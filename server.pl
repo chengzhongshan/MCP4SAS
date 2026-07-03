@@ -358,6 +358,12 @@ my @TOOLS = (
     },
 );
 
+my $SERVER_INSTRUCTIONS =
+  "MCP4SAS runs SAS code and file operations through SAS OnDemand for Academics. "
+  . "Use run_sas_codes_or_files_in_ODA for SAS code, .sas files, uploads, downloads, deletes, listings, and file metadata. "
+  . "Long jobs return a PID; poll with {\"pid\": PID} no more than about every 30 seconds. "
+  . "Do not expose this local server to untrusted networks, and avoid placing SAS ODA passwords in prompts unless intentionally bootstrapping credentials.";
+
 if (@ARGV == 0) {
     print STDERR "Usage: $0 daemon -m production -l http://127.0.0.1:8080\n";
     exit 0;
@@ -381,6 +387,7 @@ any '/mcp' => sub ($c) {
                 protocolVersion => '2024-11-05',
                 capabilities => { tools => { listChanged => \1 } },
                 serverInfo => { name => 'MCP4SAS', version => '0.1.0' },
+                instructions => $SERVER_INSTRUCTIONS,
                 sessionId => $sid,
             },
         });
