@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>MCP4SAS: An MCP Bridge for Running SAS Programs Through SAS OnDemand for Academics</title>
+  <title>MCP4SAS: An MCP Bridge for Running SAS Programs Through SASPy and Local SAS</title>
   <style>
     body {
       font-family: "Times New Roman", Times, serif;
@@ -84,7 +84,7 @@
 </head>
 <body>
 
-<h1>MCP4SAS: An MCP Bridge for Running SAS Programs Through SAS OnDemand for Academics</h1>
+<h1>MCP4SAS: An MCP Bridge for Running SAS Programs Through SASPy and Local SAS</h1>
 
 <p class="author">
   Cheng Zhongshan<br>
@@ -100,25 +100,29 @@ informatics, public health, regulated reporting, and many other data-intensive
 domains. At the same time, modern AI-assisted development environments are
 increasingly organized around tool protocols that let an agent submit jobs,
 inspect files, and iterate on code. MCP4SAS is a lightweight Model Context
-Protocol (MCP) package that connects these two worlds. It exposes SAS OnDemand
-for Academics (SAS ODA) as both a command-line runner and an MCP server, allowing
-AI agents and users to submit SAS code, run SAS files, upload and download remote
-files, inspect remote file metadata, list SAS ODA directories, reuse persistent
-SAS sessions, and monitor long-running jobs without blocking the client.
+Protocol (MCP) package that connects these two worlds. It exposes SAS execution
+through SASPy and through a direct local batch helper, allowing AI agents and
+users to submit SAS code, run SAS files, upload and download SAS ODA files,
+inspect remote file metadata, list SAS ODA directories, reuse persistent SASPy
+sessions, and monitor long-running jobs without blocking the client.
 </p>
 <p>
 The package wraps SASPy with a Perl command-line interface and a local Python
-session server. The design emphasizes practical reproducibility: repo-local
-Python and Perl dependencies, cross-platform installers, persistent session
-reuse, explicit timeout controls, SAS macro loading from the SAS ODA
-<code>~/Macros</code> directory, and diagnostic status files. This paper
-describes the motivation, architecture, installation model, major implementation
-details, example workflows, and lessons learned while building MCP4SAS as a
-standalone bridge for SAS automation in AI-assisted computing environments.
+session server for SAS ODA, local Linux SAS, local Windows SAS through SASPy IOM,
+and other SASPy configurations. It also ships a direct local SAS runner that can
+launch Linux SAS or Windows <code>sas.exe</code> without SASPy for one-shot
+batch jobs. The design emphasizes practical reproducibility: repo-local Python
+and Perl dependencies, cross-platform installers, SASPy configuration templates,
+persistent session reuse where SASPy supports it, explicit timeout controls, SAS
+macro loading from the SAS ODA <code>~/Macros</code> directory, and diagnostic
+status files. This paper describes the motivation, architecture, installation
+model, major implementation details, example workflows, and lessons learned
+while building MCP4SAS as a standalone bridge for SAS automation in
+AI-assisted computing environments.
 </p>
 </div>
 
-<p><strong>Keywords:</strong> SAS, SAS OnDemand for Academics, SASPy, Model Context Protocol, MCP, AI agents, automation, reproducibility, Perl, Python</p>
+<p><strong>Keywords:</strong> SAS, SAS OnDemand for Academics, SASPy, local SAS, Model Context Protocol, MCP, AI agents, automation, reproducibility, Perl, Python</p>
 
 <h2>Introduction</h2>
 <p>
@@ -133,46 +137,59 @@ runs, inspect the status later, and provide enough diagnostic context when
 something fails.
 </p>
 <p>
-MCP4SAS was created for this purpose. The project packages a SAS ODA command-line
-runner together with an MCP HTTP server. The runner gives direct shell access to
-SAS ODA through SASPy. The server exposes the same functionality as MCP tools so
-that an AI agent can call SAS without needing to understand all shell quoting,
-temporary file, persistent session, and status-monitoring details. The package is
-intentionally focused on SAS; it is separated from larger project-specific
-pipelines so that it can be reused in many SAS programming contexts.
+MCP4SAS was created for this purpose. The project packages a SAS command-line
+runner together with an MCP HTTP server. The SASPy-backed runner gives direct
+shell access to SAS ODA, local Linux SAS, local Windows SAS through SASPy IOM,
+and other configured SASPy targets. A second direct helper runs local Linux SAS
+or Windows <code>sas.exe</code> without SASPy when the user needs a simple batch
+job rather than an interactive SASPy session. The server exposes these
+capabilities as MCP tools so that an AI agent can call SAS without needing to
+understand all shell quoting, temporary file, persistent session, and
+status-monitoring details. The package is intentionally focused on SAS; it is
+separated from larger project-specific pipelines so that it can be reused in
+many SAS programming contexts.
 </p>
 
 <h2>Motivation</h2>
 <p>
-Three practical issues motivated MCP4SAS. First, SAS ODA is remote, while the
+Four practical issues motivated MCP4SAS. First, SAS ODA is remote, while the
 code authoring environment is local. File upload, file download, HTML result
-handling, authentication, and session reuse need to be coordinated. Second, SAS
-jobs may run longer than an AI agent's request timeout. A direct blocking call
-can make the agent appear stalled even when the SAS job is healthy. Third, SAS
-macro workflows often depend on a remote macro directory, and the called macro
-may itself call submacros. A robust bridge must make macro loading predictable
+handling, authentication, and session reuse need to be coordinated. Second,
+sites may also have licensed local SAS installations on Linux or Windows, and a
+useful bridge should not force those users through SAS ODA. Third, SAS jobs may
+run longer than an AI agent's request timeout. A direct blocking call can make
+the agent appear stalled even when the SAS job is healthy. Fourth, SAS macro
+workflows often depend on a remote macro directory, and the called macro may
+itself call submacros. A robust bridge must make macro loading predictable
 without forcing users to manually include every dependency.
 </p>
 <p>
 MCP4SAS addresses these issues with a layered design. The Perl runner provides a
-stable command-line interface. The Python session server manages a persistent
-SASPy connection. The MCP server wraps the command-line runner in a background
-job model. Together these layers give both humans and AI agents a consistent way
-to run SAS code from local workspaces.
+stable command-line interface. The Python session server manages persistent
+SASPy connections when SASPy is the selected target. A direct shell helper runs
+local SAS executables for one-shot batch jobs when SASPy is not desired. The MCP
+server wraps both execution paths in a background job model. Together these
+layers give both humans and AI agents a consistent way to run SAS code from
+local workspaces.
 </p>
 
 <h2>Overview of MCP4SAS</h2>
 <p>
-The repository contains five main components. The first is
+The repository contains seven main components. The first is
 <code>server.pl</code>, an HTTP MCP server exposing SAS tools. The second is
 <code>run_sas_codes_or_files_in_ODA.pl</code>, a command-line interface for
-running SAS code or SAS files through SAS ODA. The third is
+running SAS code or SAS files through SASPy. The historical filename keeps the
+ODA wording for compatibility. The third is
 <code>MCPDeps/SAS_ODA_Runner.pm</code>, a Perl module that coordinates local
 execution, SASPy calls, file transfer, and macro preparation. The fourth is
 <code>MCPDeps/sas_oda_session_server.py</code>, a persistent local Python server
 that owns reusable SASPy sessions. The fifth is
 <code>MCPDeps/importallmacros_ue.sas</code>, a SAS helper used to load remote
-macros from the SAS ODA <code>~/Macros</code> directory.
+macros from the SAS ODA <code>~/Macros</code> directory. The sixth is
+<code>RunLocalSASDirectly.sh</code>, a local batch helper that runs Linux SAS or
+Windows <code>sas.exe</code> without SASPy. The seventh is
+<code>install/sascfg_personal.template.py</code>, a SASPy configuration template
+for ODA, local Linux SAS, local Windows SAS, and remote IOM targets.
 </p>
 
 <table>
@@ -182,11 +199,11 @@ macros from the SAS ODA <code>~/Macros</code> directory.
   </tr>
   <tr>
     <td><code>server.pl</code></td>
-    <td>Provides the MCP endpoint and exposes SAS ODA tools to AI clients.</td>
+    <td>Provides the MCP endpoint and exposes SASPy-backed and direct local SAS tools to AI clients.</td>
   </tr>
   <tr>
     <td><code>run_sas_codes_or_files_in_ODA.pl</code></td>
-    <td>Runs SAS code, SAS files, uploads, downloads, deletes, listings, and login checks from the command line.</td>
+    <td>Runs SAS code, SAS files, uploads, downloads, deletes, listings, login checks, and SASPy connection checks from the command line.</td>
   </tr>
   <tr>
     <td><code>MCPDeps/SAS_ODA_Runner.pm</code></td>
@@ -197,6 +214,14 @@ macros from the SAS ODA <code>~/Macros</code> directory.
     <td>Maintains persistent SASPy sessions so repeated submissions do not repeatedly initialize the full SAS connection.</td>
   </tr>
   <tr>
+    <td><code>RunLocalSASDirectly.sh</code></td>
+    <td>Runs local Linux SAS or Windows <code>sas.exe</code> directly as a one-shot batch job without SASPy.</td>
+  </tr>
+  <tr>
+    <td><code>install/sascfg_personal.template.py</code></td>
+    <td>Provides example SASPy configurations for ODA, local Linux SAS, local Windows SAS, and IOM servers.</td>
+  </tr>
+  <tr>
     <td><code>MCPDeps/importallmacros_ue.sas</code></td>
     <td>Loads macro code from SAS ODA <code>~/Macros</code> for macro-heavy SAS programs.</td>
   </tr>
@@ -205,15 +230,18 @@ macros from the SAS ODA <code>~/Macros</code> directory.
 <h2>Architecture</h2>
 <p>
 Figure 1 summarizes the architecture. The user or AI agent sends a request to
-the MCP server. The MCP server creates a background worker and invokes the Perl
-runner. The Perl runner starts or reuses a local Python session server. The
-Python server owns the SASPy session that connects to SAS ODA. SAS ODA executes
-the submitted program and returns logs and result artifacts. The runner writes a
-status JSON file and an <code>output.html.info.txt</code> debug file that can be
-read later by either a user or the agent.
+the MCP server. The MCP server creates a background worker and then chooses one
+of two execution paths. For SASPy-backed work, it invokes the Perl runner, which
+starts or reuses a local Python session server. The Python server owns the SASPy
+session that connects to SAS ODA, local Linux SAS, local Windows SAS through
+IOM, or another configured SASPy target. For direct local work, the MCP server
+invokes <code>RunLocalSASDirectly.sh</code>, which starts a local SAS executable
+as a batch process without SASPy. In both paths, logs and result artifacts are
+written to local diagnostic files that can be read later by either a user or the
+agent.
 </p>
 
-<p class="caption">Figure 1. MCP4SAS execution flow from MCP client to SAS ODA.</p>
+<p class="caption">Figure 1. MCP4SAS execution flow from MCP client to SAS execution targets.</p>
 
 <div class="code">AI client or user
        |
@@ -223,17 +251,15 @@ server.pl MCP endpoint
        v
 background worker
        |
-       v
-run_sas_codes_or_files_in_ODA.pl
+       +-- SASPy path:
+       |      run_sas_codes_or_files_in_ODA.pl
+       |      MCPDeps/SAS_ODA_Runner.pm
+       |      local Python SASPy session server
+       |      SAS ODA, local Linux SAS, local Windows SAS, or IOM
        |
-       v
-MCPDeps/SAS_ODA_Runner.pm
-       |
-       v
-local Python SASPy session server
-       |
-       v
-SAS OnDemand for Academics</div>
+       +-- direct local path:
+              RunLocalSASDirectly.sh
+              local Linux SAS or Windows sas.exe batch process</div>
 
 <p>
 This design isolates long-running SAS work from the MCP request lifecycle. The
@@ -246,9 +272,10 @@ single request open for the full duration of a SAS job.
 
 <h2>Command-Line Runner</h2>
 <p>
-The command-line runner supports SAS code, SAS files, standard input, persistent
-sessions, login validation, file upload, download, delete, remote file
-inspection, and remote directory listing. A minimal command is shown below.
+The SASPy-backed command-line runner supports SAS code, SAS files, standard
+input, persistent sessions, login validation, SASPy connection validation, file
+upload, download, delete, remote file inspection, and remote directory listing.
+A minimal SAS ODA command is shown below.
 </p>
 
 <div class="code">OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
@@ -284,6 +311,58 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --persistent \
   --session-id demo</div>
 
+<h2>SASPy Target Configuration</h2>
+<p>
+MCP4SAS now uses SASPy configuration names to select the SAS target. The default
+target is <code>oda</code>, but local SAS users can choose a different
+configuration explicitly. The repository includes
+<code>install/sascfg_personal.template.py</code> and
+<code>install/install_saspy_config.sh</code> so that first-time users can start
+from a working configuration template rather than building a SASPy file from
+scratch.
+</p>
+
+<div class="code">bash install/install_saspy_config.sh
+
+SASPY_CFGNAME=oda ./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
+
+SASPY_CFGNAME=linuxlocal \
+MCP4SAS_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
+./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+
+SASPY_CFGNAME=winlocal ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only</div>
+
+<p>
+The <code>--check-saspy-connection-only</code> option validates the selected
+SASPy configuration with a small <code>PROC SETINIT</code> submit. ODA-specific
+credential prompts are restricted to the <code>oda</code> configuration so that
+local SAS users are not asked for SAS ODA credentials by mistake.
+</p>
+
+<h2>Direct Local SAS Without SASPy</h2>
+<p>
+Some users have a licensed SAS installation on the same Linux or Windows host
+and want the MCP server to run it directly, without SASPy. MCP4SAS supports this
+case with <code>RunLocalSASDirectly.sh</code> and the MCP tool
+<code>run_local_sas_without_saspy</code>. The helper locates a SAS executable
+from environment variables or standard installation paths and submits the SAS
+program as a batch job.
+</p>
+
+<div class="code">export MCP4SAS_LOCAL_SAS_EXE=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8
+
+export MCP4SAS_WINDOWS_SAS_EXE='/cygdrive/c/Program Files/SASHome/SASFoundation/9.4/sas.exe'</div>
+
+<p>
+This direct path is intentionally different from the SASPy path. It is useful
+for one-shot local batch jobs and for environments where SASPy is not available
+or not desired. It does not provide persistent session reuse, because each tool
+call starts a fresh SAS process. As a result, <code>WORK</code> data sets, macro
+variables, librefs, options, and loaded macros do not carry over to the next
+tool call. Users who need persistent local SAS state should use a SASPy
+configuration such as <code>linuxlocal</code> or <code>winlocal</code>.
+</p>
+
 <h2>MCP Server Interface</h2>
 <p>
 The MCP server is started with:
@@ -298,11 +377,13 @@ The MCP endpoint is:
 <div class="code">http://127.0.0.1:8080/mcp</div>
 
 <p>
-The server exposes two tool names:
+The server exposes four tool names:
 </p>
 <ul>
   <li><code>run_sas_codes_or_files_in_ODA</code></li>
   <li><code>run_sas_codes_or_script_in_ODA</code>, a compatibility alias</li>
+  <li><code>run_local_sas_without_saspy</code></li>
+  <li><code>run_sas_codes_or_script_on_local_Windows</code>, a compatibility alias for the direct local SAS tool</li>
 </ul>
 
 <p>
@@ -420,20 +501,23 @@ proxy. A generic HTTP MCP configuration looks like:
 <p>
 The recommended workflow is: start <code>server.pl</code>; ask the AI agent to
 call <code>run_sas_codes_or_files_in_ODA</code> with SAS code, a SAS file, or a
-file-management request; use a persistent <code>session_id</code> for related
-tasks; if the response returns a PID, poll no more often than about every 30
-seconds; and inspect <code>output.html.info.txt</code> when SAS reports errors
-or unresolved macro warnings. This workflow lets long SAS jobs proceed without
-holding a single MCP request open for the entire runtime.
+file-management request when the target is SASPy-backed; use a persistent
+<code>session_id</code> for related SASPy tasks; call
+<code>run_local_sas_without_saspy</code> for direct one-shot local Linux or
+Windows SAS batch jobs; if the response returns a PID, poll no more often than
+about every 30 seconds; and inspect the returned diagnostic file when SAS
+reports errors or unresolved macro warnings. This workflow lets long SAS jobs
+proceed without holding a single MCP request open for the entire runtime.
 </p>
 
 <h2>Persistent SAS Sessions</h2>
 <p>
 SAS ODA session startup can take several seconds, and macro bootstrap may take
-longer for users with many macros in <code>~/Macros</code>. MCP4SAS therefore
-supports persistent sessions with an explicit session identifier. The same
-session can be reused across multiple submissions, which also preserves SAS WORK
-datasets and loaded macro state.
+longer for users with many macros in <code>~/Macros</code>. Local SASPy targets
+can also benefit from keeping a SAS session alive. MCP4SAS therefore supports
+persistent sessions with an explicit session identifier for SASPy-backed
+targets. The same session can be reused across multiple submissions, which also
+preserves SAS WORK datasets and loaded macro state.
 </p>
 
 <p>
@@ -452,6 +536,13 @@ This message means that the local Perl client is waiting for the local session
 server to answer. During macro bootstrap or a long SAS program, the server may
 already be active inside SAS ODA. The elapsed time makes the wait easier to
 interpret.
+</p>
+<p>
+The direct local SAS tool does not participate in this persistent session model.
+It starts a new Linux SAS or Windows <code>sas.exe</code> batch process for each
+call. This limitation is intentional and is documented in the tool description
+so that AI agents do not assume that state from a previous direct batch job will
+remain available.
 </p>
 
 <h2>Macro Loading</h2>
@@ -515,7 +606,9 @@ When a session becomes wedged, users can stop local SAS ODA helper processes:
 MCP4SAS ships with platform-specific install scripts. Each script creates a
 repo-local Python virtual environment and installs the required Perl modules
 under the repository. This reduces conflicts with system-level Perl and Python
-installations.
+installations. The install process can also create a repo-local
+<code>sascfg_personal.py</code> template that includes SAS ODA, local Linux SAS,
+local Windows SAS, and remote IOM examples.
 </p>
 
 <table>
@@ -558,6 +651,17 @@ Students using SAS ODA can ask an AI assistant to generate a SAS program, submit
 it through MCP4SAS, inspect the log, and revise the program. The persistent
 session lets earlier WORK datasets remain available for later commands, which
 matches how many users learn and debug SAS interactively.
+</p>
+
+<h3>Licensed local SAS execution</h3>
+<p>
+Organizations with licensed local SAS installations can use MCP4SAS in two
+ways. If SASPy is configured for the local environment, users can select
+<code>linuxlocal</code>, <code>winlocal</code>, or another site-specific
+configuration and reuse persistent SASPy sessions. If SASPy is unavailable or a
+simple batch run is sufficient, users can call
+<code>run_local_sas_without_saspy</code> to run Linux SAS or Windows
+<code>sas.exe</code> directly.
 </p>
 
 <h3>Macro-heavy analytic projects</h3>
@@ -616,13 +720,20 @@ regulated reporting.
 
 <h2>Limitations</h2>
 <p>
-MCP4SAS depends on the availability and responsiveness of SAS ODA, SASPy, Java
-IOM connectivity, and local network access. Remote macro bootstrap time depends
-on the size and complexity of the user's macro directory. Some SAS ODA
+MCP4SAS depends on the availability and responsiveness of the selected SAS
+target. SAS ODA and remote IOM configurations depend on network access, Java IOM
+connectivity, and correct SASPy configuration. Remote macro bootstrap time
+depends on the size and complexity of the user's macro directory. Some SAS ODA
 connection failures may require restarting local SASPy helper processes or
-creating a fresh session identifier. Finally, the package is designed for SAS
-ODA. Sites with licensed local SAS installations may require a different
-adapter.
+creating a fresh session identifier. Local Linux and Windows SAS support depends
+on a valid licensed SAS installation and correct executable paths.
+</p>
+<p>
+The direct local SAS runner is a batch adapter, not an interactive SAS session
+manager. It can start a job and poll its PID, but it cannot preserve
+<code>WORK</code> data sets, macro variables, librefs, options, or loaded macros
+across tool calls. Persistent local SAS state should be implemented through
+SASPy when possible.
 </p>
 
 <h2>Future Work</h2>
@@ -631,20 +742,24 @@ Future development can extend MCP4SAS in several directions. A standard stdio
 MCP transport could complement the current HTTP endpoint. A richer status API
 could expose structured SAS log findings, such as errors, warnings, unresolved
 macros, and generated file paths. Additional authentication helpers could make
-first-run SASPy configuration easier on managed systems. Finally, container
-recipes could provide a fully reproducible Linux runtime for organizations that
-want to deploy the bridge in a standardized environment.
+first-run SASPy configuration easier on managed systems. A future resident local
+SAS session manager could provide persistent local SAS execution without SASPy,
+but this would require robust command framing, log boundary markers, interrupt
+handling, timeout handling, and process cleanup. Finally, container recipes
+could provide a fully reproducible Linux runtime for organizations that want to
+deploy the bridge in a standardized environment.
 </p>
 
 <h2>Conclusion</h2>
 <p>
-MCP4SAS provides a focused bridge between SAS ODA and AI-assisted development
-environments. By combining a command-line SAS ODA runner, a persistent SASPy
-session server, macro-loading support, long-run status polling, cross-platform
-installers, and an MCP HTTP server, it makes SAS workflows accessible to both
-human shell users and AI agents. The result is a practical foundation for
-interactive SAS programming, remote SAS file management, macro-heavy analysis,
-and reproducible agent-assisted SAS workflows.
+MCP4SAS provides a focused bridge between SAS and AI-assisted development
+environments. By combining a SASPy-backed command-line runner, persistent SASPy
+session server, direct local Linux/Windows SAS batch helper, macro-loading
+support, long-run status polling, cross-platform installers, and an MCP HTTP
+server, it makes SAS workflows accessible to both human shell users and AI
+agents. The result is a practical foundation for interactive SAS programming,
+remote SAS file management, local SAS batch execution, macro-heavy analysis, and
+reproducible agent-assisted SAS workflows.
 </p>
 
 <h2>References</h2>
