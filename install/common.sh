@@ -6,6 +6,7 @@ MCP4SAS_ROOT="$(cd "${MCP4SAS_INSTALL_DIR}/.." && pwd)"
 MCP4SAS_VENV="${MCP4SAS_ROOT}/.venv-pipeline"
 MCP4SAS_LOCAL_PERL="${MCP4SAS_ROOT}/local/perl5"
 MCP4SAS_SASPY_IOM_JARS=(sas.rutil.jar sas.rutil.nls.jar sastpj.rutil.jar)
+MCP4SAS_SASPY_CONFIG_TEMPLATE="${MCP4SAS_INSTALL_DIR}/sascfg_personal.template.py"
 
 log() {
   printf '[MCP4SAS install] %s\n' "$*"
@@ -49,7 +50,37 @@ create_python_venv() {
   "${MCP4SAS_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
   "${MCP4SAS_VENV}/bin/python" -m pip install -r "${MCP4SAS_INSTALL_DIR}/requirements.txt"
   printf '%s\n' "${MCP4SAS_VENV}/bin/python" > "${MCP4SAS_VENV}/.python-bin"
+  install_saspy_config_template
   install_saspy_iom_encryption_jars || true
+}
+
+install_saspy_config_template() {
+  local dst="${MCP4SAS_ROOT}/sascfg_personal.py"
+  local home_config="${HOME:-}/.config/saspy/sascfg_personal.py"
+  local home_legacy="${HOME:-}/sascfg_personal.py"
+
+  [ -s "${MCP4SAS_SASPY_CONFIG_TEMPLATE}" ] || {
+    log "SASPy config template not found: ${MCP4SAS_SASPY_CONFIG_TEMPLATE}"
+    return 0
+  }
+
+  if [ "${MCP4SAS_OVERWRITE_SASPY_CONFIG:-0}" = "1" ]; then
+    cp -f "${MCP4SAS_SASPY_CONFIG_TEMPLATE}" "${dst}"
+    log "Wrote SASPy config template to ${dst}"
+    return 0
+  fi
+
+  if [ -s "${dst}" ]; then
+    log "SASPy config already exists at ${dst}"
+    return 0
+  fi
+  if [ -n "${HOME:-}" ] && { [ -s "${home_config}" ] || [ -s "${home_legacy}" ]; }; then
+    log "Existing user SASPy config found; not writing repo-local sascfg_personal.py"
+    return 0
+  fi
+
+  cp "${MCP4SAS_SASPY_CONFIG_TEMPLATE}" "${dst}"
+  log "Wrote SASPy config template to ${dst}"
 }
 
 saspy_iomclient_dir() {
