@@ -25,7 +25,7 @@ BEGIN {
         }
     }
 
-    my $deps = File::Spec->catdir($script_dir, 'DiffGWASDeps');
+    my $deps = File::Spec->catdir($script_dir, 'MCPDeps');
     lib->import($deps) if -d $deps;
 
     my @path_prefixes = grep { defined && length && -d $_ } (

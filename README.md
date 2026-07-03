@@ -5,10 +5,10 @@ Academics (SAS ODA). It includes:
 
 - `server.pl`: an HTTP MCP server exposing SAS ODA tools.
 - `run_sas_codes_or_files_in_ODA.pl`: a command-line SAS ODA runner.
-- `DiffGWASDeps/SAS_ODA_Runner.pm`: the Perl/Python bridge around SASPy.
-- `DiffGWASDeps/sas_oda_session_server.py`: a persistent local SASPy session
+- `MCPDeps/SAS_ODA_Runner.pm`: the Perl/Python bridge around SASPy.
+- `MCPDeps/sas_oda_session_server.py`: a persistent local SASPy session
   server for faster repeated SAS ODA calls.
-- `DiffGWASDeps/importallmacros_ue.sas`: helper for loading SAS macros from
+- `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
 This repository is intentionally SAS-focused. It does not include the

@@ -64,7 +64,7 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 use lib $Bin;
-use lib "$Bin/DiffGWASDeps";
+use lib "$Bin/MCPDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
 use JSON::PP qw(encode_json decode_json);
@@ -409,7 +409,7 @@ sub collect_sas_oda_session_pids {
             push @pids, int($pid);
             next;
         }
-        if ($cmd =~ /DiffGWASDeps\/sas_oda_session_server\.py/) {
+        if ($cmd =~ /MCPDeps\/sas_oda_session_server\.py/) {
             next unless $cmd =~ m{(?:^|/|\s)python[0-9.]*(?:\s|$)};
             push @pids, int($pid);
             next;
@@ -920,14 +920,14 @@ Examples:
   $0 --code 'data a;do i=1 to 1000;x=i**2;output;rc=sleep(1);end;run;proc print data=a(obs=10);run
 ;' --no-run-timeout --persistent --session-id mysession
   $0 --code "data a;input a @@;datalines;\n10 20\n;run;proc print data=a;run;" --persistent --session-id mysession
-  ./run_sas_codes_or_script_in_ODA.pl --code 'data a;input a @@;datalines;\n10 20\n;run;proc print;run; ' --persistent --session-id ms1
+  ./run_sas_codes_or_files_in_ODA.pl --code 'data a;input a @@;datalines;\n10 20\n;run;proc print;run; ' --persistent --session-id ms1
   $0 --file script1.sas --persistent --session-id mysession
   $0 --file script2.sas --session-id mysession
-  perl -S run_sas_codes_or_script_in_ODA.pl   --code "data a; set sashelp.cars; run;"   --persistent --session-id reuse_test --output-prefix reuse1
+  perl -S run_sas_codes_or_files_in_ODA.pl   --code "data a; set sashelp.cars; run;"   --persistent --session-id reuse_test --output-prefix reuse1
   #Note: the above command creates a session "reuse_test" and runs code to create dataset "a". The next command reuses the same session to print dataset "a".
   #Macros in ~/Macros are auto-imported only when the session is created; they are not re-imported on reuse.
   #both --persistent and --session-id must be used together to enable session reuse. The output files will have prefixes "reuse1" and "reuse2" respectively.
-  perl -S run_sas_codes_or_script_in_ODA.pl   --code "proc print data=a; run;"   --persistent --session-id reuse_test --output-prefix reuse2
+  perl -S run_sas_codes_or_files_in_ODA.pl   --code "proc print data=a; run;"   --persistent --session-id reuse_test --output-prefix reuse2
   printf '%s\\n' \\
     'data a;' \\
     'input a @@;' \\
