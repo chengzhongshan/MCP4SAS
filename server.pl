@@ -58,6 +58,7 @@ use File::Temp qw(tempdir);
 use Cwd qw(abs_path getcwd);
 use JSON::PP qw(encode_json);
 use Mojo::Util qw(md5_sum);
+use POSIX qw(WNOHANG);
 use Mojolicious::Lite -signatures;
 
 $ENV{MOJO_LOG_LEVEL} //= 'error';
@@ -174,6 +175,13 @@ sub write_pid_file {
     open(my $fh, '>', $path) or die "Cannot write $path: $!\n";
     print {$fh} $pid;
     close $fh;
+}
+
+sub reap_child_if_finished {
+    my ($pid) = @_;
+    return 0 unless defined($pid) && $pid =~ /^\d+$/;
+    my $reaped = waitpid($pid, WNOHANG);
+    return ($reaped && $reaped > 0) ? 1 : 0;
 }
 
 sub local_direct_sas_tool_schema {
@@ -331,6 +339,7 @@ sub run_sas_oda_tool {
         return text_result("ERROR: PID $args->{pid} not found or already completed.")
           unless $pid_file;
 
+        reap_child_if_finished($args->{pid});
         if (pid_is_running($args->{pid})) {
             return text_result(
                 "STATUS: RUNNING (PID $args->{pid})\n"
@@ -340,10 +349,13 @@ sub run_sas_oda_tool {
         }
 
         my $content = read_text_file($out_file);
+        my $runner_stdout = File::Spec->catfile(dirname($out_file), 'runner.stdout.txt');
+        $content = read_text_file($runner_stdout)
+          if (!defined($content) || $content eq '') && -f $runner_stdout;
         unlink $pid_file if -f $pid_file;
         return text_result(
             "STATUS: COMPLETE (PID $args->{pid})\n\n"
-          . "SAS log for debugging saved to: $out_file\n\n"
+          . "SAS log for debugging saved to: " . ((defined($content) && length($content) && -f $runner_stdout && !-f $out_file) ? $runner_stdout : $out_file) . "\n\n"
           . $content
         );
     }
@@ -440,6 +452,7 @@ sub run_local_direct_sas_tool {
         return text_result("ERROR: PID $args->{pid} not found or already completed.")
           unless $pid_file;
 
+        reap_child_if_finished($args->{pid});
         if (pid_is_running($args->{pid})) {
             return text_result(
                 "STATUS: RUNNING (PID $args->{pid})\n"

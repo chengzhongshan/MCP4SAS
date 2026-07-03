@@ -925,7 +925,7 @@ if ($internal_runner_result_json) {
     exit(($worker_error || (ref($worker_result) eq 'HASH' && ($worker_result->{error} // ''))) ? 1 : 0);
 }
 
-if ($help || (!$check_sas_oda_login_only && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
+if ($help || (!$check_sas_oda_login_only && !$check_saspy_connection_only && !$dry_run && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
    || ($code && $file) ) {
     print <<USAGE;
 Usage: $0 [OPTIONS]
