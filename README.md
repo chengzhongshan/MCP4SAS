@@ -102,6 +102,39 @@ host system.
 
 ## First SAS ODA Login
 
+SAS ODA now requires the SAS IOM encryption jars used by SASPy:
+
+```text
+sas.rutil.jar
+sas.rutil.nls.jar
+sastpj.rutil.jar
+```
+
+SASPy documents this requirement for SAS ODA/SAS 9.4M7 here:
+https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption-jars
+
+If you already have MultiGWAS-Explorer checked out with the Java supplement
+files, install the jars into MCP4SAS with:
+
+```bash
+MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
+  bash install/install_saspy_iom_jars.sh
+```
+
+In this workspace, for example:
+
+```bash
+MCP4SAS_MULTIGWAS_ROOT=/mnt/24921E0E921DE4D8/Scripts_Lib/MultiGWAS-Explorer-main/MultiGWAS-Explorer \
+  bash install/install_saspy_iom_jars.sh
+```
+
+Or point directly to the directory containing the three jars:
+
+```bash
+MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/MultiGWAS-Explorer/install/saspy-java-supplement/java/iomclient \
+  bash install/install_saspy_iom_jars.sh
+```
+
 Interactive credential setup:
 
 ```bash
@@ -525,8 +558,16 @@ If SASPy hangs or a persistent session becomes stale:
 
 If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
-SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. First
-refresh the saved SAS ODA credentials:
+SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. The
+most common cause is that the three SAS IOM encryption jars are missing from
+SASPy's `java/iomclient` directory. Copy them from MultiGWAS-Explorer:
+
+```bash
+MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
+  bash install/install_saspy_iom_jars.sh
+```
+
+Then refresh or validate the saved SAS ODA credentials:
 
 ```bash
 ./run_sas_codes_or_files_in_ODA.pl \
@@ -551,9 +592,10 @@ SASPY_CFGNAME=oda \
 ./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
 ```
 
-If credentials are correct and the same error remains, check that the `iomhost`
-entries in `sascfg_personal.py` match your SAS ODA home region and try Java 8 or
-Java 11, depending on what your local SASPy/ODA setup supports.
+If the jars are installed and credentials are correct but the same error
+remains, check that the `iomhost` entries in `sascfg_personal.py` match your SAS
+ODA home region and try Java 8 or Java 11, depending on what your local
+SASPy/ODA setup supports.
 
 If a command completes but the browser prints noisy errors, suppress auto-open:
 
