@@ -1,5 +1,6 @@
 /.venv-pipeline/
 /local/
+/sascfg_personal.py
 /tmp*/
 /SAS_Output*/
 /sas_submit_worker_*

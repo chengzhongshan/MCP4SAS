@@ -51,7 +51,7 @@ BEGIN {
 use strict;
 use warnings;
 use FindBin qw($Bin);
-use File::Basename qw(dirname);
+use File::Basename qw(basename dirname);
 use File::Path qw(make_path);
 use File::Spec;
 use File::Temp qw(tempdir);
@@ -113,6 +113,13 @@ sub read_text_file {
     return defined($text) ? $text : '';
 }
 
+sub write_text_file {
+    my ($path, $text) = @_;
+    open(my $fh, '>', $path) or die "Cannot write $path: $!\n";
+    print {$fh} ($text // '');
+    close $fh;
+}
+
 sub find_status_for_pid {
     my ($pid) = @_;
     for my $pid_file (glob(File::Spec->catfile('tmp*', 'output.html.info.pid'))) {
@@ -128,11 +135,77 @@ sub find_status_for_pid {
     return;
 }
 
+sub find_local_direct_sas_status_for_pid {
+    my ($pid) = @_;
+    for my $pid_file (glob(File::Spec->catfile('tmp*', 'output.local_sas_direct.pid'))) {
+        next unless -f $pid_file;
+        my $stored = read_text_file($pid_file);
+        chomp $stored;
+        next unless defined($stored) && $stored eq "$pid";
+
+        my $out_file = $pid_file;
+        $out_file =~ s/\.pid$/.txt/;
+        return ($pid_file, $out_file);
+    }
+    return;
+}
+
+sub resolve_helper_script_path {
+    my ($script_name) = @_;
+    return '' unless defined($script_name) && length($script_name);
+    return $script_name if $script_name =~ m{[\\/]} && -f $script_name;
+
+    my @candidates = (
+        File::Spec->catfile($Bin, $script_name),
+        File::Spec->catfile($Bin, 'MCPDeps', $script_name),
+    );
+    for my $dir (File::Spec->path()) {
+        push @candidates, File::Spec->catfile($dir, $script_name);
+    }
+
+    for my $path (@candidates) {
+        return $path if defined($path) && length($path) && -f $path;
+    }
+    return '';
+}
+
 sub write_pid_file {
     my ($path, $pid) = @_;
     open(my $fh, '>', $path) or die "Cannot write $path: $!\n";
     print {$fh} $pid;
     close $fh;
+}
+
+sub local_direct_sas_tool_schema {
+    return {
+        type => 'object',
+        properties => {
+            sas_codes_or_file => {
+                type => 'string',
+                description => 'Raw SAS code or a local .sas file path. This direct local SAS runner starts a fresh SAS process for each call.',
+            },
+            output_file => {
+                type => 'string',
+                description => 'Optional MCP wrapper output text file. Default: tmp*/output.local_sas_direct.txt.',
+            },
+            pid => {
+                type => 'integer',
+                description => 'PID from a previous direct local SAS call. Supply it to poll status.',
+            },
+            tmp_sas_file => {
+                type => 'string',
+                description => 'Optional internal temporary .sas file path used when raw SAS code is submitted.',
+            },
+            local_sas_exe => {
+                type => 'string',
+                description => 'Optional local SAS executable path. Passed as MCP4SAS_LOCAL_SAS_EXE to RunLocalSASDirectly.sh.',
+            },
+            local_sas_platform => {
+                type => 'string',
+                description => 'Optional platform override for RunLocalSASDirectly.sh: linux or windows.',
+            },
+        },
+    };
 }
 
 sub mcp4sas_tool_schema {
@@ -216,6 +289,18 @@ sub mcp4sas_tool_schema {
             prompt_sas_oda_auth => {
                 type => 'string',
                 description => 'Truth-like value to force SAS ODA credential refresh.',
+            },
+            saspy_cfgname => {
+                type => 'string',
+                description => 'Optional SASPy config name, for example oda, linuxlocal, local, default, or winlocal.',
+            },
+            saspy_cfgfile => {
+                type => 'string',
+                description => 'Optional path to a SASPy sascfg_personal.py file.',
+            },
+            check_saspy_connection_only => {
+                type => 'string',
+                description => 'Truth-like value to validate the selected SASPy config with PROC SETINIT and exit.',
             },
             run_timeout_seconds => {
                 type => 'integer',
@@ -310,6 +395,9 @@ sub run_sas_oda_tool {
     push @runner_args, ('--delete-dir', $args->{delete_dir}) if defined($args->{delete_dir}) && length($args->{delete_dir});
     push @runner_args, map { ('--file-info', $_) } as_list($args->{file_info});
     push @runner_args, ('--dir4listing', $args->{dir4listing}) if defined($args->{dir4listing}) && length($args->{dir4listing});
+    push @runner_args, ('--saspy-cfgname', $args->{saspy_cfgname}) if defined($args->{saspy_cfgname}) && length($args->{saspy_cfgname});
+    push @runner_args, ('--saspy-cfgfile', $args->{saspy_cfgfile}) if defined($args->{saspy_cfgfile}) && length($args->{saspy_cfgfile});
+    push @runner_args, '--check-saspy-connection-only' if is_truthy($args->{check_saspy_connection_only});
 
     my $pid = fork();
     return text_result('ERROR: Could not fork SAS ODA worker.') unless defined $pid;
@@ -343,10 +431,85 @@ sub run_sas_oda_tool {
     );
 }
 
+sub run_local_direct_sas_tool {
+    my ($args) = @_;
+    $args ||= {};
+
+    if (defined $args->{pid}) {
+        my ($pid_file, $out_file) = find_local_direct_sas_status_for_pid($args->{pid});
+        return text_result("ERROR: PID $args->{pid} not found or already completed.")
+          unless $pid_file;
+
+        if (pid_is_running($args->{pid})) {
+            return text_result(
+                "STATUS: RUNNING (PID $args->{pid})\n"
+              . "Output file: $out_file\n"
+              . "Ask the AI agent to check status again in a moment."
+            );
+        }
+
+        my $content = read_text_file($out_file);
+        unlink $pid_file if -f $pid_file;
+        return text_result(
+            "STATUS: COMPLETE (PID $args->{pid})\n\n"
+          . "Local SAS direct-run log for debugging saved to: $out_file\n\n"
+          . $content
+        );
+    }
+
+    my $sas_input = $args->{sas_codes_or_file};
+    return text_result('ERROR: sas_codes_or_file is required for direct local SAS runs.')
+      unless defined($sas_input) && length($sas_input);
+
+    my $runner = resolve_helper_script_path('RunLocalSASDirectly.sh');
+    return text_result(
+        "ERROR: Cannot find RunLocalSASDirectly.sh. Place it in the MCP4SAS repository, MCPDeps, or PATH, "
+      . "and set MCP4SAS_LOCAL_SAS_EXE, MCP4SAS_LINUX_SAS_EXE, or MCP4SAS_WINDOWS_SAS_EXE to the local SAS executable if needed."
+    ) unless length($runner);
+
+    my $tmpdir = tempdir('tmpXXXXXX', DIR => getcwd(), CLEANUP => 0);
+    make_path($tmpdir) unless -d $tmpdir;
+
+    my $out_file = $args->{output_file} // File::Spec->catfile($tmpdir, 'output.local_sas_direct.txt');
+    my $pid_file = File::Spec->catfile($tmpdir, 'output.local_sas_direct.pid');
+    my $sas_file = $args->{tmp_sas_file} // File::Spec->catfile($tmpdir, 'input.sas');
+
+    my $code = -f $sas_input ? read_text_file($sas_input) : $sas_input;
+    $code = "ods html path='.';\n$code" unless $code =~ /^\s*ods\s+html\s+path\s*=/i;
+    write_text_file($sas_file, $code);
+
+    my $pid = fork();
+    return text_result('ERROR: Could not fork direct local SAS worker.') unless defined $pid;
+
+    if ($pid == 0) {
+        $ENV{OPEN_RESULT} //= 0;
+        $ENV{MCP4SAS_LOCAL_SAS_EXE} = $args->{local_sas_exe}
+          if defined($args->{local_sas_exe}) && length($args->{local_sas_exe});
+        $ENV{MCP4SAS_LOCAL_SAS_PLATFORM} = $args->{local_sas_platform}
+          if defined($args->{local_sas_platform}) && length($args->{local_sas_platform});
+
+        open(STDOUT, '>', $out_file) or die "Cannot redirect stdout to $out_file: $!\n";
+        open(STDERR, '>&STDOUT') or die "Cannot redirect stderr: $!\n";
+
+        exec { 'bash' } 'bash', $runner, $sas_file, 'output.html.info', $tmpdir;
+        die "Could not exec $runner through bash: $!\n";
+    }
+
+    write_pid_file($pid_file, $pid);
+    return text_result(
+        "QUERYING: direct local SAS batch worker started\n"
+      . "PID: $pid\n"
+      . "Output file: $out_file\n"
+      . "Temporary directory: $tmpdir\n"
+      . "Ask the AI agent to check status with: {\"pid\": $pid}\n"
+      . "This direct local SAS tool starts a fresh SAS batch process for each call; it does not keep WORK tables, macro variables, librefs, options, or loaded macros for later calls."
+    );
+}
+
 my @TOOLS = (
     {
         name => 'run_sas_codes_or_files_in_ODA',
-        description => 'Submit SAS code or .sas files to SAS OnDemand for Academics through SASPy, with persistent session reuse, file upload/download/delete/list operations, and background status polling for long jobs.',
+        description => 'Submit SAS code or .sas files through SASPy. Use saspy_cfgname=oda for SAS ODA, linuxlocal/local/default for local Linux SAS, or winlocal for local Windows SAS through SASPy IOM. Supports persistent SASPy session reuse, ODA file upload/download/delete/list operations, and background status polling for long jobs.',
         inputSchema => mcp4sas_tool_schema(),
         code => sub ($args) { run_sas_oda_tool($args) },
     },
@@ -356,11 +519,25 @@ my @TOOLS = (
         inputSchema => mcp4sas_tool_schema(),
         code => sub ($args) { run_sas_oda_tool($args) },
     },
+    {
+        name => 'run_local_sas_without_saspy',
+        description => 'Run SAS code or a .sas file with a local Linux SAS executable or local Windows sas.exe through RunLocalSASDirectly.sh, without SASPy. This is a one-shot batch runner with background PID polling only: persistent session reuse is not supported, and WORK data sets, macro variables, librefs, options, and loaded macros do not carry across tool calls. Use the SASPy-backed tool with saspy_cfgname=linuxlocal or winlocal when persistent local SAS session reuse is required and SASPy is available.',
+        inputSchema => local_direct_sas_tool_schema(),
+        code => sub ($args) { run_local_direct_sas_tool($args) },
+    },
+    {
+        name => 'run_sas_codes_or_script_on_local_Windows',
+        description => 'Compatibility alias for run_local_sas_without_saspy. Despite the historical name, the underlying RunLocalSASDirectly.sh helper can run local Linux SAS or local Windows sas.exe directly without SASPy. It is one-shot batch only and cannot preserve persistent SAS session state.',
+        inputSchema => local_direct_sas_tool_schema(),
+        code => sub ($args) { run_local_direct_sas_tool($args) },
+    },
 );
 
 my $SERVER_INSTRUCTIONS =
-  "MCP4SAS runs SAS code and file operations through SAS OnDemand for Academics. "
+  "MCP4SAS runs SAS code through SASPy using SAS OnDemand for Academics or a local SAS config. "
   . "Use run_sas_codes_or_files_in_ODA for SAS code, .sas files, uploads, downloads, deletes, listings, and file metadata. "
+  . "Use saspy_cfgname=oda for SAS ODA, saspy_cfgname=linuxlocal/local/default for local Linux SAS, or saspy_cfgname=winlocal for local Windows SAS. "
+  . "Use run_local_sas_without_saspy only for direct one-shot local Linux/Windows SAS batch jobs without SASPy; it cannot keep a persistent SAS session. "
   . "Long jobs return a PID; poll with {\"pid\": PID} no more than about every 30 seconds. "
   . "Do not expose this local server to untrusted networks, and avoid placing SAS ODA passwords in prompts unless intentionally bootstrapping credentials.";
 

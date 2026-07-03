@@ -88,6 +88,7 @@ my ($internal_runner_result_json, $internal_execution_file, $internal_execution_
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
+my ($saspy_cfgfile, $saspy_cfgname, $check_saspy_connection_only);
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
 my $skip_upload_if_same = 1;
@@ -373,6 +374,9 @@ GetOptions(
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
     'skip-sas-oda-auth-bootstrap!' => \$skip_sas_oda_auth_bootstrap,
     'check-sas-oda-login-only!' => \$check_sas_oda_login_only,
+    'saspy-cfgfile=s' => \$saspy_cfgfile,
+    'saspy-cfgname=s' => \$saspy_cfgname,
+    'check-saspy-connection-only!' => \$check_saspy_connection_only,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
     'kill-saspy-sessions|kill-sas-oda-sessions|kill-saspy-session-server!' => \$kill_saspy_sessions,
@@ -389,6 +393,14 @@ GetOptions(
     '_internal-persistent!' => \$internal_persistent,
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
+
+if (defined($saspy_cfgfile) && length($saspy_cfgfile)) {
+    $saspy_cfgfile =~ s{^~(?=/|$)}{$ENV{HOME} || '.'}e;
+    $ENV{SASPY_CFGFILE} = $saspy_cfgfile;
+}
+if (defined($saspy_cfgname) && length($saspy_cfgname)) {
+    $ENV{SASPY_CFGNAME} = $saspy_cfgname;
+}
 
 sub collect_sas_oda_session_pids {
     my %seen;
@@ -505,6 +517,22 @@ sub resolve_home_dir {
     return '.';
 }
 
+sub expand_user_path {
+    my ($path) = @_;
+    return '' unless defined $path && length $path;
+    $path =~ s{^~(?=/|$)}{resolve_home_dir()}e;
+    return $path;
+}
+
+sub current_saspy_cfgname {
+    return $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
+}
+
+sub current_saspy_cfg_is_oda {
+    my $cfgname = current_saspy_cfgname();
+    return ($cfgname =~ /^oda$/i) ? 1 : 0;
+}
+
 sub resolve_sas_oda_authinfo_path {
     my $home = resolve_home_dir();
     my @existing = grep { -f $_ } (
@@ -519,7 +547,7 @@ sub resolve_saspy_cfgfile_path {
     for my $key (qw(SASPY_CFGFILE SASPY_CONFIG_FILE)) {
         my $path = $ENV{$key};
         next unless defined $path && length $path;
-        $path =~ s{^~(?=/|$)}{resolve_home_dir()}e;
+        $path = expand_user_path($path);
         return $path if -f $path;
     }
 
@@ -708,7 +736,7 @@ def main():
                     pass
     print(json.dumps({
         'ok': False,
-        'error': last_error or 'Unable to create a SAS ODA session',
+        'error': last_error or 'Unable to create a SASPy session',
     }))
     return 2
 
@@ -758,6 +786,13 @@ sub bootstrap_sas_oda_credentials_if_needed {
     return if $sas_oda_auth_bootstrap_done;
     return if env_truthy($skip_sas_oda_auth_bootstrap) || env_truthy($ENV{PIPELINE_SKIP_SAS_ODA_AUTH_BOOTSTRAP});
     configure_saspy_cfgfile_env();
+    if (!current_saspy_cfg_is_oda()) {
+        if (defined($sas_oda_account) || defined($sas_oda_password) || env_truthy($force_sas_oda_auth_prompt)) {
+            die "SAS ODA credential options require SASPY_CFGNAME=oda; current SASPy cfgname is '" . current_saspy_cfgname() . "'.\n";
+        }
+        $sas_oda_auth_bootstrap_done = 1;
+        return;
+    }
 
     my $authkey = sas_oda_authkey_name();
     my $authinfo_path = resolve_sas_oda_authinfo_path();
@@ -938,6 +973,12 @@ Options:
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
+  --saspy-cfgfile <file>     Use a specific SASPy sascfg_personal.py file.
+  --saspy-cfgname <name>     Use a specific SASPy config name, such as oda,
+                             linuxlocal, local, default, or winlocal.
+  --check-saspy-connection-only
+                             Validate the selected SASPy config with
+                             PROC SETINIT and exit. Use this for local SAS.
   --monitor-status-file <f>  Follow a live SAS ODA status JSON sidecar from another terminal.
   --monitor-interval-seconds <n>
                              Poll interval for --monitor-status-file (default: 5 seconds).
@@ -1022,9 +1063,23 @@ if (defined $code && $code eq '-') {
     $code = normalize_cli_code_text($code);
 }
 
+configure_saspy_cfgfile_env();
+
+if ($check_saspy_connection_only) {
+    my $probe = validate_sas_oda_login_once('proc setinit');
+    if ($probe->{ok}) {
+        print "SASPy connection validation succeeded with cfgname '" . current_saspy_cfgname() . "' using proc setinit;run;\n";
+        exit 0;
+    }
+    my $detail = sas_oda_probe_detail($probe);
+    die "SASPy connection validation failed for cfgname '" . current_saspy_cfgname() . "': $detail\n";
+}
+
 bootstrap_sas_oda_credentials_if_needed();
 
 if ($check_sas_oda_login_only) {
+    die "--check-sas-oda-login-only requires SASPY_CFGNAME=oda; current SASPy cfgname is '" . current_saspy_cfgname() . "'. Use --check-saspy-connection-only for local SAS configs.\n"
+      unless current_saspy_cfg_is_oda();
     my $probe = validate_sas_oda_login_once('proc setinit');
     if ($probe->{ok}) {
         print "SAS ODA login validation succeeded with proc setinit;run;\n";

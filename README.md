@@ -1,10 +1,16 @@
 # MCP4SAS
 
-MCP4SAS is a small Model Context Protocol (MCP) package for running SAS code through SAS OnDemand for
-Academics (SAS ODA). It includes:
+MCP4SAS is a small Model Context Protocol (MCP) package for running SAS code
+through SASPy. It can use SAS OnDemand for Academics (SAS ODA), local SAS on
+Linux, or local Windows SAS when those targets are configured in SASPy. It
+includes:
 
-- `server.pl`: an HTTP MCP server exposing SAS ODA tools.
-- `run_sas_codes_or_files_in_ODA.pl`: a command-line SAS ODA runner.
+- `server.pl`: an HTTP MCP server exposing SASPy-backed SAS tools.
+- `run_sas_codes_or_files_in_ODA.pl`: a command-line SASPy runner. The file
+  name keeps historical ODA wording for compatibility.
+- `RunLocalSASDirectly.sh`: an optional direct local SAS batch helper for
+  running Linux SAS or Windows `sas.exe` without SASPy.
+- `RunWindowsSAS.sh`: a compatibility wrapper around `RunLocalSASDirectly.sh`.
 - `MCPDeps/SAS_ODA_Runner.pm`: the Perl/Python bridge around SASPy.
 - `MCPDeps/sas_oda_session_server.py`: a persistent local SASPy session
   server for faster repeated SAS ODA calls.
@@ -16,14 +22,126 @@ MultiGWAS-Explorer GWAS plotting pipeline.
 
 ## Requirements
 
-- A SAS OnDemand for Academics account.
+- A SAS OnDemand for Academics account, a local SAS installation, or a licensed
+  remote SAS IOM server.
 - Perl 5.
 - Python 3.8 or newer.
 - Java Runtime Environment, required by SASPy IOM.
-- Network access to SAS ODA.
+- Network access to SAS ODA when using the `oda` config.
 
 The install scripts create a repo-local Python virtual environment named
 `.venv-pipeline` and install Perl modules under `local/perl5`.
+
+## Configure SASPy Target
+
+MCP4SAS uses SASPy configuration names to choose the SAS target. ODA remains the
+default. Local SAS users should select a local config explicitly.
+
+Create a repo-local SASPy config template:
+
+```bash
+bash install/install_saspy_config.sh
+```
+
+If you already have `~/sascfg_personal.py` but want MCP4SAS to use the repo
+template with ODA and local SAS examples, force a repo-local copy:
+
+```bash
+MCP4SAS_OVERWRITE_SASPY_CONFIG=1 bash install/install_saspy_config.sh
+```
+
+MCP4SAS searches these config files in order:
+
+```text
+./sascfg_personal.py
+~/.config/saspy/sascfg_personal.py
+~/sascfg_personal.py
+```
+
+Select a target with `SASPY_CFGNAME` or `--saspy-cfgname`.
+
+SAS ODA:
+
+```bash
+SASPY_CFGNAME=oda ./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
+```
+
+Local Linux SAS:
+
+```bash
+SASPY_CFGNAME=linuxlocal \
+MCP4SAS_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
+./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+```
+
+`MCP4SAS_LOCAL_SAS_PATH` must point to the local `sas` or `sas_u8` executable.
+This Ubuntu computer does not have local SAS installed, so the `linuxlocal`
+config is available but cannot connect until SAS is installed.
+
+Local Windows SAS through SASPy IOM:
+
+```bash
+SASPY_CFGNAME=winlocal ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+```
+
+On Cygwin or other Windows shells, set `SASPY_JAVA` if Java is not on `PATH`.
+For example:
+
+```bash
+SASPY_CFGNAME=winlocal \
+SASPY_JAVA='/cygdrive/c/Program Files/Java/jdk-11/bin/java.exe' \
+./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+```
+
+Remote licensed IOM servers can use `iomlinux` or `iomwin` with
+`SASPY_IOMHOST`, `SASPY_IOMPORT`, and `SASPY_IOM_AUTHKEY`.
+
+## Direct Local SAS Without SASPy
+
+MCP4SAS also exposes `run_local_sas_without_saspy` for users who want to run an
+installed local SAS executable directly. This tool does not use SASPy. It starts
+a fresh Linux SAS or Windows `sas.exe` batch process for each call through
+`RunLocalSASDirectly.sh` and then polls the operating-system PID.
+
+For Linux SAS:
+
+```bash
+export MCP4SAS_LOCAL_SAS_EXE='/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8'
+```
+
+For Windows SAS from Cygwin/MSYS:
+
+```bash
+export MCP4SAS_WINDOWS_SAS_EXE='/cygdrive/c/Program Files/SASHome/SASFoundation/9.4/sas.exe'
+```
+
+Then start MCP4SAS and call `run_local_sas_without_saspy` from the agent:
+
+```bash
+perl server.pl daemon -m production -l http://127.0.0.1:8080
+```
+
+You can also pass `local_sas_exe` and optionally `local_sas_platform` (`linux`
+or `windows`) as MCP tool arguments.
+
+Important limitation: this direct batch tool is not persistent. Each tool call
+launches a new SAS process, so `WORK` data sets, macro variables, librefs,
+options, and loaded macros do not carry over to the next call. The PID polling
+only tracks whether the current batch job is still running.
+
+If you need persistent local SAS state, use the SASPy-backed runner instead:
+
+```bash
+SASPY_CFGNAME=linuxlocal ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+SASPY_CFGNAME=winlocal   ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+```
+
+Feasibility note: persistent local SAS without SASPy is possible only by adding
+a resident session manager that starts SAS once, sends multiple code blocks to
+the same process, marks log/listing boundaries, handles interrupts and
+timeouts, and shuts the process down cleanly. That is a larger design than the
+current batch helper. For now, SASPy `linuxlocal`, `winlocal`, or another SASPy
+configuration is the recommended persistent-session path.
 
 ## Install On Ubuntu Or Linux
 
@@ -324,6 +442,10 @@ Tools exposed:
 
 - `run_sas_codes_or_files_in_ODA`
 - `run_sas_codes_or_script_in_ODA`, compatibility alias
+- `run_local_sas_without_saspy`, direct one-shot Linux/Windows SAS batch runner
+  without SASPy or persistent session reuse
+- `run_sas_codes_or_script_on_local_Windows`, compatibility alias for the direct
+  local SAS tool
 
 Example MCP tool arguments:
 
@@ -363,8 +485,9 @@ curl -s http://127.0.0.1:8080/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
 
-You should see the tools `run_sas_codes_or_files_in_ODA` and
-`run_sas_codes_or_script_in_ODA`.
+You should see the tools `run_sas_codes_or_files_in_ODA`,
+`run_sas_codes_or_script_in_ODA`, `run_local_sas_without_saspy`, and
+`run_sas_codes_or_script_on_local_Windows`.
 
 ## Configure AI Agents
 
@@ -536,6 +659,12 @@ perl server.pl daemon -m production -l http://127.0.0.1:8080
    log contains errors or warnings.
 6. Reuse `session_id` for related calls so WORK tables and loaded macros stay
    available.
+
+For direct local Linux or Windows SAS without SASPy, call
+`run_local_sas_without_saspy` instead. Do not expect persistent state between
+calls; combine dependent SAS steps in one submitted program, or use
+`saspy_cfgname=linuxlocal` or `saspy_cfgname=winlocal` with the SASPy-backed
+tool.
 
 ## MCP Server Security Notes
 
