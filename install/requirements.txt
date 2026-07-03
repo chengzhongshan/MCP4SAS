@@ -1,0 +1,2 @@
+saspy>=5
+Pillow>=10
