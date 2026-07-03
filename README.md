@@ -17,9 +17,6 @@ includes:
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
-This repository is intentionally SAS-focused. It does not include the
-MultiGWAS-Explorer GWAS plotting pipeline.
-
 ## Requirements
 
 - A SAS OnDemand for Academics account, a local SAS installation, or a licensed
