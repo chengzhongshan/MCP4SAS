@@ -1,6 +1,6 @@
 # MCP4SAS
 
-MCP4SAS is a small MCP package for running SAS code through SAS OnDemand for
+MCP4SAS is a small Model Context Protocol (MCP) package for running SAS code through SAS OnDemand for
 Academics (SAS ODA). It includes:
 
 - `server.pl`: an HTTP MCP server exposing SAS ODA tools.
