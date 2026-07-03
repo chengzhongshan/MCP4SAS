@@ -523,6 +523,38 @@ If SASPy hangs or a persistent session becomes stale:
 ./run_sas_codes_or_files_in_ODA.pl --kill-saspy-sessions
 ```
 
+If the log says `No SAS process attached` together with
+`An exception was thrown during the encryption key exchange`, SASPy reached the
+SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. First
+refresh the saved SAS ODA credentials:
+
+```bash
+./run_sas_codes_or_files_in_ODA.pl \
+  --prompt-sas-oda-auth \
+  --check-sas-oda-login-only
+```
+
+Also confirm that your SASPy config file is visible. MCP4SAS searches these
+locations, in order:
+
+```text
+./sascfg_personal.py
+~/.config/saspy/sascfg_personal.py
+~/sascfg_personal.py
+```
+
+You can force a specific config file or config name:
+
+```bash
+SASPY_CFGFILE=~/sascfg_personal.py \
+SASPY_CFGNAME=oda \
+./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
+```
+
+If credentials are correct and the same error remains, check that the `iomhost`
+entries in `sascfg_personal.py` match your SAS ODA home region and try Java 8 or
+Java 11, depending on what your local SASPy/ODA setup supports.
+
 If a command completes but the browser prints noisy errors, suppress auto-open:
 
 ```bash

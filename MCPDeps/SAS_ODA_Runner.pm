@@ -138,6 +138,8 @@ import sys
 import time
 import threading
 import traceback
+import io
+import contextlib
 from datetime import datetime
 
 sys.stdout = sys.stderr
@@ -307,28 +309,106 @@ def _write_status(update):
         json.dump(payload, fh, ensure_ascii=False, sort_keys=True)
     os.replace(tmp_path, STATUS_FILE)
 
-def _iter_saspy_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
+def _iter_saspy_cfg_names(cfgfile=None):
+    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    preferred = explicit or 'oda'
     seen = set()
-    for name in (preferred, 'oda', 'default'):
+    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
+    for name in names:
         if not name or name in seen:
             continue
         seen.add(name)
         yield name
 
+def _saspy_cfgfile():
+    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
+        value = os.environ.get(key)
+        if value and os.path.isfile(os.path.expanduser(value)):
+            return os.path.expanduser(value)
+    return None
+
+def _read_fd_capture(fd):
+    chunks = []
+    try:
+        while True:
+            chunk = os.read(fd, 8192)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    except Exception:
+        pass
+    return b''.join(chunks).decode('utf-8', errors='replace')
+
+def _start_sas_session(**kwargs):
+    captured = io.StringIO()
+    fd_output = ''
+    saved_stdout = saved_stderr = None
+    out_r = err_r = None
+    try:
+        saved_stdout = os.dup(1)
+        saved_stderr = os.dup(2)
+        out_r, out_w = os.pipe()
+        err_r, err_w = os.pipe()
+        os.dup2(out_w, 1)
+        os.dup2(err_w, 2)
+        os.close(out_w)
+        os.close(err_w)
+        try:
+            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
+                return saspy.SASsession(**kwargs)
+        finally:
+            os.dup2(saved_stdout, 1)
+            os.dup2(saved_stderr, 2)
+            os.close(saved_stdout)
+            os.close(saved_stderr)
+            saved_stdout = saved_stderr = None
+            fd_output = (_read_fd_capture(out_r) + _read_fd_capture(err_r)).strip()
+            os.close(out_r)
+            os.close(err_r)
+            out_r = err_r = None
+    except Exception as exc:
+        detail = "\n".join(part for part in (captured.getvalue().strip(), fd_output) if part)
+        if detail:
+            raise RuntimeError(f"{exc}\nSASPy/Java output:\n{detail}") from exc
+        raise
+    finally:
+        for saved_fd, target_fd in ((saved_stdout, 1), (saved_stderr, 2)):
+            if saved_fd is not None:
+                try:
+                    os.dup2(saved_fd, target_fd)
+                    os.close(saved_fd)
+                except Exception:
+                    pass
+        for read_fd in (out_r, err_r):
+            if read_fd is not None:
+                try:
+                    os.close(read_fd)
+                except Exception:
+                    pass
+
 def _open_sas_session():
     last_exc = None
-    for cfgname in _iter_saspy_cfg_names():
+    cfgfile = _saspy_cfgfile()
+    for cfgname in _iter_saspy_cfg_names(cfgfile):
         try:
-            return saspy.SASsession(cfgname=cfgname, results='html')
+            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
+            if cfgfile:
+                kwargs['cfgfile'] = cfgfile
+            return _start_sas_session(**kwargs)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return saspy.SASsession(results='html')
+            kwargs = {'results': 'html', 'prompt': False}
+            if cfgfile:
+                kwargs['cfgfile'] = cfgfile
+            return _start_sas_session(**kwargs)
         except Exception:
             raise last_exc
-    return saspy.SASsession(results='html')
+    kwargs = {'results': 'html', 'prompt': False}
+    if cfgfile:
+        kwargs['cfgfile'] = cfgfile
+    return _start_sas_session(**kwargs)
 
 def _format_elapsed(seconds):
     seconds = max(0, int(seconds or 0))
@@ -925,7 +1005,7 @@ sub _server_submit_timeout_seconds {
 # is missing. Keep it in sync with the standalone sas_oda_session_server.py file.
 my $SERVER_PY = <<'END_SERVER_PY';
 #!/usr/bin/env python3
-import socket, threading, json, struct, time, sys, traceback
+import socket, threading, json, struct, time, sys, traceback, io, contextlib
 from saspy import SASsession
 import os
 from datetime import datetime
@@ -974,27 +1054,106 @@ options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_p
 '''
 SUBMIT_HEARTBEAT_SECONDS = max(0, int(os.environ.get('SAS_ODA_SUBMIT_HEARTBEAT_SECONDS', '20') or '20'))
 MACRO_BOOTSTRAP_TIMEOUT_SECONDS = max(0, int(os.environ.get('SAS_ODA_MACRO_BOOTSTRAP_TIMEOUT_SECONDS', '420') or '420'))
-def iter_saspy_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
+def iter_saspy_cfg_names(cfgfile=None):
+    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    preferred = explicit or 'oda'
     seen = set()
-    for name in (preferred, 'oda', 'default'):
+    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
+    for name in names:
         if not name or name in seen:
             continue
         seen.add(name)
         yield name
+
+def saspy_cfgfile():
+    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
+        value = os.environ.get(key)
+        if value and os.path.isfile(os.path.expanduser(value)):
+            return os.path.expanduser(value)
+    return None
+
+def read_fd_capture(fd):
+    chunks = []
+    try:
+        while True:
+            chunk = os.read(fd, 8192)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    except Exception:
+        pass
+    return b''.join(chunks).decode('utf-8', errors='replace')
+
+def start_sas_session(**kwargs):
+    captured = io.StringIO()
+    fd_output = ''
+    saved_stdout = saved_stderr = None
+    out_r = err_r = None
+    try:
+        saved_stdout = os.dup(1)
+        saved_stderr = os.dup(2)
+        out_r, out_w = os.pipe()
+        err_r, err_w = os.pipe()
+        os.dup2(out_w, 1)
+        os.dup2(err_w, 2)
+        os.close(out_w)
+        os.close(err_w)
+        try:
+            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
+                return SASsession(**kwargs)
+        finally:
+            os.dup2(saved_stdout, 1)
+            os.dup2(saved_stderr, 2)
+            os.close(saved_stdout)
+            os.close(saved_stderr)
+            saved_stdout = saved_stderr = None
+            fd_output = (read_fd_capture(out_r) + read_fd_capture(err_r)).strip()
+            os.close(out_r)
+            os.close(err_r)
+            out_r = err_r = None
+    except Exception as exc:
+        detail = "\n".join(part for part in (captured.getvalue().strip(), fd_output) if part)
+        if detail:
+            raise RuntimeError(f"{exc}\nSASPy/Java output:\n{detail}") from exc
+        raise
+    finally:
+        for saved_fd, target_fd in ((saved_stdout, 1), (saved_stderr, 2)):
+            if saved_fd is not None:
+                try:
+                    os.dup2(saved_fd, target_fd)
+                    os.close(saved_fd)
+                except Exception:
+                    pass
+        for read_fd in (out_r, err_r):
+            if read_fd is not None:
+                try:
+                    os.close(read_fd)
+                except Exception:
+                    pass
+
 def open_sas_session():
     last_exc = None
-    for cfgname in iter_saspy_cfg_names():
+    cfgfile = saspy_cfgfile()
+    for cfgname in iter_saspy_cfg_names(cfgfile):
         try:
-            return SASsession(cfgname=cfgname, results='html')
+            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
+            if cfgfile:
+                kwargs['cfgfile'] = cfgfile
+            return start_sas_session(**kwargs)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return SASsession(results='html')
+            kwargs = {'results': 'html', 'prompt': False}
+            if cfgfile:
+                kwargs['cfgfile'] = cfgfile
+            return start_sas_session(**kwargs)
         except Exception:
             raise last_exc
-    return SASsession(results='html')
+    kwargs = {'results': 'html', 'prompt': False}
+    if cfgfile:
+        kwargs['cfgfile'] = cfgfile
+    return start_sas_session(**kwargs)
 def log_event(message):
     stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{stamp}] {message}\n"
@@ -1733,7 +1892,7 @@ sub _session_server_error_is_transport {
     return 0 unless $resp && ref($resp) eq 'HASH';
     my $error = $resp->{error};
     return 0 unless defined $error && length $error;
-    return ($error =~ /(cannot connect to session server|failed to send request to session server|timed out waiting for session server response|timed out after \d+s|failed to read response header from session server|failed to read response body from session server|incomplete response header|incomplete response body|Broken pipe|No SAS process attached|SAS process has terminated unexpectedly)/i) ? 1 : 0;
+    return ($error =~ /(cannot connect to session server|failed to send request to session server|timed out waiting for session server response|timed out after \d+s|failed to read response header from session server|failed to read response body from session server|incomplete response header|incomplete response body|Broken pipe)/i) ? 1 : 0;
 }
 
 sub _restart_session_server {

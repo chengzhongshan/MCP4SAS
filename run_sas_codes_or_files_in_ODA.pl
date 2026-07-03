@@ -515,6 +515,32 @@ sub resolve_sas_oda_authinfo_path {
     return File::Spec->catfile($home, '.authinfo');
 }
 
+sub resolve_saspy_cfgfile_path {
+    for my $key (qw(SASPY_CFGFILE SASPY_CONFIG_FILE)) {
+        my $path = $ENV{$key};
+        next unless defined $path && length $path;
+        $path =~ s{^~(?=/|$)}{resolve_home_dir()}e;
+        return $path if -f $path;
+    }
+
+    my $home = resolve_home_dir();
+    my @candidates = (
+        File::Spec->catfile(getcwd(), 'sascfg_personal.py'),
+        File::Spec->catfile($home, '.config', 'saspy', 'sascfg_personal.py'),
+        File::Spec->catfile($home, 'sascfg_personal.py'),
+    );
+    for my $path (@candidates) {
+        return $path if defined $path && length $path && -f $path;
+    }
+    return '';
+}
+
+sub configure_saspy_cfgfile_env {
+    return if defined($ENV{SASPY_CFGFILE}) && length($ENV{SASPY_CFGFILE}) && -f $ENV{SASPY_CFGFILE};
+    my $cfgfile = resolve_saspy_cfgfile_path();
+    $ENV{SASPY_CFGFILE} = $cfgfile if length $cfgfile;
+}
+
 sub slurp_stdin_text {
     local $/;
     my $text = <STDIN>;
@@ -635,10 +661,19 @@ import os
 import sys
 import saspy
 
-def iter_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
+def saspy_cfgfile():
+    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
+        value = os.environ.get(key)
+        if value and os.path.isfile(os.path.expanduser(value)):
+            return os.path.expanduser(value)
+    return None
+
+def iter_cfg_names(cfgfile=None):
+    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    preferred = explicit or 'oda'
     seen = set()
-    for name in (preferred, 'oda', 'default'):
+    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
+    for name in names:
         if not name or name in seen:
             continue
         seen.add(name)
@@ -646,10 +681,14 @@ def iter_cfg_names():
 
 def main():
     last_error = None
-    for cfgname in iter_cfg_names():
+    cfgfile = saspy_cfgfile()
+    for cfgname in iter_cfg_names(cfgfile):
         sess = None
         try:
-            sess = saspy.SASsession(cfgname=cfgname, results='html')
+            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
+            if cfgfile:
+                kwargs['cfgfile'] = cfgfile
+            sess = saspy.SASsession(**kwargs)
             res = sess.submit("proc setinit;run;")
             log = res.get('LOG', '') or ''
             ok = ('ERROR:' not in log and 'FATAL' not in log)
@@ -698,9 +737,27 @@ PY
     return $parsed;
 }
 
+sub sas_oda_probe_detail {
+    my ($probe) = @_;
+    $probe ||= {};
+    my $detail = $probe->{error} || '';
+    my $raw = $probe->{raw_output} || '';
+    chomp $detail;
+    chomp $raw;
+    $raw =~ s/^\s*\{"ok"\s*:.*\}\s*$//mg;
+    $raw =~ s/\s+\z//;
+    if (length $raw && (!length($detail) || index($raw, $detail) < 0)) {
+        $detail = length($detail)
+          ? "$detail\nRaw SASPy output:\n$raw"
+          : $raw;
+    }
+    return length($detail) ? $detail : 'unknown SAS ODA validation failure';
+}
+
 sub bootstrap_sas_oda_credentials_if_needed {
     return if $sas_oda_auth_bootstrap_done;
     return if env_truthy($skip_sas_oda_auth_bootstrap) || env_truthy($ENV{PIPELINE_SKIP_SAS_ODA_AUTH_BOOTSTRAP});
+    configure_saspy_cfgfile_env();
 
     my $authkey = sas_oda_authkey_name();
     my $authinfo_path = resolve_sas_oda_authinfo_path();
@@ -719,6 +776,7 @@ sub bootstrap_sas_oda_credentials_if_needed {
         || ($has_supplied_creds && !$supplied_matches_existing_user);
 
     if (!$needs_bootstrap) {
+        chmod 0600, $authinfo_path if -f $authinfo_path;
         $sas_oda_auth_bootstrap_done = 1;
         return;
     }
@@ -774,8 +832,7 @@ sub bootstrap_sas_oda_credentials_if_needed {
             unlink $authinfo_path if -f $authinfo_path;
         }
 
-        my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
-        chomp $detail;
+        my $detail = sas_oda_probe_detail($probe);
         warn "WARNING: SAS ODA login validation failed. The supplied account or password may be wrong.\n";
         warn "Validation detail: $detail\n" if length $detail;
 
@@ -973,7 +1030,7 @@ if ($check_sas_oda_login_only) {
         print "SAS ODA login validation succeeded with proc setinit;run;\n";
         exit 0;
     }
-    my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
+    my $detail = sas_oda_probe_detail($probe);
     die "SAS ODA login validation failed: $detail\n";
 }
 
@@ -1331,6 +1388,7 @@ my $output_prefix_path = "$output_dir/output";
 my $status_file = "$output_prefix_path.run.status.json";
 
 $ENV{SAS_ODA_STATUS_FILE} = File::Spec->rel2abs($status_file);
+configure_saspy_cfgfile_env();
 
 my $runner = SAS_ODA_Runner->new(
     local_macro_dir => $macro_dir || "./",
@@ -1352,7 +1410,7 @@ sub make_runner {
 sub is_retryable_transport_error {
     my ($value) = @_;
     return 0 unless defined $value;
-    return ($value =~ /(Broken pipe|cannot connect to session server|incomplete response|failed to read response (?:header|body) from session server|timed out waiting for session server response|session server request timed out|No SAS process attached|SAS process has terminated unexpectedly)/i) ? 1 : 0;
+    return ($value =~ /(Broken pipe|cannot connect to session server|incomplete response|failed to read response (?:header|body) from session server|timed out waiting for session server response|session server request timed out)/i) ? 1 : 0;
 }
 
 sub has_visible_content {
