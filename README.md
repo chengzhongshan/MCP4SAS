@@ -260,7 +260,7 @@ The waiting heartbeat includes elapsed time, for example:
 Waiting for SAS ODA session server response while reading response header (elapsed=60s, timeout=3675s)...
 ```
 
-## Start The MCP Server
+## Run The MCP Server
 
 ```bash
 perl server.pl daemon -m production -l http://127.0.0.1:8080
@@ -270,6 +270,21 @@ The MCP endpoint is:
 
 ```text
 http://127.0.0.1:8080/mcp
+```
+
+Keep this terminal open while the AI agent is using MCP4SAS. For a persistent
+background service on Linux, you can use `nohup`:
+
+```bash
+nohup perl server.pl daemon -m production -l http://127.0.0.1:8080 \
+  > mcp4sas.server.log 2>&1 &
+```
+
+Stop the server by pressing `Ctrl-C` in the server terminal, or by killing the
+background process:
+
+```bash
+pkill -f 'server.pl daemon.*127.0.0.1:8080'
 ```
 
 Tools exposed:
@@ -295,6 +310,10 @@ For long jobs, the first MCP call returns a PID. Poll later with:
 }
 ```
 
+Poll long-running SAS jobs no more than about every 30 seconds. MCP4SAS starts
+SAS work in a background process so the AI agent does not need to hold one MCP
+request open for the whole SAS runtime.
+
 ## Minimal JSON-RPC Smoke Test
 
 In one terminal:
@@ -310,6 +329,191 @@ curl -s http://127.0.0.1:8080/mcp \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 ```
+
+You should see the tools `run_sas_codes_or_files_in_ODA` and
+`run_sas_codes_or_script_in_ODA`.
+
+## Configure AI Agents
+
+MCP4SAS is an HTTP MCP server. Start `server.pl` first, then point your AI
+agent's MCP configuration to:
+
+```text
+http://127.0.0.1:8080/mcp
+```
+
+Keep the server on `127.0.0.1` unless you know how to secure it. The tools can
+run SAS code and perform SAS ODA file operations, so do not expose this endpoint
+to an untrusted network.
+
+### Codex
+
+OpenAI Codex supports MCP servers in the CLI and IDE extension. Codex stores MCP
+configuration in `config.toml`; by default this is `~/.codex/config.toml`, and a
+trusted project can also use `.codex/config.toml`. See the official Codex MCP
+documentation: https://developers.openai.com/codex/mcp
+
+Recommended CLI setup:
+
+```bash
+codex mcp add mcp4sas --url http://127.0.0.1:8080/mcp
+```
+
+Manual `~/.codex/config.toml` setup:
+
+```toml
+[mcp_servers.mcp4sas]
+url = "http://127.0.0.1:8080/mcp"
+tool_timeout_sec = 120
+default_tools_approval_mode = "prompt"
+enabled = true
+```
+
+Then start or restart Codex:
+
+```bash
+codex
+```
+
+Inside the Codex terminal UI, use:
+
+```text
+/mcp
+```
+
+to confirm that `mcp4sas` is available. In the Codex IDE extension, open MCP
+settings or the shared `config.toml` and use the same server definition.
+
+Example prompt for Codex:
+
+```text
+Use the MCP4SAS tool to run:
+proc print data=sashelp.class(obs=5); run;
+Use session_id demo and check the result when the job finishes.
+```
+
+### Gemini CLI
+
+Gemini CLI uses a JSON settings file for MCP server configuration. Google
+codelab material shows `.gemini/settings.json` as the project-level settings
+file and uses `mcpServers` to define MCP tools; for an HTTP MCP server, the
+Gemini example uses `httpUrl`. See:
+https://codelabs.developers.google.com/cloud-gemini-cli-mcp-go
+
+Create or edit `.gemini/settings.json` in your project, or edit the user-level
+Gemini settings file if you want MCP4SAS available globally:
+
+```json
+{
+  "mcpServers": {
+    "mcp4sas": {
+      "httpUrl": "http://127.0.0.1:8080/mcp"
+    }
+  }
+}
+```
+
+Restart Gemini CLI after changing the settings:
+
+```bash
+gemini
+```
+
+Then ask Gemini to list or use the MCP4SAS tools. Example prompt:
+
+```text
+Use the mcp4sas MCP server to submit this SAS code to SAS ODA:
+proc print data=sashelp.class(obs=5); run;
+Use a persistent session named demo.
+```
+
+If your Gemini CLI build only supports command-based stdio MCP servers, use a
+separate HTTP-to-stdio MCP proxy or upgrade Gemini CLI to a build that supports
+HTTP MCP configuration.
+
+### Ollama And Other Local LLM Clients
+
+Ollama itself is a local model runtime, not an MCP client. To use MCP4SAS with
+an Ollama model, run Ollama behind an MCP-capable client or bridge. Examples of
+this pattern include local agent shells, desktop chat clients, or gateway tools
+that support MCP servers and can route tool calls to an Ollama-backed model.
+
+General pattern:
+
+```bash
+ollama serve
+ollama pull qwen2.5-coder:7b
+perl server.pl daemon -m production -l http://127.0.0.1:8080
+```
+
+Then configure your MCP-aware Ollama client with:
+
+```json
+{
+  "mcpServers": {
+    "mcp4sas": {
+      "url": "http://127.0.0.1:8080/mcp"
+    }
+  }
+}
+```
+
+Some clients use `url`, some use `httpUrl`, and older clients only support
+stdio-style MCP servers. For stdio-only clients, add an HTTP-to-stdio MCP proxy
+between the client and `http://127.0.0.1:8080/mcp`, or use a client that
+supports streamable HTTP MCP servers directly.
+
+Good local-model prompts should be explicit because smaller local models may
+not infer polling behavior:
+
+```text
+Use MCP4SAS to run this SAS code in SAS ODA:
+proc means data=sashelp.class; var height weight; run;
+If the first tool call returns a PID, wait and poll with that PID later.
+Do not poll more often than every 30 seconds.
+```
+
+### Other MCP Clients
+
+For any MCP client that supports streamable HTTP servers, use:
+
+```text
+name: mcp4sas
+url:  http://127.0.0.1:8080/mcp
+```
+
+For clients that require stdio servers, use an HTTP-to-stdio MCP proxy or wrap
+the MCP4SAS HTTP endpoint with the proxy recommended by that client. MCP4SAS
+itself should continue running as the HTTP service shown above.
+
+## Recommended Agent Workflow
+
+1. Start MCP4SAS:
+
+```bash
+cd MCP4SAS
+perl server.pl daemon -m production -l http://127.0.0.1:8080
+```
+
+2. In the AI agent, call `run_sas_codes_or_files_in_ODA` with SAS code or a
+   local `.sas` file.
+3. If the response contains a PID, wait at least 30 seconds before polling.
+4. Poll with `{"pid": <PID>}` until the job completes.
+5. Ask the agent to inspect the returned `output.html.info.txt` path if the SAS
+   log contains errors or warnings.
+6. Reuse `session_id` for related calls so WORK tables and loaded macros stay
+   available.
+
+## MCP Server Security Notes
+
+- Bind to `127.0.0.1` for local use.
+- Do not expose MCP4SAS on a public interface without authentication and network
+  controls.
+- Prefer interactive SAS ODA credential setup instead of pasting passwords into
+  AI prompts.
+- If you use `sas_oda_password` through an MCP call, treat the conversation and
+  logs as sensitive.
+- Review agent-generated SAS code before running it against sensitive data.
 
 ## Troubleshooting
 
