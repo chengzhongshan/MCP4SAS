@@ -1,4 +1,5 @@
 # MCP4SAS
+<img width="1272" height="801" alt="image" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
 
 MCP4SAS is a small Model Context Protocol (MCP) server for running SAS code
 through SASPy. It can use SAS OnDemand for Academics (SAS ODA), local SAS on
