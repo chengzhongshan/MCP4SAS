@@ -64,7 +64,7 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 use lib $Bin;
-use lib "$Bin/MCPDeps";
+use lib "$Bin/DiffGWASDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
 use JSON::PP qw(encode_json decode_json);
@@ -88,7 +88,6 @@ my ($internal_runner_result_json, $internal_execution_file, $internal_execution_
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
-my ($saspy_cfgfile, $saspy_cfgname, $check_saspy_connection_only);
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
 my $skip_upload_if_same = 1;
@@ -374,9 +373,6 @@ GetOptions(
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
     'skip-sas-oda-auth-bootstrap!' => \$skip_sas_oda_auth_bootstrap,
     'check-sas-oda-login-only!' => \$check_sas_oda_login_only,
-    'saspy-cfgfile=s' => \$saspy_cfgfile,
-    'saspy-cfgname=s' => \$saspy_cfgname,
-    'check-saspy-connection-only!' => \$check_saspy_connection_only,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
     'kill-saspy-sessions|kill-sas-oda-sessions|kill-saspy-session-server!' => \$kill_saspy_sessions,
@@ -394,14 +390,6 @@ GetOptions(
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
 
-if (defined($saspy_cfgfile) && length($saspy_cfgfile)) {
-    $saspy_cfgfile =~ s{^~(?=/|$)}{$ENV{HOME} || '.'}e;
-    $ENV{SASPY_CFGFILE} = $saspy_cfgfile;
-}
-if (defined($saspy_cfgname) && length($saspy_cfgname)) {
-    $ENV{SASPY_CFGNAME} = $saspy_cfgname;
-}
-
 sub collect_sas_oda_session_pids {
     my %seen;
     my @pids;
@@ -415,13 +403,13 @@ sub collect_sas_oda_session_pids {
         next if $pid == $$;
         next if $seen{$pid}++;
 
-        if ($cmd =~ /run_sas_codes_or_(?:script|files)_in_ODA\.pl/) {
+        if ($cmd =~ /run_sas_codes_or_script_in_ODA\.pl/) {
             next if $cmd =~ /--kill-saspy-sessions|--kill-sas-oda-sessions|--kill-saspy-session-server/;
             next unless $cmd =~ m{(?:^|/|\s)perl(?:\s|$)};
             push @pids, int($pid);
             next;
         }
-        if ($cmd =~ /MCPDeps\/sas_oda_session_server\.py/) {
+        if ($cmd =~ /DiffGWASDeps\/sas_oda_session_server\.py/) {
             next unless $cmd =~ m{(?:^|/|\s)python[0-9.]*(?:\s|$)};
             push @pids, int($pid);
             next;
@@ -517,22 +505,6 @@ sub resolve_home_dir {
     return '.';
 }
 
-sub expand_user_path {
-    my ($path) = @_;
-    return '' unless defined $path && length $path;
-    $path =~ s{^~(?=/|$)}{resolve_home_dir()}e;
-    return $path;
-}
-
-sub current_saspy_cfgname {
-    return $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
-}
-
-sub current_saspy_cfg_is_oda {
-    my $cfgname = current_saspy_cfgname();
-    return ($cfgname =~ /^oda$/i) ? 1 : 0;
-}
-
 sub resolve_sas_oda_authinfo_path {
     my $home = resolve_home_dir();
     my @existing = grep { -f $_ } (
@@ -541,32 +513,6 @@ sub resolve_sas_oda_authinfo_path {
     );
     return $existing[0] if @existing;
     return File::Spec->catfile($home, '.authinfo');
-}
-
-sub resolve_saspy_cfgfile_path {
-    for my $key (qw(SASPY_CFGFILE SASPY_CONFIG_FILE)) {
-        my $path = $ENV{$key};
-        next unless defined $path && length $path;
-        $path = expand_user_path($path);
-        return $path if -f $path;
-    }
-
-    my $home = resolve_home_dir();
-    my @candidates = (
-        File::Spec->catfile(getcwd(), 'sascfg_personal.py'),
-        File::Spec->catfile($home, '.config', 'saspy', 'sascfg_personal.py'),
-        File::Spec->catfile($home, 'sascfg_personal.py'),
-    );
-    for my $path (@candidates) {
-        return $path if defined $path && length $path && -f $path;
-    }
-    return '';
-}
-
-sub configure_saspy_cfgfile_env {
-    return if defined($ENV{SASPY_CFGFILE}) && length($ENV{SASPY_CFGFILE}) && -f $ENV{SASPY_CFGFILE};
-    my $cfgfile = resolve_saspy_cfgfile_path();
-    $ENV{SASPY_CFGFILE} = $cfgfile if length $cfgfile;
 }
 
 sub slurp_stdin_text {
@@ -689,19 +635,10 @@ import os
 import sys
 import saspy
 
-def saspy_cfgfile():
-    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
-        value = os.environ.get(key)
-        if value and os.path.isfile(os.path.expanduser(value)):
-            return os.path.expanduser(value)
-    return None
-
-def iter_cfg_names(cfgfile=None):
-    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
-    preferred = explicit or 'oda'
+def iter_cfg_names():
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
     seen = set()
-    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
-    for name in names:
+    for name in (preferred, 'oda', 'default'):
         if not name or name in seen:
             continue
         seen.add(name)
@@ -709,14 +646,10 @@ def iter_cfg_names(cfgfile=None):
 
 def main():
     last_error = None
-    cfgfile = saspy_cfgfile()
-    for cfgname in iter_cfg_names(cfgfile):
+    for cfgname in iter_cfg_names():
         sess = None
         try:
-            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
-            if cfgfile:
-                kwargs['cfgfile'] = cfgfile
-            sess = saspy.SASsession(**kwargs)
+            sess = saspy.SASsession(cfgname=cfgname, results='html')
             res = sess.submit("proc setinit;run;")
             log = res.get('LOG', '') or ''
             ok = ('ERROR:' not in log and 'FATAL' not in log)
@@ -736,7 +669,7 @@ def main():
                     pass
     print(json.dumps({
         'ok': False,
-        'error': last_error or 'Unable to create a SASPy session',
+        'error': last_error or 'Unable to create a SAS ODA session',
     }))
     return 2
 
@@ -765,34 +698,9 @@ PY
     return $parsed;
 }
 
-sub sas_oda_probe_detail {
-    my ($probe) = @_;
-    $probe ||= {};
-    my $detail = $probe->{error} || '';
-    my $raw = $probe->{raw_output} || '';
-    chomp $detail;
-    chomp $raw;
-    $raw =~ s/^\s*\{"ok"\s*:.*\}\s*$//mg;
-    $raw =~ s/\s+\z//;
-    if (length $raw && (!length($detail) || index($raw, $detail) < 0)) {
-        $detail = length($detail)
-          ? "$detail\nRaw SASPy output:\n$raw"
-          : $raw;
-    }
-    return length($detail) ? $detail : 'unknown SAS ODA validation failure';
-}
-
 sub bootstrap_sas_oda_credentials_if_needed {
     return if $sas_oda_auth_bootstrap_done;
     return if env_truthy($skip_sas_oda_auth_bootstrap) || env_truthy($ENV{PIPELINE_SKIP_SAS_ODA_AUTH_BOOTSTRAP});
-    configure_saspy_cfgfile_env();
-    if (!current_saspy_cfg_is_oda()) {
-        if (defined($sas_oda_account) || defined($sas_oda_password) || env_truthy($force_sas_oda_auth_prompt)) {
-            die "SAS ODA credential options require SASPY_CFGNAME=oda; current SASPy cfgname is '" . current_saspy_cfgname() . "'.\n";
-        }
-        $sas_oda_auth_bootstrap_done = 1;
-        return;
-    }
 
     my $authkey = sas_oda_authkey_name();
     my $authinfo_path = resolve_sas_oda_authinfo_path();
@@ -811,7 +719,6 @@ sub bootstrap_sas_oda_credentials_if_needed {
         || ($has_supplied_creds && !$supplied_matches_existing_user);
 
     if (!$needs_bootstrap) {
-        chmod 0600, $authinfo_path if -f $authinfo_path;
         $sas_oda_auth_bootstrap_done = 1;
         return;
     }
@@ -867,7 +774,8 @@ sub bootstrap_sas_oda_credentials_if_needed {
             unlink $authinfo_path if -f $authinfo_path;
         }
 
-        my $detail = sas_oda_probe_detail($probe);
+        my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
+        chomp $detail;
         warn "WARNING: SAS ODA login validation failed. The supplied account or password may be wrong.\n";
         warn "Validation detail: $detail\n" if length $detail;
 
@@ -925,7 +833,7 @@ if ($internal_runner_result_json) {
     exit(($worker_error || (ref($worker_result) eq 'HASH' && ($worker_result->{error} // ''))) ? 1 : 0);
 }
 
-if ($help || (!$check_sas_oda_login_only && !$check_saspy_connection_only && !$dry_run && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
+if ($help || (!$check_sas_oda_login_only && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
    || ($code && $file) ) {
     print <<USAGE;
 Usage: $0 [OPTIONS]
@@ -973,12 +881,6 @@ Options:
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
-  --saspy-cfgfile <file>     Use a specific SASPy sascfg_personal.py file.
-  --saspy-cfgname <name>     Use a specific SASPy config name, such as oda,
-                             linuxlocal, local, default, or winlocal.
-  --check-saspy-connection-only
-                             Validate the selected SASPy config with
-                             PROC SETINIT and exit. Use this for local SAS.
   --monitor-status-file <f>  Follow a live SAS ODA status JSON sidecar from another terminal.
   --monitor-interval-seconds <n>
                              Poll interval for --monitor-status-file (default: 5 seconds).
@@ -1018,14 +920,14 @@ Examples:
   $0 --code 'data a;do i=1 to 1000;x=i**2;output;rc=sleep(1);end;run;proc print data=a(obs=10);run
 ;' --no-run-timeout --persistent --session-id mysession
   $0 --code "data a;input a @@;datalines;\n10 20\n;run;proc print data=a;run;" --persistent --session-id mysession
-  ./run_sas_codes_or_files_in_ODA.pl --code 'data a;input a @@;datalines;\n10 20\n;run;proc print;run; ' --persistent --session-id ms1
+  ./run_sas_codes_or_script_in_ODA.pl --code 'data a;input a @@;datalines;\n10 20\n;run;proc print;run; ' --persistent --session-id ms1
   $0 --file script1.sas --persistent --session-id mysession
   $0 --file script2.sas --session-id mysession
-  perl -S run_sas_codes_or_files_in_ODA.pl   --code "data a; set sashelp.cars; run;"   --persistent --session-id reuse_test --output-prefix reuse1
+  perl -S run_sas_codes_or_script_in_ODA.pl   --code "data a; set sashelp.cars; run;"   --persistent --session-id reuse_test --output-prefix reuse1
   #Note: the above command creates a session "reuse_test" and runs code to create dataset "a". The next command reuses the same session to print dataset "a".
   #Macros in ~/Macros are auto-imported only when the session is created; they are not re-imported on reuse.
   #both --persistent and --session-id must be used together to enable session reuse. The output files will have prefixes "reuse1" and "reuse2" respectively.
-  perl -S run_sas_codes_or_files_in_ODA.pl   --code "proc print data=a; run;"   --persistent --session-id reuse_test --output-prefix reuse2
+  perl -S run_sas_codes_or_script_in_ODA.pl   --code "proc print data=a; run;"   --persistent --session-id reuse_test --output-prefix reuse2
   printf '%s\\n' \\
     'data a;' \\
     'input a @@;' \\
@@ -1063,29 +965,15 @@ if (defined $code && $code eq '-') {
     $code = normalize_cli_code_text($code);
 }
 
-configure_saspy_cfgfile_env();
-
-if ($check_saspy_connection_only) {
-    my $probe = validate_sas_oda_login_once('proc setinit');
-    if ($probe->{ok}) {
-        print "SASPy connection validation succeeded with cfgname '" . current_saspy_cfgname() . "' using proc setinit;run;\n";
-        exit 0;
-    }
-    my $detail = sas_oda_probe_detail($probe);
-    die "SASPy connection validation failed for cfgname '" . current_saspy_cfgname() . "': $detail\n";
-}
-
 bootstrap_sas_oda_credentials_if_needed();
 
 if ($check_sas_oda_login_only) {
-    die "--check-sas-oda-login-only requires SASPY_CFGNAME=oda; current SASPy cfgname is '" . current_saspy_cfgname() . "'. Use --check-saspy-connection-only for local SAS configs.\n"
-      unless current_saspy_cfg_is_oda();
     my $probe = validate_sas_oda_login_once('proc setinit');
     if ($probe->{ok}) {
         print "SAS ODA login validation succeeded with proc setinit;run;\n";
         exit 0;
     }
-    my $detail = sas_oda_probe_detail($probe);
+    my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
     die "SAS ODA login validation failed: $detail\n";
 }
 
@@ -1443,7 +1331,6 @@ my $output_prefix_path = "$output_dir/output";
 my $status_file = "$output_prefix_path.run.status.json";
 
 $ENV{SAS_ODA_STATUS_FILE} = File::Spec->rel2abs($status_file);
-configure_saspy_cfgfile_env();
 
 my $runner = SAS_ODA_Runner->new(
     local_macro_dir => $macro_dir || "./",
@@ -1465,7 +1352,7 @@ sub make_runner {
 sub is_retryable_transport_error {
     my ($value) = @_;
     return 0 unless defined $value;
-    return ($value =~ /(Broken pipe|cannot connect to session server|incomplete response|failed to read response (?:header|body) from session server|timed out waiting for session server response|session server request timed out)/i) ? 1 : 0;
+    return ($value =~ /(Broken pipe|cannot connect to session server|incomplete response|failed to read response (?:header|body) from session server|timed out waiting for session server response|session server request timed out|No SAS process attached|SAS process has terminated unexpectedly)/i) ? 1 : 0;
 }
 
 sub has_visible_content {
@@ -1911,60 +1798,119 @@ sub scan_sas_text_for_open_code_macro_control {
     };
 }
 
-sub line_number_for_offset {
-    my ($text, $offset) = @_;
-    return 1 unless defined $text && defined $offset && $offset > 0;
-    my $prefix = substr($text, 0, $offset);
-    my $count = () = ($prefix =~ /\n/g);
-    return $count + 1;
+sub _count_newlines {
+    my ($text) = @_;
+    return 0 unless defined $text && length $text;
+    my $count = ($text =~ tr/\n//);
+    return $count;
 }
 
-sub scan_sas_text_for_unbalanced_macro_invocations {
+sub scan_sas_text_for_macro_invocation_spans {
     my ($text) = @_;
     my $masked = sanitize_sas_text_for_macro_lint($text);
-    my @findings;
-    return \@findings unless defined $masked && length $masked;
+    my @spans;
+    my @stack;
+    my $line_no = 1;
+    my $i = 0;
+    my $len = length($masked // '');
 
-    while ($masked =~ /%([A-Za-z_]\w*)\s*\(/g) {
-        my $macro_name = $1;
-        my $macro_start = $-[0];
-        my $scan_pos = pos($masked);
-        my $depth = 1;
-        my $line_no = line_number_for_offset($masked, $macro_start);
-        my $len = length($masked);
-        my $closed = 0;
-        my $hit_statement_end = 0;
-
-        while ($scan_pos < $len) {
-            my $ch = substr($masked, $scan_pos, 1);
-            if ($ch eq '(') {
-                $depth++;
-            } elsif ($ch eq ')') {
-                $depth--;
-                if ($depth == 0) {
-                    $closed = 1;
-                    last;
-                }
-            } elsif ($ch eq ';' && $depth > 0) {
-                $hit_statement_end = 1;
-                last;
-            }
-            $scan_pos++;
+    while ($i < $len) {
+        my $rest = substr($masked, $i);
+        if ($rest =~ /^%([A-Za-z_]\w*)([ \t\r\n]*)\(/) {
+            my $name = $1;
+            my $ws = $2 // '';
+            $stack[-1]{paren_depth}++ if @stack;
+            push @stack, {
+                name         => lc($name),
+                display_name => $name,
+                start_line   => $line_no,
+                paren_depth  => 1,
+            };
+            $line_no += _count_newlines($ws);
+            $i += length($&);
+            next;
         }
 
-        next if $closed;
-        my $detail = $hit_statement_end
-          ? "before the statement semicolon"
-          : "before the end of submitted code";
+        my $ch = substr($masked, $i, 1);
+        if ($ch eq "\n") {
+            $line_no++;
+            $i++;
+            next;
+        }
+
+        if (@stack) {
+            if ($ch eq '(') {
+                $stack[-1]{paren_depth}++;
+            } elsif ($ch eq ')') {
+                $stack[-1]{paren_depth}--;
+                if ($stack[-1]{paren_depth} <= 0) {
+                    my $done = pop @stack;
+                    $done->{end_line} = $line_no;
+                    $done->{closed} = 1;
+                    push @spans, $done;
+                    $stack[-1]{paren_depth}-- if @stack;
+                }
+            }
+        }
+
+        $i++;
+    }
+
+    for my $open (@stack) {
+        $open->{closed} = 0;
+        $open->{end_line} = undef;
+        push @spans, $open;
+    }
+
+    return \@spans;
+}
+
+sub scan_sas_text_for_unclosed_macro_invocations {
+    my ($text) = @_;
+    my $spans = scan_sas_text_for_macro_invocation_spans($text);
+    my @findings;
+    my @lines = split /\n/, ($text // ''), -1;
+
+    for my $span (@{$spans || []}) {
+        next if $span->{closed};
+        my $line = $span->{start_line} || 1;
+        my $name = $span->{display_name} || ($span->{name} // 'macro');
         push @findings, {
-            type        => 'unbalanced_macro_invocation',
-            line        => $line_no,
-            message     => "Macro invocation %$macro_name( is missing a matching ')' $detail; this can leave SAS waiting for more input",
-            context_ref => [ ($line_no - 2) .. ($line_no + 2) ],
+            type        => 'unclosed_macro_invocation',
+            line        => $line,
+            message     => "Macro invocation %$name( appears to be missing its closing ')'",
+            context_ref => [ ($line - 2) .. scalar(@lines) ],
         };
     }
 
-    return \@findings;
+    return {
+        lines    => \@lines,
+        findings => \@findings,
+    };
+}
+
+sub suppress_balanced_macro_invocation_false_positives {
+    my ($text, $findings_ref) = @_;
+    return $findings_ref unless ref($findings_ref) eq 'ARRAY' && @{$findings_ref || []};
+    my $spans = scan_sas_text_for_macro_invocation_spans($text);
+    my %closed_by_start;
+    for my $span (@{$spans || []}) {
+        next unless $span->{closed};
+        my $key = join(':', lc($span->{name} // ''), ($span->{start_line} || 0));
+        $closed_by_start{$key} = $span;
+    }
+
+    my @filtered;
+    for my $finding (@{$findings_ref}) {
+        my $message = $finding->{message} // '';
+        my ($name) = $message =~ /Macro invocation %([A-Za-z_]\w*)\(/i;
+        if (defined $name && $message =~ /missing .*?\)/i) {
+            my $key = join(':', lc($name), ($finding->{line} || 0));
+            next if $closed_by_start{$key};
+        }
+        push @filtered, $finding;
+    }
+    return \@filtered;
 }
 
 sub scan_sas_text_for_unbalanced_constructs {
@@ -2105,9 +2051,12 @@ sub scan_sas_text_for_unbalanced_constructs {
         };
     }
 
+    my $macro_invocation_scan = scan_sas_text_for_unclosed_macro_invocations($text);
+    push @findings, @{ $macro_invocation_scan->{findings} || [] };
+
     my $macro_scan = scan_sas_text_for_open_code_macro_control($text);
     push @findings, @{ $macro_scan->{findings} || [] };
-    push @findings, @{ scan_sas_text_for_unbalanced_macro_invocations($text) };
+    @findings = @{ suppress_balanced_macro_invocation_false_positives($text, \@findings) || [] };
 
     return {
         lines    => \@lines,
