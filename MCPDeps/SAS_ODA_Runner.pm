@@ -943,6 +943,36 @@ sub _effective_persistent_submit_timeout_seconds {
     return $timeout;
 }
 
+sub _effective_upload_timeout_seconds {
+    my (%args) = @_;
+    my $requested_timeout = exists $args{timeout_seconds}
+      ? int($args{timeout_seconds} || 0)
+      : 0;
+    return $requested_timeout if $requested_timeout > 0;
+
+    if (!exists $ENV{SAS_ODA_SESSION_UPLOAD_TIMEOUT_SECONDS}) {
+        my $run_timeout = int($ENV{SAS_ODA_RUN_TIMEOUT_SECONDS} || 0);
+        return 0 if $run_timeout <= 0;
+    }
+
+    my $timeout = $SERVER_UPLOAD_TIMEOUT_SECONDS;
+    my $local_path = $args{local_path} // '';
+    if (length($local_path) && -e $local_path) {
+        my $size_bytes = -s $local_path;
+        if (defined $size_bytes && $size_bytes > 0) {
+            my $size_mb = int(($size_bytes + 1024 * 1024 - 1) / (1024 * 1024));
+            my $base_seconds = int($ENV{SAS_ODA_UPLOAD_TIMEOUT_BASE_SECONDS} // 180);
+            my $per_mb_seconds = int($ENV{SAS_ODA_UPLOAD_TIMEOUT_SECONDS_PER_MB} // 5);
+            $base_seconds = 0 if $base_seconds < 0;
+            $per_mb_seconds = 0 if $per_mb_seconds < 0;
+            my $size_based_timeout = $base_seconds + ($size_mb * $per_mb_seconds);
+            $timeout = $size_based_timeout if $size_based_timeout > $timeout;
+        }
+    }
+
+    return $timeout > 0 ? $timeout : $SERVER_UPLOAD_TIMEOUT_SECONDS;
+}
+
 # NOTE: This embedded copy is only written to disk when sas_oda_session_server.py
 # is missing. Keep it in sync with the standalone sas_oda_session_server.py file.
 my $SERVER_PY = <<'END_SERVER_PY';
@@ -2605,10 +2635,10 @@ sub upload {
     $opts = {} unless ref($opts) eq 'HASH';
     my $progress_label = $opts->{progress_label} // '';
     my $skip_if_same = exists $opts->{skip_if_same} ? ($opts->{skip_if_same} ? 1 : 0) : 1;
-    my $timeout_seconds = exists $opts->{timeout_seconds}
-      ? int($opts->{timeout_seconds} || 0)
-      : $SERVER_UPLOAD_TIMEOUT_SECONDS;
-    $timeout_seconds = $SERVER_UPLOAD_TIMEOUT_SECONDS if $timeout_seconds <= 0;
+    my $timeout_seconds = _effective_upload_timeout_seconds(
+        local_path      => $local_path,
+        timeout_seconds => $opts->{timeout_seconds},
+    );
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
             {
