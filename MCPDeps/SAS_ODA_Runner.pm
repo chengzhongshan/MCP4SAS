@@ -138,8 +138,6 @@ import sys
 import time
 import threading
 import traceback
-import io
-import contextlib
 from datetime import datetime
 
 sys.stdout = sys.stderr
@@ -309,106 +307,28 @@ def _write_status(update):
         json.dump(payload, fh, ensure_ascii=False, sort_keys=True)
     os.replace(tmp_path, STATUS_FILE)
 
-def _iter_saspy_cfg_names(cfgfile=None):
-    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
-    preferred = explicit or 'oda'
+def _iter_saspy_cfg_names():
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
     seen = set()
-    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
-    for name in names:
+    for name in (preferred, 'oda', 'default'):
         if not name or name in seen:
             continue
         seen.add(name)
         yield name
 
-def _saspy_cfgfile():
-    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
-        value = os.environ.get(key)
-        if value and os.path.isfile(os.path.expanduser(value)):
-            return os.path.expanduser(value)
-    return None
-
-def _read_fd_capture(fd):
-    chunks = []
-    try:
-        while True:
-            chunk = os.read(fd, 8192)
-            if not chunk:
-                break
-            chunks.append(chunk)
-    except Exception:
-        pass
-    return b''.join(chunks).decode('utf-8', errors='replace')
-
-def _start_sas_session(**kwargs):
-    captured = io.StringIO()
-    fd_output = ''
-    saved_stdout = saved_stderr = None
-    out_r = err_r = None
-    try:
-        saved_stdout = os.dup(1)
-        saved_stderr = os.dup(2)
-        out_r, out_w = os.pipe()
-        err_r, err_w = os.pipe()
-        os.dup2(out_w, 1)
-        os.dup2(err_w, 2)
-        os.close(out_w)
-        os.close(err_w)
-        try:
-            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
-                return saspy.SASsession(**kwargs)
-        finally:
-            os.dup2(saved_stdout, 1)
-            os.dup2(saved_stderr, 2)
-            os.close(saved_stdout)
-            os.close(saved_stderr)
-            saved_stdout = saved_stderr = None
-            fd_output = (_read_fd_capture(out_r) + _read_fd_capture(err_r)).strip()
-            os.close(out_r)
-            os.close(err_r)
-            out_r = err_r = None
-    except Exception as exc:
-        detail = "\n".join(part for part in (captured.getvalue().strip(), fd_output) if part)
-        if detail:
-            raise RuntimeError(f"{exc}\nSASPy/Java output:\n{detail}") from exc
-        raise
-    finally:
-        for saved_fd, target_fd in ((saved_stdout, 1), (saved_stderr, 2)):
-            if saved_fd is not None:
-                try:
-                    os.dup2(saved_fd, target_fd)
-                    os.close(saved_fd)
-                except Exception:
-                    pass
-        for read_fd in (out_r, err_r):
-            if read_fd is not None:
-                try:
-                    os.close(read_fd)
-                except Exception:
-                    pass
-
 def _open_sas_session():
     last_exc = None
-    cfgfile = _saspy_cfgfile()
-    for cfgname in _iter_saspy_cfg_names(cfgfile):
+    for cfgname in _iter_saspy_cfg_names():
         try:
-            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
-            if cfgfile:
-                kwargs['cfgfile'] = cfgfile
-            return _start_sas_session(**kwargs)
+            return saspy.SASsession(cfgname=cfgname, results='html')
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            kwargs = {'results': 'html', 'prompt': False}
-            if cfgfile:
-                kwargs['cfgfile'] = cfgfile
-            return _start_sas_session(**kwargs)
+            return saspy.SASsession(results='html')
         except Exception:
             raise last_exc
-    kwargs = {'results': 'html', 'prompt': False}
-    if cfgfile:
-        kwargs['cfgfile'] = cfgfile
-    return _start_sas_session(**kwargs)
+    return saspy.SASsession(results='html')
 
 def _format_elapsed(seconds):
     seconds = max(0, int(seconds or 0))
@@ -976,7 +896,7 @@ sub _autoload_macros_enabled {
 
 my $SERVER_HOST = '127.0.0.1';
 my $SERVER_PORT = 8765;
-my $SERVER_API_VERSION = '2026-07-01-macro-bootstrap-timeout';
+my $SERVER_API_VERSION = '2026-07-08-download-scope-fix';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -1001,17 +921,39 @@ sub _server_submit_timeout_seconds {
     return $run_timeout + $grace + 60;
 }
 
+sub _macro_bootstrap_transport_timeout_seconds {
+    my $bootstrap_timeout = int($ENV{SAS_ODA_MACRO_BOOTSTRAP_TIMEOUT_SECONDS} // 420);
+    return 0 if $bootstrap_timeout <= 0;
+
+    my $grace = int($ENV{SAS_ODA_MACRO_BOOTSTRAP_RESPONSE_GRACE_SECONDS} // 120);
+    $grace = 0 if $grace < 0;
+    return $bootstrap_timeout + $grace;
+}
+
+sub _effective_persistent_submit_timeout_seconds {
+    my (%args) = @_;
+    my $load_macros = $args{load_macros} ? 1 : 0;
+    my $timeout = _server_submit_timeout_seconds();
+    return 0 if $timeout <= 0;
+
+    if ($load_macros) {
+        my $macro_timeout = _macro_bootstrap_transport_timeout_seconds();
+        $timeout = $macro_timeout if $macro_timeout > $timeout;
+    }
+    return $timeout;
+}
+
 # NOTE: This embedded copy is only written to disk when sas_oda_session_server.py
 # is missing. Keep it in sync with the standalone sas_oda_session_server.py file.
 my $SERVER_PY = <<'END_SERVER_PY';
 #!/usr/bin/env python3
-import socket, threading, json, struct, time, sys, traceback, io, contextlib
+import socket, threading, json, struct, time, sys, traceback
 from saspy import SASsession
 import os
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-01-macro-bootstrap-timeout'
+SERVER_API_VERSION = '2026-07-08-download-scope-fix'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -1054,106 +996,27 @@ options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_p
 '''
 SUBMIT_HEARTBEAT_SECONDS = max(0, int(os.environ.get('SAS_ODA_SUBMIT_HEARTBEAT_SECONDS', '20') or '20'))
 MACRO_BOOTSTRAP_TIMEOUT_SECONDS = max(0, int(os.environ.get('SAS_ODA_MACRO_BOOTSTRAP_TIMEOUT_SECONDS', '420') or '420'))
-def iter_saspy_cfg_names(cfgfile=None):
-    explicit = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
-    preferred = explicit or 'oda'
+def iter_saspy_cfg_names():
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
     seen = set()
-    names = (preferred,) if cfgfile else (preferred, 'oda', 'default')
-    for name in names:
+    for name in (preferred, 'oda', 'default'):
         if not name or name in seen:
             continue
         seen.add(name)
         yield name
-
-def saspy_cfgfile():
-    for key in ('SASPY_CFGFILE', 'SASPY_CONFIG_FILE'):
-        value = os.environ.get(key)
-        if value and os.path.isfile(os.path.expanduser(value)):
-            return os.path.expanduser(value)
-    return None
-
-def read_fd_capture(fd):
-    chunks = []
-    try:
-        while True:
-            chunk = os.read(fd, 8192)
-            if not chunk:
-                break
-            chunks.append(chunk)
-    except Exception:
-        pass
-    return b''.join(chunks).decode('utf-8', errors='replace')
-
-def start_sas_session(**kwargs):
-    captured = io.StringIO()
-    fd_output = ''
-    saved_stdout = saved_stderr = None
-    out_r = err_r = None
-    try:
-        saved_stdout = os.dup(1)
-        saved_stderr = os.dup(2)
-        out_r, out_w = os.pipe()
-        err_r, err_w = os.pipe()
-        os.dup2(out_w, 1)
-        os.dup2(err_w, 2)
-        os.close(out_w)
-        os.close(err_w)
-        try:
-            with contextlib.redirect_stdout(captured), contextlib.redirect_stderr(captured):
-                return SASsession(**kwargs)
-        finally:
-            os.dup2(saved_stdout, 1)
-            os.dup2(saved_stderr, 2)
-            os.close(saved_stdout)
-            os.close(saved_stderr)
-            saved_stdout = saved_stderr = None
-            fd_output = (read_fd_capture(out_r) + read_fd_capture(err_r)).strip()
-            os.close(out_r)
-            os.close(err_r)
-            out_r = err_r = None
-    except Exception as exc:
-        detail = "\n".join(part for part in (captured.getvalue().strip(), fd_output) if part)
-        if detail:
-            raise RuntimeError(f"{exc}\nSASPy/Java output:\n{detail}") from exc
-        raise
-    finally:
-        for saved_fd, target_fd in ((saved_stdout, 1), (saved_stderr, 2)):
-            if saved_fd is not None:
-                try:
-                    os.dup2(saved_fd, target_fd)
-                    os.close(saved_fd)
-                except Exception:
-                    pass
-        for read_fd in (out_r, err_r):
-            if read_fd is not None:
-                try:
-                    os.close(read_fd)
-                except Exception:
-                    pass
-
 def open_sas_session():
     last_exc = None
-    cfgfile = saspy_cfgfile()
-    for cfgname in iter_saspy_cfg_names(cfgfile):
+    for cfgname in iter_saspy_cfg_names():
         try:
-            kwargs = {'cfgname': cfgname, 'results': 'html', 'prompt': False}
-            if cfgfile:
-                kwargs['cfgfile'] = cfgfile
-            return start_sas_session(**kwargs)
+            return SASsession(cfgname=cfgname, results='html')
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            kwargs = {'results': 'html', 'prompt': False}
-            if cfgfile:
-                kwargs['cfgfile'] = cfgfile
-            return start_sas_session(**kwargs)
+            return SASsession(results='html')
         except Exception:
             raise last_exc
-    kwargs = {'results': 'html', 'prompt': False}
-    if cfgfile:
-        kwargs['cfgfile'] = cfgfile
-    return start_sas_session(**kwargs)
+    return SASsession(results='html')
 def log_event(message):
     stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{stamp}] {message}\n"
@@ -1742,7 +1605,13 @@ def handle_client(conn, addr):
                         final_size = info.get('size') or local_size
                     except Exception:
                         final_size = local_size
-                    print_upload_progress(progress_line_label, final_size, local_size, done=True)
+                    if local_size >= 10 * 1024 * 1024:
+                        print_upload_progress(progress_line_label, final_size, local_size, done=True)
+                    else:
+                        print(
+                            f"Upload step [{session_id}]: completed {display_label} -> {remote_path} ({final_size:,} bytes)",
+                            flush=True,
+                        )
                     log_event(f"upload done session_id={session_id} remote_path={remote_path}")
                     return remote_path
                 remote_path = with_retry(session_id, _upload)
@@ -1764,8 +1633,12 @@ def handle_client(conn, addr):
                     remote_info = run_fileinfo(sess, remote_path)
                     if not isinstance(remote_info, dict) or not remote_info.get('exists'):
                         raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {remote_path}")
-                    remote_path = remote_info.get('path') or remote_path
+                    resolved_remote_path = remote_info.get('path') or remote_path
                     remote_size = remote_info.get('size') or 0
+                    print(
+                        f"Download step [{session_id}]: {resolved_remote_path} -> {out_path} ({remote_size:,} bytes)",
+                        flush=True,
+                    )
                     stop_event = threading.Event()
                     poller = None
                     try:
@@ -1777,7 +1650,7 @@ def handle_client(conn, addr):
                                 daemon=True,
                             )
                             poller.start()
-                        sess.download(out_path, remote_path)
+                        sess.download(out_path, resolved_remote_path)
                     finally:
                         stop_event.set()
                         if poller is not None:
@@ -1789,6 +1662,11 @@ def handle_client(conn, addr):
                         raise IOError(f"Downloaded local file is empty despite non-empty remote file: {out_path}")
                     if remote_size >= 10 * 1024 * 1024:
                         print_upload_progress(f"Download progress [{session_id}]", final_size, remote_size, done=True)
+                    else:
+                        print(
+                            f"Download step [{session_id}]: saved {out_path} ({final_size:,} bytes)",
+                            flush=True,
+                        )
                     log_event(f"download done session_id={session_id} local_path={out_path}")
                     return out_path
                 saved_path = with_retry(session_id, _download)
@@ -1892,7 +1770,7 @@ sub _session_server_error_is_transport {
     return 0 unless $resp && ref($resp) eq 'HASH';
     my $error = $resp->{error};
     return 0 unless defined $error && length $error;
-    return ($error =~ /(cannot connect to session server|failed to send request to session server|timed out waiting for session server response|timed out after \d+s|failed to read response header from session server|failed to read response body from session server|incomplete response header|incomplete response body|Broken pipe)/i) ? 1 : 0;
+    return ($error =~ /(cannot connect to session server|failed to send request to session server|timed out waiting for session server response|timed out after \d+s|failed to read response header from session server|failed to read response body from session server|incomplete response header|incomplete response body|Broken pipe|No SAS process attached|SAS process has terminated unexpectedly)/i) ? 1 : 0;
 }
 
 sub _restart_session_server {
@@ -2037,6 +1915,11 @@ sub _start_server_if_needed {
     }
     # start server in background
     my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    my $server_stdio_mode = $ENV{SAS_ODA_SERVER_STDIO} // '';
+    my $inherit_server_stdio =
+      $server_stdio_mode =~ /^(?:1|true|yes|on|inherit|show)$/i ? 1 :
+      $server_stdio_mode =~ /^(?:0|false|no|off|silent|hide)$/i ? 0 :
+      ((-t STDOUT || -t STDERR) ? 1 : 0);
     my $pid = fork();
     if (!defined $pid) {
         warn "Could not fork SAS ODA session server launcher: $!\n";
@@ -2050,8 +1933,10 @@ sub _start_server_if_needed {
         }
         $ENV{PIPELINE_PYTHON_BIN} = $python_bin if length $python_bin;
         open STDIN,  '<', File::Spec->devnull();
-        open STDOUT, '>', File::Spec->devnull();
-        open STDERR, '>', File::Spec->devnull();
+        unless ($inherit_server_stdio) {
+            open STDOUT, '>', File::Spec->devnull();
+            open STDERR, '>', File::Spec->devnull();
+        }
         exec { $python_bin } $python_bin, $server_path;
         exit 127;
     }
@@ -2211,6 +2096,35 @@ sub _warn_dependency_upload {
     $msg .= ": $path" if length $path;
     $msg .= "\n";
     warn $msg;
+}
+
+sub _resolve_local_dependency_path {
+    my ($self, $path) = @_;
+    return '' unless defined $path && length $path;
+    return $path if -e $path;
+
+    my @candidates;
+    push @candidates, File::Spec->catfile(getcwd(), $path)
+      unless File::Spec->file_name_is_absolute($path);
+    push @candidates, File::Spec->catfile($self->{local_macro_dir}, $path)
+      if defined($self->{local_macro_dir}) && length($self->{local_macro_dir}) && !File::Spec->file_name_is_absolute($path);
+
+    if ($path =~ m{^(?:~\/|/)} || $path =~ /[\\\/]/) {
+        my $base = basename($path);
+        if (defined $base && length $base) {
+            push @candidates, File::Spec->catfile(getcwd(), $base);
+            push @candidates, File::Spec->catfile($self->{local_macro_dir}, $base)
+              if defined($self->{local_macro_dir}) && length($self->{local_macro_dir});
+        }
+    }
+
+    my %seen;
+    for my $candidate (@candidates) {
+        next unless defined $candidate && length $candidate;
+        next if $seen{$candidate}++;
+        return $candidate if -e $candidate;
+    }
+    return '';
 }
 
 sub _is_builtin_macro_name {
@@ -2473,27 +2387,40 @@ sub _process_dependencies {
         push @logs, "Using global importallmacros_ue bootstrap for unresolved remote macros: " . join(', ', @unresolved_macro_names);
     }
 
-    my $sas_path_regex = qr/(?i)\b(datafile\s*=\s*|outfile\s*=\s*|infile\s+|file\s+|filename\s+\S+\s+|libname\s+\S+\s+)(["'])([^"']+)\2/;
+    my $upload_dependency = sub {
+        my ($cmd, $path) = @_;
+        next if $path =~ /^\/home\// || $path =~ /&/;
+        my $local_path = $self->_resolve_local_dependency_path($path);
+        return unless $local_path && !$uploaded{$local_path}++;
+        my $detail = $cmd;
+        $detail =~ s/\s+$//;
+        _warn_dependency_upload(kind => 'file dependency', detail => $detail, path => $path);
+        my $remote = eval {
+            $self->upload(
+                $local_path,
+                {
+                    progress_label => "file dependency ($detail): " . basename($local_path),
+                }
+            );
+        };
+        if ($remote && $remote !~ /^PYTHON ERROR/) {
+            push @logs, "Detected $cmd dependency. Uploaded: $path -> $remote";
+            $code =~ s/\Q$path\E/$remote/g;
+        }
+    };
+
+    my $sas_path_regex = qr/(?i)\b(datafile\s*=\s*|outfile\s*=\s*|zip\s*=\s*|infile\s+|file\s+|filename\s+\S+\s+|libname\s+\S+\s+)(["'])([^"']+)\2/;
     while ($scan_code =~ /$sas_path_regex/g) {
         my ($cmd, $quote, $path) = ($1, $2, $3);
-        next if $path =~ /^\/home\// || $path =~ /&/;
-        if (-e $path && !$uploaded{$path}++) {
-            my $detail = $cmd;
-            $detail =~ s/\s+$//;
-            _warn_dependency_upload(kind => 'file dependency', detail => $detail, path => $path);
-            my $remote = eval {
-                $self->upload(
-                    $path,
-                    {
-                        progress_label => "file dependency ($detail): " . basename($path),
-                    }
-                );
-            };
-            if ($remote && $remote !~ /^PYTHON ERROR/) {
-                push @logs, "Detected $cmd dependency. Uploaded: $path -> $remote";
-                $code =~ s/\Q$path\E/$remote/g;
-            }
-        }
+        $upload_dependency->($cmd, $path);
+    }
+
+    my $sas_unquoted_assignment_regex = qr/(?i)\b(datafile\s*=\s*|outfile\s*=\s*|zip\s*=\s*)([^\s,;\)\r\n]+)/;
+    while ($scan_code =~ /$sas_unquoted_assignment_regex/g) {
+        my ($cmd, $path) = ($1, $2);
+        next unless defined $path && length $path;
+        next if $path =~ /^["']/;
+        $upload_dependency->($cmd, $path);
     }
 
     return ($header_includes . $code, join("\n", @logs));
@@ -2535,15 +2462,19 @@ sub run_code {
     my $macro_bootstrap_meta;
     local $ENV{SAS_ODA_AUTOLOAD_MACROS} = 0 if $disable_global_macro_bootstrap;
     if ($self->{persistent} && $self->{session_id}) {
+        my $load_macros = (_autoload_macros_enabled() && !$disable_global_macro_bootstrap) ? 1 : 0;
+        my $submit_timeout = _effective_persistent_submit_timeout_seconds(
+            load_macros => $load_macros,
+        );
         $self->_start_server_if_needed();
         my $resp = _call_session_server(
             {
                 cmd         => 'submit',
                 session_id  => $self->{session_id},
                 code        => $processed_code,
-                load_macros => (_autoload_macros_enabled() && !$disable_global_macro_bootstrap) ? 1 : 0,
+                load_macros => $load_macros,
             },
-            _server_submit_timeout_seconds(),
+            $submit_timeout,
         );
         my $resp_log = '';
         my $resp_lst = '';
