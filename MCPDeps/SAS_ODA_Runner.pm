@@ -2307,6 +2307,134 @@ END_NONPERSISTENT_PY
     return $result;
 }
 
+sub _run_nonpersistent_python_action {
+    my ($action, $args_ref) = @_;
+    $args_ref = {} unless ref($args_ref) eq 'HASH';
+
+    my ($argsfh, $args_path) = tempfile('sas_action_args_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    print {$argsfh} encode_json($args_ref);
+    close $argsfh;
+
+    my ($jsonfh, $json_path) = tempfile('sas_action_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    close $jsonfh;
+
+    my ($pyfh, $py_path) = tempfile('sas_action_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => getcwd());
+    print {$pyfh} $INLINE_PYTHON_SOURCE;
+    print {$pyfh} <<'END_NONPERSISTENT_ACTION_PY';
+
+def _endsas_safely(session_obj):
+    try:
+        sess = getattr(session_obj, '_session', None)
+        if sess is not None:
+            sess.endsas()
+    except Exception:
+        pass
+
+def _action_dispatch(action, payload):
+    session_obj = None
+    if action == 'fileinfo':
+        return remote_file_info(str(payload.get('remote_path', '') or ''), session_obj)
+    if action == 'download':
+        return download_file(
+            str(payload.get('remote_path', '') or ''),
+            str(payload.get('local_path', '') or ''),
+            session_obj,
+        )
+    if action == 'upload':
+        return upload_file(
+            str(payload.get('local_path', '') or ''),
+            session_obj,
+            payload.get('progress_label'),
+            bool(payload.get('skip_if_same', True)),
+        )
+    if action == 'dirlist':
+        return dirlist(str(payload.get('remote_path', '') or ''), session_obj)
+    if action == 'delete':
+        return delete_file(
+            str(payload.get('remote_file', '') or ''),
+            str(payload.get('remote_dir', '') or ''),
+            session_obj,
+        )
+    if action == 'gethome':
+        return get_sas_home(session_obj)
+    raise RuntimeError(f"Unsupported nonpersistent action: {action}")
+
+if __name__ == '__main__':
+    action = sys.argv[1]
+    args_path = sys.argv[2]
+    result_path = sys.argv[3]
+    payload = {
+        'status': 'error',
+        'error': '',
+        'value': None,
+    }
+    session_obj = None
+    try:
+        with open(args_path, 'r', encoding='utf-8') as fh:
+            action_args = json.load(fh)
+        value, session_obj = _action_dispatch(action, action_args)
+        if isinstance(value, str) and value.startswith('PYTHON ERROR:'):
+            payload['error'] = value
+        else:
+            payload['status'] = 'ok'
+            payload['value'] = value
+    except BaseException as exc:
+        payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
+    finally:
+        _endsas_safely(session_obj)
+        with open(result_path, 'w', encoding='utf-8') as fh:
+            json.dump(payload, fh, ensure_ascii=False)
+END_NONPERSISTENT_ACTION_PY
+    close $pyfh;
+
+    my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
+    if (defined($site_packages) && length($site_packages) && -d $site_packages) {
+        local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
+          ? "$site_packages:$ENV{PYTHONPATH}"
+          : $site_packages;
+        system { $python_bin } $python_bin, $py_path, $action, $args_path, $json_path;
+    } else {
+        system { $python_bin } $python_bin, $py_path, $action, $args_path, $json_path;
+    }
+
+    my $exit_code = $? >> 8;
+    my $signal = $? & 127;
+    my $result = {};
+    if (-e $json_path && open(my $rfh, '<', $json_path)) {
+        local $/;
+        my $json = <$rfh>;
+        close $rfh;
+        eval { $result = decode_json($json) if defined $json && length $json; };
+        if ($@) {
+            $result = {
+                status => 'error',
+                error  => "Could not parse nonpersistent Python action result JSON: $@",
+            };
+        }
+    } else {
+        $result = {
+            status => 'error',
+            error  => 'Nonpersistent Python action helper did not produce a result JSON file.',
+        };
+    }
+
+    unlink $args_path if defined $args_path && -e $args_path;
+    unlink $json_path if defined $json_path && -e $json_path;
+    unlink $py_path   if defined $py_path   && -e $py_path;
+
+    if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {
+        my $detail = $result->{error} // 'unknown nonpersistent Python action failure';
+        $detail .= " (exit=$exit_code, signal=$signal)";
+        return {
+            status => 'error',
+            error  => $detail,
+        };
+    }
+
+    return $result;
+}
+
 sub new {
     my ($class, %args) = @_;
     my $requested_persistent = $args{persistent} // 0;
@@ -2825,9 +2953,14 @@ sub filesindir {
         return $resp->{files} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { dirlist($remote_path, $self->{_session}) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action(
+        'dirlist',
+        {
+            remote_path => $remote_path,
+        }
+    );
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent dirlist error');
 }
 
 sub fileinfo {
@@ -2841,9 +2974,14 @@ sub fileinfo {
         return $resp->{info} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { remote_file_info($remote_path, $self->{_session}) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action(
+        'fileinfo',
+        {
+            remote_path => $remote_path,
+        }
+    );
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent fileinfo error');
 }
 
 sub upload {
@@ -2858,11 +2996,16 @@ sub upload {
     if ($self->_should_use_direct_upload_for_persistent_session(local_path => $local_path)) {
         my $threshold_bytes = _persistent_direct_upload_threshold_bytes();
         warn "Using direct SAS ODA upload path for large persistent transfer ($local_path, threshold=${threshold_bytes} bytes) to avoid long-lived session-server socket stalls.\n";
-        my ($result, $sess) = eval { upload_file($local_path, $self->{_transfer_session}, $progress_label, $skip_if_same) };
-        $self->{_transfer_session} = $sess if ref $sess;
-        return $result if defined $result && $result !~ /^PYTHON ERROR/;
-        my $detail = $@ || $result || 'direct upload failure';
-        return "PYTHON ERROR: $detail";
+        my $resp = _run_nonpersistent_python_action(
+            'upload',
+            {
+                local_path     => $local_path,
+                progress_label => $progress_label,
+                skip_if_same   => $skip_if_same ? 1 : 0,
+            }
+        );
+        return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+        return "PYTHON ERROR: " . ($resp->{error} // 'direct upload failure');
     }
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
@@ -2879,9 +3022,16 @@ sub upload {
         return $resp->{remote_path} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { upload_file($local_path, $self->{_session}, $progress_label, $skip_if_same) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action(
+        'upload',
+        {
+            local_path     => $local_path,
+            progress_label => $progress_label,
+            skip_if_same   => $skip_if_same ? 1 : 0,
+        }
+    );
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent upload error');
 }
 
 sub download {
@@ -2895,9 +3045,15 @@ sub download {
         return $resp->{local_path} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { download_file($remote_path, $local_path, $self->{_session}) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action(
+        'download',
+        {
+            remote_path => $remote_path,
+            local_path  => $local_path,
+        }
+    );
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent download error');
 }
 
 sub delete {
@@ -2911,9 +3067,15 @@ sub delete {
         return $resp->{msg} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { delete_file($remote_file, $remote_dir, $self->{_session}) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action(
+        'delete',
+        {
+            remote_file => $remote_file,
+            remote_dir  => $remote_dir,
+        }
+    );
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent delete error');
 }
 
 sub get_sas_home_path {
@@ -2927,9 +3089,9 @@ sub get_sas_home_path {
         return $resp->{home} if $resp && ($resp->{status} // '') eq 'ok';
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
-    my ($result, $sess) = eval { get_sas_home($self->{_session}) };
-    $self->{_session} = $sess;
-    return $result;
+    my $resp = _run_nonpersistent_python_action('gethome', {});
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent gethome error');
 }   
 
 =head1 DESCRIPTION
