@@ -896,7 +896,7 @@ sub _autoload_macros_enabled {
 
 my $SERVER_HOST = '127.0.0.1';
 my $SERVER_PORT = 8765;
-my $SERVER_API_VERSION = '2026-07-08-download-scope-fix';
+my $SERVER_API_VERSION = '2026-07-08-submit-progress-frames';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -973,6 +973,31 @@ sub _effective_upload_timeout_seconds {
     return $timeout > 0 ? $timeout : $SERVER_UPLOAD_TIMEOUT_SECONDS;
 }
 
+sub _persistent_direct_upload_threshold_bytes {
+    my $threshold = int($ENV{SAS_ODA_PERSISTENT_DIRECT_UPLOAD_THRESHOLD_BYTES} // (10 * 1024 * 1024));
+    return $threshold > 0 ? $threshold : 0;
+}
+
+sub _should_use_direct_upload_for_persistent_session {
+    my ($self, %args) = @_;
+    return 0 unless $self->{persistent} && $self->{session_id};
+
+    if (exists $ENV{SAS_ODA_FORCE_DIRECT_UPLOAD}) {
+        return _runner_env_truthy($ENV{SAS_ODA_FORCE_DIRECT_UPLOAD}) ? 1 : 0;
+    }
+
+    my $threshold = _persistent_direct_upload_threshold_bytes();
+    return 0 unless $threshold > 0;
+
+    my $local_path = $args{local_path} // '';
+    return 0 unless length($local_path) && -e $local_path;
+
+    my $size_bytes = -s $local_path;
+    return 0 unless defined $size_bytes && $size_bytes >= $threshold;
+
+    return 1;
+}
+
 # NOTE: This embedded copy is only written to disk when sas_oda_session_server.py
 # is missing. Keep it in sync with the standalone sas_oda_session_server.py file.
 my $SERVER_PY = <<'END_SERVER_PY';
@@ -983,7 +1008,7 @@ import os
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-08-download-scope-fix'
+SERVER_API_VERSION = '2026-07-08-submit-progress-frames'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -1262,7 +1287,11 @@ def print_submit_heartbeat(label, elapsed_seconds):
     sys.stderr.write(f"{label} is still running in SAS ODA... elapsed {format_elapsed(elapsed_seconds)}\n")
     sys.stderr.flush()
 
-def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_seconds=None):
+def send_framed_json(conn, payload):
+    out = json.dumps(payload).encode('utf-8')
+    conn.sendall(len(out).to_bytes(8, 'big') + out)
+
+def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_seconds=None, progress_callback=None):
     display_label = f"{label or 'SAS ODA job'} [{session_id}]"
     if SUBMIT_HEARTBEAT_SECONDS <= 0:
         return sess.submit(sas_code)
@@ -1295,6 +1324,14 @@ def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_second
         if now - last_heartbeat >= SUBMIT_HEARTBEAT_SECONDS:
             print_submit_heartbeat(display_label, now - start)
             log_event(f"submit heartbeat label={display_label} session_id={session_id} elapsed={int(now - start)}s")
+            if callable(progress_callback):
+                progress_callback({
+                    'status': 'progress',
+                    'kind': 'submit_heartbeat',
+                    'label': display_label,
+                    'session_id': session_id,
+                    'elapsed_seconds': int(now - start),
+                })
             last_heartbeat = now
 
     worker.join()
@@ -1563,7 +1600,13 @@ def handle_client(conn, addr):
                         if bootstrap_ran:
                             macro_warning = bool(session_macro_bootstrap_warning.get(session_id, False))
                             macro_meta = dict(session_macro_bootstrap_meta.get(session_id, {}) or {})
-                    res = submit_with_heartbeat(sess, req.get('code',''), session_id, label="SAS ODA user job")
+                    res = submit_with_heartbeat(
+                        sess,
+                        req.get('code',''),
+                        session_id,
+                        label="SAS ODA user job",
+                        progress_callback=lambda payload: send_framed_json(conn, payload),
+                    )
                     if not submit_result_has_visible_content(res):
                         alive, probe_detail = probe_session_after_empty_submit(sess)
                         if not alive:
@@ -1746,14 +1789,12 @@ def handle_client(conn, addr):
         else:
             resp = {'status':'error','error':'unknown command'}
             log_event(f"unknown command session_id={session_id} cmd={cmd}")
-        out = json.dumps(resp).encode('utf-8')
-        conn.sendall(len(out).to_bytes(8,'big') + out)
+        send_framed_json(conn, resp)
         log_event(f"response status={resp.get('status')} cmd={cmd} session_id={session_id}")
     except Exception as e:
         log_event(f"handle_client fatal err={e}")
         try:
-            out = json.dumps({'status':'error','error':str(e)}).encode('utf-8')
-            conn.sendall(len(out).to_bytes(8,'big') + out)
+            send_framed_json(conn, {'status':'error','error':str(e)})
         except Exception:
             pass
     finally:
@@ -2026,6 +2067,43 @@ sub _recv_exact_with_timeout {
     return ($data, undef);
 }
 
+sub _read_session_server_frame {
+    my ($sock, $timeout_seconds) = @_;
+    my ($rhdr, $read_hdr_error) = _recv_exact_with_timeout($sock, 8, $timeout_seconds, 'response header');
+    return (undef, $read_hdr_error) if $read_hdr_error;
+    if (length($rhdr) != 8) {
+        return (
+            undef,
+            {
+                status => 'error',
+                error  => 'session server returned an incomplete response header',
+                raw    => $rhdr,
+            }
+        );
+    }
+
+    my $rlen = unpack('Q>', $rhdr);
+    my ($data, $read_body_error) = _recv_exact_with_timeout($sock, $rlen, $timeout_seconds, 'response body');
+    return (undef, { status => 'error', error => $read_body_error }) if $read_body_error;
+    if (length($data) != $rlen) {
+        return (
+            undef,
+            {
+                status => 'error',
+                error  => 'session server returned an incomplete response body',
+                raw    => $data,
+            }
+        );
+    }
+
+    my $resp;
+    eval { $resp = decode_json($data); };
+    if ($@) {
+        return (undef, { status => 'error', error => "JSON parse error: $@", raw => $data });
+    }
+    return ($resp, undef);
+}
+
 sub _call_session_server {
     my ($payload, $timeout_seconds) = @_;
     my $json = encode_json($payload);
@@ -2051,38 +2129,21 @@ sub _call_session_server {
         $sent += $written;
     }
     shutdown($sock, 1);
-    # read 8-byte length
-    my ($rhdr, $read_hdr_error) = _recv_exact_with_timeout($sock, 8, $timeout_seconds, 'response header');
-    if ($read_hdr_error) {
-        close $sock;
-        return { status => 'error', error => $read_hdr_error };
-    }
-    if (length($rhdr) != 8) {
-        close $sock;
-        return {
-            status => 'error',
-            error => 'session server returned an incomplete response header',
-            raw => $rhdr,
-        };
-    }
-    my $rlen = unpack('Q>', $rhdr);
-    my ($data, $read_body_error) = _recv_exact_with_timeout($sock, $rlen, $timeout_seconds, 'response body');
-    close $sock;
-    if ($read_body_error) {
-        return { status => 'error', error => $read_body_error };
-    }
-    if (length($data) != $rlen) {
-        return {
-            status => 'error',
-            error => 'session server returned an incomplete response body',
-            raw => $data,
-        };
-    }
+
     my $resp;
-    eval { $resp = decode_json($data); };
-    if ($@) {
-        return { status => 'error', error => "JSON parse error: $@", raw => $data };
+    while (1) {
+        my ($frame, $frame_error) = _read_session_server_frame($sock, $timeout_seconds);
+        if ($frame_error) {
+            close $sock;
+            return ref($frame_error) eq 'HASH'
+              ? $frame_error
+              : { status => 'error', error => $frame_error };
+        }
+        $resp = $frame;
+        next if ref($resp) eq 'HASH' && ($resp->{status} // '') eq 'progress';
+        last;
     }
+    close $sock;
     return $resp;
 }
 
@@ -2097,6 +2158,7 @@ sub new {
         local_macro_dir => $args{local_macro_dir} || "./",
         open_html => $args{open_html} // 1,
         _session => undef,
+        _transfer_session => undef,
         persistent => 1,
         session_id => $session_id,
         requested_persistent => $requested_persistent,
@@ -2639,6 +2701,15 @@ sub upload {
         local_path      => $local_path,
         timeout_seconds => $opts->{timeout_seconds},
     );
+    if ($self->_should_use_direct_upload_for_persistent_session(local_path => $local_path)) {
+        my $threshold_bytes = _persistent_direct_upload_threshold_bytes();
+        warn "Using direct SAS ODA upload path for large persistent transfer ($local_path, threshold=${threshold_bytes} bytes) to avoid long-lived session-server socket stalls.\n";
+        my ($result, $sess) = eval { upload_file($local_path, $self->{_transfer_session}, $progress_label, $skip_if_same) };
+        $self->{_transfer_session} = $sess if ref $sess;
+        return $result if defined $result && $result !~ /^PYTHON ERROR/;
+        my $detail = $@ || $result || 'direct upload failure';
+        return "PYTHON ERROR: $detail";
+    }
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
             {

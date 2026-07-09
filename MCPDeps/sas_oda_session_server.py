@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-08-download-scope-fix'
+SERVER_API_VERSION = '2026-07-08-submit-progress-frames'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -284,7 +284,11 @@ def print_submit_heartbeat(label, elapsed_seconds):
     sys.stderr.write(f"{label} is still running in SAS ODA... elapsed {format_elapsed(elapsed_seconds)}\n")
     sys.stderr.flush()
 
-def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_seconds=None):
+def send_framed_json(conn, payload):
+    out = json.dumps(payload).encode('utf-8')
+    conn.sendall(len(out).to_bytes(8, 'big') + out)
+
+def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_seconds=None, progress_callback=None):
     display_label = f"{label or 'SAS ODA job'} [{session_id}]"
     if SUBMIT_HEARTBEAT_SECONDS <= 0:
         return sess.submit(sas_code)
@@ -317,6 +321,14 @@ def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_second
         if now - last_heartbeat >= SUBMIT_HEARTBEAT_SECONDS:
             print_submit_heartbeat(display_label, now - start)
             log_event(f"submit heartbeat label={display_label} session_id={session_id} elapsed={int(now - start)}s")
+            if callable(progress_callback):
+                progress_callback({
+                    'status': 'progress',
+                    'kind': 'submit_heartbeat',
+                    'label': display_label,
+                    'session_id': session_id,
+                    'elapsed_seconds': int(now - start),
+                })
             last_heartbeat = now
 
     worker.join()
@@ -585,7 +597,13 @@ def handle_client(conn, addr):
                         if bootstrap_ran:
                             macro_warning = bool(session_macro_bootstrap_warning.get(session_id, False))
                             macro_meta = dict(session_macro_bootstrap_meta.get(session_id, {}) or {})
-                    res = submit_with_heartbeat(sess, req.get('code',''), session_id, label="SAS ODA user job")
+                    res = submit_with_heartbeat(
+                        sess,
+                        req.get('code',''),
+                        session_id,
+                        label="SAS ODA user job",
+                        progress_callback=lambda payload: send_framed_json(conn, payload),
+                    )
                     if not submit_result_has_visible_content(res):
                         alive, probe_detail = probe_session_after_empty_submit(sess)
                         if not alive:
@@ -768,14 +786,12 @@ def handle_client(conn, addr):
         else:
             resp = {'status':'error','error':'unknown command'}
             log_event(f"unknown command session_id={session_id} cmd={cmd}")
-        out = json.dumps(resp).encode('utf-8')
-        conn.sendall(len(out).to_bytes(8,'big') + out)
+        send_framed_json(conn, resp)
         log_event(f"response status={resp.get('status')} cmd={cmd} session_id={session_id}")
     except Exception as e:
         log_event(f"handle_client fatal err={e}")
         try:
-            out = json.dumps({'status':'error','error':str(e)}).encode('utf-8')
-            conn.sendall(len(out).to_bytes(8,'big') + out)
+            send_framed_json(conn, {'status':'error','error':str(e)})
         except Exception:
             pass
     finally:
