@@ -1498,32 +1498,50 @@ sub run_runner_submit_with_timeout {
         $code_file = $tmpcode;
     }
 
-    my $script_path = abs_path(__FILE__) || File::Spec->rel2abs(__FILE__);
-    my @cmd = (
-        $^X,
-        $script_path,
-        '--_internal-runner-result-json', $tmpjson,
-        '--_internal-macro-dir', $runner_macro_dir,
-        '--_internal-open-html=' . ($runner_open_html ? 1 : 0),
-    );
-    if (defined $execution_file) {
-        push @cmd, ('--_internal-execution-file', $execution_file);
-    } else {
-        push @cmd, ('--_internal-execution-code-file', $code_file);
-    }
-    if ($runner_persistent) {
-        push @cmd, '--_internal-persistent';
-        push @cmd, ('--_internal-session-id', $runner_session_id) if defined $runner_session_id && length $runner_session_id;
-    }
-
     my $pid = fork();
     die "Could not fork for timed SAS submit worker\n" unless defined $pid;
 
     if ($pid == 0) {
         local $ENV{SAS_ODA_RUN_TIMEOUT_SECONDS} = 0;
         local $ENV{SAS_ODA_RUN_TIMEOUT_GRACE_SECONDS} = 0;
-        exec { $^X } @cmd;
-        die "Could not exec internal SAS submit worker: $!\n";
+        bootstrap_sas_oda_credentials_if_needed();
+        my $worker_runner = SAS_ODA_Runner->new(
+            local_macro_dir => $runner_macro_dir,
+            open_html       => $runner_open_html,
+            session_id      => $runner_session_id,
+            persistent      => $runner_persistent,
+        );
+        my $worker_result;
+        my $worker_error = '';
+        eval {
+            if (defined $execution_file) {
+                $worker_result = $worker_runner->run_file($execution_file);
+            } else {
+                my $worker_code = slurp_text_file($code_file);
+                $worker_result = $worker_runner->run_code($worker_code);
+            }
+            1;
+        } or do {
+            $worker_error = $@ || 'unknown internal worker error';
+        };
+        if ($worker_error) {
+            $worker_result = {
+                error        => $worker_error,
+                log          => '',
+                lst          => '',
+                dep_logs     => '',
+                output       => '',
+                htmlfilename => '',
+            };
+        }
+        open my $worker_out, '>', $tmpjson
+          or die "Cannot write internal worker result to $tmpjson: $!\n";
+        print {$worker_out} encode_json({
+            eval_error => $worker_error,
+            result     => make_json_safe($worker_result),
+        });
+        close $worker_out;
+        exit(($worker_error || (ref($worker_result) eq 'HASH' && ($worker_result->{error} // ''))) ? 1 : 0);
     }
 
     my $reaped = 0;

@@ -900,12 +900,12 @@ my $SERVER_API_VERSION = '2026-07-08-submit-progress-frames';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
-my $SERVER_METADATA_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_METADATA_TIMEOUT_SECONDS} // 12);
-my $SERVER_DELETE_TIMEOUT_SECONDS   = int($ENV{SAS_ODA_SESSION_DELETE_TIMEOUT_SECONDS} // 12);
-my $SERVER_GETHOME_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_GETHOME_TIMEOUT_SECONDS} // 12);
+my $SERVER_METADATA_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_METADATA_TIMEOUT_SECONDS} // 60);
+my $SERVER_DELETE_TIMEOUT_SECONDS   = int($ENV{SAS_ODA_SESSION_DELETE_TIMEOUT_SECONDS} // 60);
+my $SERVER_GETHOME_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_GETHOME_TIMEOUT_SECONDS} // 60);
 my $SERVER_UPLOAD_TIMEOUT_SECONDS   = int($ENV{SAS_ODA_SESSION_UPLOAD_TIMEOUT_SECONDS} // 180);
 my $SERVER_DOWNLOAD_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_DOWNLOAD_TIMEOUT_SECONDS} // 180);
-my $MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS = int($ENV{SAS_ODA_MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS} // 30);
+my $MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS = int($ENV{SAS_ODA_MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS} // 180);
 
 sub _server_submit_timeout_seconds {
     if (exists $ENV{SAS_ODA_SESSION_SUBMIT_TIMEOUT_SECONDS}) {
@@ -1008,7 +1008,7 @@ import os
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-08-submit-progress-frames'
+SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -1193,7 +1193,7 @@ def create_session(session_id):
     log_event(f"create_session done session_id={session_id}")
     return sess
 
-def ensure_macros_loaded(session_id, sess):
+def ensure_macros_loaded(session_id, sess, progress_callback=None):
     if session_macros_loaded.get(session_id):
         return ''
     log_event(f"macro_bootstrap start session_id={session_id}")
@@ -1216,12 +1216,21 @@ def ensure_macros_loaded(session_id, sess):
         ])
     )
     print(f"[{session_id}] SAS ODA macro bootstrap started at {bootstrap_started_at}", flush=True)
+    if callable(progress_callback):
+        progress_callback({
+            'status': 'progress',
+            'kind': 'macro_bootstrap_started',
+            'label': 'SAS ODA macro bootstrap',
+            'session_id': session_id,
+            'started_at': bootstrap_started_at,
+        })
     res = submit_with_heartbeat(
         sess,
         LOAD_MACROS_CODE,
         session_id,
         label="SAS ODA macro bootstrap",
         timeout_seconds=MACRO_BOOTSTRAP_TIMEOUT_SECONDS,
+        progress_callback=progress_callback,
     )
     macro_log = res.get('LOG', '')
     bootstrap_ok = ''
@@ -1266,6 +1275,17 @@ def ensure_macros_loaded(session_id, sess):
     if warning:
         print(f"[{session_id}] WARNING: Macro load may have failed - check log above", flush=True)
         log_event(f"macro_bootstrap warning session_id={session_id}")
+    if callable(progress_callback):
+        progress_callback({
+            'status': 'progress',
+            'kind': 'macro_bootstrap_finished',
+            'label': 'SAS ODA macro bootstrap',
+            'session_id': session_id,
+            'finished_at': bootstrap_finished_at,
+            'elapsed_seconds': bootstrap_elapsed_seconds,
+            'ok': bootstrap_ok or '0',
+            'warning': bool(warning),
+        })
     session_macros_loaded[session_id] = True
     log_event(f"macro_bootstrap done session_id={session_id}")
     return macro_log
@@ -1596,7 +1616,11 @@ def handle_client(conn, addr):
                     nonlocal macro_log, macro_warning, macro_meta
                     if load_macros:
                         bootstrap_ran = not bool(session_macros_loaded.get(session_id, False))
-                        macro_log = ensure_macros_loaded(session_id, sess) or ''
+                        macro_log = ensure_macros_loaded(
+                            session_id,
+                            sess,
+                            progress_callback=lambda payload: send_framed_json(conn, payload),
+                        ) or ''
                         if bootstrap_ran:
                             macro_warning = bool(session_macro_bootstrap_warning.get(session_id, False))
                             macro_meta = dict(session_macro_bootstrap_meta.get(session_id, {}) or {})
@@ -1846,6 +1870,7 @@ sub _session_server_error_is_transport {
 
 sub _restart_session_server {
     my ($self) = @_;
+    $self->{_session_server_ready} = 0 if ref $self;
     my $shutdown = _call_session_server({ cmd => 'shutdown' }, $SERVER_CONNECT_TIMEOUT_SECONDS);
     if (!$shutdown || ($shutdown->{status} // '') ne 'ok') {
         warn "Warning: could not gracefully stop the SAS ODA session server before restart; waiting for the port to clear.\n";
@@ -1934,12 +1959,16 @@ sub _call_persistent_session_server {
     my ($self, $payload, $timeout_seconds, $label) = @_;
     $self->_start_server_if_needed();
     my $resp = _call_session_server($payload, $timeout_seconds);
-    return $resp if $resp && ($resp->{status} // '') eq 'ok';
+    if ($resp && ($resp->{status} // '') eq 'ok') {
+        $self->{_session_server_ready} = 1;
+        return $resp;
+    }
 
     if (_session_server_error_is_transport($resp)) {
         warn "Warning: restarting persistent SAS ODA session server after $label transport failure.\n";
         $self->_restart_session_server();
         $resp = _call_session_server($payload, $timeout_seconds);
+        $self->{_session_server_ready} = 1 if $resp && ($resp->{status} // '') eq 'ok';
     }
 
     return $resp;
@@ -1949,21 +1978,33 @@ sub _start_server_if_needed {
     my ($self) = @_;
     return unless $self->{persistent} && $self->{session_id};
     $self->{_prewarm_create_msg} = '';
+    if ($self->{_session_server_ready}) {
+        return if _server_reachable($SERVER_HOST, $SERVER_PORT);
+        $self->{_session_server_ready} = 0;
+    }
     # If a server is already reachable, make sure it speaks the current
     # protocol/version so file-only operations do not get stuck on an older
     # eager-macro-loading implementation.
     if (_server_reachable($SERVER_HOST, $SERVER_PORT)) {
         my $ping = _call_session_server({ cmd => 'ping' }, $SERVER_CONNECT_TIMEOUT_SECONDS);
         if ($ping && ($ping->{status} // '') eq 'ok' && ($ping->{server_api_version} // '') eq $SERVER_API_VERSION) {
+            $self->{_session_server_ready} = 1;
             $self->_prewarm_session_server();
             return;
         }
-        warn "Warning: restarting stale or incompatible SAS ODA session server on $SERVER_HOST:$SERVER_PORT\n";
-        my $shutdown = _call_session_server({ cmd => 'shutdown' }, $SERVER_CONNECT_TIMEOUT_SECONDS);
-        if (!$shutdown || ($shutdown->{status} // '') ne 'ok') {
-            warn "Warning: could not gracefully stop the stale SAS ODA session server; continuing to wait for the port to clear.\n";
+        if ($ping && ($ping->{status} // '') eq 'ok' && length($ping->{server_api_version} // '')) {
+            warn "Warning: restarting stale or incompatible SAS ODA session server on $SERVER_HOST:$SERVER_PORT\n";
+            my $shutdown = _call_session_server({ cmd => 'shutdown' }, $SERVER_CONNECT_TIMEOUT_SECONDS);
+            if (!$shutdown || ($shutdown->{status} // '') ne 'ok') {
+                warn "Warning: could not gracefully stop the stale SAS ODA session server; continuing to wait for the port to clear.\n";
+            }
+            _wait_for_server_port_state(0, 5);
+        } else {
+            warn "Warning: SAS ODA session server ping was inconclusive on $SERVER_HOST:$SERVER_PORT; reusing the existing reachable server without forcing a restart.\n";
+            $self->{_session_server_ready} = 1;
+            $self->_prewarm_session_server();
+            return;
         }
-        _wait_for_server_port_state(0, 5);
     }
     # Refresh the helper script on disk when the embedded server changes so
     # future restarts cannot accidentally relaunch stale Python code.
@@ -2015,10 +2056,12 @@ sub _start_server_if_needed {
     if (_wait_for_server_port_state(1, 10)) {
         my $ping = _call_session_server({ cmd => 'ping' }, $SERVER_CONNECT_TIMEOUT_SECONDS);
         if ($ping && ($ping->{status} // '') eq 'ok' && ($ping->{server_api_version} // '') eq $SERVER_API_VERSION) {
+            $self->{_session_server_ready} = 1;
             $self->_prewarm_session_server();
             return;
         }
     }
+    $self->{_session_server_ready} = 0;
     warn "SAS ODA session server did not start after attempts\n";
 }
 
@@ -2147,6 +2190,123 @@ sub _call_session_server {
     return $resp;
 }
 
+sub _run_nonpersistent_sas_logic_via_python {
+    my ($sas_code) = @_;
+
+    my ($codefh, $code_path) = tempfile('sas_inline_code_XXXX', SUFFIX => '.sas', UNLINK => 0, DIR => getcwd());
+    print {$codefh} ($sas_code // '');
+    close $codefh;
+
+    my ($jsonfh, $json_path) = tempfile('sas_inline_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    close $jsonfh;
+
+    my ($pyfh, $py_path) = tempfile('sas_inline_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => getcwd());
+    print {$pyfh} $INLINE_PYTHON_SOURCE;
+    print {$pyfh} <<'END_NONPERSISTENT_PY';
+
+def _export_macro_bootstrap_meta(session_obj):
+    if session_obj is None:
+        return {}
+    return {
+        'started_at': getattr(session_obj, '_macro_bootstrap_started_at', '') or '',
+        'finished_at': getattr(session_obj, '_macro_bootstrap_finished_at', '') or '',
+        'elapsed_seconds': getattr(session_obj, '_macro_bootstrap_elapsed_seconds', ''),
+        'ok': getattr(session_obj, '_macro_bootstrap_ok', '') or '',
+        'warning': bool(getattr(session_obj, '_macro_bootstrap_warning', False)),
+        'log_path': getattr(session_obj, '_macro_bootstrap_log_path', '') or '',
+    }
+
+def _endsas_safely(session_obj):
+    try:
+        sess = getattr(session_obj, '_session', None)
+        if sess is not None:
+            sess.endsas()
+    except Exception:
+        pass
+
+if __name__ == '__main__':
+    code_path = sys.argv[1]
+    result_path = sys.argv[2]
+    payload = {
+        'status': 'error',
+        'error': '',
+        'log': '',
+        'lst': '',
+        'macro_bootstrap_meta': {},
+    }
+    session_obj = None
+    try:
+        with open(code_path, 'r', encoding='utf-8') as fh:
+            sas_code = fh.read()
+        res = run_sas_logic(sas_code, session_obj)
+        if isinstance(res, (list, tuple)) and len(res) >= 3:
+            session_obj = res[2]
+        payload['macro_bootstrap_meta'] = _export_macro_bootstrap_meta(session_obj)
+        if isinstance(res, (list, tuple)) and len(res) >= 2 and res[0] != "ERROR":
+            payload['status'] = 'ok'
+            payload['log'] = str(res[0] or '')
+            payload['lst'] = str(res[1] or '')
+        else:
+            payload['error'] = str(res[1] if isinstance(res, (list, tuple)) and len(res) >= 2 else 'unknown error')
+    except BaseException as exc:
+        payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
+    finally:
+        _endsas_safely(session_obj)
+        with open(result_path, 'w', encoding='utf-8') as fh:
+            json.dump(payload, fh, ensure_ascii=False)
+END_NONPERSISTENT_PY
+    close $pyfh;
+
+    my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
+    if (defined($site_packages) && length($site_packages) && -d $site_packages) {
+        local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
+          ? "$site_packages:$ENV{PYTHONPATH}"
+          : $site_packages;
+        system { $python_bin } $python_bin, $py_path, $code_path, $json_path;
+    } else {
+        system { $python_bin } $python_bin, $py_path, $code_path, $json_path;
+    }
+
+    my $exit_code = $? >> 8;
+    my $signal = $? & 127;
+    my $result = {};
+    if (-e $json_path && open(my $rfh, '<', $json_path)) {
+        local $/;
+        my $json = <$rfh>;
+        close $rfh;
+        eval { $result = decode_json($json) if defined $json && length $json; };
+        if ($@) {
+            $result = {
+                status => 'error',
+                error  => "Could not parse inline SAS Python result JSON: $@",
+            };
+        }
+    } else {
+        $result = {
+            status => 'error',
+            error  => 'Inline SAS Python helper did not produce a result JSON file.',
+        };
+    }
+
+    unlink $code_path if defined $code_path && -e $code_path;
+    unlink $json_path if defined $json_path && -e $json_path;
+    unlink $py_path   if defined $py_path   && -e $py_path;
+
+    if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {
+        my $detail = $result->{error} // 'unknown inline SAS Python helper failure';
+        $detail .= " (exit=$exit_code, signal=$signal)";
+        return {
+            status => 'error',
+            error  => $detail,
+            log    => '',
+            lst    => '',
+        };
+    }
+
+    return $result;
+}
+
 sub new {
     my ($class, %args) = @_;
     my $requested_persistent = $args{persistent} // 0;
@@ -2159,10 +2319,11 @@ sub new {
         open_html => $args{open_html} // 1,
         _session => undef,
         _transfer_session => undef,
-        persistent => 1,
+        persistent => $requested_persistent ? 1 : 0,
         session_id => $session_id,
         requested_persistent => $requested_persistent,
         _prewarm_create_msg => '',
+        _session_server_ready => 0,
     };
     return bless $self, $class;
 }
@@ -2553,7 +2714,7 @@ sub run_code {
     my $result;
     my $macro_bootstrap_meta;
     local $ENV{SAS_ODA_AUTOLOAD_MACROS} = 0 if $disable_global_macro_bootstrap;
-    if ($self->{persistent} && $self->{session_id}) {
+    if ($self->{requested_persistent} && $self->{session_id}) {
         my $load_macros = (_autoload_macros_enabled() && !$disable_global_macro_bootstrap) ? 1 : 0;
         my $submit_timeout = _effective_persistent_submit_timeout_seconds(
             load_macros => $load_macros,
@@ -2584,27 +2745,20 @@ sub run_code {
         }
         $result = [ $resp_log, $resp_lst, undef ];
     } else {
-        $result = eval { run_sas_logic($processed_code, $self->{_session}) };
-        $self->{_session} = $result->[2] if ref $result;
-        if (ref($self->{_session}) && $macro_autoload_enabled) {
-            my ($elapsed, $log_path, $started_at, $finished_at, $ok, $warning);
-            eval { $elapsed = $self->{_session}->{_macro_bootstrap_elapsed_seconds}; 1; };
-            eval { $log_path = $self->{_session}->{_macro_bootstrap_log_path}; 1; };
-            if (defined $elapsed || defined $log_path) {
-                eval { $started_at = $self->{_session}->{_macro_bootstrap_started_at}; 1; };
-                eval { $finished_at = $self->{_session}->{_macro_bootstrap_finished_at}; 1; };
-                eval { $ok = $self->{_session}->{_macro_bootstrap_ok}; 1; };
-                eval { $warning = $self->{_session}->{_macro_bootstrap_warning}; 1; };
-                $macro_bootstrap_meta = {
-                    started_at      => $started_at // '',
-                    finished_at     => $finished_at // '',
-                    elapsed_seconds => $elapsed,
-                    ok              => $ok // '',
-                    warning         => $warning ? 1 : 0,
-                    log_path        => $log_path // '',
-                };
-            }
+        my $resp = eval { _run_nonpersistent_sas_logic_via_python($processed_code) };
+        if ($@) {
+            return { error => $@, log => '', lst => '', dep_logs => $dep_logs };
         }
+        if (!$resp || ($resp->{status} // '') ne 'ok') {
+            return {
+                error => $resp->{error} // 'inline SAS Python helper error',
+                log => $resp->{log} // '',
+                lst => $resp->{lst} // '',
+                dep_logs => $dep_logs,
+            };
+        }
+        $macro_bootstrap_meta = $resp->{macro_bootstrap_meta} if ref($resp->{macro_bootstrap_meta}) eq 'HASH';
+        $result = [ $resp->{log} // '', $resp->{lst} // '', undef ];
     }
 
     if ($@ || !$result || $result->[0] eq "ERROR") {
