@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-08-submit-progress-frames'
+SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -190,7 +190,7 @@ def create_session(session_id):
     log_event(f"create_session done session_id={session_id}")
     return sess
 
-def ensure_macros_loaded(session_id, sess):
+def ensure_macros_loaded(session_id, sess, progress_callback=None):
     if session_macros_loaded.get(session_id):
         return ''
     log_event(f"macro_bootstrap start session_id={session_id}")
@@ -213,12 +213,21 @@ def ensure_macros_loaded(session_id, sess):
         ])
     )
     print(f"[{session_id}] SAS ODA macro bootstrap started at {bootstrap_started_at}", flush=True)
+    if callable(progress_callback):
+        progress_callback({
+            'status': 'progress',
+            'kind': 'macro_bootstrap_started',
+            'label': 'SAS ODA macro bootstrap',
+            'session_id': session_id,
+            'started_at': bootstrap_started_at,
+        })
     res = submit_with_heartbeat(
         sess,
         LOAD_MACROS_CODE,
         session_id,
         label="SAS ODA macro bootstrap",
         timeout_seconds=MACRO_BOOTSTRAP_TIMEOUT_SECONDS,
+        progress_callback=progress_callback,
     )
     macro_log = res.get('LOG', '')
     bootstrap_ok = ''
@@ -263,6 +272,17 @@ def ensure_macros_loaded(session_id, sess):
     if warning:
         print(f"[{session_id}] WARNING: Macro load may have failed - check log above", flush=True)
         log_event(f"macro_bootstrap warning session_id={session_id}")
+    if callable(progress_callback):
+        progress_callback({
+            'status': 'progress',
+            'kind': 'macro_bootstrap_finished',
+            'label': 'SAS ODA macro bootstrap',
+            'session_id': session_id,
+            'finished_at': bootstrap_finished_at,
+            'elapsed_seconds': bootstrap_elapsed_seconds,
+            'ok': bootstrap_ok or '0',
+            'warning': bool(warning),
+        })
     session_macros_loaded[session_id] = True
     log_event(f"macro_bootstrap done session_id={session_id}")
     return macro_log
@@ -593,7 +613,11 @@ def handle_client(conn, addr):
                     nonlocal macro_log, macro_warning, macro_meta
                     if load_macros:
                         bootstrap_ran = not bool(session_macros_loaded.get(session_id, False))
-                        macro_log = ensure_macros_loaded(session_id, sess) or ''
+                        macro_log = ensure_macros_loaded(
+                            session_id,
+                            sess,
+                            progress_callback=lambda payload: send_framed_json(conn, payload),
+                        ) or ''
                         if bootstrap_ran:
                             macro_warning = bool(session_macro_bootstrap_warning.get(session_id, False))
                             macro_meta = dict(session_macro_bootstrap_meta.get(session_id, {}) or {})
