@@ -59,6 +59,56 @@ BEGIN {
             }
         }
     }
+
+    my ($has_code, $has_file, $has_file_op) = (0, 0, 0);
+    my @argv = @ARGV;
+    while (@argv) {
+        my $arg = shift @argv;
+        last if $arg eq '--';
+
+        if ($arg eq '--code' || $arg eq '--codes' || $arg eq '-c') {
+            $has_code = 1;
+            shift @argv if @argv;
+            next;
+        }
+        if ($arg =~ /^--(?:code|codes)=/ || $arg =~ /^-c.+/) {
+            $has_code = 1;
+            next;
+        }
+
+        if ($arg eq '--file' || $arg eq '-f') {
+            $has_file = 1;
+            shift @argv if @argv;
+            next;
+        }
+        if ($arg =~ /^--file=/ || $arg =~ /^-f.+/) {
+            $has_file = 1;
+            next;
+        }
+
+        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--dir4listing|--file-info)$/) {
+            $has_file_op = 1;
+            shift @argv if @argv;
+            next;
+        }
+        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--dir4listing|--file-info)=/) {
+            $has_file_op = 1;
+            next;
+        }
+        if ($arg eq '-u' || $arg eq '-d' || $arg eq '-k' || $arg eq '-l') {
+            $has_file_op = 1;
+            shift @argv if @argv;
+            next;
+        }
+        if ($arg =~ /^-(?:u|d|k|l).+/) {
+            $has_file_op = 1;
+            next;
+        }
+    }
+
+    if ($has_file_op && !$has_code && !$has_file && !defined $ENV{PERLMCP_SASPY_LOAD_MACROS}) {
+        $ENV{PERLMCP_SASPY_LOAD_MACROS} = 0;
+    }
 }
 use strict;
 use warnings;
@@ -91,6 +141,7 @@ my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
 my $skip_upload_if_same = 1;
+my $cleanup_empty_output_dir = 1;
 my $delete_dir = '~';
 my $created_output_dir = 0;
 my $default_sas_run_timeout_seconds = exists $ENV{SAS_ODA_DEFAULT_RUN_TIMEOUT_SECONDS}
@@ -351,11 +402,39 @@ sub status_timestamp {
 
 $python_bin = resolve_python_bin();
 
+{
+    my @normalized_argv;
+    while (@ARGV) {
+        my $arg = shift @ARGV;
+
+        if ($arg eq '--cleanup-empty-output-dir') {
+            if (@ARGV && $ARGV[0] =~ /^(?:0|1)$/) {
+                my $value = shift @ARGV;
+                push @normalized_argv, ($value ? '--cleanup-empty-output-dir' : '--no-cleanup-empty-output-dir');
+            } else {
+                push @normalized_argv, $arg;
+            }
+            next;
+        }
+
+        if ($arg =~ /^--cleanup-empty-output-dir=(.+)$/) {
+            my $value = $1;
+            die "Error: --cleanup-empty-output-dir only accepts 0 or 1\n"
+                unless $value =~ /^(?:0|1)$/;
+            push @normalized_argv, ($value ? '--cleanup-empty-output-dir' : '--no-cleanup-empty-output-dir');
+            next;
+        }
+
+        push @normalized_argv, $arg;
+    }
+    @ARGV = @normalized_argv;
+}
+
 GetOptions(
     'code|codes|c=s' => \$code,
     'file|f=s' => \$file,
     'macro-dir|m=s' => \$macro_dir,
-    'no-html-info' => \$no_html,
+    'no-html-info|no-html_info' => \$no_html,
     'output-prefix|p=s' => \$output_prefix,
     'persistent!' => \$persistent,
     'session-id|s=s' => \$session_id,
@@ -368,6 +447,7 @@ GetOptions(
     'delete-dir=s' => \$delete_dir,
     'dir4listing|l=s' => \$dir4listing,
     'file-info=s@' => \@file_infos,
+    'cleanup-empty-output-dir!' => \$cleanup_empty_output_dir,
     'sas-oda-account=s' => \$sas_oda_account,
     'sas-oda-password=s' => \$sas_oda_password,
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
@@ -848,6 +928,7 @@ Options:
   -f, --file <file>          SAS script file to execute
   -m, --macro-dir <dir>      Directory containing macro files (default: ./)
   --no-html-info             output a plain text file containing the random html filename
+  --no-html_info             Legacy alias for --no-html-info
   -p, --output-prefix <prefix> Prefix for output files (default: output)
     --persistent             Keep SAS session alive for multiple runs, only working with --session-id. If not specified, a new session is created and destroyed for each run.
                              As the intial starting of saspy server and sas oda session takes time, using persistent session can save time for multiple runs. So please try to
@@ -877,6 +958,12 @@ Options:
                              Repeat this option to inspect multiple files.
                              Quote '~/...' in your shell so the local shell does not
                              expand the remote HOME shorthand before this helper sees it.
+  --cleanup-empty-output-dir Remove an empty auto-created output directory (default: on).
+                             Also accepts legacy numeric forms:
+                             --cleanup-empty-output-dir 1
+                             --cleanup-empty-output-dir=0
+  --no-cleanup-empty-output-dir
+                             Keep an empty auto-created output directory for debugging.
   --sas-oda-account <user>   Optional SAS ODA account/email for first-run credential bootstrap.
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
@@ -996,6 +1083,7 @@ sub ensure_output_dir {
 
 sub cleanup_empty_output_dir_if_created {
     my ($dir) = @_;
+    return unless $cleanup_empty_output_dir;
     return unless $created_output_dir;
     return unless defined $dir && length $dir && -d $dir;
     opendir(my $dh, $dir) or return;
