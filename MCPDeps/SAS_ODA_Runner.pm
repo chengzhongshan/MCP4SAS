@@ -134,7 +134,9 @@ my $INLINE_PYTHON_SOURCE = <<'END_PYTHON';
 import saspy
 import json
 import os
+import shutil
 import sys
+import tempfile
 import time
 import threading
 import traceback
@@ -272,6 +274,24 @@ def _remote_file_matches_local_upload(remote_info, local_path):
             if abs(remote_epoch - local_epoch) <= 2:
                 return True
     return False
+
+def _remote_upload_size_ok(remote_info, expected_size):
+    if not isinstance(remote_info, dict) or not remote_info.get('exists'):
+        return False
+    remote_size = remote_info.get('size')
+    if remote_size is None:
+        return False
+    try:
+        return int(remote_size) == int(expected_size or 0)
+    except Exception:
+        return False
+
+def _stage_upload_source(local_path, remote_name):
+    suffix = os.path.splitext(remote_name or '')[1] or '.tmp'
+    fd, staged_path = tempfile.mkstemp(prefix='sas_upload_stage_', suffix=suffix)
+    os.close(fd)
+    shutil.copy2(local_path, staged_path)
+    return staged_path
 
 def _write_text_artifact(path, text):
     if not path:
@@ -493,20 +513,24 @@ def run_fileinfo(sess, remote_path):
     filename myfile "{safe_path}";
     data _null_;
         length _size $64 _created $128 _modified $128;
-        fid = fopen('myfile','I',1,'B');
-        if fid > 0 then do;
-            _size = compress(finfo(fid,'File Size (bytes)'));
-            if missing(_size) then _size = compress(finfo(fid,'File Size'));
-            _created = strip(finfo(fid,'Create Time'));
-            if missing(_created) then _created = strip(finfo(fid,'Created'));
-            _modified = strip(finfo(fid,'Last Modified'));
-            if missing(_modified) then _modified = strip(finfo(fid,'Last Modified Time'));
-            if missing(_modified) then _modified = strip(finfo(fid,'Modification Time'));
+        length _exists_flag 8;
+        _exists_flag = fexist('myfile');
+        if _exists_flag then do;
             call symputx('_remote_exists','1','G');
+            fid = fopen('myfile','I',1,'B');
+            if fid > 0 then do;
+                _size = compress(finfo(fid,'File Size (bytes)'));
+                if missing(_size) then _size = compress(finfo(fid,'File Size'));
+                _created = strip(finfo(fid,'Create Time'));
+                if missing(_created) then _created = strip(finfo(fid,'Created'));
+                _modified = strip(finfo(fid,'Last Modified'));
+                if missing(_modified) then _modified = strip(finfo(fid,'Last Modified Time'));
+                if missing(_modified) then _modified = strip(finfo(fid,'Modification Time'));
+                rc = fclose(fid);
+            end;
             call symputx('_remote_size', _size, 'G');
             call symputx('_remote_created', _created, 'G');
             call symputx('_remote_modified', _modified, 'G');
-            rc = fclose(fid);
         end;
         else do;
             call symputx('_remote_exists','0','G');
@@ -521,11 +545,19 @@ def run_fileinfo(sess, remote_path):
     size = sess.symget('_remote_size')
     created = sess.symget('_remote_created')
     modified = sess.symget('_remote_modified')
-    size_val = int(size) if size and str(size).isdigit() else None
+    exists_text = str(exists).strip() if exists is not None else ''
+    size_text = str(size).strip() if size is not None else ''
+    size_val = int(size_text) if size_text.isdigit() else None
     created = str(created).strip() if created is not None and str(created).strip() else None
     modified = str(modified).strip() if modified is not None and str(modified).strip() else None
+    exists_flag = (
+        exists_text not in ('', '0', '0.0', 'false', 'False', 'FALSE')
+        or size_val is not None
+        or created is not None
+        or modified is not None
+    )
     return {
-        'exists': (exists == '1') or (size_val is not None),
+        'exists': exists_flag,
         'size': size_val,
         'path': remote_path,
         'created': created,
@@ -786,13 +818,17 @@ def remote_file_info(remote_filepath, session_obj):
         filename myfile "{safe_path}";
         data _null_;
             length _size $64 _exists $8;
-            fid = fopen('myfile','I',1,'B');
-            if fid > 0 then do;
-                _size = compress(finfo(fid,'File Size (bytes)'));
-                if missing(_size) then _size = compress(finfo(fid,'File Size'));
+            length _exists_flag 8;
+            _exists_flag = fexist('myfile');
+            if _exists_flag then do;
                 call symputx('_remote_exists','1','G');
+                fid = fopen('myfile','I',1,'B');
+                if fid > 0 then do;
+                    _size = compress(finfo(fid,'File Size (bytes)'));
+                    if missing(_size) then _size = compress(finfo(fid,'File Size'));
+                    rc = fclose(fid);
+                end;
                 call symputx('_remote_size', _size, 'G');
-                rc = fclose(fid);
             end;
             else do;
                 call symputx('_remote_exists','0','G');
@@ -803,8 +839,10 @@ def remote_file_info(remote_filepath, session_obj):
         session.submit(sas_code)
         exists = session.symget('_remote_exists')
         size = session.symget('_remote_size')
-        size_num = int(size) if size and str(size).strip().isdigit() else None
-        exists_flag = (exists == '1') or (size_num is not None)
+        exists_text = str(exists).strip() if exists is not None else ''
+        size_text = str(size).strip() if size is not None else ''
+        size_num = int(size_text) if size_text.isdigit() else None
+        exists_flag = exists_text not in ('', '0', '0.0', 'false', 'False', 'FALSE') or (size_num is not None)
         return {'exists': exists_flag, 'size': size_num, 'path': remote_filepath}, session_obj
     except Exception as e:
         return f"PYTHON ERROR: {str(e)}", session_obj
@@ -830,27 +868,48 @@ def upload_file(local_path, session_obj, progress_label=None, skip_if_same=True)
                 )
                 return remote_path, session_obj
         print(f"Upload step: {display_label} -> {remote_path} ({local_size:,} bytes)", flush=True)
-        stop_event = threading.Event()
-        poller = None
-        try:
-            if local_size >= 10 * 1024 * 1024:
-                _print_upload_progress(progress_line_label, 0, local_size, done=False)
-                poller = threading.Thread(
-                    target=_poll_remote_upload_progress,
-                    args=(remote_path, local_size, stop_event, progress_line_label),
-                    daemon=True,
-                )
-                poller.start()
-            session.upload(local_path, remote_path)
-        finally:
-            stop_event.set()
-            if poller is not None:
-                poller.join(timeout=5)
+        def _upload_once(source_path):
+            stop_event = threading.Event()
+            poller = None
+            try:
+                if local_size >= 10 * 1024 * 1024:
+                    _print_upload_progress(progress_line_label, 0, local_size, done=False)
+                    poller = threading.Thread(
+                        target=_poll_remote_upload_progress,
+                        args=(remote_path, local_size, stop_event, progress_line_label),
+                        daemon=True,
+                    )
+                    poller.start()
+                session.upload(source_path, remote_path)
+            finally:
+                stop_event.set()
+                if poller is not None:
+                    poller.join(timeout=5)
+        _upload_once(local_path)
         try:
             info = run_fileinfo(session, remote_path)
-            final_size = info.get('size') or local_size
         except Exception:
-            final_size = local_size
+            info = None
+        if not _remote_upload_size_ok(info, local_size):
+            staged_path = None
+            try:
+                staged_path = _stage_upload_source(local_path, remote_name)
+                print(
+                    f"Upload verification retry [{display_label}]: remote size mismatch after initial upload; retrying from staged temp copy.",
+                    flush=True,
+                )
+                _upload_once(staged_path)
+                info = run_fileinfo(session, remote_path)
+            finally:
+                if staged_path and os.path.exists(staged_path):
+                    try:
+                        os.unlink(staged_path)
+                    except Exception:
+                        pass
+        if not _remote_upload_size_ok(info, local_size):
+            got_size = info.get('size') if isinstance(info, dict) else None
+            raise IOError(f"Uploaded remote file size mismatch for {remote_path}: expected {local_size} bytes, got {got_size}")
+        final_size = info.get('size') if isinstance(info, dict) else local_size
         _print_upload_progress(progress_line_label, final_size, local_size, done=True)
         return remote_path, session_obj
     except Exception as e:
@@ -896,7 +955,7 @@ sub _autoload_macros_enabled {
 
 my $SERVER_HOST = '127.0.0.1';
 my $SERVER_PORT = 8765;
-my $SERVER_API_VERSION = '2026-07-08-submit-progress-frames';
+my $SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -998,6 +1057,99 @@ sub _should_use_direct_upload_for_persistent_session {
     return 1;
 }
 
+sub _upload_skip_cache_path {
+    return $ENV{SAS_ODA_UPLOAD_SKIP_CACHE_FILE}
+      if defined($ENV{SAS_ODA_UPLOAD_SKIP_CACHE_FILE}) && length($ENV{SAS_ODA_UPLOAD_SKIP_CACHE_FILE});
+
+    my $home = $ENV{HOME} || $ENV{USERPROFILE} || getcwd();
+    return File::Spec->catfile($home, '.sas_oda_upload_skip_cache.json');
+}
+
+sub _load_upload_skip_cache {
+    my $path = _upload_skip_cache_path();
+    return {} unless defined($path) && length($path) && -s $path;
+    open my $fh, '<', $path or return {};
+    local $/;
+    my $raw = <$fh>;
+    close $fh;
+    return {} unless defined $raw && length $raw;
+    my $payload = eval { decode_json($raw) };
+    return (ref($payload) eq 'HASH') ? $payload : {};
+}
+
+sub _save_upload_skip_cache {
+    my ($cache) = @_;
+    return unless ref($cache) eq 'HASH';
+    my $path = _upload_skip_cache_path();
+    return unless defined($path) && length($path);
+    my ($vol, $dir, $file) = File::Spec->splitpath($path);
+    my $base_dir = File::Spec->catpath($vol, $dir, '');
+    if (defined($base_dir) && length($base_dir) && !-d $base_dir) {
+        eval { require File::Path; File::Path::make_path($base_dir); 1; };
+    }
+    my $tmp = $path . '.tmp';
+    open my $fh, '>', $tmp or return;
+    print {$fh} encode_json($cache);
+    close $fh;
+    rename $tmp, $path;
+}
+
+sub _local_upload_signature {
+    my ($local_path) = @_;
+    return unless defined($local_path) && length($local_path) && -e $local_path;
+    my @st = stat($local_path);
+    return unless @st;
+    return {
+        size           => 0 + ($st[7] // 0),
+        modified_epoch => defined($st[9])  ? int($st[9])  : undef,
+        created_epoch  => defined($st[10]) ? int($st[10]) : undef,
+    };
+}
+
+sub _cached_remote_file_matches_local_upload {
+    my ($remote_info, $local_path) = @_;
+    return 0 unless ref($remote_info) eq 'HASH' && ($remote_info->{exists} // 0);
+    my $remote_path = $remote_info->{path} // '';
+    return 0 unless length $remote_path;
+
+    my $local_sig = _local_upload_signature($local_path);
+    return 0 unless ref($local_sig) eq 'HASH';
+
+    my $remote_size = $remote_info->{size};
+    return 0 unless defined $remote_size;
+    return 0 unless int($remote_size) == int($local_sig->{size} // -1);
+
+    my $cache = _load_upload_skip_cache();
+    my $entry = (ref($cache) eq 'HASH') ? $cache->{$remote_path} : undef;
+    return 0 unless ref($entry) eq 'HASH';
+    return 0 unless defined($entry->{size}) && int($entry->{size}) == int($local_sig->{size} // -1);
+
+    if (defined($entry->{created_epoch}) && defined($local_sig->{created_epoch})) {
+        return 1 if abs(int($entry->{created_epoch}) - int($local_sig->{created_epoch})) <= 2;
+    }
+    if (defined($entry->{modified_epoch}) && defined($local_sig->{modified_epoch})) {
+        return 1 if abs(int($entry->{modified_epoch}) - int($local_sig->{modified_epoch})) <= 2;
+    }
+    return 0;
+}
+
+sub _remember_uploaded_file_match {
+    my ($remote_path, $local_path) = @_;
+    return unless defined($remote_path) && length($remote_path);
+    my $local_sig = _local_upload_signature($local_path);
+    return unless ref($local_sig) eq 'HASH';
+    my $cache = _load_upload_skip_cache();
+    $cache = {} unless ref($cache) eq 'HASH';
+    $cache->{$remote_path} = {
+        size           => $local_sig->{size},
+        created_epoch  => $local_sig->{created_epoch},
+        modified_epoch => $local_sig->{modified_epoch},
+        local_path     => $local_path,
+        updated_epoch  => time(),
+    };
+    _save_upload_skip_cache($cache);
+}
+
 # NOTE: This embedded copy is only written to disk when sas_oda_session_server.py
 # is missing. Keep it in sync with the standalone sas_oda_session_server.py file.
 my $SERVER_PY = <<'END_SERVER_PY';
@@ -1005,6 +1157,8 @@ my $SERVER_PY = <<'END_SERVER_PY';
 import socket, threading, json, struct, time, sys, traceback
 from saspy import SASsession
 import os
+import shutil
+import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
@@ -1152,28 +1306,41 @@ def _remote_file_matches_local_upload(remote_info, local_path):
             return False
     except Exception:
         return False
-    remote_epochs = []
-    local_epochs = []
-    for key in ('created_epoch', 'modified_epoch'):
-        value = remote_info.get(key)
-        if value is not None:
-            try:
-                remote_epochs.append(int(value))
-            except Exception:
-                pass
-        local_value = local_meta.get(key)
-        if local_value is not None:
-            try:
-                local_epochs.append(int(local_value))
-            except Exception:
-                pass
-    if not remote_epochs or not local_epochs:
-        return False
-    for remote_epoch in remote_epochs:
-        for local_epoch in local_epochs:
-            if abs(remote_epoch - local_epoch) <= 2:
-                return True
+    created_remote = remote_info.get('created_epoch')
+    created_local = local_meta.get('created_epoch')
+    if created_remote is not None and created_local is not None:
+        try:
+            return abs(int(created_remote) - int(created_local)) <= 2
+        except Exception:
+            pass
+
+    modified_remote = remote_info.get('modified_epoch')
+    modified_local = local_meta.get('modified_epoch')
+    if modified_remote is not None and modified_local is not None:
+        try:
+            return abs(int(modified_remote) - int(modified_local)) <= 2
+        except Exception:
+            pass
+
     return False
+
+def _remote_upload_size_ok(remote_info, expected_size):
+    if not isinstance(remote_info, dict) or not remote_info.get('exists'):
+        return False
+    remote_size = remote_info.get('size')
+    if remote_size is None:
+        return False
+    try:
+        return int(remote_size) == int(expected_size or 0)
+    except Exception:
+        return False
+
+def _stage_upload_source(local_path, remote_name):
+    suffix = os.path.splitext(remote_name or '')[1] or '.tmp'
+    fd, staged_path = tempfile.mkstemp(prefix='sas_upload_stage_', suffix=suffix)
+    os.close(fd)
+    shutil.copy2(local_path, staged_path)
+    return staged_path
 
 def write_text_artifact(path, text):
     if not path:
@@ -1410,20 +1577,24 @@ def run_fileinfo(sess, remote_path):
     filename myfile "{safe_path}";
     data _null_;
         length _size $64 _created $128 _modified $128;
-        fid = fopen('myfile','I',1,'B');
-        if fid > 0 then do;
-            _size = compress(finfo(fid,'File Size (bytes)'));
-            if missing(_size) then _size = compress(finfo(fid,'File Size'));
-            _created = strip(finfo(fid,'Create Time'));
-            if missing(_created) then _created = strip(finfo(fid,'Created'));
-            _modified = strip(finfo(fid,'Last Modified'));
-            if missing(_modified) then _modified = strip(finfo(fid,'Last Modified Time'));
-            if missing(_modified) then _modified = strip(finfo(fid,'Modification Time'));
+        length _exists_flag 8;
+        _exists_flag = fexist('myfile');
+        if _exists_flag then do;
             call symputx('_remote_exists','1','G');
+            fid = fopen('myfile','I',1,'B');
+            if fid > 0 then do;
+                _size = compress(finfo(fid,'File Size (bytes)'));
+                if missing(_size) then _size = compress(finfo(fid,'File Size'));
+                _created = strip(finfo(fid,'Create Time'));
+                if missing(_created) then _created = strip(finfo(fid,'Created'));
+                _modified = strip(finfo(fid,'Last Modified'));
+                if missing(_modified) then _modified = strip(finfo(fid,'Last Modified Time'));
+                if missing(_modified) then _modified = strip(finfo(fid,'Modification Time'));
+                rc = fclose(fid);
+            end;
             call symputx('_remote_size', _size, 'G');
             call symputx('_remote_created', _created, 'G');
             call symputx('_remote_modified', _modified, 'G');
-            rc = fclose(fid);
         end;
         else do;
             call symputx('_remote_exists','0','G');
@@ -1438,11 +1609,19 @@ def run_fileinfo(sess, remote_path):
     size = sess.symget('_remote_size')
     created = sess.symget('_remote_created')
     modified = sess.symget('_remote_modified')
-    size_val = int(size) if size and str(size).isdigit() else None
+    exists_text = str(exists).strip() if exists is not None else ''
+    size_text = str(size).strip() if size is not None else ''
+    size_val = int(size_text) if size_text.isdigit() else None
     created = str(created).strip() if created is not None and str(created).strip() else None
     modified = str(modified).strip() if modified is not None and str(modified).strip() else None
+    exists_flag = (
+        exists_text not in ('', '0', '0.0', 'false', 'False', 'FALSE')
+        or size_val is not None
+        or created is not None
+        or modified is not None
+    )
     return {
-        'exists': (exists == '1') or (size_val is not None),
+        'exists': exists_flag,
         'size': size_val,
         'path': remote_path,
         'created': created,
@@ -1681,27 +1860,48 @@ def handle_client(conn, addr):
                             log_event(f"upload skipped session_id={session_id} remote_path={remote_path} reason=matched_size_timestamp")
                             return remote_path
                     print(f"Upload step [{session_id}]: {display_label} -> {remote_path} ({local_size:,} bytes)", flush=True)
-                    stop_event = threading.Event()
-                    poller = None
-                    try:
-                        if local_size >= 10 * 1024 * 1024:
-                            print_upload_progress(progress_line_label, 0, local_size, done=False)
-                            poller = threading.Thread(
-                                target=poll_remote_upload_progress,
-                                args=(session_id, remote_path, local_size, stop_event, progress_line_label),
-                                daemon=True,
-                            )
-                            poller.start()
-                        sess.upload(local_path, remote_path)
-                    finally:
-                        stop_event.set()
-                        if poller is not None:
-                            poller.join(timeout=5)
+                    def _upload_once(source_path):
+                        stop_event = threading.Event()
+                        poller = None
+                        try:
+                            if local_size >= 10 * 1024 * 1024:
+                                print_upload_progress(progress_line_label, 0, local_size, done=False)
+                                poller = threading.Thread(
+                                    target=poll_remote_upload_progress,
+                                    args=(session_id, remote_path, local_size, stop_event, progress_line_label),
+                                    daemon=True,
+                                )
+                                poller.start()
+                            sess.upload(source_path, remote_path)
+                        finally:
+                            stop_event.set()
+                            if poller is not None:
+                                poller.join(timeout=5)
+                    _upload_once(local_path)
                     try:
                         info = run_fileinfo(sess, remote_path)
-                        final_size = info.get('size') or local_size
                     except Exception:
-                        final_size = local_size
+                        info = None
+                    if not _remote_upload_size_ok(info, local_size):
+                        staged_path = None
+                        try:
+                            staged_path = _stage_upload_source(local_path, remote_name)
+                            print(
+                                f"Upload verification retry [{session_id}]: {display_label} remote size mismatch after initial upload; retrying from staged temp copy.",
+                                flush=True,
+                            )
+                            _upload_once(staged_path)
+                            info = run_fileinfo(sess, remote_path)
+                        finally:
+                            if staged_path and os.path.exists(staged_path):
+                                try:
+                                    os.unlink(staged_path)
+                                except Exception:
+                                    pass
+                    if not _remote_upload_size_ok(info, local_size):
+                        got_size = info.get('size') if isinstance(info, dict) else None
+                        raise IOError(f"Uploaded remote file size mismatch for {remote_path}: expected {local_size} bytes, got {got_size}")
+                    final_size = info.get('size') if isinstance(info, dict) else local_size
                     if local_size >= 10 * 1024 * 1024:
                         print_upload_progress(progress_line_label, final_size, local_size, done=True)
                     else:
@@ -2518,6 +2718,15 @@ sub _find_local_macro_file {
     my ($self, $macro_name) = @_;
     return unless defined $macro_name && length $macro_name;
     my @bases;
+    for my $extra (
+        $ENV{SAS_ODA_VALIDATED_MACRO_DIR},
+        '\\\\rs1.stjude.org\\clusterhome\\zcheng\\SAS-Useful-Codes\\Macros',
+        '\\\\rs1.stjude.org\\clusterhome\\zcheng\\SAS-Useful-Codes\\Macros\\SAS_ondemand_scripts',
+    ) {
+        push @bases, $extra if defined $extra && length $extra && -d $extra;
+    }
+    my $cwd_macros = File::Spec->catdir(getcwd(), 'Macros');
+    push @bases, $cwd_macros if -d $cwd_macros;
     push @bases, $self->{local_macro_dir}
       if defined $self->{local_macro_dir} && length $self->{local_macro_dir} && -d $self->{local_macro_dir};
 
@@ -2629,7 +2838,7 @@ sub _expanded_targeted_remote_macro_names {
     return () unless ref($macro_names_ref) eq 'ARRAY' && @$macro_names_ref;
 
     my %targeted_macro_dependencies = (
-        macroparas => [ 'FileOrDirExist', 'del_file_with_fullpath', 'list_files4dsd' ],
+        macroparas => [ 'FileOrDirExist', 'del_file_with_fullpath', 'list_files', 'list_files4dsd', 'listfiles2dsdInUE' ],
     );
     my %seen;
     my @names;
@@ -2652,14 +2861,15 @@ sub _expanded_targeted_remote_macro_names {
 
 sub _find_local_macro_bootstrap_helper {
     my ($self) = @_;
-    my @candidates;
-    push @candidates, File::Spec->catfile($self->{local_macro_dir}, 'importallmacros_ue.sas')
-      if defined $self->{local_macro_dir} && length $self->{local_macro_dir};
-
     my $module_file = abs_path(__FILE__) || File::Spec->rel2abs(__FILE__);
     $module_file =~ s{\\}{/}g;
     my $module_dir = dirname($module_file);
+    my @candidates;
+    push @candidates, $ENV{SAS_ODA_VALIDATED_MACRO_BOOTSTRAP}
+      if defined $ENV{SAS_ODA_VALIDATED_MACRO_BOOTSTRAP} && length $ENV{SAS_ODA_VALIDATED_MACRO_BOOTSTRAP};
     push @candidates, File::Spec->catfile($module_dir, 'importallmacros_ue.sas');
+    push @candidates, File::Spec->catfile($self->{local_macro_dir}, 'importallmacros_ue.sas')
+      if defined $self->{local_macro_dir} && length $self->{local_macro_dir};
 
     my %seen;
     for my $path (@candidates) {
@@ -2699,6 +2909,7 @@ sub _process_dependencies {
     my @logs;
     my %uploaded;
     my $scan_code = _dependency_scan_code($code);
+    my $macro_autoload_enabled = _autoload_macros_enabled() ? 1 : 0;
     my %defined_in_code = map { lc($_) => 1 } ($scan_code =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
 
     while ($scan_code =~ /%include\s+["'](.+?)["']/gi) {
@@ -2726,11 +2937,14 @@ sub _process_dependencies {
     foreach my $m_name (@potential_macros) {
         next if _is_builtin_macro_name($m_name);
         next if $defined_in_code{lc $m_name};
+        if ($macro_autoload_enabled) {
+            push @unresolved_macro_names, $m_name;
+            next;
+        }
         my $local_m_path = $self->_find_local_macro_file($m_name);
         if (defined $local_m_path && -e $local_m_path && !$uploaded{$local_m_path}++) {
-            my ($should_overlay, $overlay_reason) = _autoload_macros_enabled()
-              ? $self->_local_macro_should_overlay_remote($m_name, $local_m_path)
-              : (1, 'global macro autoload disabled; targeted local macro overlay required');
+            my ($should_overlay, $overlay_reason) =
+              (1, 'global macro autoload disabled; targeted local macro overlay required');
             if ($should_overlay) {
                 _warn_dependency_upload(kind => 'macro file', detail => "%$m_name", path => $local_m_path);
                 my $remote = eval {
@@ -2757,15 +2971,18 @@ sub _process_dependencies {
         }
     }
 
-    my $targeted_remote_loader = _autoload_macros_enabled()
-      ? ''
-      : $self->_build_targeted_remote_macro_loader(\@unresolved_macro_names);
-    if (length $targeted_remote_loader) {
-        $header_includes = $targeted_remote_loader . "\n" . $header_includes;
-        my @expanded_targeted_names = _expanded_targeted_remote_macro_names(\@unresolved_macro_names);
-        push @logs, "Injected targeted remote macro loader for: " . join(', ', @expanded_targeted_names);
-    } elsif (@unresolved_macro_names && _autoload_macros_enabled()) {
-        push @logs, "Using global importallmacros_ue bootstrap for unresolved remote macros: " . join(', ', @unresolved_macro_names);
+    if (!$macro_autoload_enabled) {
+        my $targeted_remote_loader = $self->_build_targeted_remote_macro_loader(\@unresolved_macro_names);
+        if (length $targeted_remote_loader) {
+            $header_includes = $targeted_remote_loader . "\n" . $header_includes;
+            my @expanded_targeted_names = _expanded_targeted_remote_macro_names(\@unresolved_macro_names);
+            push @logs, "Injected targeted remote macro loader for: " . join(', ', @expanded_targeted_names);
+        }
+    } elsif (@unresolved_macro_names) {
+        my %seen;
+        my @unique = grep { defined($_) && length($_) && !$seen{lc $_}++ } @unresolved_macro_names;
+        push @logs, "Using colocated importallmacros_ue bootstrap only for unresolved macros: " . join(', ', @unique);
+        push @logs, 'No additional macro files were uploaded because importallmacros_ue.sas is treated as self-contained.';
     }
 
     my $upload_dependency = sub {
@@ -2989,6 +3206,22 @@ sub upload {
     $opts = {} unless ref($opts) eq 'HASH';
     my $progress_label = $opts->{progress_label} // '';
     my $skip_if_same = exists $opts->{skip_if_same} ? ($opts->{skip_if_same} ? 1 : 0) : 1;
+    my $remote_home = '';
+    my $remote_path = '';
+    if ($skip_if_same) {
+        $remote_home = $self->get_sas_home_path();
+        if (defined($remote_home) && $remote_home !~ /^PYTHON ERROR:/ && length($remote_home)) {
+            $remote_path = $remote_home;
+            $remote_path =~ s{[\\/]+$}{};
+            $remote_path .= '/' . File::Basename::basename($local_path);
+            my $remote_info = eval { $self->fileinfo($remote_path) };
+            if (ref($remote_info) eq 'HASH' && _cached_remote_file_matches_local_upload($remote_info, $local_path)) {
+                my $display_label = $progress_label || ('dependency upload: ' . File::Basename::basename($local_path));
+                warn "Upload step: $display_label -> $remote_path already matches cached local size/creation-time; skipping upload.\n";
+                return $remote_path;
+            }
+        }
+    }
     my $timeout_seconds = _effective_upload_timeout_seconds(
         local_path      => $local_path,
         timeout_seconds => $opts->{timeout_seconds},
@@ -3004,7 +3237,10 @@ sub upload {
                 skip_if_same   => $skip_if_same ? 1 : 0,
             }
         );
-        return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+        if ($resp && ($resp->{status} // '') eq 'ok') {
+            _remember_uploaded_file_match($resp->{value}, $local_path);
+            return $resp->{value};
+        }
         return "PYTHON ERROR: " . ($resp->{error} // 'direct upload failure');
     }
     if ($self->{persistent} && $self->{session_id}) {
@@ -3019,7 +3255,10 @@ sub upload {
             $timeout_seconds,
             'remote upload',
         );
-        return $resp->{remote_path} if $resp && ($resp->{status} // '') eq 'ok';
+        if ($resp && ($resp->{status} // '') eq 'ok') {
+            _remember_uploaded_file_match($resp->{remote_path}, $local_path);
+            return $resp->{remote_path};
+        }
         return "PYTHON ERROR: " . ($resp->{error} // 'session server error');
     }
     my $resp = _run_nonpersistent_python_action(
@@ -3030,7 +3269,10 @@ sub upload {
             skip_if_same   => $skip_if_same ? 1 : 0,
         }
     );
-    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    if ($resp && ($resp->{status} // '') eq 'ok') {
+        _remember_uploaded_file_match($resp->{value}, $local_path);
+        return $resp->{value};
+    }
     return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent upload error');
 }
 
