@@ -1453,6 +1453,20 @@ sub fallback_runner {
     return make_runner(persistent => 0, session_id => undef);
 }
 
+my $batch_fileops_runner;
+
+sub transient_batch_fileops_runner {
+    return $runner if $persistent;
+    return $batch_fileops_runner if $batch_fileops_runner;
+    my $tmp_session_id = join('_', 'fileops', $$, int(time() * 1000));
+    print "Using temporary reusable SAS ODA session '$tmp_session_id' for this non-persistent batch of remote file operations.\n";
+    $batch_fileops_runner = make_runner(
+        persistent => 1,
+        session_id => $tmp_session_id,
+    );
+    return $batch_fileops_runner;
+}
+
 sub persistent_submit_fallback_allowed {
     return env_truthy($ENV{SAS_ODA_ALLOW_PERSISTENT_SUBMIT_FALLBACK});
 }
@@ -2758,29 +2772,40 @@ sub remote_path_for_file_action {
 }
 
 sub delete_one_file {
-    my ($remote_file, $remote_dir) = @_;
+    my ($remote_file, $remote_dir, $active_runner) = @_;
+    my $runner_for_delete = $active_runner || $runner;
     print "Deleting file $remote_file from remote SAS ODA...\n";
-    if ($persistent && $session_id) {
-        print "Using persistent SAS ODA session '$session_id' for delete...\n";
+    if (($runner_for_delete->{persistent} // 0) && ($runner_for_delete->{session_id} // '')) {
+        print "Using persistent SAS ODA session '$runner_for_delete->{session_id}' for delete...\n";
     }
-    my $delete_msg = run_with_possible_fallback(
-        'delete',
-        sub {
-            my ($active_runner) = @_;
-            return $active_runner->delete($remote_file, $remote_dir);
-        },
-    );
+    my $delete_msg = $active_runner
+      ? run_scalar_action_with_timeout(
+            'SAS ODA delete',
+            sub { return $runner_for_delete->delete($remote_file, $remote_dir); },
+        )
+      : run_with_possible_fallback(
+            'delete',
+            sub {
+                my ($active_runner) = @_;
+                return $active_runner->delete($remote_file, $remote_dir);
+            },
+        );
     if (defined $delete_msg && $delete_msg =~ /^PYTHON ERROR:/) {
         die "Delete failed: $delete_msg\n";
     }
     my $verify_path = remote_path_for_file_action($remote_file, $remote_dir);
-    my $remote_info = run_hash_with_possible_fallback(
-        'file-info lookup after delete',
-        sub {
-            my ($active_runner) = @_;
-            return $active_runner->fileinfo($verify_path);
-        },
-    );
+    my $remote_info = $active_runner
+      ? run_hash_action_with_timeout(
+            'SAS ODA file-info lookup after delete',
+            sub { return $runner_for_delete->fileinfo($verify_path); },
+        )
+      : run_hash_with_possible_fallback(
+            'file-info lookup after delete',
+            sub {
+                my ($active_runner) = @_;
+                return $active_runner->fileinfo($verify_path);
+            },
+        );
     if (ref($remote_info) eq 'HASH' && $remote_info->{exists}) {
         my $size_text = defined $remote_info->{size} ? $remote_info->{size} . " bytes" : 'unknown size';
         die "Delete failed: remote file still exists after delete attempt: $verify_path ($size_text)\n";
@@ -3223,15 +3248,23 @@ if (@download_files) {
 
 if (@delete_files || @delete_file_rgxs) {
     my @all_delete_targets = @delete_files;
+    my $delete_runner = (!$persistent && (@delete_file_rgxs || @all_delete_targets > 1))
+      ? transient_batch_fileops_runner()
+      : undef;
     if (@delete_file_rgxs) {
         print "Resolving remote delete regex matches in $delete_dir...\n";
-        my $files_ref = run_array_with_possible_fallback(
-            'remote dir listing for delete regex',
-            sub {
-                my ($active_runner) = @_;
-                return $active_runner->filesindir($delete_dir);
-            },
-        );
+        my $files_ref = $delete_runner
+          ? run_array_action_with_timeout(
+                'SAS ODA remote dir listing for delete regex',
+                sub { return $delete_runner->filesindir($delete_dir); },
+            )
+          : run_array_with_possible_fallback(
+                'remote dir listing for delete regex',
+                sub {
+                    my ($active_runner) = @_;
+                    return $active_runner->filesindir($delete_dir);
+                },
+            );
         if (!ref($files_ref) || ref($files_ref) ne 'ARRAY') {
             my $msg = defined $files_ref ? $files_ref : 'unknown dir listing error';
             die "Remote dir listing failed for delete regex resolution: $msg\n";
@@ -3255,7 +3288,7 @@ if (@delete_files || @delete_file_rgxs) {
         @all_delete_targets = sort keys %selected;
     }
     for my $target (@all_delete_targets) {
-        delete_one_file($target, $delete_dir);
+        delete_one_file($target, $delete_dir, $delete_runner);
     }
 }
 
