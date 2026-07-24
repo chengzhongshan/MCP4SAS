@@ -2068,6 +2068,17 @@ sub _session_server_error_is_transport {
     return ($error =~ /(cannot connect to session server|failed to send request to session server|timed out waiting for session server response|timed out after \d+s|failed to read response header from session server|failed to read response body from session server|incomplete response header|incomplete response body|Broken pipe|No SAS process attached|SAS process has terminated unexpectedly)/i) ? 1 : 0;
 }
 
+sub _session_server_progress_is_macro_bootstrap {
+    my ($progress) = @_;
+    return 0 unless $progress && ref($progress) eq 'HASH';
+    return 0 unless ($progress->{status} // '') eq 'progress';
+
+    my $kind = $progress->{kind} // '';
+    return 1 if $kind eq 'macro_bootstrap_started';
+    return 1 if $kind eq 'submit_heartbeat' && (($progress->{label} // '') =~ /macro bootstrap/i);
+    return 0;
+}
+
 sub _restart_session_server {
     my ($self) = @_;
     $self->{_session_server_ready} = 0 if ref $self;
@@ -2261,8 +2272,11 @@ sub _start_server_if_needed {
             return;
         }
     }
+    # Slow hosts can miss this initial startup probe even though the helper
+    # comes up moments later. Let the first real request decide whether the
+    # startup actually failed so we avoid a misleading warning.
     $self->{_session_server_ready} = 0;
-    warn "SAS ODA session server did not start after attempts\n";
+    return;
 }
 
 sub _recv_exact_with_timeout {
@@ -2374,19 +2388,26 @@ sub _call_session_server {
     shutdown($sock, 1);
 
     my $resp;
+    my $last_progress;
     while (1) {
         my ($frame, $frame_error) = _read_session_server_frame($sock, $timeout_seconds);
         if ($frame_error) {
             close $sock;
-            return ref($frame_error) eq 'HASH'
+            my $error_resp = ref($frame_error) eq 'HASH'
               ? $frame_error
               : { status => 'error', error => $frame_error };
+            $error_resp->{last_progress} = $last_progress if $last_progress;
+            return $error_resp;
         }
         $resp = $frame;
-        next if ref($resp) eq 'HASH' && ($resp->{status} // '') eq 'progress';
+        if (ref($resp) eq 'HASH' && ($resp->{status} // '') eq 'progress') {
+            $last_progress = $resp;
+            next;
+        }
         last;
     }
     close $sock;
+    $resp->{last_progress} = $last_progress if ref($resp) eq 'HASH' && $last_progress && !exists $resp->{last_progress};
     return $resp;
 }
 
@@ -2874,8 +2895,13 @@ sub _find_local_macro_bootstrap_helper {
     my %seen;
     for my $path (@candidates) {
         next unless defined $path && length $path;
-        next if $seen{$path}++;
-        return $path if -e $path;
+        my $resolved = File::Spec->file_name_is_absolute($path)
+          ? $path
+          : File::Spec->rel2abs($path);
+        next if $seen{lc $resolved}++;
+        next unless -e $resolved;
+        $resolved = abs_path($resolved) || $resolved;
+        return $resolved;
     }
     return;
 }
@@ -3074,6 +3100,23 @@ sub run_code {
             },
             $submit_timeout,
         );
+        if ($load_macros
+            && _session_server_error_is_transport($resp)
+            && _session_server_progress_is_macro_bootstrap($resp->{last_progress})
+            && !$self->{_macro_bootstrap_transport_retry_in_progress}) {
+            warn "Warning: persistent-session SAS macro bootstrap hit a transport failure; restarting the local SAS ODA session server and retrying this submit once.\n";
+            local $self->{_macro_bootstrap_transport_retry_in_progress} = 1;
+            $self->_restart_session_server();
+            $resp = _call_session_server(
+                {
+                    cmd         => 'submit',
+                    session_id  => $self->{session_id},
+                    code        => $processed_code,
+                    load_macros => $load_macros,
+                },
+                $submit_timeout,
+            );
+        }
         my $resp_log = '';
         my $resp_lst = '';
         if (ref $resp eq 'HASH') {
