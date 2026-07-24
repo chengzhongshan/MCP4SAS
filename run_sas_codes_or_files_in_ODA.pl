@@ -3243,7 +3243,6 @@ if (!$no_html and (($execution_code && $execution_code!~/^\s*$/) || $execution_f
     close $html_fh;
     if ($sas_execution_failed) {
         print "SAS log for debug saved to: $html_file\n";
-        print "ERROR: $sas_execution_error\n";
     } elsif ($final_html_path) {
         print "HTML output saved to: $final_html_path\n";
         print "SAS log for debug saved to: $html_file\n";
@@ -3264,7 +3263,8 @@ if ($sas_execution_failed) {
         success  => 0,
     }) if ($execution_file || ($execution_code && $execution_code !~ /^\s*$/));
     cleanup_empty_output_dir_if_created($output_dir);
-    die "ERROR: $sas_execution_error\n";
+    print "ERROR: $sas_execution_error\n";
+    exit 1;
 }
 
 # else{
