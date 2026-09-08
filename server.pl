@@ -235,6 +235,14 @@ sub mcp4sas_tool_schema {
                 ],
                 description => 'Optional local file path, or list of paths, to upload to SAS ODA HOME.',
             },
+            archive_transfers => {
+                type => 'string',
+                description => 'Truth-like value controlling ZIP batching for two or more uploads/downloads. Default: true.',
+            },
+            skip_upload_if_same => {
+                type => 'string',
+                description => 'Truth-like value controlling remote size/timestamp reuse for uploads. Default: true.',
+            },
             download_file => {
                 oneOf => [
                     { type => 'string' },
@@ -273,6 +281,14 @@ sub mcp4sas_tool_schema {
                     { type => 'array', items => { type => 'string' } },
                 ],
                 description => 'Optional remote SAS ODA file path(s) to inspect.',
+            },
+            classify_sas_log => {
+                type => 'string',
+                description => 'Optional local SAS log to classify without submitting code. Space exhaustion exits 73; remote session termination exits 74.',
+            },
+            cleanup_empty_output_dir => {
+                type => 'string',
+                description => 'Truth-like value controlling removal of empty auto-created output directories. Default: true.',
             },
             dir4listing => {
                 type => 'string',
@@ -400,12 +416,20 @@ sub run_sas_oda_tool {
     }
 
     push @runner_args, map { ('--upload-file', $_) } as_list($args->{upload_file});
+    push @runner_args, '--no-archive-transfers'
+      if exists($args->{archive_transfers}) && is_falsey($args->{archive_transfers});
+    push @runner_args, '--no-skip-upload-if-same'
+      if exists($args->{skip_upload_if_same}) && is_falsey($args->{skip_upload_if_same});
     push @runner_args, map { ('--download-file', $_) } as_list($args->{download_file});
     push @runner_args, map { ('--download-local-path', $_) } as_list($args->{download_local_path});
     push @runner_args, map { ('--delete-file', $_) } as_list($args->{delete_file});
     push @runner_args, map { ('--delete-file-rgx', $_) } as_list($args->{delete_file_rgx});
     push @runner_args, ('--delete-dir', $args->{delete_dir}) if defined($args->{delete_dir}) && length($args->{delete_dir});
     push @runner_args, map { ('--file-info', $_) } as_list($args->{file_info});
+    push @runner_args, ('--classify-sas-log', $args->{classify_sas_log})
+      if defined($args->{classify_sas_log}) && length($args->{classify_sas_log});
+    push @runner_args, '--no-cleanup-empty-output-dir'
+      if exists($args->{cleanup_empty_output_dir}) && is_falsey($args->{cleanup_empty_output_dir});
     push @runner_args, ('--dir4listing', $args->{dir4listing}) if defined($args->{dir4listing}) && length($args->{dir4listing});
     push @runner_args, ('--saspy-cfgname', $args->{saspy_cfgname}) if defined($args->{saspy_cfgname}) && length($args->{saspy_cfgname});
     push @runner_args, ('--saspy-cfgfile', $args->{saspy_cfgfile}) if defined($args->{saspy_cfgfile}) && length($args->{saspy_cfgfile});

@@ -15,6 +15,8 @@ includes:
 - `MCPDeps/SAS_ODA_Runner.pm`: the Perl/Python bridge around SASPy.
 - `MCPDeps/sas_oda_session_server.py`: a persistent local SASPy session
   server for faster repeated SAS ODA calls.
+- `MCPDeps/test_sas_oda_debug_macro_guard.pl`: regression test for the SAS
+  32-character macro-name limit and bootstrap/session-server compatibility.
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
@@ -334,6 +336,12 @@ Stop wedged local SASPy/SAS ODA helper processes:
 ```
 
 ## Upload, Download, Delete, And List ODA Files
+
+When two or more files are uploaded or downloaded, the runner now uses one
+validated ZIP transfer by default. Pass `--no-archive-transfers` only when
+diagnosing compatibility problems. Existing uploads are reused when their
+remote size and timestamp match; pass `--no-skip-upload-if-same` to force a
+replacement.
 
 Upload:
 
@@ -676,6 +684,20 @@ tool.
 - Review agent-generated SAS code before running it against sensitive data.
 
 ## Troubleshooting
+
+Classify a saved SAS log without connecting to ODA:
+
+```bash
+./run_sas_codes_or_files_in_ODA.pl --classify-sas-log output.html.info.txt
+```
+
+Confirmed WORK/quota exhaustion is non-retryable and exits with status `73`.
+A remote SAS-session termination without a definitive SAS log is also treated
+as non-retryable and exits with status `74`, with a diagnostic marker written
+beside the output status files. This prevents an expensive failed submission
+from being replayed automatically; start a fresh session after reducing the
+input or WORK footprint. File-management operations may still recreate a lost
+session because they are safe to retry.
 
 If SASPy hangs or a persistent session becomes stale:
 

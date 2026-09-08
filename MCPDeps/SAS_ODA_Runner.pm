@@ -140,14 +140,18 @@ import tempfile
 import time
 import threading
 import traceback
+import uuid
+import zipfile
 from datetime import datetime
 
 sys.stdout = sys.stderr
 
 LOAD_MACROS_CODE = '''
 %macro _pipeline_bootstrap_macros;
-%global _pipeline_macro_bootstrap_ok;
+%global _pipeline_macro_bootstrap_ok _pipeline_macro_boot_skipped _pipeline_debug_macro_exists;
 %let _pipeline_macro_bootstrap_ok=0;
+%let _pipeline_macro_boot_skipped=0;
+%let _pipeline_debug_macro_exists=%sysmacexist(debug_macro);
 %let _home=%sysfunc(pathname(HOME));
 %let _macro_home=&_home/Macros;
 %let _pipeline_opt_mprint=%sysfunc(getoption(mprint,keyword));
@@ -157,22 +161,30 @@ LOAD_MACROS_CODE = '''
 %let _pipeline_opt_source=%sysfunc(getoption(source,keyword));
 %let _pipeline_opt_source2=%sysfunc(getoption(source2,keyword));
 options nomprint nomlogic nosymbolgen nonotes nosource nosource2;
-%if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
-    %include "&_home/importallmacros_ue.sas";
-%end;
-%else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
-    %include "&_macro_home/importallmacros_ue.sas";
+%if &_pipeline_debug_macro_exists %then %do;
+    %let _pipeline_macro_bootstrap_ok=1;
+    %let _pipeline_macro_boot_skipped=1;
 %end;
 %else %do;
-    filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
-    %include M;
-    filename M clear;
-%end;
-%if %sysmacexist(importallmacros_ue) %then %do;
-    %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
-    %let _pipeline_macro_bootstrap_ok=1;
+    %if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
+        %include "&_home/importallmacros_ue.sas";
+    %end;
+    %else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
+        %include "&_macro_home/importallmacros_ue.sas";
+    %end;
+    %else %do;
+        filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+        %include M;
+        filename M clear;
+    %end;
+    %if %sysmacexist(importallmacros_ue) %then %do;
+        %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
+        %let _pipeline_macro_bootstrap_ok=1;
+    %end;
 %end;
 options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_pipeline_opt_notes &_pipeline_opt_source &_pipeline_opt_source2;
+%put NOTE: PIPELINE_DEBUG_MACRO_EXISTS=&_pipeline_debug_macro_exists;
+%put NOTE: PIPELINE_MACRO_BOOTSTRAP_SKIPPED=&_pipeline_macro_boot_skipped;
 %put NOTE: PIPELINE_MACRO_BOOTSTRAP_OK=&_pipeline_macro_bootstrap_ok;
 %mend;
 %_pipeline_bootstrap_macros;
@@ -430,6 +442,8 @@ def ensure_macros_loaded(session_obj):
             "Bootstrap End: ",
             "Elapsed Seconds: ",
             "Bootstrap OK: ",
+            "Debug Macro Exists: ",
+            "Bootstrap Skipped: ",
             "Warning: ",
             "Status: running",
             "",
@@ -449,12 +463,22 @@ def ensure_macros_loaded(session_obj):
     res = _submit_with_heartbeat(session, LOAD_MACROS_CODE, "SAS ODA macro bootstrap")
     log = res.get('LOG', '')
     bootstrap_ok = ''
+    debug_macro_exists = ''
+    bootstrap_skipped = ''
     try:
         bootstrap_ok = str(session.symget('_pipeline_macro_bootstrap_ok') or '').strip()
+        debug_macro_exists = str(session.symget('_pipeline_debug_macro_exists') or '').strip()
+        bootstrap_skipped = str(session.symget('_pipeline_macro_boot_skipped') or '').strip()
     except Exception:
         bootstrap_ok = ''
+        debug_macro_exists = ''
+        bootstrap_skipped = ''
     if not bootstrap_ok and 'PIPELINE_MACRO_BOOTSTRAP_OK=1' in log:
         bootstrap_ok = '1'
+    if not debug_macro_exists and 'PIPELINE_DEBUG_MACRO_EXISTS=1' in log:
+        debug_macro_exists = '1'
+    if not bootstrap_skipped and 'PIPELINE_MACRO_BOOTSTRAP_SKIPPED=1' in log:
+        bootstrap_skipped = '1'
     warning = bootstrap_ok != '1'
     bootstrap_finished_at = _status_timestamp()
     bootstrap_elapsed_seconds = round(time.time() - bootstrap_started_epoch, 2)
@@ -465,6 +489,8 @@ def ensure_macros_loaded(session_obj):
             f"Bootstrap End: {bootstrap_finished_at}",
             f"Elapsed Seconds: {bootstrap_elapsed_seconds}",
             f"Bootstrap OK: {bootstrap_ok or '0'}",
+            f"Debug Macro Exists: {debug_macro_exists or '0'}",
+            f"Bootstrap Skipped: {bootstrap_skipped or '0'}",
             f"Warning: {1 if warning else 0}",
             "",
             "=== SAS Macro Bootstrap Log ===",
@@ -479,12 +505,15 @@ def ensure_macros_loaded(session_obj):
         'bootstrap_finished_at': bootstrap_finished_at,
         'bootstrap_elapsed_seconds': bootstrap_elapsed_seconds,
         'bootstrap_ok': bootstrap_ok or '0',
+        'debug_macro_exists': debug_macro_exists or '0',
+        'bootstrap_skipped': bootstrap_skipped or '0',
         'bootstrap_warning': bool(warning),
         'bootstrap_log_path': bootstrap_log_path,
     })
     sys.stderr.write(
         f"SAS ODA macro bootstrap finished at {bootstrap_finished_at} "
-        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'})\n"
+        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'}, "
+        f"debug_macro_exists={debug_macro_exists or '0'}, skipped={bootstrap_skipped or '0'})\n"
     )
     sys.stderr.write(f"Bootstrap-only SAS log saved to: {bootstrap_log_path}\n")
     sys.stderr.flush()
@@ -495,6 +524,8 @@ def ensure_macros_loaded(session_obj):
 
     session_obj._macro_bootstrap_log = log
     session_obj._macro_bootstrap_ok = bootstrap_ok
+    session_obj._debug_macro_exists = debug_macro_exists
+    session_obj._macro_bootstrap_skipped = bootstrap_skipped
     session_obj._macro_bootstrap_warning = warning
     session_obj._macro_bootstrap_started_at = bootstrap_started_at
     session_obj._macro_bootstrap_finished_at = bootstrap_finished_at
@@ -503,10 +534,40 @@ def ensure_macros_loaded(session_obj):
     session_obj._macros_loaded = True
     return session, session_obj
 
+def _session_home_value(sess):
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    userid = str(getattr(cfg, 'omruser', '') or '').strip()
+    authkey = str(getattr(cfg, 'authkey', '') or '').strip()
+    if not userid:
+        authfile = os.path.join(os.path.expanduser('~'), '_authinfo' if os.name == 'nt' else '.authinfo')
+        try:
+            with open(authfile, 'r', encoding='utf-8') as handle:
+                for line in handle:
+                    fields = line.split()
+                    if len(fields) == 5 and (not authkey or fields[0] == authkey) and fields[1] == 'user' and fields[3] == 'password':
+                        userid = fields[2]
+                        break
+        except OSError:
+            pass
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    sess.submit(r'''
+%global _mg_homepath;
+%let _mg_homepath=;
+%if %symexist(_USERHOME) %then %let _mg_homepath=%superq(_USERHOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysget(HOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysfunc(pathname(HOME));
+''')
+    userid = str(sess.symget('SYSUSERID') or '').strip()
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    return str(sess.symget('_mg_homepath') or '').strip()
+
 def run_fileinfo(sess, remote_path):
     if remote_path.startswith('~/'):
-        sess.submit("%let homepath=%sysfunc(pathname(HOME));")
-        home = sess.symget('homepath')
+        home = _session_home_value(sess)
         remote_path = f"{home}/{remote_path[2:]}"
     safe_path = remote_path.replace('"', '""')
     sas_code = f"""
@@ -728,6 +789,52 @@ def delete_file(remote_file,remote_dir,session_obj):
     except Exception as e:
         return f"PYTHON ERROR : {str(e)}", session_obj
 
+def delete_files_bulk(items, session_obj):
+    """Delete and verify a manifest in one SASPy session and one SAS submit."""
+    session, session_obj = get_session(session_obj)
+    normalized = []
+    for index, item in enumerate(list(items or []), start=1):
+        remote_file = str(item.get('remote_file', '') or '')
+        remote_dir = str(item.get('remote_dir', '') or '')
+        remote_file, remote_dir = normalize_delete_target(remote_file, remote_dir, session_obj)
+        remote_path = join_remote_path(remote_dir, remote_file)
+        fileref = f"d{index:07d}"
+        normalized.append((fileref, remote_path))
+
+    if not normalized:
+        return [], session_obj
+
+    lines = []
+    for fileref, remote_path in normalized:
+        safe_path = remote_path.replace('"', '""')
+        lines.append(f'filename {fileref} "{safe_path}";')
+    lines.append('data _null_;')
+    for index, (fileref, _remote_path) in enumerate(normalized, start=1):
+        lines.append(f'  rc=fdelete("{fileref}");')
+        lines.append(f'  call symputx("_bulk_del_exists_{index}", fexist("{fileref}"), "G");')
+        lines.append(f'  call symputx("_bulk_del_rc_{index}", rc, "G");')
+    lines.append('run;')
+    for fileref, _remote_path in normalized:
+        lines.append(f'filename {fileref} clear;')
+
+    res = session.submit("\n".join(lines))
+    log = str((res or {}).get('LOG', ''))
+    results = []
+    still_present = []
+    for index, (_fileref, remote_path) in enumerate(normalized, start=1):
+        exists_text = str(session.symget(f'_bulk_del_exists_{index}') or '').strip()
+        rc_text = str(session.symget(f'_bulk_del_rc_{index}') or '').strip()
+        exists = exists_text not in ('', '0', '0.0', 'false', 'False', 'FALSE')
+        results.append({'remote_path': remote_path, 'exists': exists, 'delete_rc': rc_text})
+        if exists:
+            still_present.append(remote_path)
+    if still_present:
+        raise IOError(
+            'Remote file(s) still exist after bulk delete: ' + ', '.join(still_present)
+            + ('\n' + log if log else '')
+        )
+    return results, session_obj
+
 def resolve_remote_path(remote_filepath, session_obj):
     if remote_filepath.startswith('~/'):
         home = get_sas_home(session_obj)[0]
@@ -762,7 +869,8 @@ def normalize_delete_target(remote_file, remote_dir, session_obj):
 def download_file(remote_filepath, local_path, session_obj):
     try:
         session, session_obj = get_session(session_obj)
-        filename = os.path.basename(remote_filepath)
+        requested_remote_path = str(remote_filepath or '')
+        filename = os.path.basename(requested_remote_path)
         
         # Logic to handle empty local_path
         if not local_path or local_path.strip() == '':
@@ -773,10 +881,10 @@ def download_file(remote_filepath, local_path, session_obj):
 
         if dir_name and not os.path.exists(dir_name):
             os.makedirs(dir_name, exist_ok=True)
-        remote_info, session_obj = remote_file_info(remote_filepath, session_obj)
+        remote_info, session_obj = remote_file_info(requested_remote_path, session_obj)
         if not isinstance(remote_info, dict) or not remote_info.get('exists'):
-            raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {remote_filepath}")
-        remote_filepath = remote_info.get('path') or remote_filepath
+            raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {requested_remote_path}")
+        resolved_remote_path = remote_info.get('path') or requested_remote_path
         remote_size = 0
         if isinstance(remote_info, dict):
             remote_size = remote_info.get('size') or 0
@@ -791,7 +899,7 @@ def download_file(remote_filepath, local_path, session_obj):
                     daemon=True,
                 )
                 poller.start()
-            session.download(local_path, remote_filepath)
+            session.download(local_path, resolved_remote_path)
         finally:
             stop_event.set()
             if poller is not None:
@@ -915,6 +1023,335 @@ def upload_file(local_path, session_obj, progress_label=None, skip_if_same=True)
     except Exception as e:
         return f"PYTHON ERROR: {str(e)}", session_obj
 
+def _sas_archive_quote(value):
+    return str(value or '').replace('"', '""')
+
+def _archive_transfer_enabled(payload):
+    value = payload.get('archive_transfers', True)
+    if isinstance(value, str):
+        return value.strip().lower() not in ('0', 'false', 'no', 'off')
+    return bool(value)
+
+def _archive_member_name(index, token):
+    return f"mgw_{token}_{index + 1:06d}.bin"
+
+def _submit_archive_code(session, sas_code, operation):
+    res = session.submit(sas_code)
+    log = str((res or {}).get('LOG', ''))
+    try:
+        failed = str(session.symget('_mg_archive_error') or '').strip()
+    except Exception:
+        failed = ''
+    log_has_error = any(line.lstrip().startswith('ERROR:') for line in log.splitlines())
+    if failed not in ('', '0', '0.0') or log_has_error:
+        raise IOError(f"SAS ODA {operation} reported a file-copy failure.\n{log}")
+    return res
+
+def _cleanup_remote_archive_paths(session, paths):
+    paths = [str(path or '') for path in paths if str(path or '')]
+    if not paths:
+        return
+    statements = []
+    for index, path in enumerate(paths):
+        fileref = f"c{index + 1:07d}"[-8:]
+        statements.extend([
+            f'filename {fileref} "{_sas_archive_quote(path)}";',
+            'data _null_;',
+            f"  if fexist('{fileref}') then rc=fdelete('{fileref}');",
+            'run;',
+            f'filename {fileref} clear;',
+        ])
+    try:
+        session.submit('\n'.join(statements))
+    except Exception:
+        pass
+
+def upload_files_archive(items, session_obj):
+    """Upload one local ZIP, extract its generated members in SAS HOME, and verify sizes."""
+    session, session_obj = get_session(session_obj)
+    home, session_obj = get_sas_home(session_obj)
+    home = str(home or '').rstrip('/')
+    token = uuid.uuid4().hex[:12]
+    archive_name = f"multigwas_upload_{token}.zip"
+    local_archive = os.path.join(tempfile.gettempdir(), archive_name)
+    remote_archive = f"{home}/{archive_name}"
+    remote_archive_uploaded = False
+    prepared = []
+    reused_results = []
+    remote_names = set()
+    try:
+        with zipfile.ZipFile(local_archive, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as bundle:
+            for index, item in enumerate(items):
+                local_path = os.path.abspath(str(item.get('local_path', '') or ''))
+                if not os.path.isfile(local_path):
+                    raise FileNotFoundError(f"Upload source does not exist: {local_path}")
+                remote_name = os.path.basename(local_path.replace('\\', '/'))
+                if not remote_name:
+                    raise ValueError(f"Could not determine remote basename for upload: {local_path}")
+                if remote_name in remote_names:
+                    raise ValueError(f"Archive upload has duplicate remote basename: {remote_name}")
+                remote_names.add(remote_name)
+                member = _archive_member_name(index, token)
+                remote_path = f"{home}/{remote_name}"
+                if bool(item.get('skip_if_same', True)):
+                    try:
+                        existing_info = run_fileinfo(session, remote_path)
+                    except Exception:
+                        existing_info = None
+                    if _remote_file_matches_local_upload(existing_info, local_path):
+                        print(
+                            f"Archive upload manifest: {remote_name} already matches local size/timestamp; reusing it.",
+                            flush=True,
+                        )
+                        reused_results.append({
+                            'local_path': item.get('local_path', ''),
+                            'remote_path': remote_path,
+                            'archive_transfer': False,
+                            'reused': True,
+                        })
+                        continue
+                bundle.write(local_path, member)
+                prepared.append({
+                    'item': item,
+                    'local_path': local_path,
+                    'remote_name': remote_name,
+                    'remote_path': remote_path,
+                    'member': member,
+                    'size': os.path.getsize(local_path),
+                })
+        if not prepared:
+            return reused_results, session_obj
+        if len(prepared) == 1:
+            entry = prepared[0]
+            uploaded_path, session_obj = upload_file(
+                entry['local_path'],
+                session_obj,
+                entry['item'].get('progress_label'),
+                False,
+            )
+            if not uploaded_path or str(uploaded_path).startswith('PYTHON ERROR:'):
+                raise IOError(str(uploaded_path or 'single pending upload returned no remote path'))
+            reused_results.append({
+                'local_path': entry['item'].get('local_path', ''),
+                'remote_path': uploaded_path,
+                'archive_transfer': False,
+            })
+            return reused_results, session_obj
+        print(
+            f"Archive upload: bundling {len(prepared)} files into one SASPy transfer "
+            f"({os.path.getsize(local_archive):,} bytes).",
+            flush=True,
+        )
+        uploaded_path, session_obj = upload_file(
+            local_archive,
+            session_obj,
+            f"archive containing {len(prepared)} files",
+            False,
+        )
+        if not uploaded_path or str(uploaded_path).startswith('PYTHON ERROR:'):
+            raise IOError(str(uploaded_path or 'archive upload returned no remote path'))
+        remote_archive = str(uploaded_path)
+        remote_archive_uploaded = True
+        statements = ['%let _mg_archive_error=0;']
+        for index, entry in enumerate(prepared):
+            zin = f"zi{index + 1:06d}"[-8:]
+            zout = f"zo{index + 1:06d}"[-8:]
+            statements.extend([
+                f'filename {zout} "{_sas_archive_quote(entry["remote_path"])}" recfm=n;',
+                'data _null_;',
+                f"  if fexist('{zout}') then do;",
+                f"    rc_delete=fdelete('{zout}');",
+                '    if rc_delete ne 0 then do;',
+                "      call symputx('_mg_archive_error','1','G');",
+                f'      put "ERROR: Could not replace existing archive destination {entry["remote_name"]}: " rc_delete=;',
+                '    end;',
+                '  end;',
+                'run;',
+                f'filename {zout} clear;',
+                f'filename {zin} ZIP "{_sas_archive_quote(remote_archive)}" member="{entry["member"]}";',
+                f'filename {zout} "{_sas_archive_quote(entry["remote_path"])}" recfm=n;',
+                'data _null_;',
+                f'  infile {zin} lrecl=32767 recfm=f length=_mg_len eof=_mg_eof unbuf;',
+                f'  file {zout} lrecl=32767 recfm=n;',
+                '  input;',
+                '  put _infile_ $varying32767. _mg_len;',
+                '  return;',
+                '  _mg_eof: stop;',
+                'run;',
+                f'filename {zin} clear;',
+                f'filename {zout} clear;',
+            ])
+        _submit_archive_code(session, '\n'.join(statements), 'archive extraction')
+        results = list(reused_results)
+        for entry in prepared:
+            info = run_fileinfo(session, entry['remote_path'])
+            if not _remote_upload_size_ok(info, entry['size']):
+                got = info.get('size') if isinstance(info, dict) else None
+                raise IOError(
+                    f"Extracted remote file size mismatch for {entry['remote_path']}: "
+                    f"expected {entry['size']} bytes, got {got}"
+                )
+            results.append({
+                'local_path': entry['item'].get('local_path', ''),
+                'remote_path': entry['remote_path'],
+                'archive_transfer': True,
+            })
+        print(f"Archive upload verified {len(results)} extracted SAS ODA files.", flush=True)
+        return results, session_obj
+    finally:
+        if remote_archive_uploaded:
+            _cleanup_remote_archive_paths(session, [remote_archive])
+        try:
+            if os.path.exists(local_archive):
+                os.unlink(local_archive)
+        except Exception:
+            pass
+
+def download_files_archive(items, session_obj):
+    """Create one ZIP in SAS HOME, download it once, safely extract locally, and verify sizes."""
+    session, session_obj = get_session(session_obj)
+    home, session_obj = get_sas_home(session_obj)
+    home = str(home or '').rstrip('/')
+    token = uuid.uuid4().hex[:12]
+    archive_name = f"multigwas_download_{token}.zip"
+    remote_archive = f"{home}/{archive_name}"
+    local_archive = os.path.join(tempfile.gettempdir(), archive_name)
+    prepared = []
+    local_parts = []
+    staging_remote_paths = []
+    local_destinations = set()
+    try:
+        for index, item in enumerate(items):
+            requested_remote = str(item.get('remote_path', '') or '')
+            info, session_obj = remote_file_info(requested_remote, session_obj)
+            if not isinstance(info, dict) or not info.get('exists'):
+                raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {requested_remote}")
+            local_path = str(item.get('local_path', '') or '')
+            if not local_path.strip():
+                local_path = os.path.basename(requested_remote)
+            local_path = os.path.abspath(local_path)
+            normalized_destination = os.path.normcase(local_path)
+            if normalized_destination in local_destinations:
+                raise ValueError(f"Archive download has duplicate local destination: {local_path}")
+            local_destinations.add(normalized_destination)
+            member = _archive_member_name(index, token)
+            stage_path = f"{home}/{member}"
+            staging_remote_paths.append(stage_path)
+            prepared.append({
+                'item': item,
+                'remote_path': info.get('path') or requested_remote,
+                'local_path': local_path,
+                'member': member,
+                'stage_path': stage_path,
+                'size': int(info.get('size') or 0),
+            })
+
+        statements = ['%let _mg_archive_error=0;']
+        statements.extend([
+            f'filename mgzout "{_sas_archive_quote(remote_archive)}";',
+            'data _null_;',
+            "  if fexist('mgzout') then rc=fdelete('mgzout');",
+            'run;',
+            'filename mgzout clear;',
+        ])
+        for index, entry in enumerate(prepared):
+            src = f"ds{index + 1:06d}"[-8:]
+            dst = f"dt{index + 1:06d}"[-8:]
+            statements.extend([
+                f'filename {src} "{_sas_archive_quote(entry["remote_path"])}" recfm=n;',
+                f'filename {dst} "{_sas_archive_quote(entry["stage_path"])}" recfm=n;',
+                'data _null_;',
+                f"  if fexist('{dst}') then rc_delete=fdelete('{dst}');",
+                f"  rc=fcopy('{src}','{dst}');",
+                '  if rc ne 0 then do;',
+                "    call symputx('_mg_archive_error','1','G');",
+                f'    put "ERROR: Could not stage remote archive member {entry["member"]}: " rc=;',
+                '  end;',
+                'run;',
+                f'filename {src} clear;',
+                f'filename {dst} clear;',
+            ])
+        statements.append('ods package(mgwpkg) open nopf;')
+        for entry in prepared:
+            statements.append(f'ods package(mgwpkg) add file="{_sas_archive_quote(entry["stage_path"])}";')
+        statements.extend([
+            'ods package(mgwpkg) publish archive',
+            '  properties(',
+            f'    archive_name="{_sas_archive_quote(archive_name)}"',
+            f'    archive_path="{_sas_archive_quote(home)}"',
+            '  );',
+            'ods package(mgwpkg) close;',
+            f'filename mgmeta ZIP "{_sas_archive_quote(remote_archive)}" member="PackageMetaData";',
+            'data _null_;',
+            "  if fexist('mgmeta') then rc=fdelete('mgmeta');",
+            'run;',
+            'filename mgmeta clear;',
+        ])
+        for index, entry in enumerate(prepared):
+            stage = f"dx{index + 1:06d}"[-8:]
+            statements.extend([
+                f'filename {stage} "{_sas_archive_quote(entry["stage_path"])}";',
+                'data _null_;',
+                f"  if fexist('{stage}') then rc=fdelete('{stage}');",
+                'run;',
+                f'filename {stage} clear;',
+            ])
+        _submit_archive_code(session, '\n'.join(statements), 'archive creation')
+        archive_info = run_fileinfo(session, remote_archive)
+        if not isinstance(archive_info, dict) or not archive_info.get('exists') or int(archive_info.get('size') or 0) <= 0:
+            raise IOError(f"SAS ODA did not create a non-empty download archive: {remote_archive}")
+        print(
+            f"Archive download: transferring {len(prepared)} files in one SASPy download "
+            f"({int(archive_info.get('size') or 0):,} bytes).",
+            flush=True,
+        )
+        downloaded, session_obj = download_file(remote_archive, local_archive, session_obj)
+        if not downloaded:
+            raise IOError(f"Archive download returned no local path for {remote_archive}")
+        with zipfile.ZipFile(local_archive, 'r') as bundle:
+            names = set(bundle.namelist())
+            missing = [entry['member'] for entry in prepared if entry['member'] not in names]
+            if missing:
+                raise IOError(f"Downloaded archive is missing expected members: {', '.join(missing)}")
+            for entry in prepared:
+                local_dir = os.path.dirname(entry['local_path'])
+                if local_dir:
+                    os.makedirs(local_dir, exist_ok=True)
+                fd, part_path = tempfile.mkstemp(prefix='.sas_oda_archive_', dir=(local_dir or '.'))
+                os.close(fd)
+                local_parts.append((part_path, entry['local_path']))
+                with bundle.open(entry['member'], 'r') as source, open(part_path, 'wb') as target:
+                    shutil.copyfileobj(source, target, length=1024 * 1024)
+                actual_size = os.path.getsize(part_path)
+                if actual_size != entry['size']:
+                    raise IOError(
+                        f"Downloaded archive member size mismatch for {entry['remote_path']}: "
+                        f"expected {entry['size']} bytes, got {actual_size}"
+                    )
+        for part_path, final_path in local_parts:
+            os.replace(part_path, final_path)
+        local_parts = []
+        results = [{
+            'remote_path': entry['item'].get('remote_path', ''),
+            'local_path': entry['local_path'],
+            'archive_transfer': True,
+        } for entry in prepared]
+        print(f"Archive download verified and extracted {len(results)} local files.", flush=True)
+        return results, session_obj
+    finally:
+        _cleanup_remote_archive_paths(session, [remote_archive] + staging_remote_paths)
+        for part_path, _ in local_parts:
+            try:
+                if os.path.exists(part_path):
+                    os.unlink(part_path)
+            except Exception:
+                pass
+        try:
+            if os.path.exists(local_archive):
+                os.unlink(local_archive)
+        except Exception:
+            pass
+
 import os
 
 def dirlist(remote_path, session_obj):
@@ -932,8 +1369,7 @@ def dirlist(remote_path, session_obj):
 
 def get_sas_home(session_obj):
     session, session_obj = get_session(session_obj)
-    sas_out = session.submit("%let homepath=%sysfunc(pathname(HOME));")
-    sashomepath = session.symget('homepath')
+    sashomepath = _session_home_value(session)
     return sashomepath, session_obj
 
 END_PYTHON
@@ -955,7 +1391,7 @@ sub _autoload_macros_enabled {
 
 my $SERVER_HOST = '127.0.0.1';
 my $SERVER_PORT = 8765;
-my $SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames';
+my $SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -1162,7 +1598,7 @@ import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames'
+SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -1172,8 +1608,10 @@ LOG_PATH = os.environ.get('SAS_ODA_SESSION_DEBUG_LOG') or os.path.join(os.path.d
 STATUS_FILE = os.environ.get('SAS_ODA_STATUS_FILE') or ''
 LOAD_MACROS_CODE = '''
 %macro _pipeline_bootstrap_macros;
-%global _pipeline_macro_bootstrap_ok;
+%global _pipeline_macro_bootstrap_ok _pipeline_macro_boot_skipped _pipeline_debug_macro_exists;
 %let _pipeline_macro_bootstrap_ok=0;
+%let _pipeline_macro_boot_skipped=0;
+%let _pipeline_debug_macro_exists=%sysmacexist(debug_macro);
 %let _home=%sysfunc(pathname(HOME));
 %let _macro_home=&_home/Macros;
 %let _pipeline_opt_mprint=%sysfunc(getoption(mprint,keyword));
@@ -1183,22 +1621,30 @@ LOAD_MACROS_CODE = '''
 %let _pipeline_opt_source=%sysfunc(getoption(source,keyword));
 %let _pipeline_opt_source2=%sysfunc(getoption(source2,keyword));
 options nomprint nomlogic nosymbolgen nonotes nosource nosource2;
-%if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
-    %include "&_home/importallmacros_ue.sas";
-%end;
-%else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
-    %include "&_macro_home/importallmacros_ue.sas";
+%if &_pipeline_debug_macro_exists %then %do;
+    %let _pipeline_macro_bootstrap_ok=1;
+    %let _pipeline_macro_boot_skipped=1;
 %end;
 %else %do;
-    filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
-    %include M;
-    filename M clear;
-%end;
-%if %sysmacexist(importallmacros_ue) %then %do;
-    %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
-    %let _pipeline_macro_bootstrap_ok=1;
+    %if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
+        %include "&_home/importallmacros_ue.sas";
+    %end;
+    %else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
+        %include "&_macro_home/importallmacros_ue.sas";
+    %end;
+    %else %do;
+        filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+        %include M;
+        filename M clear;
+    %end;
+    %if %sysmacexist(importallmacros_ue) %then %do;
+        %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
+        %let _pipeline_macro_bootstrap_ok=1;
+    %end;
 %end;
 options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_pipeline_opt_notes &_pipeline_opt_source &_pipeline_opt_source2;
+%put NOTE: PIPELINE_DEBUG_MACRO_EXISTS=&_pipeline_debug_macro_exists;
+%put NOTE: PIPELINE_MACRO_BOOTSTRAP_SKIPPED=&_pipeline_macro_boot_skipped;
 %put NOTE: PIPELINE_MACRO_BOOTSTRAP_OK=&_pipeline_macro_bootstrap_ok;
 %mend;
 %_pipeline_bootstrap_macros;
@@ -1375,6 +1821,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             "Bootstrap End: ",
             "Elapsed Seconds: ",
             "Bootstrap OK: ",
+            "Debug Macro Exists: ",
+            "Bootstrap Skipped: ",
             "Warning: ",
             "Status: running",
             "",
@@ -1401,12 +1849,22 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
     )
     macro_log = res.get('LOG', '')
     bootstrap_ok = ''
+    debug_macro_exists = ''
+    bootstrap_skipped = ''
     try:
         bootstrap_ok = str(sess.symget('_pipeline_macro_bootstrap_ok') or '').strip()
+        debug_macro_exists = str(sess.symget('_pipeline_debug_macro_exists') or '').strip()
+        bootstrap_skipped = str(sess.symget('_pipeline_macro_boot_skipped') or '').strip()
     except Exception:
         bootstrap_ok = ''
+        debug_macro_exists = ''
+        bootstrap_skipped = ''
     if not bootstrap_ok and 'PIPELINE_MACRO_BOOTSTRAP_OK=1' in macro_log:
         bootstrap_ok = '1'
+    if not debug_macro_exists and 'PIPELINE_DEBUG_MACRO_EXISTS=1' in macro_log:
+        debug_macro_exists = '1'
+    if not bootstrap_skipped and 'PIPELINE_MACRO_BOOTSTRAP_SKIPPED=1' in macro_log:
+        bootstrap_skipped = '1'
     warning = bootstrap_ok != '1'
     bootstrap_finished_at = status_timestamp()
     bootstrap_elapsed_seconds = round(time.time() - bootstrap_started_epoch, 2)
@@ -1418,6 +1876,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             f"Bootstrap End: {bootstrap_finished_at}",
             f"Elapsed Seconds: {bootstrap_elapsed_seconds}",
             f"Bootstrap OK: {bootstrap_ok or '0'}",
+            f"Debug Macro Exists: {debug_macro_exists or '0'}",
+            f"Bootstrap Skipped: {bootstrap_skipped or '0'}",
             f"Warning: {1 if warning else 0}",
             "",
             "=== SAS Macro Bootstrap Log ===",
@@ -1429,12 +1889,15 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
         'finished_at': bootstrap_finished_at,
         'elapsed_seconds': bootstrap_elapsed_seconds,
         'ok': bootstrap_ok or '0',
+        'debug_macro_exists': debug_macro_exists or '0',
+        'skipped': bootstrap_skipped or '0',
         'warning': bool(warning),
         'log_path': bootstrap_log_path,
     }
     print(
         f"[{session_id}] SAS ODA macro bootstrap finished at {bootstrap_finished_at} "
-        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'})",
+        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'}, "
+        f"debug_macro_exists={debug_macro_exists or '0'}, skipped={bootstrap_skipped or '0'})",
         flush=True,
     )
     print(f"[{session_id}] Bootstrap-only SAS log saved to: {bootstrap_log_path}", flush=True)
@@ -1451,6 +1914,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             'finished_at': bootstrap_finished_at,
             'elapsed_seconds': bootstrap_elapsed_seconds,
             'ok': bootstrap_ok or '0',
+            'debug_macro_exists': debug_macro_exists or '0',
+            'skipped': bootstrap_skipped or '0',
             'warning': bool(warning),
         })
     session_macros_loaded[session_id] = True
@@ -1539,8 +2004,35 @@ def ensure_session(session_id):
     return sessions[session_id]
 
 def session_home(sess):
-    sess.submit("%let homepath=%sysfunc(pathname(HOME));")
-    return sess.symget('homepath')
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    userid = str(getattr(cfg, 'omruser', '') or '').strip()
+    authkey = str(getattr(cfg, 'authkey', '') or '').strip()
+    if not userid:
+        authfile = os.path.join(os.path.expanduser('~'), '_authinfo' if os.name == 'nt' else '.authinfo')
+        try:
+            with open(authfile, 'r', encoding='utf-8') as handle:
+                for line in handle:
+                    fields = line.split()
+                    if len(fields) == 5 and (not authkey or fields[0] == authkey) and fields[1] == 'user' and fields[3] == 'password':
+                        userid = fields[2]
+                        break
+        except OSError:
+            pass
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    sess.submit(r'''
+%global _mg_homepath;
+%let _mg_homepath=;
+%if %symexist(_USERHOME) %then %let _mg_homepath=%superq(_USERHOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysget(HOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysfunc(pathname(HOME));
+''')
+    userid = str(sess.symget('SYSUSERID') or '').strip()
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    return str(sess.symget('_mg_homepath') or '').strip()
 
 def resolve_remote_path(remote_path, sess):
     if remote_path.startswith('~/'):
@@ -1725,14 +2217,14 @@ def probe_session_after_empty_submit(sess):
         detail = traceback.format_exc()
         return False, f"{type(exc).__name__}: {exc}\n{detail}"
 
-def with_retry(session_id, fn):
+def with_retry(session_id, fn, retry_session_loss=True):
     try:
         sess = ensure_session(session_id)
         return fn(sess)
     except Exception as e:
         err = str(e)
         log_event(f"with_retry error session_id={session_id} err={err}")
-        if 'No SAS process attached' in err or 'SAS process has terminated' in err:
+        if retry_session_loss and ('No SAS process attached' in err or 'SAS process has terminated' in err):
             with lock:
                 log_event(f"with_retry recreating session_id={session_id}")
                 sess = create_session(session_id)
@@ -1815,7 +2307,12 @@ def handle_client(conn, addr):
                         if not alive:
                             raise RuntimeError("SAS submit returned empty output and the SAS session was no longer usable afterwards.\n" + probe_detail)
                     return res
-                res = with_retry(session_id, _submit)
+                # Never resubmit user SAS code implicitly after the ODA process
+                # dies.  A WORK-space exhaustion can terminate the process, and
+                # replaying the same code wastes time and normally fails again.
+                # The caller preserves/classifies the SAS log and decides whether
+                # a genuinely retryable submission should be started.
+                res = with_retry(session_id, _submit, retry_session_loss=False)
                 log = str(res.get('LOG',''))
                 lst = str(res.get('LST',''))
                 if macro_log and macro_warning:
@@ -1917,20 +2414,20 @@ def handle_client(conn, addr):
                 resp = {'status':'error','error':str(e)}
                 log_event(f"upload error session_id={session_id} local_path={local_path} err={e}")
         elif cmd == 'download':
-            remote_path = req.get('remote_path', '')
+            requested_remote_path = str(req.get('remote_path', '') or '')
             local_path = req.get('local_path', '')
             try:
                 def _download(sess):
-                    log_event(f"download start session_id={session_id} remote_path={remote_path} local_path={local_path}")
-                    out_path = local_path or os.path.basename(remote_path)
+                    log_event(f"download start session_id={session_id} remote_path={requested_remote_path} local_path={local_path}")
+                    out_path = local_path or os.path.basename(requested_remote_path)
                     out_path = os.path.abspath(out_path)
                     out_dir = os.path.dirname(out_path)
                     if out_dir and not os.path.exists(out_dir):
                         os.makedirs(out_dir, exist_ok=True)
-                    remote_info = run_fileinfo(sess, remote_path)
+                    remote_info = run_fileinfo(sess, requested_remote_path)
                     if not isinstance(remote_info, dict) or not remote_info.get('exists'):
-                        raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {remote_path}")
-                    resolved_remote_path = remote_info.get('path') or remote_path
+                        raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {requested_remote_path}")
+                    resolved_remote_path = remote_info.get('path') or requested_remote_path
                     remote_size = remote_info.get('size') or 0
                     print(
                         f"Download step [{session_id}]: {resolved_remote_path} -> {out_path} ({remote_size:,} bytes)",
@@ -1970,7 +2467,7 @@ def handle_client(conn, addr):
                 resp = {'status':'ok','local_path':saved_path}
             except Exception as e:
                 resp = {'status':'error','error':str(e)}
-                log_event(f"download error session_id={session_id} remote_path={remote_path} err={e}")
+                log_event(f"download error session_id={session_id} remote_path={requested_remote_path} err={e}")
         elif cmd == 'delete':
             remote_file = req.get('remote_file', '')
             remote_dir = req.get('remote_dir', '')
@@ -2078,7 +2575,6 @@ sub _session_server_progress_is_macro_bootstrap {
     return 1 if $kind eq 'submit_heartbeat' && (($progress->{label} // '') =~ /macro bootstrap/i);
     return 0;
 }
-
 sub _restart_session_server {
     my ($self) = @_;
     $self->{_session_server_ready} = 0 if ref $self;
@@ -2411,6 +2907,50 @@ sub _call_session_server {
     return $resp;
 }
 
+sub _normalize_local_path_for_python {
+    my ($path) = @_;
+    return $path unless defined $path && length $path;
+    # Cygwin getcwd() may yield E:/... even though the helper Python is the
+    # POSIX /usr/bin/python. Linux Python treats E:/... as relative and
+    # prepends cwd, so convert it to the project's /mnt/<drive>/ convention.
+    if ($^O eq 'cygwin' && $path =~ m{^([A-Za-z]):[\\/](.*)$}) {
+        my ($drive, $rest) = (lc($1), $2 // '');
+        $rest =~ s{\\}{/}g;
+        return "/mnt/$drive/$rest";
+    }
+    return $path if $path =~ m{^[A-Za-z]:[\\/]} || $path =~ m{^\\\\};
+    return $path if $^O eq 'cygwin' && $path =~ m{^/mnt/[A-Za-z](?:/|$)};
+    if ($path =~ m{^/mnt/([A-Za-z])(?:/(.*))?$}) {
+        my ($drive, $rest) = (uc($1), $2 // '');
+        return length($rest) ? "${drive}:/$rest" : "${drive}:/";
+    }
+    if ($path =~ m{^/([A-Za-z])/(.*)$}) {
+        my ($drive, $rest) = (uc($1), $2);
+        return "${drive}:/$rest";
+    }
+    return $path;
+}
+
+sub _normalize_python_action_args {
+    my ($args_ref) = @_;
+    $args_ref = {} unless ref($args_ref) eq 'HASH';
+    my %normalized = %{$args_ref};
+    for my $key (qw(local_path download_local_path code_path result_path args_path json_path py_path)) {
+        next unless exists $normalized{$key};
+        $normalized{$key} = _normalize_local_path_for_python($normalized{$key});
+    }
+    for my $list_key (qw(uploads downloads)) {
+        next unless ref($normalized{$list_key}) eq 'ARRAY';
+        $normalized{$list_key} = [ map {
+            my %item = ref($_) eq 'HASH' ? %{$_} : ();
+            $item{local_path} = _normalize_local_path_for_python($item{local_path})
+              if exists $item{local_path};
+            \%item;
+        } @{ $normalized{$list_key} } ];
+    }
+    return \%normalized;
+}
+
 sub _run_nonpersistent_sas_logic_via_python {
     my ($sas_code) = @_;
 
@@ -2433,6 +2973,8 @@ def _export_macro_bootstrap_meta(session_obj):
         'finished_at': getattr(session_obj, '_macro_bootstrap_finished_at', '') or '',
         'elapsed_seconds': getattr(session_obj, '_macro_bootstrap_elapsed_seconds', ''),
         'ok': getattr(session_obj, '_macro_bootstrap_ok', '') or '',
+        'debug_macro_exists': getattr(session_obj, '_debug_macro_exists', '') or '',
+        'skipped': getattr(session_obj, '_macro_bootstrap_skipped', '') or '',
         'warning': bool(getattr(session_obj, '_macro_bootstrap_warning', False)),
         'log_path': getattr(session_obj, '_macro_bootstrap_log_path', '') or '',
     }
@@ -2479,14 +3021,17 @@ END_NONPERSISTENT_PY
     close $pyfh;
 
     my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    my $py_path_for_python   = _normalize_local_path_for_python($py_path);
+    my $code_path_for_python = _normalize_local_path_for_python($code_path);
+    my $json_path_for_python = _normalize_local_path_for_python($json_path);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
           ? "$site_packages:$ENV{PYTHONPATH}"
           : $site_packages;
-        system { $python_bin } $python_bin, $py_path, $code_path, $json_path;
+        system { $python_bin } $python_bin, $py_path_for_python, $code_path_for_python, $json_path_for_python;
     } else {
-        system { $python_bin } $python_bin, $py_path, $code_path, $json_path;
+        system { $python_bin } $python_bin, $py_path_for_python, $code_path_for_python, $json_path_for_python;
     }
 
     my $exit_code = $? >> 8;
@@ -2530,7 +3075,7 @@ END_NONPERSISTENT_PY
 
 sub _run_nonpersistent_python_action {
     my ($action, $args_ref) = @_;
-    $args_ref = {} unless ref($args_ref) eq 'HASH';
+    $args_ref = _normalize_python_action_args($args_ref);
 
     my ($argsfh, $args_path) = tempfile('sas_action_args_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
     print {$argsfh} encode_json($args_ref);
@@ -2553,6 +3098,47 @@ def _endsas_safely(session_obj):
 
 def _action_dispatch(action, payload):
     session_obj = None
+    if action == 'bulk_transfer':
+        results = {'uploads': [], 'downloads': []}
+        uploads = list(payload.get('uploads') or [])
+        downloads = list(payload.get('downloads') or [])
+        archive_enabled = _archive_transfer_enabled(payload)
+        if archive_enabled and len(uploads) >= 2:
+            _, session_obj = get_session(session_obj)
+            try:
+                results['uploads'], session_obj = upload_files_archive(uploads, session_obj)
+            except Exception as exc:
+                print(f"WARNING: Archive upload failed; falling back to individual transfers: {exc}", flush=True)
+                results['uploads'] = []
+        if not results['uploads'] and uploads:
+            for item in uploads:
+                value, session_obj = upload_file(
+                    str(item.get('local_path', '') or ''),
+                    session_obj,
+                    item.get('progress_label'),
+                    bool(item.get('skip_if_same', True)),
+                )
+                if value is None or (isinstance(value, str) and value.startswith('PYTHON ERROR:')):
+                    raise RuntimeError(str(value or 'unknown bulk upload failure'))
+                results['uploads'].append({'local_path': item.get('local_path', ''), 'remote_path': value})
+        if archive_enabled and len(downloads) >= 2:
+            _, session_obj = get_session(session_obj)
+            try:
+                results['downloads'], session_obj = download_files_archive(downloads, session_obj)
+            except Exception as exc:
+                print(f"WARNING: Archive download failed; falling back to individual transfers: {exc}", flush=True)
+                results['downloads'] = []
+        if not results['downloads'] and downloads:
+            for item in downloads:
+                value, session_obj = download_file(
+                    str(item.get('remote_path', '') or ''),
+                    str(item.get('local_path', '') or ''),
+                    session_obj,
+                )
+                if value is None or (isinstance(value, str) and value.startswith('PYTHON ERROR:')):
+                    raise RuntimeError(str(value or 'unknown bulk download failure'))
+                results['downloads'].append({'remote_path': item.get('remote_path', ''), 'local_path': value})
+        return results, session_obj
     if action == 'fileinfo':
         return remote_file_info(str(payload.get('remote_path', '') or ''), session_obj)
     if action == 'download':
@@ -2576,6 +3162,8 @@ def _action_dispatch(action, payload):
             str(payload.get('remote_dir', '') or ''),
             session_obj,
         )
+    if action == 'bulk_delete':
+        return delete_files_bulk(list(payload.get('targets') or []), session_obj)
     if action == 'gethome':
         return get_sas_home(session_obj)
     raise RuntimeError(f"Unsupported nonpersistent action: {action}")
@@ -2609,14 +3197,17 @@ END_NONPERSISTENT_ACTION_PY
     close $pyfh;
 
     my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    my $py_path_for_python   = _normalize_local_path_for_python($py_path);
+    my $args_path_for_python = _normalize_local_path_for_python($args_path);
+    my $json_path_for_python = _normalize_local_path_for_python($json_path);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
           ? "$site_packages:$ENV{PYTHONPATH}"
           : $site_packages;
-        system { $python_bin } $python_bin, $py_path, $action, $args_path, $json_path;
+        system { $python_bin } $python_bin, $py_path_for_python, $action, $args_path_for_python, $json_path_for_python;
     } else {
-        system { $python_bin } $python_bin, $py_path, $action, $args_path, $json_path;
+        system { $python_bin } $python_bin, $py_path_for_python, $action, $args_path_for_python, $json_path_for_python;
     }
 
     my $exit_code = $? >> 8;
@@ -2732,7 +3323,7 @@ sub _resolve_local_dependency_path {
 sub _is_builtin_macro_name {
     my ($name) = @_;
     return 1 unless defined $name && length $name;
-    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
+    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
 }
 
 sub _find_local_macro_file {
@@ -3013,7 +3604,10 @@ sub _process_dependencies {
 
     my $upload_dependency = sub {
         my ($cmd, $path) = @_;
-        next if $path =~ /^\/home\// || $path =~ /&/;
+        # Paths rooted in SAS HOME are already remote. Treating ~/... as a
+        # local dependency caused one SASPy connection per input/output after
+        # the same files had already been transferred by the bulk manifest.
+        return if $path =~ m{^(?:~/|/home/)} || $path =~ /&/;
         my $local_path = $self->_resolve_local_dependency_path($path);
         return unless $local_path && !$uploaded{$local_path}++;
         my $detail = $cmd;
@@ -3174,6 +3768,10 @@ sub run_code {
           if defined($macro_bootstrap_meta->{elapsed_seconds}) && $macro_bootstrap_meta->{elapsed_seconds} ne '';
         push @notes, "Bootstrap OK: " . ($macro_bootstrap_meta->{ok} // '')
           if defined($macro_bootstrap_meta->{ok}) && length($macro_bootstrap_meta->{ok});
+        push @notes, "Debug Macro Exists: " . ($macro_bootstrap_meta->{debug_macro_exists} // '')
+          if defined($macro_bootstrap_meta->{debug_macro_exists}) && length($macro_bootstrap_meta->{debug_macro_exists});
+        push @notes, "Bootstrap Skipped: " . ($macro_bootstrap_meta->{skipped} // '')
+          if defined($macro_bootstrap_meta->{skipped}) && length($macro_bootstrap_meta->{skipped});
         push @notes, "Bootstrap Warning: " . (($macro_bootstrap_meta->{warning}) ? 1 : 0)
           if exists $macro_bootstrap_meta->{warning};
         push @notes, "Bootstrap-only SAS log: " . $macro_bootstrap_meta->{log_path}
@@ -3341,6 +3939,32 @@ sub download {
     return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent download error');
 }
 
+sub transfer_many {
+    my ($self, $payload) = @_;
+    $payload = {} unless ref($payload) eq 'HASH';
+    if ($self->{persistent} && $self->{session_id}) {
+        my @uploads;
+        for my $item (@{ $payload->{uploads} || [] }) {
+            my $value = $self->upload($item->{local_path}, {
+                progress_label => $item->{progress_label},
+                skip_if_same   => exists($item->{skip_if_same}) ? $item->{skip_if_same} : 1,
+            });
+            return $value if !defined($value) || $value =~ /^PYTHON ERROR:/;
+            push @uploads, { %{$item}, remote_path => $value };
+        }
+        my @downloads;
+        for my $item (@{ $payload->{downloads} || [] }) {
+            my $value = $self->download($item->{remote_path}, $item->{local_path});
+            return $value if !defined($value) || $value =~ /^PYTHON ERROR:/;
+            push @downloads, { %{$item}, local_path => $value };
+        }
+        return { uploads => \@uploads, downloads => \@downloads };
+    }
+    my $resp = _run_nonpersistent_python_action('bulk_transfer', $payload);
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent bulk transfer error');
+}
+
 sub delete {
     my ($self, $remote_file, $remote_dir) = @_;
     if ($self->{persistent} && $self->{session_id}) {
@@ -3363,8 +3987,52 @@ sub delete {
     return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent delete error');
 }
 
+sub delete_many {
+    my ($self, $targets) = @_;
+    $targets = [] unless ref($targets) eq 'ARRAY';
+    if ($self->{persistent} && $self->{session_id}) {
+        my @results;
+        for my $item (@{$targets}) {
+            $item = {} unless ref($item) eq 'HASH';
+            my $remote_file = $item->{remote_file} // '';
+            my $remote_dir  = $item->{remote_dir} // '';
+            my $msg = $self->delete($remote_file, $remote_dir);
+            return $msg if !defined($msg) || $msg =~ /^PYTHON ERROR:/;
+            push @results, { remote_file => $remote_file, remote_dir => $remote_dir };
+        }
+        return \@results;
+    }
+    my $resp = _run_nonpersistent_python_action('bulk_delete', { targets => $targets });
+    return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+    return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent bulk delete error');
+}
+
+sub _configured_oda_remote_home {
+    my $explicit = $ENV{SAS_ODA_REMOTE_HOME} // '';
+    return $explicit if $explicit =~ m{^/home/[A-Za-z0-9._-]+$};
+
+    my $local_home = $ENV{HOME} // '';
+    my $authfile = length($local_home) ? File::Spec->catfile($local_home, '.authinfo') : '';
+    if (length($authfile) && -r $authfile && open(my $fh, '<', $authfile)) {
+        while (my $line = <$fh>) {
+            my @fields = split /\s+/, $line;
+            next unless @fields == 5 && $fields[1] eq 'user' && $fields[3] eq 'password';
+            my $user = $fields[2] // '';
+            $user =~ s/\@.*$//;
+            if ($user =~ /^[A-Za-z0-9._-]+$/ && $user !~ /^(?:admin|root)$/i) {
+                close $fh;
+                return "/home/$user";
+            }
+        }
+        close $fh;
+    }
+    return '';
+}
+
 sub get_sas_home_path {
     my ($self) = @_;
+    my $configured_home = _configured_oda_remote_home();
+    return $configured_home if length $configured_home;
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
             { cmd => 'gethome', session_id => $self->{session_id} },

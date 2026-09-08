@@ -115,6 +115,7 @@ use warnings;
 use FindBin qw($Bin);
 use lib $Bin;
 use lib "$Bin/DiffGWASDeps";
+use lib "$Bin/MCPDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
 use JSON::PP qw(encode_json decode_json);
@@ -138,9 +139,13 @@ my ($internal_runner_result_json, $internal_execution_file, $internal_execution_
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
+my $classify_sas_log;
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
 my $skip_upload_if_same = 1;
+my $archive_transfers = exists $ENV{SAS_ODA_ARCHIVE_TRANSFERS}
+    ? ($ENV{SAS_ODA_ARCHIVE_TRANSFERS} =~ /^(?:1|true|yes|y|on)$/i ? 1 : 0)
+    : 1;
 my $cleanup_empty_output_dir = 1;
 my $delete_dir = '~';
 my $created_output_dir = 0;
@@ -440,6 +445,7 @@ GetOptions(
     'session-id|s=s' => \$session_id,
     'upload-file|u=s@' => \@upload_files,
     'skip-upload-if-same!' => \$skip_upload_if_same,
+    'archive-transfers!' => \$archive_transfers,
     'download-file|d=s@' => \@download_files,
     'download-local-path=s@' => \@download_local_paths,
     'delete-file|k=s@' => \@delete_files,
@@ -453,6 +459,7 @@ GetOptions(
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
     'skip-sas-oda-auth-bootstrap!' => \$skip_sas_oda_auth_bootstrap,
     'check-sas-oda-login-only!' => \$check_sas_oda_login_only,
+    'classify-sas-log=s' => \$classify_sas_log,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
     'kill-saspy-sessions|kill-sas-oda-sessions|kill-saspy-session-server!' => \$kill_saspy_sessions,
@@ -489,7 +496,7 @@ sub collect_sas_oda_session_pids {
             push @pids, int($pid);
             next;
         }
-        if ($cmd =~ /DiffGWASDeps\/sas_oda_session_server\.py/) {
+        if ($cmd =~ /(?:DiffGWASDeps|MCPDeps)\/sas_oda_session_server\.py/) {
             next unless $cmd =~ m{(?:^|/|\s)python[0-9.]*(?:\s|$)};
             push @pids, int($pid);
             next;
@@ -913,7 +920,26 @@ if ($internal_runner_result_json) {
     exit(($worker_error || (ref($worker_result) eq 'HASH' && ($worker_result->{error} // ''))) ? 1 : 0);
 }
 
-if ($help || (!$check_sas_oda_login_only && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
+if (!$help && defined($classify_sas_log) && length($classify_sas_log)) {
+    open my $classify_fh, '<:encoding(UTF-8)', $classify_sas_log
+      or die "Cannot read SAS log $classify_sas_log: $!\n";
+    local $/;
+    my $classify_text = <$classify_fh> // '';
+    close $classify_fh;
+    my $has_space_failure = sas_log_contains_space_exhaustion($classify_text) ? 1 : 0;
+    my $has_remote_termination = !$has_space_failure && sas_log_contains_remote_termination($classify_text) ? 1 : 0;
+    print encode_json({
+        sas_log       => $classify_sas_log,
+        failure_class => ($has_space_failure ? 'sas_oda_space_exhaustion'
+          : ($has_remote_termination ? 'sas_oda_remote_session_termination' : '')),
+        error_code    => ($has_space_failure ? 'SAS_ODA_WORKSPACE_EXHAUSTION'
+          : ($has_remote_termination ? 'SAS_ODA_REMOTE_SESSION_TERMINATED' : '')),
+        retryable     => (($has_space_failure || $has_remote_termination) ? JSON::PP::false : JSON::PP::true),
+    }), "\n";
+    exit($has_space_failure ? 73 : ($has_remote_termination ? 74 : 0));
+}
+
+if ($help || (!$check_sas_oda_login_only && !$classify_sas_log && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
    || ($code && $file) ) {
     print <<USAGE;
 Usage: $0 [OPTIONS]
@@ -938,6 +964,10 @@ Options:
                              once via importallmacros_ue. Reused sessions do not rerun that import.
   -u, --upload-file <file>   Upload a file to remote SAS ODA HOME directory.
                              Repeat this option to upload multiple files in one run.
+      --archive-transfers    Bundle two or more uploads/downloads into one ZIP transfer,
+                             extract it automatically, validate every file, and remove
+                             the temporary ZIP locally and in SAS ODA (default: on).
+                             Pass --no-archive-transfers for individual transfers.
       --skip-upload-if-same  Reuse an existing remote file with the same basename
                              when size and timestamp already match (default: on).
                              Pass --no-skip-upload-if-same to force a fresh upload.
@@ -968,6 +998,9 @@ Options:
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
+  --classify-sas-log <file>  Inspect an existing SAS log without connecting to ODA.
+                             Space exhaustion returns JSON with retryable=false
+                             and exits 73; other logs exit 0.
   --monitor-status-file <f>  Follow a live SAS ODA status JSON sidecar from another terminal.
   --monitor-interval-seconds <n>
                              Poll interval for --monitor-status-file (default: 5 seconds).
@@ -1453,6 +1486,12 @@ sub fallback_runner {
     return make_runner(persistent => 0, session_id => undef);
 }
 
+sub sas_log_contains_remote_termination {
+    my ($text) = @_;
+    return 0 unless defined $text && length $text;
+    return ($text =~ /No SAS process attached|SAS process has terminated unexpectedly|SAS submit returned empty output and the SAS session was no longer usable|session server[^\n]*(?:terminated|closed)|remote SAS[^\n]*(?:terminated|disconnected)/i) ? 1 : 0;
+}
+
 my $batch_fileops_runner;
 
 sub transient_batch_fileops_runner {
@@ -1730,7 +1769,7 @@ sub sas_submission_contains_include {
 sub is_builtin_macro_name {
     my ($name) = @_;
     return 1 unless defined $name && length $name;
-    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
+    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
 }
 
 sub sas_submission_uses_nonbuiltin_macro {
@@ -2255,6 +2294,31 @@ sub scan_sas_text_for_inline_data_step_cards {
     return \@findings;
 }
 
+sub scan_sas_text_for_unsafe_put_semicolons {
+    my ($text) = @_;
+    my @findings;
+    return \@findings unless defined $text && length $text;
+    my @lines = split /\r?\n/, $text, -1;
+    for my $idx (0 .. $#lines) {
+        my $line = $lines[$idx] // '';
+        next unless $line =~ /^\s*%put\b/i;
+        # A literal semicolon terminates a macro statement even when it looks
+        # like ordinary prose.  Flag trailing text unless it starts another
+        # macro statement; use a comma or macro quoting such as %str(;) when a
+        # semicolon is genuinely part of the message.
+        next unless $line =~ /^\s*%put\b.*?;\s*([^%\s][^;]*);\s*$/i;
+        my $trailing = $1 // '';
+        $trailing =~ s/^\s+|\s+$//g;
+        push @findings, {
+            line        => $idx + 1,
+            type        => 'unsafe_put_semicolon',
+            message     => "Literal semicolon terminates %put before trailing text '$trailing'; replace it with punctuation such as a comma or macro-quote the semicolon.",
+            context_ref => [ $idx + 1 ],
+        };
+    }
+    return \@findings;
+}
+
 sub scan_sas_text_for_common_macro_typos {
     my ($text) = @_;
     my @findings;
@@ -2286,6 +2350,7 @@ sub run_submission_preflight {
     my $submitted_code = $args{submitted_code} // '';
     my $display_path = $args{display_path} // '(submitted SAS program)';
     my $scan = scan_sas_text_for_unbalanced_constructs($submitted_code);
+    push @{ $scan->{findings} }, @{ scan_sas_text_for_unsafe_put_semicolons($submitted_code) };
     my @warning_findings;
     push @warning_findings, @{ scan_sas_text_for_inline_data_step_cards($submitted_code) };
     push @warning_findings, @{ scan_sas_text_for_common_macro_typos($submitted_code) };
@@ -2551,13 +2616,14 @@ sub summarize_sas_log_text {
 sub sas_log_contains_fatal_error {
     my ($text) = @_;
     return 0 unless defined $text && length $text;
-    return 1 if $text =~ /WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i;
-    return 1 if $text =~ /ERROR:\s+Macro\s+\w+\s+not defined/i;
-    return 1 if $text =~ /ERROR:\s+The macro\s+\w+\s+was not found/i;
-    return 1 if $text =~ /ERROR:\s+The macro\s+\w+\s+will stop executing\./i;
-    return 1 if $text =~ /ERROR:\s+A character operand was found in the %EVAL function or %IF condition where a numeric operand is required\./i;
-    return 1 if $text =~ /ERROR:\s+/i;
-    return 1 if $text =~ /^\s*ERROR\s+\d+-\d+:/mi;
+    for my $line (split /\r?\n/, $text) {
+        # SAS SOURCE/SOURCE2 listings prefix submitted source with a line
+        # number.  A listed "%put ERROR:" is code, not a runtime error.
+        next if $line =~ /^\s*\d+(?:\s+|!\s*)/;
+        return 1 if $line =~ /WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i;
+        return 1 if $line =~ /ERROR:\s+/i;
+        return 1 if $line =~ /^\s*ERROR\s+\d+-\d+:/i;
+    }
     return 0;
 }
 
@@ -2566,6 +2632,7 @@ sub first_fatal_sas_log_line {
     return '' unless defined $text && length $text;
     for my $line (split /\r?\n/, $text) {
         next unless defined $line;
+        next if $line =~ /^\s*\d+(?:\s+|!\s*)/;
         if ($line =~ /WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i
             || $line =~ /ERROR:\s+/i
             || $line =~ /^\s*ERROR\s+\d+-\d+:/i) {
@@ -2812,6 +2879,18 @@ sub delete_one_file {
     }
 }
 
+sub sas_log_contains_space_exhaustion {
+    my ($text) = @_;
+    return 0 unless defined $text && length $text;
+    for my $line (split /\r?\n/, $text) {
+        next if $line =~ /^\s*\d+(?:\s+|!\s*)/;
+        return 1 if $line =~ /^\s*ERROR:\s+Insufficient space in\b/i;
+        return 1 if $line =~ /^\s*ERROR:.*(?:No space left on device|Disk quota exceeded|file system is full|disk is full|quota[^\r\n]*exceed)/i;
+        return 1 if $line =~ /^\s*(?:ERROR:\s*)?UNIX errno\s*=\s*(?:28|122)(?:\D|$)/i;
+    }
+    return 0;
+}
+
 sub compose_remote_path_for_match {
     my ($remote_dir, $entry) = @_;
     return $entry if !defined $remote_dir || $remote_dir eq '' || $remote_dir eq '.';
@@ -2823,8 +2902,29 @@ sub compose_remote_path_for_match {
 
 #Make the upload file before running any codes, so that the uploaded file can be used in the code if needed.
 if(@upload_files){
-    for my $upload_path (@upload_files) {
-        upload_one_file($upload_path);
+    print "Bulk upload manifest: " . scalar(@upload_files) . " file(s); using one SASPy session.\n";
+    my @items = map {
+        +{
+            local_path     => $_,
+            progress_label => 'manifest upload: ' . basename($_),
+            skip_if_same   => $skip_upload_if_same ? 1 : 0,
+        }
+    } @upload_files;
+    my $bulk_result = run_with_possible_fallback(
+        'bulk upload',
+        sub {
+            my ($active_runner) = @_;
+            return $active_runner->transfer_many({
+                uploads => \@items,
+                downloads => [],
+                archive_transfers => $archive_transfers ? 1 : 0,
+            });
+        },
+    );
+    die "Bulk upload failed: " . (defined($bulk_result) ? $bulk_result : 'unknown error') . "\n"
+      if !ref($bulk_result) || ref($bulk_result) ne 'HASH';
+    for my $item (@{ $bulk_result->{uploads} || [] }) {
+        print "Remote path for " . basename($item->{local_path} || '') . " is $item->{remote_path}\n";
     }
 }
 
@@ -2951,6 +3051,7 @@ if (!$skip_execution_due_to_preflight && $include_preflight && $include_prefligh
 my $result;
 my $sas_execution_failed = 0;
 my $sas_execution_error = '';
+my $sas_execution_failure_class = '';
 my $submit_text_for_autoload = $execution_file ? slurp_text_file($execution_file) : ($execution_code // '');
 my $submit_should_autoload_macros = should_autoload_macros_for_submission($submit_text_for_autoload) ? 1 : 0;
 
@@ -3114,12 +3215,35 @@ if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
 
 if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
     && ref($result) eq 'HASH'
+    && !$sas_execution_failure_class
+    && sas_log_contains_remote_termination(join("\n", $result->{error} // '', $result->{log} // '', $result->{dep_logs} // ''))) {
+    $sas_execution_failed = 1;
+    $sas_execution_failure_class = 'sas_oda_remote_session_termination';
+    $sas_execution_error = 'NON-RETRYABLE: The remote SAS ODA session terminated without a definitive SAS log. '
+      . 'WORK/quota or memory exhaustion is possible but unconfirmed; preserve the status/log artifacts and reduce the input or WORK footprint before rerunning.';
+    warn "ERROR: $sas_execution_error\n";
+}
+
+if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
+    && ref($result) eq 'HASH'
     && !length($result->{error} // '')
     && sas_log_contains_fatal_error($result->{log} // '')) {
     $sas_execution_failed = 1;
     my $first_line = first_fatal_sas_log_line($result->{log} // '');
     $sas_execution_error = 'SAS log contains fatal errors';
     $sas_execution_error .= ": $first_line" if length $first_line;
+}
+
+if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
+    && ref($result) eq 'HASH'
+    && sas_log_contains_space_exhaustion(join("\n", $result->{error} // '', $result->{log} // ''))) {
+    $sas_execution_failed = 1;
+    $sas_execution_failure_class = 'sas_oda_space_exhaustion';
+    my $first_line = first_fatal_sas_log_line(join("\n", $result->{error} // '', $result->{log} // ''));
+    $sas_execution_error = 'NON-RETRYABLE: SAS ODA exhausted its WORK/storage space';
+    $sas_execution_error .= ": $first_line" if length $first_line;
+    $sas_execution_error .= '. Free ODA storage or reduce WORK data before rerunning; the same SAS script must not be submitted again automatically.';
+    warn "ERROR: $sas_execution_error\n";
 }
 
 if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
@@ -3240,15 +3364,37 @@ if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
 #Put the download part after running the code, so that users can specify the dataset to be downloaded in the code if needed. 
 #For example, users can create a dataset in the code and then specify that dataset to be downloaded.
 if (@download_files) {
+    print "Bulk download manifest: " . scalar(@download_files) . " file(s); using one SASPy session.\n";
+    my @items;
     for my $i (0 .. $#download_files) {
-        my $resolved_local_download = resolve_download_local_path($i, $download_files[$i]);
-        download_one_file($download_files[$i], $resolved_local_download);
+        push @items, {
+            remote_path => $download_files[$i],
+            local_path  => resolve_download_local_path($i, $download_files[$i]),
+        };
+    }
+    my $bulk_result = run_with_possible_fallback(
+        'bulk download',
+        sub {
+            my ($active_runner) = @_;
+            return $active_runner->transfer_many({
+                uploads => [],
+                downloads => \@items,
+                archive_transfers => $archive_transfers ? 1 : 0,
+            });
+        },
+    );
+    die "Bulk download failed: " . (defined($bulk_result) ? $bulk_result : 'unknown error') . "\n"
+      if !ref($bulk_result) || ref($bulk_result) ne 'HASH';
+    for my $item (@{ $bulk_result->{downloads} || [] }) {
+        my $local_path = File::Spec->rel2abs($item->{local_path} || '');
+        die "Bulk download did not create expected local file: $local_path\n" unless -s $local_path;
+        print "The file is saved as $local_path\n";
     }
 }
 
 if (@delete_files || @delete_file_rgxs) {
     my @all_delete_targets = @delete_files;
-    my $delete_runner = (!$persistent && (@delete_file_rgxs || @all_delete_targets > 1))
+    my $delete_runner = (!$persistent && @delete_file_rgxs)
       ? transient_batch_fileops_runner()
       : undef;
     if (@delete_file_rgxs) {
@@ -3287,8 +3433,26 @@ if (@delete_files || @delete_file_rgxs) {
         }
         @all_delete_targets = sort keys %selected;
     }
-    for my $target (@all_delete_targets) {
-        delete_one_file($target, $delete_dir, $delete_runner);
+    print "Bulk delete manifest: " . scalar(@all_delete_targets) . " file(s); using one SASPy session and one SAS submit.\n";
+    my @delete_items = map {
+        +{ remote_file => $_, remote_dir => $delete_dir }
+    } @all_delete_targets;
+    my $delete_results = run_with_possible_fallback(
+        'bulk delete',
+        sub {
+            my ($active_runner) = @_;
+            return $active_runner->delete_many(\@delete_items);
+        },
+    );
+    if (!ref($delete_results) || ref($delete_results) ne 'ARRAY') {
+        my $msg = defined($delete_results) ? $delete_results : 'unknown bulk delete error';
+        die "Bulk delete failed: $msg\n";
+    }
+    for my $item (@{$delete_results}) {
+        my $path = ref($item) eq 'HASH'
+          ? ($item->{remote_path} // $item->{remote_file} // '')
+          : '';
+        print "Deleted/verified remote file: $path\n" if length $path;
     }
 }
 
@@ -3400,10 +3564,53 @@ if ($sas_execution_failed) {
         message  => $sas_execution_error,
         complete => 1,
         success  => 0,
+        (length($sas_execution_failure_class)
+          ? (failure_class => $sas_execution_failure_class, retryable => 0)
+          : ()),
     }) if ($execution_file || ($execution_code && $execution_code !~ /^\s*$/));
+    my $failure_exit_code = 1;
+    if ($sas_execution_failure_class eq 'sas_oda_space_exhaustion') {
+        my $marker_file = "$output_prefix_path.non_retryable_space_failure.txt";
+        if (open my $marker_fh, '>:encoding(UTF-8)', $marker_file) {
+            print {$marker_fh} "failure_class=sas_oda_space_exhaustion\n";
+            print {$marker_fh} "retryable=false\n";
+            print {$marker_fh} "sas_status=$status_file\n";
+            print {$marker_fh} "message=$sas_execution_error\n";
+            print {$marker_fh} "recommended_action=Free ODA storage or reduce WORK data before starting a new run.\n";
+            close $marker_fh;
+            print STDERR "ERROR: Non-retryable SAS ODA space-failure marker written to: $marker_file\n";
+        } else {
+            warn "WARNING: Could not write SAS ODA space-failure marker $marker_file: $!\n";
+        }
+        $failure_exit_code = (defined($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
+          && $ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE} =~ /^\d+$/)
+          ? int($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
+          : 73;
+        print STDERR "ERROR: Stopping without retry; exit code $failure_exit_code identifies a non-retryable ODA space failure.\n";
+    } elsif ($sas_execution_failure_class eq 'sas_oda_remote_session_termination') {
+        my $marker_file = "$output_prefix_path.non_retryable_remote_termination.txt";
+        if (open my $marker_fh, '>:encoding(UTF-8)', $marker_file) {
+            print {$marker_fh} "failure_class=sas_oda_remote_session_termination\n";
+            print {$marker_fh} "error_code=SAS_ODA_REMOTE_SESSION_TERMINATED\n";
+            print {$marker_fh} "retryable=false\n";
+            print {$marker_fh} "sas_status=$status_file\n";
+            print {$marker_fh} "message=$sas_execution_error\n";
+            print {$marker_fh} "diagnosis=Possible ODA WORK/quota or memory exhaustion, but the server-side cause was not reported.\n";
+            print {$marker_fh} "recommended_action=Preserve diagnostics, reduce the input or WORK footprint, and start a fresh ODA session before rerunning.\n";
+            close $marker_fh;
+            print STDERR "ERROR: Non-retryable SAS ODA remote-termination marker written to: $marker_file\n";
+        } else {
+            warn "WARNING: Could not write SAS ODA remote-termination marker $marker_file: $!\n";
+        }
+        $failure_exit_code = (defined($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
+          && $ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE} =~ /^\d+$/)
+          ? int($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
+          : 74;
+        print STDERR "ERROR: Stopping without retry; exit code $failure_exit_code identifies a remote SAS session termination.\n";
+    }
     cleanup_empty_output_dir_if_created($output_dir);
     print "ERROR: $sas_execution_error\n";
-    exit 1;
+    exit $failure_exit_code;
 }
 
 # else{
