@@ -7,7 +7,7 @@ import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = 8765
-SERVER_API_VERSION = '2026-07-09-macro-bootstrap-progress-frames'
+SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -17,8 +17,10 @@ LOG_PATH = os.environ.get('SAS_ODA_SESSION_DEBUG_LOG') or os.path.join(os.path.d
 STATUS_FILE = os.environ.get('SAS_ODA_STATUS_FILE') or ''
 LOAD_MACROS_CODE = '''
 %macro _pipeline_bootstrap_macros;
-%global _pipeline_macro_bootstrap_ok;
+%global _pipeline_macro_bootstrap_ok _pipeline_macro_boot_skipped _pipeline_debug_macro_exists;
 %let _pipeline_macro_bootstrap_ok=0;
+%let _pipeline_macro_boot_skipped=0;
+%let _pipeline_debug_macro_exists=%sysmacexist(debug_macro);
 %let _home=%sysfunc(pathname(HOME));
 %let _macro_home=&_home/Macros;
 %let _pipeline_opt_mprint=%sysfunc(getoption(mprint,keyword));
@@ -28,22 +30,30 @@ LOAD_MACROS_CODE = '''
 %let _pipeline_opt_source=%sysfunc(getoption(source,keyword));
 %let _pipeline_opt_source2=%sysfunc(getoption(source2,keyword));
 options nomprint nomlogic nosymbolgen nonotes nosource nosource2;
-%if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
-    %include "&_home/importallmacros_ue.sas";
-%end;
-%else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
-    %include "&_macro_home/importallmacros_ue.sas";
+%if &_pipeline_debug_macro_exists %then %do;
+    %let _pipeline_macro_bootstrap_ok=1;
+    %let _pipeline_macro_boot_skipped=1;
 %end;
 %else %do;
-    filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
-    %include M;
-    filename M clear;
-%end;
-%if %sysmacexist(importallmacros_ue) %then %do;
-    %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
-    %let _pipeline_macro_bootstrap_ok=1;
+    %if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
+        %include "&_home/importallmacros_ue.sas";
+    %end;
+    %else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
+        %include "&_macro_home/importallmacros_ue.sas";
+    %end;
+    %else %do;
+        filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+        %include M;
+        filename M clear;
+    %end;
+    %if %sysmacexist(importallmacros_ue) %then %do;
+        %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
+        %let _pipeline_macro_bootstrap_ok=1;
+    %end;
 %end;
 options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_pipeline_opt_notes &_pipeline_opt_source &_pipeline_opt_source2;
+%put NOTE: PIPELINE_DEBUG_MACRO_EXISTS=&_pipeline_debug_macro_exists;
+%put NOTE: PIPELINE_MACRO_BOOTSTRAP_SKIPPED=&_pipeline_macro_boot_skipped;
 %put NOTE: PIPELINE_MACRO_BOOTSTRAP_OK=&_pipeline_macro_bootstrap_ok;
 %mend;
 %_pipeline_bootstrap_macros;
@@ -220,6 +230,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             "Bootstrap End: ",
             "Elapsed Seconds: ",
             "Bootstrap OK: ",
+            "Debug Macro Exists: ",
+            "Bootstrap Skipped: ",
             "Warning: ",
             "Status: running",
             "",
@@ -246,12 +258,22 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
     )
     macro_log = res.get('LOG', '')
     bootstrap_ok = ''
+    debug_macro_exists = ''
+    bootstrap_skipped = ''
     try:
         bootstrap_ok = str(sess.symget('_pipeline_macro_bootstrap_ok') or '').strip()
+        debug_macro_exists = str(sess.symget('_pipeline_debug_macro_exists') or '').strip()
+        bootstrap_skipped = str(sess.symget('_pipeline_macro_boot_skipped') or '').strip()
     except Exception:
         bootstrap_ok = ''
+        debug_macro_exists = ''
+        bootstrap_skipped = ''
     if not bootstrap_ok and 'PIPELINE_MACRO_BOOTSTRAP_OK=1' in macro_log:
         bootstrap_ok = '1'
+    if not debug_macro_exists and 'PIPELINE_DEBUG_MACRO_EXISTS=1' in macro_log:
+        debug_macro_exists = '1'
+    if not bootstrap_skipped and 'PIPELINE_MACRO_BOOTSTRAP_SKIPPED=1' in macro_log:
+        bootstrap_skipped = '1'
     warning = bootstrap_ok != '1'
     bootstrap_finished_at = status_timestamp()
     bootstrap_elapsed_seconds = round(time.time() - bootstrap_started_epoch, 2)
@@ -263,6 +285,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             f"Bootstrap End: {bootstrap_finished_at}",
             f"Elapsed Seconds: {bootstrap_elapsed_seconds}",
             f"Bootstrap OK: {bootstrap_ok or '0'}",
+            f"Debug Macro Exists: {debug_macro_exists or '0'}",
+            f"Bootstrap Skipped: {bootstrap_skipped or '0'}",
             f"Warning: {1 if warning else 0}",
             "",
             "=== SAS Macro Bootstrap Log ===",
@@ -274,12 +298,15 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
         'finished_at': bootstrap_finished_at,
         'elapsed_seconds': bootstrap_elapsed_seconds,
         'ok': bootstrap_ok or '0',
+        'debug_macro_exists': debug_macro_exists or '0',
+        'skipped': bootstrap_skipped or '0',
         'warning': bool(warning),
         'log_path': bootstrap_log_path,
     }
     print(
         f"[{session_id}] SAS ODA macro bootstrap finished at {bootstrap_finished_at} "
-        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'})",
+        f"(elapsed {bootstrap_elapsed_seconds}s, ok={bootstrap_ok or '0'}, "
+        f"debug_macro_exists={debug_macro_exists or '0'}, skipped={bootstrap_skipped or '0'})",
         flush=True,
     )
     print(f"[{session_id}] Bootstrap-only SAS log saved to: {bootstrap_log_path}", flush=True)
@@ -296,6 +323,8 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             'finished_at': bootstrap_finished_at,
             'elapsed_seconds': bootstrap_elapsed_seconds,
             'ok': bootstrap_ok or '0',
+            'debug_macro_exists': debug_macro_exists or '0',
+            'skipped': bootstrap_skipped or '0',
             'warning': bool(warning),
         })
     session_macros_loaded[session_id] = True
@@ -384,8 +413,35 @@ def ensure_session(session_id):
     return sessions[session_id]
 
 def session_home(sess):
-    sess.submit("%let homepath=%sysfunc(pathname(HOME));")
-    return sess.symget('homepath')
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    userid = str(getattr(cfg, 'omruser', '') or '').strip()
+    authkey = str(getattr(cfg, 'authkey', '') or '').strip()
+    if not userid:
+        authfile = os.path.join(os.path.expanduser('~'), '_authinfo' if os.name == 'nt' else '.authinfo')
+        try:
+            with open(authfile, 'r', encoding='utf-8') as handle:
+                for line in handle:
+                    fields = line.split()
+                    if len(fields) == 5 and (not authkey or fields[0] == authkey) and fields[1] == 'user' and fields[3] == 'password':
+                        userid = fields[2]
+                        break
+        except OSError:
+            pass
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    sess.submit(r'''
+%global _mg_homepath;
+%let _mg_homepath=;
+%if %symexist(_USERHOME) %then %let _mg_homepath=%superq(_USERHOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysget(HOME);
+%if %superq(_mg_homepath)= %then %let _mg_homepath=%sysfunc(pathname(HOME));
+''')
+    userid = str(sess.symget('SYSUSERID') or '').strip()
+    home_user = userid.split('@', 1)[0]
+    if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
+        return f"/home/{home_user}"
+    return str(sess.symget('_mg_homepath') or '').strip()
 
 def resolve_remote_path(remote_path, sess):
     if remote_path.startswith('~/'):
@@ -570,14 +626,14 @@ def probe_session_after_empty_submit(sess):
         detail = traceback.format_exc()
         return False, f"{type(exc).__name__}: {exc}\n{detail}"
 
-def with_retry(session_id, fn):
+def with_retry(session_id, fn, retry_session_loss=True):
     try:
         sess = ensure_session(session_id)
         return fn(sess)
     except Exception as e:
         err = str(e)
         log_event(f"with_retry error session_id={session_id} err={err}")
-        if 'No SAS process attached' in err or 'SAS process has terminated' in err:
+        if retry_session_loss and ('No SAS process attached' in err or 'SAS process has terminated' in err):
             with lock:
                 log_event(f"with_retry recreating session_id={session_id}")
                 sess = create_session(session_id)
@@ -660,7 +716,12 @@ def handle_client(conn, addr):
                         if not alive:
                             raise RuntimeError("SAS submit returned empty output and the SAS session was no longer usable afterwards.\n" + probe_detail)
                     return res
-                res = with_retry(session_id, _submit)
+                # Never resubmit user SAS code implicitly after the ODA process
+                # dies.  A WORK-space exhaustion can terminate the process, and
+                # replaying the same code wastes time and normally fails again.
+                # The caller preserves/classifies the SAS log and decides whether
+                # a genuinely retryable submission should be started.
+                res = with_retry(session_id, _submit, retry_session_loss=False)
                 log = str(res.get('LOG',''))
                 lst = str(res.get('LST',''))
                 if macro_log and macro_warning:
@@ -762,20 +823,20 @@ def handle_client(conn, addr):
                 resp = {'status':'error','error':str(e)}
                 log_event(f"upload error session_id={session_id} local_path={local_path} err={e}")
         elif cmd == 'download':
-            remote_path = req.get('remote_path', '')
+            requested_remote_path = str(req.get('remote_path', '') or '')
             local_path = req.get('local_path', '')
             try:
                 def _download(sess):
-                    log_event(f"download start session_id={session_id} remote_path={remote_path} local_path={local_path}")
-                    out_path = local_path or os.path.basename(remote_path)
+                    log_event(f"download start session_id={session_id} remote_path={requested_remote_path} local_path={local_path}")
+                    out_path = local_path or os.path.basename(requested_remote_path)
                     out_path = os.path.abspath(out_path)
                     out_dir = os.path.dirname(out_path)
                     if out_dir and not os.path.exists(out_dir):
                         os.makedirs(out_dir, exist_ok=True)
-                    remote_info = run_fileinfo(sess, remote_path)
+                    remote_info = run_fileinfo(sess, requested_remote_path)
                     if not isinstance(remote_info, dict) or not remote_info.get('exists'):
-                        raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {remote_path}")
-                    resolved_remote_path = remote_info.get('path') or remote_path
+                        raise FileNotFoundError(f"Remote file does not exist in SAS ODA: {requested_remote_path}")
+                    resolved_remote_path = remote_info.get('path') or requested_remote_path
                     remote_size = remote_info.get('size') or 0
                     print(
                         f"Download step [{session_id}]: {resolved_remote_path} -> {out_path} ({remote_size:,} bytes)",
@@ -815,7 +876,7 @@ def handle_client(conn, addr):
                 resp = {'status':'ok','local_path':saved_path}
             except Exception as e:
                 resp = {'status':'error','error':str(e)}
-                log_event(f"download error session_id={session_id} remote_path={remote_path} err={e}")
+                log_event(f"download error session_id={session_id} remote_path={requested_remote_path} err={e}")
         elif cmd == 'delete':
             remote_file = req.get('remote_file', '')
             remote_dir = req.get('remote_dir', '')
