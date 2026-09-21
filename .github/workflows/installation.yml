@@ -1,0 +1,96 @@
+name: Installation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: installation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unix:
+    name: Install on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, macos-15-intel]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install from scratch
+        run: |
+          set -o pipefail
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo bash install/install_ubuntu.sh 2>&1 | tee install.log
+          else
+            bash install/install_macos.sh 2>&1 | tee install.log
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: installation-${{ matrix.os }}
+          path: install.log
+
+  windows-cygwin:
+    name: Install on windows-2022 with Cygwin
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Cygwin runtime
+        shell: powershell
+        run: |
+          $setup = Join-Path $env:RUNNER_TEMP 'setup-x86_64.exe'
+          $root = Join-Path $env:RUNNER_TEMP 'cygwin64'
+          Invoke-WebRequest 'https://cygwin.com/setup-x86_64.exe' -OutFile $setup
+          & $setup -q -B -g -n -N -d --no-write-registry -R $root `
+            -s 'https://mirrors.kernel.org/sourceware/cygwin/' `
+            -P 'bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "CYGWIN_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Install from scratch
+        shell: powershell
+        run: |
+          $bash = Join-Path $env:CYGWIN_ROOT 'bin\bash.exe'
+          $drive = $env:GITHUB_WORKSPACE.Substring(0, 1).ToLowerInvariant()
+          $repo = '/cygdrive/' + $drive + ($env:GITHUB_WORKSPACE.Substring(2) -replace '\\', '/')
+          & $bash -l -c "cd '$repo' && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh 2>&1 | tee install.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: installation-windows-cygwin
+          path: install.log
+
+  conda:
+    name: Install with Conda on ubuntu-24.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          activate-environment: base
+      - name: Install from scratch
+        run: |
+          set -o pipefail
+          bash install/install_conda.sh 2>&1 | tee install.log
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: installation-conda
+          path: install.log
