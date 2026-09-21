@@ -62,10 +62,12 @@ jobs:
         shell: powershell
         run: |
           $bash = Join-Path $env:CYGWIN_ROOT 'bin\bash.exe'
-          $drive = $env:GITHUB_WORKSPACE.Substring(0, 1).ToLowerInvariant()
-          $repo = '/cygdrive/' + $drive + ($env:GITHUB_WORKSPACE.Substring(2) -replace '\\', '/')
-          & $bash -l -c "cd '$repo' && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh 2>&1 | tee install.log"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $cygpath = Join-Path $env:CYGWIN_ROOT 'bin\cygpath.exe'
+          $env:MCP4SAS_CYGWIN_REPO = (& $cygpath -u $env:GITHUB_WORKSPACE).Trim()
+          & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh' `
+            2>&1 | Tee-Object -FilePath install.log
+          $installExit = $LASTEXITCODE
+          if ($installExit -ne 0) { exit $installExit }
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -85,6 +87,9 @@ jobs:
         with:
           miniforge-version: latest
           activate-environment: base
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: true
       - name: Install from scratch
         run: |
           set -o pipefail
