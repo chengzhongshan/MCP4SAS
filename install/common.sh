@@ -50,7 +50,10 @@ create_python_venv() {
   MCP4SAS_BASE_PYTHON="$python_bin"
   log "Creating Python virtual environment at ${MCP4SAS_VENV}"
   if command_exists uname && uname -s | grep -qi '^CYGWIN'; then
-    "$python_bin" -m venv --system-site-packages "${MCP4SAS_VENV}"
+    # Cygwin distributes pip separately and its venv ensurepip bootstrap can
+    # fail even when python312-pip is installed. Reuse that system pip long
+    # enough to seed this isolated environment.
+    "$python_bin" -m venv --without-pip --system-site-packages "${MCP4SAS_VENV}"
   else
     "$python_bin" -m venv "${MCP4SAS_VENV}"
   fi
