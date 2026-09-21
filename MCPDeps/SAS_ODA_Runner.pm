@@ -352,15 +352,15 @@ def _open_sas_session():
     last_exc = None
     for cfgname in _iter_saspy_cfg_names():
         try:
-            return saspy.SASsession(cfgname=cfgname, results='html')
+            return saspy.SASsession(cfgname=cfgname, results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return saspy.SASsession(results='html')
+            return saspy.SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
             raise last_exc
-    return saspy.SASsession(results='html')
+    return saspy.SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
 
 def _format_elapsed(seconds):
     seconds = max(0, int(seconds or 0))
@@ -426,6 +426,30 @@ def get_session(session_obj):
         session_obj._macros_loaded = False
 
     return session_obj._session, session_obj
+
+def _saspy_subprocess_id(session_obj):
+    sess = getattr(session_obj, '_session', None)
+    io_obj = getattr(sess, '_io', None)
+    pid_obj = getattr(io_obj, 'pid', None)
+    if hasattr(pid_obj, 'pid'):
+        pid_obj = pid_obj.pid
+    return str(pid_obj) if pid_obj not in (None, '') else 'unknown'
+
+def _print_one_shot_connection_close(session_obj, action, result, next_step=''):
+    if getattr(session_obj, '_session', None) is None:
+        return
+    lines = [
+        'MCP4SAS SAS connection lifecycle:',
+        f'  subprocess id: {_saspy_subprocess_id(session_obj)}',
+        '  mode: one-shot',
+        f'  action: {action}',
+        f'  result: {result}',
+        '  closure reason: this action is complete and no persistent session was requested.',
+    ]
+    if next_step:
+        lines.append(f'  next step: {next_step}')
+    sys.stderr.write('\n'.join(lines) + '\n')
+    sys.stderr.flush()
 
 def ensure_macros_loaded(session_obj):
     session, session_obj = get_session(session_obj)
@@ -1663,15 +1687,15 @@ def open_sas_session():
     last_exc = None
     for cfgname in iter_saspy_cfg_names():
         try:
-            return SASsession(cfgname=cfgname, results='html')
+            return SASsession(cfgname=cfgname, results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return SASsession(results='html')
+            return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
             raise last_exc
-    return SASsession(results='html')
+    return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
 def log_event(message):
     stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{stamp}] {message}\n"
@@ -2979,13 +3003,15 @@ def _export_macro_bootstrap_meta(session_obj):
         'log_path': getattr(session_obj, '_macro_bootstrap_log_path', '') or '',
     }
 
-def _endsas_safely(session_obj):
+def _endsas_safely(session_obj, action, result, next_step=''):
     try:
         sess = getattr(session_obj, '_session', None)
         if sess is not None:
+            _print_one_shot_connection_close(session_obj, action, result, next_step)
             sess.endsas()
-    except Exception:
-        pass
+    except Exception as exc:
+        sys.stderr.write(f'WARNING: SAS connection cleanup raised {type(exc).__name__}: {exc}\n')
+        sys.stderr.flush()
 
 if __name__ == '__main__':
     code_path = sys.argv[1]
@@ -3014,7 +3040,13 @@ if __name__ == '__main__':
     except BaseException as exc:
         payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
     finally:
-        _endsas_safely(session_obj)
+        close_result = 'success' if payload.get('status') == 'ok' else 'failure'
+        _endsas_safely(
+            session_obj,
+            'SAS code submission (including macro bootstrap when required)',
+            close_result,
+            'No further SAS connection is expected for this one-shot run.',
+        )
         with open(result_path, 'w', encoding='utf-8') as fh:
             json.dump(payload, fh, ensure_ascii=False)
 END_NONPERSISTENT_PY
@@ -3088,13 +3120,15 @@ sub _run_nonpersistent_python_action {
     print {$pyfh} $INLINE_PYTHON_SOURCE;
     print {$pyfh} <<'END_NONPERSISTENT_ACTION_PY';
 
-def _endsas_safely(session_obj):
+def _endsas_safely(session_obj, action, result, next_step=''):
     try:
         sess = getattr(session_obj, '_session', None)
         if sess is not None:
+            _print_one_shot_connection_close(session_obj, action, result, next_step)
             sess.endsas()
-    except Exception:
-        pass
+    except Exception as exc:
+        sys.stderr.write(f'WARNING: SAS connection cleanup raised {type(exc).__name__}: {exc}\n')
+        sys.stderr.flush()
 
 def _action_dispatch(action, payload):
     session_obj = None
@@ -3178,6 +3212,7 @@ if __name__ == '__main__':
         'value': None,
     }
     session_obj = None
+    action_args = {}
     try:
         with open(args_path, 'r', encoding='utf-8') as fh:
             action_args = json.load(fh)
@@ -3190,7 +3225,10 @@ if __name__ == '__main__':
     except BaseException as exc:
         payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
     finally:
-        _endsas_safely(session_obj)
+        close_result = 'success' if payload.get('status') == 'ok' else 'failure'
+        action_label = str(action_args.get('connection_purpose') or action.replace('_', ' '))
+        next_step = str(action_args.get('connection_next_step') or '')
+        _endsas_safely(session_obj, action_label, close_result, next_step)
         with open(result_path, 'w', encoding='utf-8') as fh:
             json.dump(payload, fh, ensure_ascii=False)
 END_NONPERSISTENT_ACTION_PY
@@ -3510,6 +3548,8 @@ sub _ensure_remote_macro_bootstrap_helper {
                 progress_label => 'macro bootstrap helper: ' . basename($local_helper),
                 skip_if_same   => 1,
                 timeout_seconds => $MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS,
+                connection_purpose => 'macro bootstrap helper upload/reuse check',
+                connection_next_step => 'open a separate one-shot connection for macro bootstrap and SAS code submission',
             }
         );
     };
@@ -3822,7 +3862,8 @@ sub filesindir {
 }
 
 sub fileinfo {
-    my ($self, $remote_path) = @_;
+    my ($self, $remote_path, $opts) = @_;
+    $opts = {} unless ref($opts) eq 'HASH';
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
             { cmd => 'fileinfo', session_id => $self->{session_id}, remote_path => $remote_path },
@@ -3836,6 +3877,8 @@ sub fileinfo {
         'fileinfo',
         {
             remote_path => $remote_path,
+            connection_purpose => $opts->{connection_purpose},
+            connection_next_step => $opts->{connection_next_step},
         }
     );
     return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
@@ -3855,7 +3898,15 @@ sub upload {
             $remote_path = $remote_home;
             $remote_path =~ s{[\\/]+$}{};
             $remote_path .= '/' . File::Basename::basename($local_path);
-            my $remote_info = eval { $self->fileinfo($remote_path) };
+            my $remote_info = eval {
+                $self->fileinfo(
+                    $remote_path,
+                    {
+                        connection_purpose => $opts->{connection_purpose},
+                        connection_next_step => $opts->{connection_next_step},
+                    }
+                )
+            };
             if (ref($remote_info) eq 'HASH' && _cached_remote_file_matches_local_upload($remote_info, $local_path)) {
                 my $display_label = $progress_label || ('dependency upload: ' . File::Basename::basename($local_path));
                 warn "Upload step: $display_label -> $remote_path already matches cached local size/creation-time; skipping upload.\n";
@@ -3908,6 +3959,8 @@ sub upload {
             local_path     => $local_path,
             progress_label => $progress_label,
             skip_if_same   => $skip_if_same ? 1 : 0,
+            connection_purpose => $opts->{connection_purpose},
+            connection_next_step => $opts->{connection_next_step},
         }
     );
     if ($resp && ($resp->{status} // '') eq 'ok') {

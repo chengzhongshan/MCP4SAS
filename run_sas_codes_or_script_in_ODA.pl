@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 BEGIN {
     require File::Basename;
     require File::Spec;
@@ -139,6 +139,7 @@ my ($internal_runner_result_json, $internal_execution_file, $internal_execution_
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
+my ($saspy_cfgname, $saspy_cfgfile);
 my $classify_sas_log;
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
@@ -459,6 +460,8 @@ GetOptions(
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
     'skip-sas-oda-auth-bootstrap!' => \$skip_sas_oda_auth_bootstrap,
     'check-sas-oda-login-only!' => \$check_sas_oda_login_only,
+    'saspy-cfgname=s' => \$saspy_cfgname,
+    'saspy-cfgfile=s' => \$saspy_cfgfile,
     'classify-sas-log=s' => \$classify_sas_log,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
@@ -476,6 +479,11 @@ GetOptions(
     '_internal-persistent!' => \$internal_persistent,
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
+
+$ENV{SASPY_CFGNAME} = $saspy_cfgname
+    if defined($saspy_cfgname) && length($saspy_cfgname);
+$ENV{SASPY_CFGFILE} = $saspy_cfgfile
+    if defined($saspy_cfgfile) && length($saspy_cfgfile);
 
 sub collect_sas_oda_session_pids {
     my %seen;
@@ -733,10 +741,14 @@ def iter_cfg_names():
 
 def main():
     last_error = None
+    session_options = {'results': 'html'}
+    cfgfile = os.environ.get('SASPY_CFGFILE')
+    if cfgfile:
+        session_options['cfgfile'] = cfgfile
     for cfgname in iter_cfg_names():
         sess = None
         try:
-            sess = saspy.SASsession(cfgname=cfgname, results='html')
+            sess = saspy.SASsession(cfgname=cfgname, **session_options)
             res = sess.submit("proc setinit;run;")
             log = res.get('LOG', '') or ''
             ok = ('ERROR:' not in log and 'FATAL' not in log)
@@ -998,6 +1010,8 @@ Options:
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
+  --saspy-cfgname <name>     Select a SASPy configuration (default: oda).
+  --saspy-cfgfile <file>     Use a specific sascfg_personal.py file.
   --classify-sas-log <file>  Inspect an existing SAS log without connecting to ODA.
                              Space exhaustion returns JSON with retryable=false
                              and exits 73; other logs exit 0.

@@ -17,6 +17,8 @@ includes:
   server for faster repeated SAS ODA calls.
 - `MCPDeps/test_sas_oda_debug_macro_guard.pl`: regression test for the SAS
   32-character macro-name limit and bootstrap/session-server compatibility.
+- `MCPDeps/test_sas_oda_connection_lifecycle.pl`: regression test for clear
+  one-shot SASPy connection shutdown diagnostics.
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
@@ -50,12 +52,16 @@ template with ODA and local SAS examples, force a repo-local copy:
 MCP4SAS_OVERWRITE_SASPY_CONFIG=1 bash install/install_saspy_config.sh
 ```
 
-MCP4SAS searches these config files in order:
+The full installer writes the default configuration into the isolated SASPy
+package so commands launched outside the repository use the same settings. A
+repo-local copy is also created for inspection and customization. To use a
+different file, pass it explicitly:
 
-```text
-./sascfg_personal.py
-~/.config/saspy/sascfg_personal.py
-~/sascfg_personal.py
+```bash
+./run_sas_codes_or_files_in_ODA.pl \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
 ```
 
 Select a target with `SASPY_CFGNAME` or `--saspy-cfgname`.
@@ -202,6 +208,17 @@ name:
 MCP4SAS_CONDA_ENV=my_sas_env bash install/install_conda.sh
 ```
 
+Every installer finishes by running the local smoke check. You can repeat it
+without reinstalling dependencies:
+
+```bash
+bash install/check_mcp4sas_install.sh
+```
+
+The GitHub Installation workflow runs fresh Ubuntu, Apple Silicon macOS, Intel
+macOS, Windows/Cygwin, and Conda installations on every pull request and push
+to `main`.
+
 ## Use With Vagrant
 
 From a machine with Vagrant and VirtualBox installed:
@@ -220,7 +237,7 @@ host system.
 
 ## First SAS ODA Login
 
-SAS ODA now requires the SAS IOM encryption jars used by SASPy:
+SAS ODA requires the SAS IOM encryption jars used by SASPy:
 
 ```text
 sas.rutil.jar
@@ -231,26 +248,13 @@ sastpj.rutil.jar
 SASPy documents this requirement for SAS ODA/SAS 9.4M7 here:
 https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption-jars
 
-If you already have MultiGWAS-Explorer checked out with the Java supplement
-files, install the jars into MCP4SAS with:
+The MCP4SAS installers include the tested SASPy Java bridge, IOM client,
+encryption, CORBA, and logging JARs. They copy these files into the isolated
+Python environment and build the ODA classpath automatically. To repair or
+refresh those files without reinstalling everything, run:
 
 ```bash
-MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
-  bash install/install_saspy_iom_jars.sh
-```
-
-In this workspace, for example:
-
-```bash
-MCP4SAS_MULTIGWAS_ROOT=/mnt/24921E0E921DE4D8/Scripts_Lib/MultiGWAS-Explorer-main/MultiGWAS-Explorer \
-  bash install/install_saspy_iom_jars.sh
-```
-
-Or point directly to the directory containing the three jars:
-
-```bash
-MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/MultiGWAS-Explorer/install/saspy-java-supplement/java/iomclient \
-  bash install/install_saspy_iom_jars.sh
+bash install/install_saspy_iom_jars.sh
 ```
 
 Interactive credential setup:
@@ -342,6 +346,13 @@ validated ZIP transfer by default. Pass `--no-archive-transfers` only when
 diagnosing compatibility problems. Existing uploads are reused when their
 remote size and timestamp match; pass `--no-skip-upload-if-same` to force a
 replacement.
+
+One-shot actions now print a structured connection lifecycle message before
+calling SASPy `endsas()`. It identifies the subprocess, completed action,
+result, closure reason, and expected next step. This distinguishes an expected
+one-shot connection shutdown from an unexpected SAS ODA transport failure.
+Persistent sessions remain open until they are stopped, expire, or encounter a
+transport failure.
 
 Upload:
 
@@ -709,11 +720,12 @@ If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
 SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. The
 most common cause is that the three SAS IOM encryption jars are missing from
-SASPy's `java/iomclient` directory. Copy them from MultiGWAS-Explorer:
+SASPy's `java/iomclient` directory or that SASPy is using an incomplete
+classpath. Restore the bundled, tested Java assets and generated profile:
 
 ```bash
-MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
-  bash install/install_saspy_iom_jars.sh
+bash install/install_saspy_iom_jars.sh
+bash install/check_mcp4sas_install.sh
 ```
 
 Then refresh or validate the saved SAS ODA credentials:
@@ -724,21 +736,14 @@ Then refresh or validate the saved SAS ODA credentials:
   --check-sas-oda-login-only
 ```
 
-Also confirm that your SASPy config file is visible. MCP4SAS searches these
-locations, in order:
-
-```text
-./sascfg_personal.py
-~/.config/saspy/sascfg_personal.py
-~/sascfg_personal.py
-```
-
-You can force a specific config file or config name:
+You can force a specific config file or config name with CLI options or their
+environment-variable equivalents:
 
 ```bash
-SASPY_CFGFILE=~/sascfg_personal.py \
-SASPY_CFGNAME=oda \
-./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
+./run_sas_codes_or_files_in_ODA.pl \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
 ```
 
 If the jars are installed and credentials are correct but the same error
