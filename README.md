@@ -28,6 +28,81 @@ includes:
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
+## Install MCP4SAS
+
+Choose your platform below. Each installer provisions the required local
+dependencies and finishes with an installation smoke test.
+
+### Ubuntu or Linux
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_ubuntu.sh
+```
+
+If system packages are already installed, skip `apt`:
+
+```bash
+MCP4SAS_SKIP_APT=1 bash install/install_ubuntu.sh
+```
+
+### macOS
+
+Install Xcode Command Line Tools when prompted, then run:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_macos.sh
+```
+
+The macOS installer uses Homebrew for Perl/Python/Java support.
+
+### Windows with Cygwin
+
+Open a Cygwin terminal, then run:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_cygwin.sh
+```
+
+If you already installed the required Cygwin packages, skip the package update:
+
+```bash
+MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh
+```
+
+### Conda
+
+This is useful on Linux, macOS, WSL, or a Unix-like shell with Conda available:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_conda.sh
+```
+
+By default this creates a Conda environment named `mcp4sas`. To choose another
+name:
+
+```bash
+MCP4SAS_CONDA_ENV=my_sas_env bash install/install_conda.sh
+```
+
+Every installer finishes by running the local smoke check. You can repeat it
+without reinstalling dependencies:
+
+```bash
+bash install/check_mcp4sas_install.sh
+```
+
+The GitHub Installation workflow runs fresh Ubuntu, Apple Silicon macOS, Intel
+macOS, Windows/Cygwin, and Conda installations on every pull request and push
+to `main`.
+
 ## Requirements
 
 - A SAS OnDemand for Academics account, a local SAS installation, or a licensed
@@ -154,76 +229,6 @@ the same process, marks log/listing boundaries, handles interrupts and
 timeouts, and shuts the process down cleanly. That is a larger design than the
 current batch helper. For now, SASPy `linuxlocal`, `winlocal`, or another SASPy
 configuration is the recommended persistent-session path.
-
-## Install On Ubuntu Or Linux
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_ubuntu.sh
-```
-
-If system packages are already installed, skip `apt`:
-
-```bash
-MCP4SAS_SKIP_APT=1 bash install/install_ubuntu.sh
-```
-
-## Install On macOS
-
-Install Xcode Command Line Tools when prompted, then run:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_macos.sh
-```
-
-The macOS installer uses Homebrew for Perl/Python/Java support.
-
-## Install On Windows With Cygwin
-
-Open a Cygwin terminal, then run:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_cygwin.sh
-```
-
-If you already installed the required Cygwin packages, skip the package update:
-
-```bash
-MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh
-```
-
-## Install With Conda
-
-This is useful on Linux, macOS, WSL, or a Unix-like shell with Conda available:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_conda.sh
-```
-
-By default this creates a Conda environment named `mcp4sas`. To choose another
-name:
-
-```bash
-MCP4SAS_CONDA_ENV=my_sas_env bash install/install_conda.sh
-```
-
-Every installer finishes by running the local smoke check. You can repeat it
-without reinstalling dependencies:
-
-```bash
-bash install/check_mcp4sas_install.sh
-```
-
-The GitHub Installation workflow runs fresh Ubuntu, Apple Silicon macOS, Intel
-macOS, Windows/Cygwin, and Conda installations on every pull request and push
-to `main`.
 
 ## Use With Vagrant
 
