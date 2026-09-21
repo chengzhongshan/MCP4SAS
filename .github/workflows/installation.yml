@@ -53,10 +53,17 @@ jobs:
           $setup = Join-Path $env:RUNNER_TEMP 'setup-x86_64.exe'
           $root = Join-Path $env:RUNNER_TEMP 'cygwin64'
           Invoke-WebRequest 'https://cygwin.com/setup-x86_64.exe' -OutFile $setup
-          & $setup -q -B -g -n -N -d --no-write-registry -R $root `
-            -s 'https://mirrors.kernel.org/sourceware/cygwin/' `
-            -P 'bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip'
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $setupArgs = @(
+            '-q', '-B', '-g', '-n', '-N', '-d', '--no-write-registry',
+            '-R', $root,
+            '-s', 'https://mirrors.kernel.org/sourceware/cygwin/',
+            '-P', 'bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip'
+          )
+          $process = Start-Process -FilePath $setup -ArgumentList $setupArgs -Wait -PassThru -NoNewWindow
+          if ($process.ExitCode -ne 0) { exit $process.ExitCode }
+          if (-not (Test-Path (Join-Path $root 'bin\bash.exe'))) {
+            throw 'Cygwin setup exited without installing bin\bash.exe'
+          }
       - name: Install from scratch
         shell: powershell
         run: |
