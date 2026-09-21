@@ -270,7 +270,7 @@ install_perl_deps() {
     use_bootstrap_cpanm=1
   fi
   if [ "$use_bootstrap_cpanm" -eq 1 ]; then
-    curl -L https://cpanmin.us -o "${MCP4SAS_ROOT}/local/cpanm"
+    curl -fsSL https://cpanmin.us -o "${MCP4SAS_ROOT}/local/cpanm"
     chmod +x "${MCP4SAS_ROOT}/local/cpanm"
     CPANM="${MCP4SAS_ROOT}/local/cpanm"
   else
