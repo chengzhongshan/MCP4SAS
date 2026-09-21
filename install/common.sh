@@ -258,9 +258,18 @@ install_saspy_iom_encryption_jars() {
 }
 
 install_perl_deps() {
+  local use_bootstrap_cpanm=0
   log "Installing Perl dependencies under ${MCP4SAS_LOCAL_PERL}"
   mkdir -p "${MCP4SAS_ROOT}/local"
-  if ! command_exists cpanm; then
+  if command_exists uname && uname -s | grep -qi '^CYGWIN'; then
+    # Windows Perl distributions are commonly inherited through PATH inside
+    # Cygwin. Their cpanm executable and modules are ABI-incompatible with
+    # Cygwin Perl, so always bootstrap a Cygwin-native copy here.
+    use_bootstrap_cpanm=1
+  elif ! command_exists cpanm; then
+    use_bootstrap_cpanm=1
+  fi
+  if [ "$use_bootstrap_cpanm" -eq 1 ]; then
     curl -L https://cpanmin.us -o "${MCP4SAS_ROOT}/local/cpanm"
     chmod +x "${MCP4SAS_ROOT}/local/cpanm"
     CPANM="${MCP4SAS_ROOT}/local/cpanm"
