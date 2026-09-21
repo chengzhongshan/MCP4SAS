@@ -57,12 +57,12 @@ jobs:
             -s 'https://mirrors.kernel.org/sourceware/cygwin/' `
             -P 'bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip'
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          "CYGWIN_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Install from scratch
         shell: powershell
         run: |
-          $bash = Join-Path $env:CYGWIN_ROOT 'bin\bash.exe'
-          $cygpath = Join-Path $env:CYGWIN_ROOT 'bin\cygpath.exe'
+          $root = Join-Path $env:RUNNER_TEMP 'cygwin64'
+          $bash = Join-Path $root 'bin\bash.exe'
+          $cygpath = Join-Path $root 'bin\cygpath.exe'
           $env:MCP4SAS_CYGWIN_REPO = (& $cygpath -u $env:GITHUB_WORKSPACE).Trim()
           & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh' `
             2>&1 | Tee-Object -FilePath install.log

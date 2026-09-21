@@ -49,7 +49,11 @@ create_python_venv() {
   local python_bin="$1"
   MCP4SAS_BASE_PYTHON="$python_bin"
   log "Creating Python virtual environment at ${MCP4SAS_VENV}"
-  "$python_bin" -m venv "${MCP4SAS_VENV}"
+  if command_exists uname && uname -s | grep -qi '^CYGWIN'; then
+    "$python_bin" -m venv --system-site-packages "${MCP4SAS_VENV}"
+  else
+    "$python_bin" -m venv "${MCP4SAS_VENV}"
+  fi
   "${MCP4SAS_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
   "${MCP4SAS_VENV}/bin/python" -m pip install -r "${MCP4SAS_INSTALL_DIR}/requirements.txt"
   printf '%s\n' "${MCP4SAS_VENV}/bin/python" > "${MCP4SAS_VENV}/.python-bin"
