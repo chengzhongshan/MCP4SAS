@@ -1,0 +1,7 @@
+*.sh text eol=lf
+*.pl text eol=lf
+*.pm text eol=lf
+*.py text eol=lf
+*.sas text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
