@@ -71,8 +71,7 @@ jobs:
           $bash = Join-Path $root 'bin\bash.exe'
           $cygpath = Join-Path $root 'bin\cygpath.exe'
           $env:MCP4SAS_CYGWIN_REPO = (& $cygpath -u $env:GITHUB_WORKSPACE).Trim()
-          & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh' `
-            2>&1 | Tee-Object -FilePath install.log
+          & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && set -o pipefail && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh 2>&1 | tee install.log'
           $installExit = $LASTEXITCODE
           if ($installExit -ne 0) { exit $installExit }
       - uses: actions/upload-artifact@v7
