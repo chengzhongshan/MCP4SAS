@@ -1,5 +1,11 @@
 # MCP4SAS
-<img width="1272" height="801" alt="image" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
+
+<p align="center">
+  <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
+    <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
+  </a>
+</p>
+<p align="center"><sub>Click the workflow figure to open the full-resolution version.</sub></p>
 
 MCP4SAS is a small Model Context Protocol (MCP) server for running SAS code
 through SASPy. It can use SAS OnDemand for Academics (SAS ODA), local SAS on
