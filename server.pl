@@ -60,6 +60,7 @@ use JSON::PP qw(encode_json decode_json);
 use File::Copy qw(copy);
 use Mojo::Util qw(md5_sum);
 use POSIX qw(WNOHANG);
+use SAS_Log_Diagnostics;
 use Mojolicious::Lite -signatures;
 
 $ENV{MOJO_LOG_LEVEL} //= 'error';
@@ -427,14 +428,20 @@ sub run_sas_oda_tool {
         unlink $completion_file if -f $completion_file;
         unlink "$completion_file.tmp" if -f "$completion_file.tmp";
         unlink $pid_file if -f $pid_file;
+        my $diagnostics = SAS_Log_Diagnostics::summarize($content);
         my $response = text_result(
             "STATUS: $label (PID $args->{pid})\n$exit_detail\n"
+          . SAS_Log_Diagnostics::format_summary($diagnostics)
           . "SAS log for debugging saved to: $log_path\n\n"
           . ($content // '')
           . (length($cleanup_error) ? "\nWARNING: $cleanup_error\n" : '')
           . (length($worker_error) ? "\nERROR: $worker_error\n" : '')
         );
         $response->{isError} = $failed ? JSON::PP::true : JSON::PP::false;
+        $response->{structuredContent} = {
+            status => $label, exit_code => $completion->{exit_code},
+            log_path => $log_path, diagnostics => $diagnostics,
+        };
         return $response;
     }
 

@@ -118,6 +118,7 @@ use lib "$Bin/DiffGWASDeps";
 use lib "$Bin/MCPDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
+use SAS_Source_Analysis;
 use MCP4SAS_Temp;
 use JSON::PP qw(encode_json decode_json);
 use Cwd qw(abs_path getcwd);
@@ -1926,13 +1927,7 @@ sub _blank_preserving_newlines {
 
 sub sanitize_sas_text_for_macro_lint {
     my ($text) = @_;
-    my $masked = defined($text) ? $text : '';
-    $masked =~ s{/\*.*?\*/}{ _blank_preserving_newlines($&) }gse;
-    $masked =~ s{(^\s*%\*[^;]*;)}{ _blank_preserving_newlines($1) }gme;
-    $masked =~ s{(^\s*\*[^;]*;)}{ _blank_preserving_newlines($1) }gme;
-    $masked =~ s{"(?:[^"]|"")*"}{ _blank_preserving_newlines($&) }gse;
-    $masked =~ s{'(?:[^']|'')*'}{ _blank_preserving_newlines($&) }gse;
-    return $masked;
+    return SAS_Source_Analysis::mask_noncode($text);
 }
 
 sub scan_sas_text_for_open_code_macro_control {
@@ -1941,56 +1936,43 @@ sub scan_sas_text_for_open_code_macro_control {
     my @lines = split /\n/, ($masked // ''), -1;
     my @findings;
     my $macro_depth = 0;
-
-    for my $idx (0 .. $#lines) {
-        my $line_no = $idx + 1;
-        my $line = $lines[$idx] // '';
-
-        if ($line =~ /^\s*%macro\b/i) {
+    # SAS statements are separated by semicolons, not by physical lines.
+    # Track every control token in source order, including inline definitions.
+    while ($masked =~ /%(macro|mend|goto|return)\b/ig) {
+        my $stmt = lc($1);
+        my $token_start = $-[0];
+        my $token_end = $+[0];
+        next if substr($masked, $token_end) =~ /^\s*:/;
+        my $prefix = substr($masked, 0, $token_start);
+        my $line_no = 1 + ($prefix =~ tr/\n//);
+        if ($stmt eq 'macro') {
             $macro_depth++;
-            next;
-        }
-
-        if ($line =~ /^\s*%mend\b/i) {
+        } elsif ($stmt eq 'mend') {
             if ($macro_depth > 0) {
                 $macro_depth--;
             } else {
                 push @findings, {
-                    type        => 'open_code_mend',
-                    line        => $line_no,
-                    message     => "Macro end statement %mend appears outside a %macro/%mend block",
-                    context_ref => [ ($line_no - 2) .. ($line_no + 2) ],
+                    type => 'open_code_mend', line => $line_no,
+                    message => 'Macro end statement %mend appears outside a %macro/%mend block',
+                    context_ref => [($line_no - 2) .. ($line_no + 2)],
                 };
             }
-            next;
-        }
-
-        next if $macro_depth > 0;
-
-        if ($line =~ /^\s*%(goto|return)\b/i) {
-            my $stmt = lc($1);
+        } elsif ($macro_depth == 0) {
             push @findings, {
-                type        => 'open_code_macro_control',
-                line        => $line_no,
-                message     => "Macro control statement %$stmt appears in open SAS code outside a %macro/%mend block",
-                context_ref => [ ($line_no - 2) .. ($line_no + 2) ],
+                type => 'open_code_macro_control', line => $line_no,
+                message => "Macro control statement %$stmt appears in open SAS code outside a %macro/%mend block",
+                context_ref => [($line_no - 2) .. ($line_no + 2)],
             };
         }
     }
-
     if ($macro_depth > 0) {
         push @findings, {
-            type        => 'unclosed_macro_definition',
-            line        => scalar(@lines) || 1,
-            message     => "A %macro block appears to be missing its matching %mend",
-            context_ref => [ ((scalar(@lines) || 1) - 4) .. (scalar(@lines) || 1) ],
+            type => 'unclosed_macro_definition', line => scalar(@lines) || 1,
+            message => 'A %macro block appears to be missing its matching %mend',
+            context_ref => [((scalar(@lines) || 1) - 4) .. (scalar(@lines) || 1)],
         };
     }
-
-    return {
-        lines    => \@lines,
-        findings => \@findings,
-    };
+    return {lines => \@lines, findings => \@findings};
 }
 
 sub _count_newlines {
@@ -2111,152 +2093,13 @@ sub suppress_balanced_macro_invocation_false_positives {
 sub scan_sas_text_for_unbalanced_constructs {
     my ($text) = @_;
     my @lines = split /\n/, ($text // ''), -1;
-    my @findings;
-    my ($in_block_comment, $block_start_line) = (0, 0);
-    my ($in_single_quote, $single_start_line) = (0, 0);
-    my ($in_double_quote, $double_start_line) = (0, 0);
-    my $in_statement_comment = 0;
-
-    for my $idx (0 .. $#lines) {
-        my $line_no = $idx + 1;
-        my $line = $lines[$idx];
-        my $i = 0;
-        my $len = length($line);
-        while ($i < $len) {
-            my $ch = substr($line, $i, 1);
-            my $next = ($i + 1 < $len) ? substr($line, $i + 1, 1) : '';
-
-            if ($in_statement_comment) {
-                if ($ch eq ';') {
-                    $in_statement_comment = 0;
-                }
-                $i++;
-                next;
-            }
-
-            if ($in_block_comment) {
-                if ($ch eq '*' && $next eq '/') {
-                    $in_block_comment = 0;
-                    $block_start_line = 0;
-                    $i += 2;
-                    next;
-                }
-                $i++;
-                next;
-            }
-
-            if ($in_single_quote) {
-                if ($ch eq "'") {
-                    if ($next eq "'") {
-                        $i += 2;
-                        next;
-                    }
-                    $in_single_quote = 0;
-                    $single_start_line = 0;
-                }
-                $i++;
-                next;
-            }
-
-            if ($in_double_quote) {
-                if ($ch eq '"') {
-                    if ($next eq '"') {
-                        $i += 2;
-                        next;
-                    }
-                    $in_double_quote = 0;
-                    $double_start_line = 0;
-                }
-                $i++;
-                next;
-            }
-
-            if ($ch =~ /\s/) {
-                $i++;
-                next;
-            }
-
-            if ($i == 0 || substr($line, 0, $i) =~ /^\s*$/) {
-                if ($ch eq '*') {
-                    $in_statement_comment = 1;
-                    $i++;
-                    next;
-                }
-                if ($ch eq '%' && $next eq '*') {
-                    $in_statement_comment = 1;
-                    $i += 2;
-                    next;
-                }
-            }
-
-            if ($ch eq '/' && $next eq '*') {
-                $in_block_comment = 1;
-                $block_start_line = $line_no;
-                $i += 2;
-                next;
-            }
-            if ($ch eq '*' && $next eq '/') {
-                push @findings, {
-                    type        => 'unexpected_comment_close',
-                    line        => $line_no,
-                    message     => "Unexpected closing block comment '*/'",
-                    context_ref => [ ($line_no - 2) .. ($line_no + 2) ],
-                };
-                $i += 2;
-                next;
-            }
-            if ($ch eq "'") {
-                $in_single_quote = 1;
-                $single_start_line = $line_no;
-                $i++;
-                next;
-            }
-            if ($ch eq '"') {
-                $in_double_quote = 1;
-                $double_start_line = $line_no;
-                $i++;
-                next;
-            }
-            $i++;
-        }
-    }
-
-    if ($in_block_comment) {
-        push @findings, {
-            type        => 'unclosed_block_comment',
-            line        => $block_start_line || scalar(@lines),
-            message     => "Unclosed block comment starting on line " . ($block_start_line || scalar(@lines)),
-            context_ref => [ (($block_start_line || scalar(@lines)) - 2) .. scalar(@lines) ],
-        };
-    }
-    if ($in_single_quote) {
-        push @findings, {
-            type        => 'unclosed_single_quote',
-            line        => $single_start_line || scalar(@lines),
-            message     => "Unclosed single-quoted string starting on line " . ($single_start_line || scalar(@lines)),
-            context_ref => [ (($single_start_line || scalar(@lines)) - 2) .. scalar(@lines) ],
-        };
-    }
-    if ($in_double_quote) {
-        push @findings, {
-            type        => 'unclosed_double_quote',
-            line        => $double_start_line || scalar(@lines),
-            message     => "Unclosed double-quoted string starting on line " . ($double_start_line || scalar(@lines)),
-            context_ref => [ (($double_start_line || scalar(@lines)) - 2) .. scalar(@lines) ],
-        };
-    }
-
+    my @findings = @{SAS_Source_Analysis::analyze_source($text)->{findings}};
     my $macro_invocation_scan = scan_sas_text_for_unclosed_macro_invocations($text);
-    push @findings, @{ $macro_invocation_scan->{findings} || [] };
-
+    push @findings, @{$macro_invocation_scan->{findings} || []};
     my $macro_scan = scan_sas_text_for_open_code_macro_control($text);
-    push @findings, @{ $macro_scan->{findings} || [] };
-    @findings = @{ suppress_balanced_macro_invocation_false_positives($text, \@findings) || [] };
-
-    return {
-        lines    => \@lines,
-        findings => \@findings,
-    };
+    push @findings, @{$macro_scan->{findings} || []};
+    @findings = @{suppress_balanced_macro_invocation_false_positives($text, \@findings) || []};
+    return {lines => \@lines, findings => \@findings};
 }
 
 sub format_sas_preflight_report {
@@ -2315,7 +2158,7 @@ sub scan_sas_text_for_inline_data_step_cards {
     my ($text) = @_;
     my @findings;
     return \@findings unless defined $text && length $text;
-    my @lines = split /\r?\n/, $text, -1;
+    my @lines = split /\r?\n/, SAS_Source_Analysis::mask_noncode($text), -1;
     for my $idx (0 .. $#lines) {
         my $line = $lines[$idx] // '';
         next unless $line =~ /\b(?:datalines4?|cards4?|parmcards4?)\s*;/i;
@@ -2334,7 +2177,7 @@ sub scan_sas_text_for_unsafe_put_semicolons {
     my ($text) = @_;
     my @findings;
     return \@findings unless defined $text && length $text;
-    my @lines = split /\r?\n/, $text, -1;
+    my @lines = split /\r?\n/, SAS_Source_Analysis::mask_comments($text), -1;
     for my $idx (0 .. $#lines) {
         my $line = $lines[$idx] // '';
         next unless $line =~ /^\s*%put\b/i;
@@ -2363,7 +2206,7 @@ sub scan_sas_text_for_common_macro_typos {
     my %suggestions = (
         macorparas => 'macroparas',
     );
-    my @lines = split /\r?\n/, $text, -1;
+    my @lines = split /\r?\n/, SAS_Source_Analysis::mask_noncode($text), -1;
     for my $idx (0 .. $#lines) {
         my $line = $lines[$idx];
         while ($line =~ /%([A-Za-z_]\w*)\b/g) {

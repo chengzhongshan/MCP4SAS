@@ -444,3 +444,485 @@ To review and publish the source changes when desired:
 bash update_github_upload.sh --dry-run
 bash update_github_upload.sh 'Improve MCP4SAS using real SAS and MCP examples'
 ```
+
+## 7. Thirty additional generated real examples
+
+This October 12, 2026 validation adds **30 distinct examples**, separate from
+the previous basic-summary, macro-label, missing-table, GTEx, file-transfer,
+and cross-call WORK-state scenarios. Each case has a different SAS source
+body and checks a different calculation, procedure, import, diagnostic, or
+syntax condition. Reverification of these same cases is not counted as
+additional examples. The generator rejects duplicate IDs and source hashes.
+
+The maintained Perl source is
+[tests/run_live_new_examples_30.pl](tests/run_live_new_examples_30.pl).
+It generates all thirty `.sas` files and `catalog.json` in a unique local
+`SAS_Output_real30_*` directory. No Python test driver is needed. The examples
+use generated data, SAS procedures, and temporary filerefs; they do not
+query an external scientific API or upload research datasets.
+
+### Exact Cygwin commands
+
+From the MCP4SAS checkout, start a fresh test server in terminal 1:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18131
+```
+
+In terminal 2, run the new batch:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/run_live_new_examples_30.pl --live \
+  --url http://127.0.0.1:18131/mcp > new_real30_verified.log 2>&1
+```
+
+The original discovery pass used port `18130` and
+`> new_real30_initial.log 2>&1`. It completed with 26/30 case validations
+passing. After editing `server.pl`, restart the HTTP server before testing
+the new response fields. An attempted rerun reached the old server process
+and was stopped because it lacked the new structured status. This was a
+test-server lifecycle problem, not another SAS calculation failure. The
+complete verification used the fresh server on port `18131`.
+
+Generate the sources without contacting SAS ODA, or rerun a selected case:
+
+```bash
+perl tests/run_live_new_examples_30.pl --generate-only
+perl tests/run_live_new_examples_30.pl --live --only 29 \
+  --url http://127.0.0.1:18131/mcp
+```
+
+To execute a generated file directly with either CLI entry point:
+
+```bash
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl run_sas_codes_or_files_in_ODA.pl \
+  --file SAS_Output_real30_hEvUVx/29_macro_after_statement.sas \
+  --output-prefix SAS_Output_real30_case29 --run-timeout-seconds 180
+```
+
+Replace the generated directory with the one printed by your run. Stop your
+test HTTP server with Ctrl+C when finished. The driver uses a unique named
+persistent ODA session for short cases; the ABORT case uses a separate
+one-shot session. It never calls the global SASPy process-kill command or
+shuts down unrelated sessions. Named persistent sessions remain reusable.
+
+### Case inventory and expected outcomes
+
+All generated files are named `<ID>_<name>.sas`. "Expected failure" means
+the test passes only if MCP returns `FAILED`, a nonzero exit code,
+`isError=true`, and the expected diagnostic. Successful calculations must
+emit their case-specific `MCP30_OK_<ID>` marker in the actual SAS log.
+
+| ID | Generated example name | Calculation or condition validated | Expected job |
+| --- | --- | --- | --- |
+| 01 | `sql_join_cardinality` | Three joined rows; weighted total 80 | Complete |
+| 02 | `transpose_duplicate_id` | PROC TRANSPOSE rejects duplicate IDs | Expected failure |
+| 03 | `transpose_after_aggregation` | Aggregation resolves duplicates; values 15 and 30 | Complete |
+| 04 | `invalid_numeric_input` | Invalid text becomes missing; sum 20, one missing; quality diagnostic | Complete |
+| 05 | `unsorted_by_group` | BY processing rejects unsorted input | Expected failure |
+| 06 | `missing_custom_format` | FMTERR rejects an unknown format | Expected failure |
+| 07 | `custom_format_mapping` | Two correct age-band labels | Complete |
+| 08 | `json_array_import` | JSON engine reads two rows; sum 24 | Complete |
+| 09 | `quoted_csv_import` | Embedded comma and doubled quote preserved | Complete |
+| 10 | `gzip_write_read` | Compressed CSV written and read; sum 42 | Complete |
+| 11 | `quoted_macro_literal` | Quoted percent text remains ordinary data | Complete |
+| 12 | `macro_local_scope` | Local variable does not replace global value | Complete |
+| 13 | `hash_missing_key` | Hash match returns 99; missing key remains missing | Complete |
+| 14 | `left_join_unmatched` | Three rows retained, two unmatched | Complete |
+| 15 | `summary_missing_class` | Missing class retained; two groups, sum 37 | Complete |
+| 16 | `weighted_frequency` | Weighted frequency total 10 | Complete |
+| 17 | `regression_parameter_capture` | ODS parameter table contains slope 3 | Complete |
+| 18 | `binomial_logistic_model` | Two nonmissing estimated parameters | Complete |
+| 19 | `rank_tie_handling` | Duplicate minima receive mean rank 1.5 | Complete |
+| 20 | `compare_detects_difference` | PROC COMPARE signals a known difference | Complete |
+| 21 | `log_only_success` | Sum 10; HTML is not required | Complete |
+| 22 | `sgplot_two_series` | Generated two-series plot produces HTML | Complete |
+| 23 | `report_computed_column` | PROC REPORT completes with computed net column | Complete |
+| 24 | `utf8_csv_roundtrip` | Export/import preserves both UTF-8 label values | Complete |
+| 25 | `incomplete_assignment` | Incomplete assignment produces syntax error | Expected failure |
+| 26 | `abort_cancel` | ABORT CANCEL reported as failure | Expected failure |
+| 27 | `unique_index_violation` | Unique index rejects duplicate values | Expected failure |
+| 28 | `append_type_conflict` | FORCE append substitutes missing for a type conflict; warning surfaced | Complete |
+| 29 | `macro_after_statement` | Macro after another statement on the same line produces value 29 | Complete |
+| 30 | `division_by_zero_note` | Ratio becomes missing; quality diagnostic surfaced | Complete |
+
+Each completed poll also checks structured status, exit code, retained full
+log, and removal of PID/completion markers. Success cases requiring a table
+or graphic must have nonempty HTML. Cases 22 and 23 check procedure completion
+and output existence; they do not perform pixel-by-pixel graphics validation.
+
+### Failures encountered and resulting improvements
+
+**Case 29: valid SAS rejected before submission.** The old preflight counted
+`%macro` and `%mend` only at the beginning of physical lines. This valid SAS
+was incorrectly rejected with "Macro end statement %mend appears outside a
+%macro/%mend block":
+
+```sas
+options mprint; %macro e29inline;
+data e29; value=29; run;
+%mend;
+%e29inline;
+```
+
+Both CLI entry points now scan control tokens in source order rather than
+assuming one statement per line. Quoted text and comments remain masked,
+and genuinely unclosed definitions, stray `%mend`, and open-code `%goto`
+remain detectable. Source line numbers are retained. The new
+`tests/test_inline_macro_preflight.pl` regression covers those positive and
+negative cases for both entry points.
+
+**Cases 04 and 30: diagnostics suppressed by SAS options.** Their calculated
+missing values were correct, but the first test expected NOTES while the
+session used NONOTES. The generator now explicitly begins each example
+with `options notes nosyntaxcheck obs=max;`. This is a test setup correction;
+MCP4SAS does not override a user's explicit SAS logging options.
+
+The new Perl module `MCPDeps/SAS_Log_Diagnostics.pm` separately summarizes
+runtime warnings, data-quality NOTES, and DATA-step `_ERROR_=1` diagnostics.
+Completed MCP ODA polls expose `structuredContent.status`, `exit_code`,
+`log_path`, and `diagnostics`, and place a short diagnostic summary ahead of
+the full log. Source listings, MPRINT/SYMBOLGEN traces, routine NOTES, and
+text outside the SAS-log section are excluded. Duplicate diagnostic lines
+are deduplicated. These diagnostics do not change a successful exit into a
+failure; the worker exit status remains the authority for job success.
+Case 28 validates this behavior with a real warning-producing FORCE append.
+
+**Case 24: a test compared attributes instead of values.** PROC IMPORT
+inferred a shorter character length and added formats. The original
+`SYSINFO=0` assertion therefore failed even though the UTF-8 cell values
+were preserved. The corrected example compares the two IDs and label values
+using SQL and prints the imported table. This corrects the scientific test
+expectation rather than hiding a runner error.
+
+The six intentionally failing examples continue to require genuine failed
+job reporting. The new warning summary does not weaken fatal-error handling.
+
+### Final verification and retained evidence
+
+The complete fresh-server run exited **0** and passed **30/30 case
+validations**: 24 successful jobs and six intentional failed jobs reported
+correctly. The final generated SAS files, catalog, start/poll MCP responses,
+`results.json`, and saved suite log are under
+`SAS_Output_real30_hEvUVx/`. Each entry in `results.json` points to its retained
+`SAS_Output_MCP4SAS_*` directory with the full log and available HTML.
+The original 26/30 discovery pass is retained in
+`SAS_Output_real30_QAaWmj/`; the interrupted stale-server attempt is retained
+separately in `SAS_Output_real30_EJAl56/`. It is not counted as a completed
+validation. Shell logs were moved into these ignored artifact directories
+after their processes finished.
+
+The live structured responses surfaced two data-quality diagnostics in case
+04, one warning in case 28, and three data-quality diagnostics in case 30.
+Case 29 completed in four seconds after the preflight repair and produced
+its result marker and HTML. All thirty completed jobs removed their own
+PID/completion markers. Existing retained result directories and unrelated
+scratch from earlier runs were not deleted.
+
+The following offline commands passed after the live batch:
+
+```bash
+perl tests/test_mcp_job_reporting.pl           # 48 assertions
+perl MCPDeps/test_sas_log_and_labels.pl        # 30 assertions
+perl tests/test_inline_macro_preflight.pl     # 16 assertions
+perl tests/test_sas_log_diagnostics.pl         # 7 assertions
+perl -c run_sas_codes_or_files_in_ODA.pl
+perl -c run_sas_codes_or_script_in_ODA.pl
+perl -c server.pl
+perl -c tests/run_live_new_examples_30.pl
+git -c core.whitespace=cr-at-eol diff --check
+```
+
+This is **101 offline assertions**, separate from the thirty real case
+validations. The fresh loopback HTTP test server was stopped after the batch.
+Source changes, commands, and examples are maintained in Perl/Bash/SAS;
+SASPy remains the existing internal ODA bridge. No GitHub push was performed
+for this thirty-example update.
+
+## 8. Another thirty new real examples: cases 31-60
+
+The subsequent request was handled as a new batch, rather than rerunning
+cases 01-30 and counting them again. Batch 2 has thirty additional source
+bodies and scenarios. The generator checks source hashes against batch 1
+as well as checking unique IDs and sources within batch 2. The catalog is
+maintained in [tests/new_examples_31_60.pl](tests/new_examples_31_60.pl),
+and uses the same Perl HTTP harness with `--batch 2`.
+
+### Cygwin commands used
+
+Start the separate loopback test server:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18132
+```
+
+The first discovery run and corrected verification used:
+
+```bash
+perl tests/run_live_new_examples_30.pl --live --batch 2 \
+  --url http://127.0.0.1:18132/mcp > new_real30_batch2_initial.log 2>&1
+
+perl tests/run_live_new_examples_30.pl --live --batch 2 \
+  --url http://127.0.0.1:18132/mcp > new_real30_batch2_verified.log 2>&1
+```
+
+Generate the new sources offline, or rerun only the apostrophe example:
+
+```bash
+perl tests/run_live_new_examples_30.pl --generate-only --batch 2
+perl tests/run_live_new_examples_30.pl --live --batch 2 --only 31 \
+  --url http://127.0.0.1:18132/mcp
+```
+
+### New case inventory
+
+The generated filenames are `<ID>_<name>.sas`. Cases 58-60 pass validation
+only when the job fails with the corresponding genuine diagnostic. All
+other cases require successful status and their individual result marker.
+
+| ID | New example name | Validation |
+| --- | --- | --- |
+| 31 | `datalines_apostrophe` | Raw surname `O'Brien` preserved |
+| 32 | `datalines4_comment_tokens` | Raw `*/`, `/*`, and embedded semicolons preserved |
+| 33 | `sort_duplicate_keys` | NODUPKEY retains three keys and rejects two rows |
+| 34 | `sql_union_semantics` | UNION gives three rows; UNION ALL gives four |
+| 35 | `regex_variant_extraction` | PRX extracts `rs123456` |
+| 36 | `leap_day_date_import` | Leap day parsed; next date is one day later |
+| 37 | `numeric_function_missing` | MEAN ignores missing input; arithmetic mean propagates missing |
+| 38 | `retained_group_totals` | Group totals reset correctly to 5 and 11 |
+| 39 | `month_end_alignment` | INTNX returns February 29, 2024 |
+| 40 | `univariate_percentile` | Median of 1-9 is 5 |
+| 41 | `paired_ttest_output` | Paired test emits a finite probability within 0-1 |
+| 42 | `anova_overall_table` | GLM emits three overall ANOVA rows |
+| 43 | `correlation_output_dataset` | CORR returns Pearson correlation 1 |
+| 44 | `fisher_exact_output` | Fisher exact ODS table exists with rows |
+| 45 | `kaplan_meier_output` | Nonmissing survival estimates lie within 0-1 |
+| 46 | `poisson_genmod_parameters` | Intercept and slope estimates are nonmissing |
+| 47 | `mixed_model_fixed_effects` | Two fixed-effect estimates are nonmissing |
+| 48 | `sql_case_missing_category` | Missing, low, and high categories mapped correctly |
+| 49 | `fcmp_custom_function` | Generated FCMP function returns 37 |
+| 50 | `tabulate_multidimensional_table` | TABULATE completes; underlying total is 18 |
+| 51 | `temporary_array_dot_product` | Array dot product is 32 |
+| 52 | `lag_by_group_reset` | Within-group differences are 4 and 9 |
+| 53 | `format_cntlin_lookup` | Generated CNTLIN format maps 2 to `case` |
+| 54 | `dictionary_column_metadata` | One numeric and one 17-byte character column |
+| 55 | `contents_variable_order` | CONTENTS returns the three declared variable positions |
+| 56 | `space_in_name_literal` | Name literal `patient id` reads as 56 |
+| 57 | `special_missing_values` | `.A` is missing and distinct from ordinary `.` |
+| 58 | `missing_infile_resource` | Missing DATA-step input file fails |
+| 59 | `sql_unknown_column` | Unknown SQL column fails |
+| 60 | `array_subscript_bounds` | Array access outside its bounds fails |
+
+Procedural output checks are intentionally described separately from
+exact-value checks. For example, case 44 verifies Fisher's ODS result table,
+not an independently calculated reference probability. All cases also check
+the MCP status/error flag, exit code, structured status, retained log,
+required HTML, and completion-marker cleanup.
+
+### New failure and resulting repair
+
+The original pass validated **28/30** cases. Cases 31 and 32 were rejected
+before remote submission. Preflight treated raw inline data as SAS source:
+the apostrophe in `O'Brien` appeared to start an unterminated quoted string,
+and `*/literal` appeared to close a block comment that had not been opened.
+Both are legitimate values in the generated input records.
+
+`MCPDeps/SAS_Source_Analysis.pm` now recognizes inline-data declarations
+outside SAS strings and comments. It masks the raw records, preserving
+character offsets and source line numbers, until the appropriate terminator:
+`;` for ordinary DATALINES/CARDS/PARMCARDS or `;;;;` for their `4` variants.
+It does not alter the program submitted to SAS. Both CLI entry points use
+this view for quote/comment balancing, macro lint, PUT-semicolon checks,
+inline-card checks, and macro-typo warnings. Raw percent text and
+declaration-like text therefore do not become preflight findings.
+
+The scanner also diagnoses a missing inline-data terminator. Real quote,
+comment, or macro errors after a terminated data block remain detectable.
+Declaration-like text inside an ordinary string or comment does not start
+a data block or hide later errors. The new
+`tests/test_inline_data_preflight.pl` regression tests both entry points,
+offset/line preservation, the accepted raw characters, and these negative
+cases. This fixes preflight; it does not change SAS's own data-reading rules.
+
+### Final batch-2 results and checks
+
+The corrected full run exited **0** with **30/30 case validations passing**:
+27 successful jobs and three genuine runtime failures correctly reported.
+Cases 31 and 32 both produced their result markers and nonempty HTML after
+the preflight correction. The original failed run is retained in
+`SAS_Output_real30_UgeNlZ/`; the final verified run is retained in
+`SAS_Output_real30_0yq737/`. Each contains generated source files, the catalog,
+MCP responses, `results.json`, and the saved shell log (`suite.log`). The
+results JSON identifies the separate durable log/HTML directory for every
+job. The temporary loopback test server was stopped after verification.
+
+Offline regression commands and passing assertion counts:
+
+```bash
+perl tests/test_inline_data_preflight.pl      # 48
+perl tests/test_inline_macro_preflight.pl     # 16
+perl tests/test_sas_log_diagnostics.pl         # 7
+perl MCPDeps/test_sas_log_and_labels.pl        # 30
+perl tests/test_mcp_job_reporting.pl           # 48
+perl -c tests/new_examples_31_60.pl
+perl -c tests/run_live_new_examples_30.pl
+perl -c run_sas_codes_or_files_in_ODA.pl
+perl -c run_sas_codes_or_script_in_ODA.pl
+git -c core.whitespace=cr-at-eol diff --check
+```
+
+That is **149 offline assertions**, in addition to the real batch-2 cases.
+Across the two new batches there are **60 distinct example scenarios**;
+discovery runs, reruns, and offline assertions are not counted as new
+examples. All maintained generators and new analysis/test modules are Perl.
+The report retains the previous batch's findings and commands. This update
+remains local and has not been pushed to GitHub.
+
+## 9. Third independent batch: new cases 61-90
+
+The next request adds thirty further examples rather than counting prior
+runs again. Their sources are maintained in
+[tests/new_examples_61_90.pl](tests/new_examples_61_90.pl). The Perl driver
+accepts `--batch 3` and checks its sources against both earlier batches.
+Discovery runs and verification reruns are not counted as additional cases.
+
+### Cygwin commands
+
+Start the isolated test HTTP server from the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18133
+```
+
+Run the discovery pass, then the full verification after repair:
+
+```bash
+perl tests/run_live_new_examples_30.pl --live --batch 3 \
+  --url http://127.0.0.1:18133/mcp > new_real30_batch3_initial.log 2>&1
+
+perl tests/run_live_new_examples_30.pl --live --batch 3 \
+  --url http://127.0.0.1:18133/mcp > new_real30_batch3_verified.log 2>&1
+```
+
+Generate all sources offline or select one new example:
+
+```bash
+perl tests/run_live_new_examples_30.pl --generate-only --batch 3
+perl tests/run_live_new_examples_30.pl --live --batch 3 --only 61 \
+  --url http://127.0.0.1:18133/mcp
+```
+
+### Thirty new examples and checks
+
+| ID | New generated source name | Condition validated |
+| --- | --- | --- |
+| 61 | `quoted_comment_delimiter` | Quoted `/*` value does not hide a real macro terminator |
+| 62 | `statement_comment_after_semicolon` | Inline statement comment accepts an apostrophe |
+| 63 | `commented_put_example` | PUT documentation inside a block comment is not executed |
+| 64 | `sql_having_group_filter` | HAVING retains group 2 with total 15 |
+| 65 | `correlated_exists_filter` | EXISTS retains two keys without duplicate multiplication |
+| 66 | `full_outer_join_keys` | Full join retains three distinct keys |
+| 67 | `cross_join_product` | Cartesian join produces six rows |
+| 68 | `merge_membership_flags` | MERGE IN flags identify all three membership patterns |
+| 69 | `call_execute_generated_step` | Generated DATA step creates value 69 |
+| 70 | `symputx_numeric_transfer` | Calculated total 28 transfers through a macro variable |
+| 71 | `sysfunc_math_expression` | Macro-expanded square root is 9 |
+| 72 | `qscan_quoted_separator` | QSCAN retains comma inside a quoted list item |
+| 73 | `iso_datetime_interval` | ISO datetime interval is 90 seconds |
+| 74 | `multibyte_character_slice` | KSUBSTR preserves a complete accented UTF-8 character |
+| 75 | `md5_known_vector` | MD5 digest matches the known vector for `abc` |
+| 76 | `compressed_dataset_rename` | Compressed data retains four rows after rename |
+| 77 | `sql_view_live_data` | View reflects a later underlying update to 77 |
+| 78 | `standardized_mean_variance` | Standardized mean is zero, sample SD one |
+| 79 | `geographic_distance_units` | One degree at equator gives distance within 100-120 km |
+| 80 | `survey_weighted_mean` | Survey weighted mean is 170/6 |
+| 81 | `monthly_date_aggregation` | January has two records, February one |
+| 82 | `datasets_attribute_modify` | Attribute changes preserve numeric value 82 |
+| 83 | `fopen_fread_fileref` | File functions read the generated text record |
+| 84 | `additional_ods_html_destination` | Additional ODS HTML file exists and contains data |
+| 85 | `sql_update_delete` | Updates/deletion leave two rows with sum 103 |
+| 86 | `set_character_length_warning` | Length warning surfaced; longer string truncates to `pla` |
+| 87 | `unknown_numeric_function` | Undefined DATA-step function fails |
+| 88 | `sql_join_type_error` | Incompatible SQL join-key types fail |
+| 89 | `unknown_procedure` | Nonexistent SAS procedure fails |
+| 90 | `numeric_domain_diagnostics` | Invalid LOG/SQRT inputs become missing with quality diagnostics |
+
+Cases 87-89 require genuine failed status, nonzero exit, MCP `isError=true`,
+and their expected SAS diagnostic. The other 27 require successful status
+and a case-specific log marker. HTML-producing cases require a nonempty
+downloaded HTML artifact. Case 86 also checks the structured warning count;
+case 90 checks the structured data-quality count. All cases check structured
+status, the retained log, and removal of PID/completion markers.
+
+### Three newly reproduced preflight failures
+
+The discovery pass validated **27/30** cases. Cases 61-63 were valid SAS
+programs rejected before remote execution:
+
+- **61:** Regex-based comment removal started inside a quoted `/*` value
+  and consumed through a later real block comment. Subsequent macro lint
+  incorrectly reported a missing `%mend` even though it was present.
+- **62:** The quote/comment scanner only recognized a bare `*` statement
+  comment at a physical line start. After `data e62;`, it interpreted the
+  apostrophe in `* author's explanatory note;` as an unterminated string.
+- **63:** The PUT-semicolon check scanned lines inside a block comment and
+  treated a nonexecuted documentation example as a fatal compile problem.
+
+The existing Perl `MCPDeps/SAS_Source_Analysis.pm` now analyzes quotes,
+comments, statement boundaries, and previously recognized inline-data
+blocks in source order. It produces a view masking both comments and quoted
+strings for macro lint, and a separate comment-only view for checks needing
+the original quoted text. Neither view changes the source submitted to SAS.
+Both CLI entry points share this analysis instead of separately removing
+comments with regular expressions or assuming comments start physical lines.
+
+Real unterminated quotes and comments remain detectable. Inline statement
+comments and macro comments preserve the surrounding statement/expression
+state. PUT text and misspelled macro names inside comments do not become
+findings; real unsafe PUT statements still do. Character offsets and source
+line numbers are preserved. The new
+`tests/test_comment_quote_preflight.pl` covers these cases and genuine errors
+for both CLI entry points, including macro comments inside an expression.
+
+### Final batch-3 verification
+
+The corrected full run exited **0** and validated **30/30 cases**:
+27 successful jobs and three intentional genuine failed jobs correctly
+reported. Cases 61-63 each produced their result marker and nonempty HTML.
+The discovery artifacts are retained in `SAS_Output_real30_Q_aqNP/`; the
+verified artifacts are retained in `SAS_Output_real30_Mg0Je0/`. Generated
+SAS sources, the catalog, MCP start/poll responses, `results.json`, and the
+saved suite log (`suite.log`) are preserved. Each results entry identifies
+the durable job directory containing the full SAS log and available HTML.
+The temporary loopback HTTP server was stopped after verification.
+
+The following offline regressions passed after this batch:
+
+```bash
+perl tests/test_comment_quote_preflight.pl    # 26 assertions
+perl tests/test_inline_data_preflight.pl      # 48 assertions
+perl tests/test_inline_macro_preflight.pl     # 16 assertions
+perl tests/test_sas_log_diagnostics.pl         # 7 assertions
+perl MCPDeps/test_sas_log_and_labels.pl        # 30 assertions
+perl tests/test_mcp_job_reporting.pl           # 48 assertions
+perl -c tests/new_examples_61_90.pl
+perl -c tests/run_live_new_examples_30.pl
+perl -c run_sas_codes_or_files_in_ODA.pl
+perl -c run_sas_codes_or_script_in_ODA.pl
+perl -c server.pl
+git -c core.whitespace=cr-at-eol diff --check
+```
+
+That is **175 offline assertions**, separate from the thirty real batch-3
+case validations. The three new batches contain **90 distinct example
+scenarios** in total. Sources and test/analysis code remain Perl/Bash/SAS;
+SASPy continues as the existing internal bridge. Runtime artifacts remain
+local and ignored by Git. No GitHub push was performed for this update.
