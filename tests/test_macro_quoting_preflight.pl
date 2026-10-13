@@ -45,4 +45,13 @@ for my $entry (qw(run_sas_codes_or_files_in_ODA.pl run_sas_codes_or_script_in_OD
     unlike($code,qr/not_executed\.sas/,'runner does not inject a loader for a masked literal');
     like($code,qr/real_dependency\.sas/,'runner still injects a loader for a real macro');
 }
+for my $code (
+    q{%let x=%bquote(%nrstr(%nested_literal()));},
+    q{data x; value="%nrstr(%nested_literal())"; run;},
+    q{%let x=%quote(%bquote(%nrstr(%nested_literal())));}) {
+    unlike(SAS_Source_Analysis::macro_dependency_view($code),qr/%nested_literal/,'nested NRSTR is excluded from dependencies');
+    is_deeply(SAS_Source_Analysis::analyze_source($code)->{findings},[],'nested quoting remains valid source');
+}
+like(SAS_Source_Analysis::macro_dependency_view(q{%let x=%bquote(%quote(%real_nested()));}),qr/%real_nested/,'real nested evaluated dependency retained');
+is_deeply(SAS_Source_Analysis::analyze_source(q{data x; value="%str(%")"; run;})->{findings},[],'escaped macro quote does not close outer double-quoted string');
 done_testing();

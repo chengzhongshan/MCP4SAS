@@ -1200,3 +1200,252 @@ also checked in the companion repository. Test generation, orchestration
 and regression tests use Perl/Bash; the existing SASPy transport remains
 the backend. Runtime output directories and logs remain local; publication
 includes maintained source, examples, provenance, tests and this report.
+
+## 11. Second library-derived batch: 100 new cases (191–290)
+
+This batch responds to the request for another 100 newly generated real
+examples. It adds cases 191–290 rather than repeating the preceding 190.
+The Perl catalogue is `tests/new_examples_191_290.pl`, adapted from 49
+additional source files in the same two library collections. The selected
+files' SHA-256 hashes are recorded in `tests/sas_library_source_manifest.json`.
+Original library files remain unchanged; generated examples use synthetic
+data and owned WORK files rather than the original external datasets.
+
+The examples cover nested/evaluated macro quoting, SQL set operations,
+join cardinality, correlated updates, views, merge precedence, conditional
+LAG queues, metadata, filesystem handles, rankings, scaling, regression,
+Wilcoxon output, transpose, multiple testing, ODS, graphics, regex capture,
+missing values and date/datetime units. Cases 288–290 intentionally exercise
+three genuine SAS errors: duplicate transpose IDs, an ambiguous SQL column
+and the nonexistent WORD function.
+
+Duplicate checks now normalize generated IDs and whitespace, so an earlier
+example cannot qualify merely through renaming. Batch 5 also rejects
+unexpected structured warnings and data-quality notes on successful cases.
+Expected warnings in 230, 253 and 264 are explicitly checked, preserving
+the distinction between an advisory and a failed SAS job.
+
+### Cygwin commands
+
+Terminal 1, from the MCP4SAS repository root:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18136
+```
+
+Terminal 2:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/run_live_new_examples_30.pl --generate-only --batch 5 \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes
+perl tests/run_live_new_examples_30.pl --live --batch 5 \
+  --url http://127.0.0.1:18136/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch5_initial.log 2>&1
+```
+
+The `--library-root` option verifies the original library snapshot; omit
+it to run the self-contained generated examples elsewhere. Test orchestration
+and generation use Perl/Bash and the existing SASPy backend.
+
+### New example catalogue
+
+`E:` identifies Easy-For-Error-Codes-SAS; `D:` identifies SAS_Code_Database.
+The oracle is a checked numerical/text condition unless the case expects
+an actual failed job.
+
+| ID | Example | Oracle | Library source |
+|---|---|---|---|
+| 191 | `nested_nrstr_inside_bquote` | `value='%e191_literal()'` | D:nrstr qcmpres cmpres demo.sas |
+| 192 | `nrstr_inside_evaluated_double_quote` | `value='%e192_literal()'` | D:nrstr qcmpres cmpres demo.sas |
+| 193 | `macro_quote_escaped_double_quote` | `value='"'` | D:Resolve Macro varible with _bquote_ and _str_ in SAS Macro.sas |
+| 194 | `superq_masked_comma_arguments` | `value='left,right'` | D:nrstr qcmpres cmpres demo.sas |
+| 195 | `symget_dynamic_lookup` | `total=34` | D:symget functions like that of a hash.sas |
+| 196 | `symputx_local_scope` | `value='inner' and symget('e196value')='outer'` | D:symget functions like that of a hash.sas |
+| 197 | `dosubl_synchronous_result` | `rc=0 and value=42` | D:Run macro repeatedly with macro dosubl.sas |
+| 198 | `cards4_embedded_macro_tokens` | `n=37` | E:datalines4 demo.sas |
+| 199 | `regex_literal_percent_dependency` | `value='foo'` | E:prxposn need to be used with prxparse and prxmatch.sas |
+| 200 | `macro_nrstr_comment_like_text` | `index(value,'alpha;')>0` | D:nrstr qcmpres cmpres demo.sas |
+| 201 | `sql_union_distinct` | `n=3 and total=6` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 202 | `sql_union_all_bag` | `n=5 and total=10` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 203 | `sql_except_distinct` | `n=1 and total=1` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 204 | `sql_intersect_distinct` | `n=1 and total=2` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 205 | `sql_except_all_bag` | `n=2 and total=3` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 206 | `sql_intersect_all_bag` | `n=1 and total=2` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 207 | `sql_full_join_coalesced_key` | `n=3 and total=6 and av=30 and bv=500` | D:Proc SQL Full Join with Function Coalesce.sas |
+| 208 | `sql_duplicate_right_join_multiplicity` | `n=2 and total=9` | E:Be caution about Proc SQL Left Join when there are duplicates in the right table.sas |
+| 209 | `sql_not_exists_antijoin` | `n=1 and total=1` | D:Proc SQL Full Join with Function Coalesce.sas |
+| 210 | `sql_correlated_update` | `total=17 and n=3` | D:Proc SQL update Demo.sas |
+| 211 | `sql_delete_subset` | `n=3 and total=9` | D:Proc SQL delete Demo.sas |
+| 212 | `sql_view_reads_updated_base` | `answer=21` | D:Proc SQL View Demo.sas |
+| 213 | `sql_case_nullable_category` | `n=3` | D:Proc SQL with conditions by using case function.sas |
+| 214 | `sql_having_only_singletons` | `n=1 and value=1` | D:Proc SQL function Group with having conditions.sas |
+| 215 | `sql_column_mean_missing_denominator` | `value=5 and nonmissing=2 and allrows=3` | E:different usage of avg and mean in proc sql.sas |
+| 216 | `sql_row_mean_multiple_arguments` | `total=11 and n=2` | E:different usage of avg and mean in proc sql.sas |
+| 217 | `sql_calculated_alias_filter` | `total=25` | D:Proc SQL with conditions by using case function.sas |
+| 218 | `sql_outer_union_corr_columns` | `n=2 and total=5` | D:Proc SQL Except  Union Union all Intersect Demo.sas |
+| 219 | `sql_left_join_unmatched_missing` | `n=1 and total=9` | D:Proc SQL Full Join with Function Coalesce.sas |
+| 220 | `sql_select_into_trimmed_list` | `value='3&#124;2&#124;1'` | D:Proc contents output variable information without ODS print.sas |
+| 221 | `merge_last_dataset_overwrites` | `value=20` | E:Merge Function IMPORTANT NOTES.sas |
+| 222 | `merge_in_flags_inner_only` | `n=2 and total=5` | E:Merge Function IMPORTANT NOTES.sas |
+| 223 | `conditional_lag_queue` | `value=2 and n=1` | E:lag_with_by_and_last_statement.sas |
+| 224 | `by_group_lag_reset` | `total=2 and n=2` | E:lag_with_by_and_last_statement.sas |
+| 225 | `by_first_last_bounds` | `total=4 and n=2` | E:output_first_and_last_record_by_grp_at_the_same_row.sas |
+| 226 | `temporary_array_retention` | `a=6 and b=6` | D:temporary numeric array.sas |
+| 227 | `character_array_lookup_order` | `value='alpha'` | E:assign_number_to_alphabet_word.sas |
+| 228 | `special_missing_comparison_order` | `value=1 and n=2` | D:specify mssing types in data step.sas |
+| 229 | `select_when_default_category` | `label='other'` | D:Select When function in data step.sas |
+| 230 | `append_force_extra_variable` | `n=2 and total=3` | D:Proc Append Demo.sas |
+| 231 | `contents_variable_type_counts` | `n=2 and chars=1 and width=8` | D:Proc contents output variable information without ODS print.sas |
+| 232 | `dataset_nlobs_handle_closed` | `n=4 and rc=0` | D:Retrieve the number of observations in a dataset.sas |
+| 233 | `view_exist_type_selector` | `isview=1 and isdata=0` | D:Verifying the existence of a SAS dataset.sas |
+| 234 | `missing_dataset_open_returns_zero` | `dsid=0` | D:Verifying the existence of a SAS dataset.sas |
+| 235 | `work_directory_handle_lifecycle` | `opened=1 and n>=0 and closed=0 and cleared=0` | D:SAS file function dopen dnum dread Demo.sas |
+| 236 | `work_owned_directory_create_remove` | `lengthn(path)>0 and exists=1 and deleted=0` | E:create dir in sas data step with dcreate.sas |
+| 237 | `work_file_rename_verified` | `rc=0 and exists=1 and deleted=0` | D:Rename file, dataset and directory Demo.sas |
+| 238 | `dataset_rename_function` | `value=7 and existsold=0` | D:Rename file, dataset and directory Demo.sas |
+| 239 | `contents_label_format_preservation` | `label='library value' and format='COMMA' and formatl=12 and formatd=2` | D:Proc contents output variable information without ODS print.sas |
+| 240 | `dictionary_columns_work_lookup` | `n=2 and width=12` | D:Proc contents output variable information without ODS print.sas |
+| 241 | `rank_ties_low` | `value=1` | E:proc rank with tiers.sas |
+| 242 | `rank_ties_high` | `value=2` | E:proc rank with tiers.sas |
+| 243 | `rank_ties_mean` | `value=1.5` | E:proc rank with tiers.sas |
+| 244 | `rank_ties_dense` | `value=1` | E:proc rank with tiers.sas |
+| 245 | `rank_groups_zero_based` | `low=0 and high=1 and total=2` | E:proc rank with tiers.sas |
+| 246 | `standard_sample_zscores` | `abs(total)<1e-10 and abs(low+1)<1e-10 and abs(high-1)<1e-10` | E:colwide z score with proc standard.sas |
+| 247 | `stdize_range_endpoints` | `low=0 and high=1 and abs(total-1.25)<1e-10` | E:scale data to range with proc stdize but not proc standard.sas |
+| 248 | `reg_perfect_line_residuals` | `maxerr<1e-10 and n=5` | D:output residual in proc reg for simple regression.sas |
+| 249 | `reg_outest_intercept_slope` | `abs(intercept-5)<1e-10 and abs(x+2)<1e-10` | D:output residual in proc reg for simple regression.sas |
+| 250 | `wilcoxon_two_group_ods_capture` | `n>0` | D:Wilcoxon rank sum test_Mann Whitney U test Demo.sas |
+| 251 | `transpose_wide_to_long_names` | `n=2 and total=12 and names=2` | D:SAS transpose long to wide and wide to long Demo Very useful.sas |
+| 252 | `transpose_long_to_wide_id` | `x=4 and y=8` | D:SAS transpose long to wide and wide to long Demo Very useful.sas |
+| 253 | `transpose_let_duplicate_last` | `v1=9` | D:SAS transpose long to wide and wide to long Demo Very useful.sas |
+| 254 | `compare_equal_sysinfo` | `value=0` | D:Compare two datasets with Proc compare.sas |
+| 255 | `compare_unequal_sysinfo` | `value>0` | D:Compare two datasets with Proc compare.sas |
+| 256 | `multtest_bonferroni_raw_p` | `abs(low-.03)<1e-10 and abs(high-.60)<1e-10` | D:Proc Multtest for P value adjustment.sas |
+| 257 | `fdr_manual_monotone_stepup` | `abs(low-.03)<1e-10 and abs(high-.20)<1e-10` | D:simple FDR for raw P values.sas |
+| 258 | `cmiss_mixed_types` | `n=2` | E:cmiss_function2get_missing_variables_among_variables.sas |
+| 259 | `iml_nonmissing_mask_count` | `n=4` | E:get_index_for_nonmissing_values_in_proc_iml.sas |
+| 260 | `fcmp_work_function` | `value=49` | D:proc fcmp Demo.sas |
+| 261 | `ods_select_none_capture_moments` | `n>0` | D:ODS alternative for NOPRINT.sas |
+| 262 | `ods_recover_after_freq_suppression` | `value=1` | E:recover ods with ods select all after using ods select none.sas |
+| 263 | `freq_ods_crosstab_capture` | `n=9` | E:ODS output Tables failed with noprint in Proc Freq.sas |
+| 264 | `freq_noprint_ods_missing_warning` | `captured=0` | E:ODS output Tables failed with noprint in Proc Freq.sas |
+| 265 | `report_nowd_computed_column` | `total=7` | D:HTML output with Proc report Demo_create link for all elements in columns.sas |
+| 266 | `sgplot_scatter_group` | `y=x*grp` | D:proc sgplot demo.sas |
+| 267 | `sgplot_series_sorted` | `y=x*x` | D:proc sgplot demo.sas |
+| 268 | `sgplot_histogram_density` | `x>=1 and x<=20` | D:proc sgplot demo.sas |
+| 269 | `sgplot_vbar_response_sum` | `value>=1 and value<=3` | D:proc sgplot demo.sas |
+| 270 | `sgplot_refline_and_inset` | `x=y` | D:proc sgplot demo.sas |
+| 271 | `prxposn_capture_numeric_suffix` | `matched=1 and value='42'` | E:prxposn need to be used with prxparse and prxmatch.sas |
+| 272 | `prxsubstr_match_position_length` | `pos=4 and len=3` | E:prxposn need to be used with prxparse and prxmatch.sas |
+| 273 | `prxnext_multiple_matches` | `total=5` | E:prxposn need to be used with prxparse and prxmatch.sas |
+| 274 | `prxchange_reverse_capture_order` | `value='beta:alpha'` | E:prxchange_replace_elements_within_multiple_quotes.sas |
+| 275 | `prxchange_remove_quote_pairs` | `value='one two'` | E:prxchange_replace_elements_within_multiple_quotes.sas |
+| 276 | `ifc_missing_third_branch` | `value='missing'` | D:SAS Function Missing and IFC Demo.sas |
+| 277 | `coalescec_first_nonblank` | `value='alpha'` | D:SAS Function Missing and IFC Demo.sas |
+| 278 | `missing_numeric_char_combination` | `n=2` | D:SAS Function Missing and IFC Demo.sas |
+| 279 | `vvalue_formatted_numeric_text` | `value='1,234.5'` | D:Proc contents output variable information without ODS print.sas |
+| 280 | `vname_array_index_metadata` | `upcase(value)='BETA'` | D:temporary numeric array.sas |
+| 281 | `intck_month_discrete_continuous` | `a=1 and b=0` | D:time format with do loop.sas |
+| 282 | `intnx_leap_day_alignment` | `value='29feb2024'd` | D:time format with do loop.sas |
+| 283 | `dhms_datepart_timepart_roundtrip` | `d='13oct2026'd and t=14*3600+25*60+30` | D:time format with do loop.sas |
+| 284 | `mdy_leap_year_construct` | `y=2024 and m=2 and d=29` | D:time format with do loop.sas |
+| 285 | `date_informat_iso_roundtrip` | `value='2026-10-13'` | D:time format with do loop.sas |
+| 286 | `do_date_loop_day_step` | `n=3 and span=14` | D:time format with do loop.sas |
+| 287 | `data_step_view_reexecution` | `value=14` | D:Proc SQL View Demo.sas |
+| 288 | `transpose_duplicate_id_failure` | `Expected failure: occurs twice` | D:SAS transpose long to wide and wide to long Demo Very useful.sas |
+| 289 | `sql_ambiguous_column_failure` | `Expected failure: ambiguous` | D:Proc SQL Full Join with Function Coalesce.sas |
+| 290 | `undefined_word_function_failure` | `Expected failure: WORD.*unknown` | E:assign_number_to_alphabet_word.sas |
+
+### Discovery results and improvements
+
+The discovery pass in `SAS_Output_real30_5iO0gt` passed 90/100 checks.
+Cases 191 and 192 computed the right values but wrongly injected targeted
+macro loaders for NRSTR literals. The scanner now collects nested macro
+quoting spans and recognizes macro functions evaluated inside double-quoted
+SAS strings. NRSTR bodies remain masked in dependency analysis even when
+nested in BQUOTE/QUOTE; actual evaluated dependencies remain visible.
+Escaped macro double quotes no longer terminate the surrounding string.
+Eight additional regression assertions cover these contexts and retained
+real dependencies. The shared source-analysis module and regressions were
+synchronized to all three active companion pipeline copies.
+
+Three checks needed corrections in the generated test cases themselves.
+Case 195's key defaulted to eight characters and truncated `e195_high`,
+producing a real invalid-SYMGET NOTE and a wrong sum; `length key $32` fixes
+the example. Case 198's raw text was 37 characters, not the original expected
+35. Case 290 correctly failed with `ERROR 68-185`, but the original expected
+phrase was `not found`; the observed message says `WORD is unknown`. Its
+oracle now checks that actual diagnostic, preserving expected failure.
+These are example/oracle corrections, not changes to SAS semantics.
+
+Five discovery jobs (201–205) encountered a temporary Perl scanner syntax
+error while the scanner was being edited during execution. They provide no
+evidence of a SQL defect. The scanner was repaired immediately, and the
+complete verification uses a frozen implementation for all 100 cases.
+
+An offline cleanup regression initially misidentified an active live job's
+scratch directory as its own leak. `test_mcp_job_reporting.pl` now runs in
+an isolated temporary workspace, so its cleanup assertion checks only its
+own job. Its 48 assertions pass while live jobs are active. A new five-check
+regression verifies that changing generated IDs/whitespace cannot bypass
+example uniqueness checks. Missing provenance and unknown source collections
+are now rejected before submission. Batch 5 rejects unexpected advisory
+diagnostics as well as wrong calculations and failure status.
+
+### Verification commands
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/run_live_new_examples_30.pl --live --batch 5 \
+  --url http://127.0.0.1:18136/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch5_verified.log 2>&1
+prove tests/test_comment_quote_preflight.pl \
+  tests/test_inline_data_preflight.pl tests/test_inline_macro_preflight.pl \
+  MCPDeps/test_sas_log_and_labels.pl tests/test_mcp_job_reporting.pl \
+  tests/test_sas_log_diagnostics.pl tests/test_macro_quoting_preflight.pl \
+  tests/test_format_name_advisory.pl MCPDeps/test_sas_oda_include_lookup.pl \
+  tests/test_quoted_filename_upload.pl tests/test_example_uniqueness.pl
+perl -I MCPDeps -c MCPDeps/SAS_Source_Analysis.pm
+```
+
+Offline checks passed **251 assertions across 11 Perl tests**. The companion
+checks passed **113 assertions across eight Perl tests**. Its live compatibility
+command was:
+
+```bash
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl run_sas_codes_or_files_in_SAS_ODA.pl \
+  --file examples/sas_library_nested_quote_smoke.sas \
+  --output-prefix SAS_Output_library_nested_quotes \
+  --run-timeout-seconds 180
+```
+
+That live run exited 0, printed `LIBRARY_NESTED_QUOTE_OK`, injected no
+targeted loaders for the literal macro names, and retained nonempty HTML
+at `SAS_Output_library_nested_quotes/sas_res_8BVcF.html`. The standalone
+example is also included in this repository. Runtime artifacts remain
+local; source, new examples, hashes, regressions and this report are the
+publication content.
+
+### Final live outcome
+
+The complete frozen-code rerun exited 0 and passed **100/100 validations**
+in `SAS_Output_real30_Maf8p4`: **97 successful SAS jobs and three intentional
+failed jobs** (288, 289, 290). All 49 original source hashes matched, and all
+100 examples passed duplicate checks against the preceding 190 examples.
+Successful jobs retained HTML and their computed markers, expected warnings
+were surfaced as structured advisories, and intentional errors retained
+failed status, nonzero exit, MCP error flags and their actual diagnostics.
+Completion-marker cleanup was checked for every job.
+
+The discovery and final terminal logs are retained locally in
+`SAS_Output_library100_run_logs/new_library100_batch5_initial.log` and
+`SAS_Output_library100_run_logs/new_library100_batch5_verified.log`.
+Generated programs, per-job responses, diagnostics and the full results
+JSON remain in the run directories. These runtime artifacts are excluded
+from GitHub; the two repositories publish the maintained fixes and tests.

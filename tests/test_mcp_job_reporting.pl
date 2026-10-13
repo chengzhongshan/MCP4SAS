@@ -40,6 +40,12 @@ die 'Missing runner temporary-directory helper' unless $runner_temp_function;
 eval $runner_temp_function;
 die $@ if $@;
 
+my $original_cwd = getcwd();
+my $test_workdir = tempdir('mcp_reporting_test_XXXXXX', TMPDIR => 1, CLEANUP => 1);
+chdir $test_workdir or die $!;
+END { chdir $original_cwd if defined $original_cwd; }
+# Inspect scratch only in this test's workspace; concurrent live jobs own
+# independent directories and must not affect the cleanup assertion.
 my $scratch = tempdir('tmpMCP4SAS_test_XXXXXX', DIR => File::Spec->rel2abs('.'), CLEANUP => 0);
 open my $scratch_file, '>', "$scratch/input.sas" or die $!;
 print {$scratch_file} 'proc means;';

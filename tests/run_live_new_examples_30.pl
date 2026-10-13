@@ -21,7 +21,7 @@ GetOptions('live' => \$live, 'generate-only' => \$generate, 'only=s' => \$only,
     'library-root=s' => \$library_root) or die "Invalid options\n";
 die "Use --live or --generate-only [--only 01,02] [--out directory] [--url URL]\n"
     unless $live || $generate;
-die "--batch must be 1, 2, 3 or 4\n" unless $batch >= 1 && $batch <= 4;
+die "--batch must be 1, 2, 3, 4 or 5\n" unless $batch >= 1 && $batch <= 5;
 my $root = abs_path("$Bin/..");
 chdir $root or die $!;
 $out ||= tempdir('SAS_Output_real30_XXXXXX', DIR => $root, CLEANUP => 0);
@@ -37,6 +37,14 @@ sub save {
 sub load_text {
     open my $fh, '<:raw', $_[0] or die "$_[0]: $!";
     local $/; return <$fh>;
+}
+sub example_fingerprint {
+    my ($source)=@_;
+    # Reject copies changed only by generated IDs or whitespace.
+    $source =~ s/\be\d+/eCASE/ig;
+    $source =~ s/MCP30_(OK|ASSERT)_\d+/MCP30_${1}_CASE/g;
+    $source =~ s/\s+/ /g;
+    return sha256_hex($source);
 }
 my @cases;
 sub example {
@@ -306,17 +314,17 @@ data _null_; set e30; if missing(ratio) then put 'MCP30_OK_30'; else put 'ERROR:
 proc print data=e30; run;
 SAS
 if ($batch >= 2) {
-    my %previous = map { sha256_hex($_->{sas}) => 1 } @cases;
+    my %previous = map { example_fingerprint($_->{sas}) => 1 } @cases;
     for my $number (2 .. $batch) {
-        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl'}->{$number};
+        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl'}->{$number};
         my $additional = do "$Bin/$filename";
         die "Cannot load batch $number: ".($@ || $! || 'invalid catalog')."\n" unless ref($additional) eq 'ARRAY';
-        die "Batch $number repeats a previous source\n" if grep { $previous{sha256_hex($_->{sas})} } @$additional;
-        $previous{sha256_hex($_->{sas})} = 1 for @$additional;
+        die "Batch $number repeats a previous source after ID normalization\n" if grep { $previous{example_fingerprint($_->{sas})} } @$additional;
+        $previous{example_fingerprint($_->{sas})} = 1 for @$additional;
         @cases = @$additional;
     }
 }
-my $expected_count=$batch==4 ? 100 : 30;
+my $expected_count=$batch>=4 ? 100 : 30;
 die "Expected exactly $expected_count unique examples; got ".scalar(@cases)."\n" unless @cases==$expected_count;
 my $source_manifest = -f "$Bin/sas_library_source_manifest.json"
     ? decode_json(load_text("$Bin/sas_library_source_manifest.json")) : {};
@@ -324,9 +332,12 @@ my %seen;
 my %source_seen;
 for my $case (@cases) {
     die "Duplicate example ID\n" if $seen{$case->{id}}++;
-    die "Duplicate example source\n" if $source_seen{sha256_hex($case->{sas})}++;
+    die "Duplicate example source after ID normalization\n" if $source_seen{example_fingerprint($case->{sas})}++;
     if ($case->{source_ref}) {
+        die "Missing source provenance: $case->{source_ref}\n"
+            unless exists $source_manifest->{$case->{source_ref}};
         my ($collection,$filename)=split /:/,$case->{source_ref},2;
+        die "Unknown source collection: $collection\n" unless $collection =~ /\A[ED]\z/;
         $collection=$collection eq 'E' ? 'Easy-For-Error-Codes-SAS' : 'SAS_Code_Database';
         $case->{source_collection}=$collection;
         $case->{source_file}=$filename;
@@ -394,6 +405,10 @@ for my $case (@cases) {
         my @problems;
         my $expected=$case->{fail}?'FAILED':'COMPLETE';
         $result->{diagnostics}=$finished->{structuredContent}{diagnostics};
+        push @problems,'unexpected data-quality diagnostic'
+            if $batch>=5 && !$case->{fail} && !$case->{quality} && ($result->{diagnostics}{data_quality_count}//0);
+        push @problems,'unexpected warning'
+            if $batch>=5 && !$case->{fail} && !$case->{warning} && ($result->{diagnostics}{warning_count}//0);
         push @problems,'structured status missing/inconsistent'
             unless ($finished->{structuredContent}{status}//'') eq $expected;
         push @problems,'structured data-quality diagnostic absent'
