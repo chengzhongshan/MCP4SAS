@@ -5,6 +5,8 @@
 /SAS_Output*/
 /sas_submit_worker_*
 /DiffGWASDeps/sas_oda_session_server.log
+/MCPDeps/sas_oda_session_server.log
+/.mcp4sas_work_*/
 /.DS_Store
 *.pyc
 __pycache__/

@@ -168,7 +168,7 @@ printf 'Log file: %s\n' "${log_file}"
 printf 'Listing file: %s\n\n' "${lst_file}"
 
 set +e
-"${sas_exe}" "${sas_args[@]}"
+(cd "${abs_workdir}" && "${sas_exe}" "${sas_args[@]}")
 status=$?
 set -e
 

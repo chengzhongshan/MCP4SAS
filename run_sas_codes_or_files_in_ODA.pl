@@ -118,6 +118,7 @@ use lib "$Bin/DiffGWASDeps";
 use lib "$Bin/MCPDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
+use MCP4SAS_Temp;
 use JSON::PP qw(encode_json decode_json);
 use Cwd qw(abs_path getcwd);
 use File::Basename;
@@ -147,6 +148,7 @@ my $archive_transfers = exists $ENV{SAS_ODA_ARCHIVE_TRANSFERS}
     ? ($ENV{SAS_ODA_ARCHIVE_TRANSFERS} =~ /^(?:1|true|yes|y|on)$/i ? 1 : 0)
     : 1;
 my $cleanup_empty_output_dir = 1;
+my $keep_intermediate_files = ($ENV{MCP4SAS_KEEP_INTERMEDIATES} // '') =~ /^(?:1|true|yes|on)$/i ? 1 : 0;
 my $delete_dir = '~';
 my $created_output_dir = 0;
 my $default_sas_run_timeout_seconds = exists $ENV{SAS_ODA_DEFAULT_RUN_TIMEOUT_SECONDS}
@@ -454,6 +456,7 @@ GetOptions(
     'dir4listing|l=s' => \$dir4listing,
     'file-info=s@' => \@file_infos,
     'cleanup-empty-output-dir!' => \$cleanup_empty_output_dir,
+    'keep-intermediate-files!' => \$keep_intermediate_files,
     'sas-oda-account=s' => \$sas_oda_account,
     'sas-oda-password=s' => \$sas_oda_password,
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
@@ -590,6 +593,13 @@ sub resolve_home_dir {
         return $cand;
     }
     return '.';
+}
+
+sub runner_temp_dir {
+    my $worker_temp_dir = $ENV{MCP4SAS_WORKER_TEMP_DIR} // '';
+    return File::Spec->rel2abs($worker_temp_dir)
+      if length($worker_temp_dir) && -d $worker_temp_dir;
+    return getcwd();
 }
 
 sub resolve_sas_oda_authinfo_path {
@@ -988,6 +998,8 @@ Options:
                              Repeat this option to inspect multiple files.
                              Quote '~/...' in your shell so the local shell does not
                              expand the remote HOME shorthand before this helper sees it.
+  --keep-intermediate-files Retain the owned scratch directory for debugging.
+                             Default: remove intermediates on exit, preserve results.
   --cleanup-empty-output-dir Remove an empty auto-created output directory (default: on).
                              Also accepts legacy numeric forms:
                              --cleanup-empty-output-dir 1
@@ -1085,6 +1097,7 @@ if (defined $code && $code eq '-') {
     $code = normalize_cli_code_text($code);
 }
 
+MCP4SAS_Temp::initialize(keep => $keep_intermediate_files) unless $dry_run;
 bootstrap_sas_oda_credentials_if_needed();
 
 if ($check_sas_oda_login_only) {
@@ -1224,16 +1237,7 @@ sub monitor_status_loop {
 }
 
 sub kill_process_tree {
-    my ($pid) = @_;
-    return unless $pid && $pid > 0;
-
-    kill 'TERM', $pid;
-    select undef, undef, undef, 0.5;
-    kill 'KILL', $pid;
-
-    if ($^O =~ /^(?:MSWin32|cygwin)$/i) {
-        system('cmd', '/c', "taskkill /PID $pid /T /F >NUL 2>NUL");
-    }
+    return MCP4SAS_Temp::terminate_tree(@_);
 }
 
 sub make_json_safe {
@@ -1267,12 +1271,15 @@ sub run_sas_submit_with_timeout {
     my ($label, $code_ref) = @_;
     return $code_ref->() if !$sas_run_timeout_seconds || $sas_run_timeout_seconds <= 0;
 
-    my ($tmpfh, $tmpjson) = tempfile('sas_submit_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    my ($tmpfh, $tmpjson) = tempfile('sas_submit_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => runner_temp_dir());
     close $tmpfh;
     my $debug_sidecar = $tmpjson . '.debug.txt';
 
     my $pid = fork();
-    die "Could not fork for timed SAS submit\n" unless defined $pid;
+    if (!defined $pid) {
+        unlink $tmpjson if -e $tmpjson;
+        die "Could not fork for timed SAS submit: $!\n";
+    }
 
     if ($pid == 0) {
         my $result;
@@ -1340,6 +1347,7 @@ sub run_sas_submit_with_timeout {
         }
         waitpid($pid, 0) unless $reaped;
         unlink $tmpjson if -e $tmpjson;
+        unlink $debug_sidecar if -e $debug_sidecar;
         return {
             error => "$label timed out after ${sas_run_timeout_seconds}s",
             log   => '',
@@ -1628,19 +1636,23 @@ sub run_runner_submit_with_timeout {
           : $runner_obj->run_code($execution_code // '');
     }
 
-    my ($tmpfh, $tmpjson) = tempfile('sas_submit_worker_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    my ($tmpfh, $tmpjson) = tempfile('sas_submit_worker_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => runner_temp_dir());
     close $tmpfh;
 
     my $code_file = '';
     if (!defined $execution_file) {
-        my ($codefh, $tmpcode) = tempfile('sas_submit_worker_code_XXXX', SUFFIX => '.sas', UNLINK => 0, DIR => getcwd());
+        my ($codefh, $tmpcode) = tempfile('sas_submit_worker_code_XXXX', SUFFIX => '.sas', UNLINK => 0, DIR => runner_temp_dir());
         print {$codefh} ($execution_code // '');
         close $codefh;
         $code_file = $tmpcode;
     }
 
     my $pid = fork();
-    die "Could not fork for timed SAS submit worker\n" unless defined $pid;
+    if (!defined $pid) {
+        unlink $tmpjson if -e $tmpjson;
+        unlink $code_file if $code_file && -e $code_file;
+        die "Could not fork for timed SAS submit worker: $!\n";
+    }
 
     if ($pid == 0) {
         local $ENV{SAS_ODA_RUN_TIMEOUT_SECONDS} = 0;
@@ -1814,16 +1826,27 @@ sub resolve_local_include_path {
     my ($path) = @_;
     return '' unless defined $path && length $path;
     return $path if -e $path;
+    my $base = basename($path);
+    my $script_dir = dirname(abs_path(__FILE__));
     my @candidates = (
         File::Spec->catfile(getcwd(), $path),
         File::Spec->catfile($macro_dir || './', $path),
-        File::Spec->catfile(dirname(abs_path(__FILE__)), $path),
+        File::Spec->catfile($script_dir, $path),
+        # Plot wrappers submit remote paths such as ~/Macro.sas while the
+        # version-controlled source lives in DiffGWASDeps.  Resolve these
+        # predictable locations before considering a recursive search of a
+        # working directory that may contain millions of GWAS files.
+        File::Spec->catfile(getcwd(), 'MCPDeps', $base),
+        File::Spec->catfile($script_dir, 'MCPDeps', $base),
+        File::Spec->catfile($macro_dir || './', 'MCPDeps', $base),
+        File::Spec->catfile(getcwd(), 'DiffGWASDeps', $base),
+        File::Spec->catfile($script_dir, 'DiffGWASDeps', $base),
+        File::Spec->catfile($macro_dir || './', 'DiffGWASDeps', $base),
     );
     for my $candidate (@candidates) {
         next unless defined $candidate && length $candidate;
         return $candidate if -e $candidate;
     }
-    my $base = basename($path);
     if (defined $base && length $base && $base ne $path) {
         my @roots = grep { defined $_ && length $_ && -d $_ } (
             getcwd(),
@@ -2620,8 +2643,8 @@ sub sas_log_contains_fatal_error {
         # SAS SOURCE/SOURCE2 listings prefix submitted source with a line
         # number.  A listed "%put ERROR:" is code, not a runtime error.
         next if $line =~ /^\s*\d+(?:\s+|!\s*)/;
-        return 1 if $line =~ /WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i;
-        return 1 if $line =~ /ERROR:\s+/i;
+        return 1 if $line =~ /^\s*WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i;
+        return 1 if $line =~ /^\s*ERROR:\s+/i;
         return 1 if $line =~ /^\s*ERROR\s+\d+-\d+:/i;
     }
     return 0;
@@ -2633,8 +2656,8 @@ sub first_fatal_sas_log_line {
     for my $line (split /\r?\n/, $text) {
         next unless defined $line;
         next if $line =~ /^\s*\d+(?:\s+|!\s*)/;
-        if ($line =~ /WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i
-            || $line =~ /ERROR:\s+/i
+        if ($line =~ /^\s*WARNING:\s+Apparent invocation of macro\s+\w+\s+not resolved\./i
+            || $line =~ /^\s*ERROR:\s+/i
             || $line =~ /^\s*ERROR\s+\d+-\d+:/i) {
             return $line;
         }
@@ -3380,6 +3403,8 @@ if (@download_files) {
                 uploads => [],
                 downloads => \@items,
                 archive_transfers => $archive_transfers ? 1 : 0,
+                connection_purpose => 'bulk download of SAS ODA result files',
+                connection_next_step => 'validate the downloaded local files; no persistent SAS session remains',
             });
         },
     );
@@ -3570,9 +3595,14 @@ if ($sas_execution_failed) {
     }) if ($execution_file || ($execution_code && $execution_code !~ /^\s*$/));
     my $failure_exit_code = 1;
     if ($sas_execution_failure_class eq 'sas_oda_space_exhaustion') {
+        $failure_exit_code = (defined($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
+          && $ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE} =~ /^\d+$/)
+          ? int($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
+          : 73;
         my $marker_file = "$output_prefix_path.non_retryable_space_failure.txt";
         if (open my $marker_fh, '>:encoding(UTF-8)', $marker_file) {
             print {$marker_fh} "failure_class=sas_oda_space_exhaustion\n";
+            print {$marker_fh} "exit_code=$failure_exit_code\n";
             print {$marker_fh} "retryable=false\n";
             print {$marker_fh} "sas_status=$status_file\n";
             print {$marker_fh} "message=$sas_execution_error\n";
@@ -3582,16 +3612,17 @@ if ($sas_execution_failed) {
         } else {
             warn "WARNING: Could not write SAS ODA space-failure marker $marker_file: $!\n";
         }
-        $failure_exit_code = (defined($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
-          && $ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE} =~ /^\d+$/)
-          ? int($ENV{SAS_ODA_SPACE_EXHAUSTION_EXIT_CODE})
-          : 73;
         print STDERR "ERROR: Stopping without retry; exit code $failure_exit_code identifies a non-retryable ODA space failure.\n";
     } elsif ($sas_execution_failure_class eq 'sas_oda_remote_session_termination') {
+        $failure_exit_code = (defined($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
+          && $ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE} =~ /^\d+$/)
+          ? int($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
+          : 74;
         my $marker_file = "$output_prefix_path.non_retryable_remote_termination.txt";
         if (open my $marker_fh, '>:encoding(UTF-8)', $marker_file) {
             print {$marker_fh} "failure_class=sas_oda_remote_session_termination\n";
             print {$marker_fh} "error_code=SAS_ODA_REMOTE_SESSION_TERMINATED\n";
+            print {$marker_fh} "exit_code=$failure_exit_code\n";
             print {$marker_fh} "retryable=false\n";
             print {$marker_fh} "sas_status=$status_file\n";
             print {$marker_fh} "message=$sas_execution_error\n";
@@ -3602,12 +3633,10 @@ if ($sas_execution_failed) {
         } else {
             warn "WARNING: Could not write SAS ODA remote-termination marker $marker_file: $!\n";
         }
-        $failure_exit_code = (defined($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
-          && $ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE} =~ /^\d+$/)
-          ? int($ENV{SAS_ODA_REMOTE_TERMINATION_EXIT_CODE})
-          : 74;
         print STDERR "ERROR: Stopping without retry; exit code $failure_exit_code identifies a remote SAS session termination.\n";
     }
+    write_status_file($status_file, { exit_code => $failure_exit_code })
+      if ($execution_file || ($execution_code && $execution_code !~ /^\s*$/));
     cleanup_empty_output_dir_if_created($output_dir);
     print "ERROR: $sas_execution_error\n";
     exit $failure_exit_code;

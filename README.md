@@ -126,8 +126,10 @@ or `windows`) as MCP tool arguments.
 
 Important limitation: this direct batch tool is not persistent. Each tool call
 launches a new SAS process, so `WORK` data sets, macro variables, librefs,
-options, and loaded macros do not carry over to the next call. The PID polling
-only tracks whether the current batch job is still running.
+options, and loaded macros do not carry over to the next call. Polling reports
+the helper exit code and flags nonzero exits as MCP errors; after polling, it
+removes the PID and completion markers while preserving the run's logs and
+HTML results.
 
 If you need persistent local SAS state, use the SASPy-backed runner instead:
 
@@ -231,25 +233,10 @@ sastpj.rutil.jar
 SASPy documents this requirement for SAS ODA/SAS 9.4M7 here:
 https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption-jars
 
-If you already have MultiGWAS-Explorer checked out with the Java supplement
-files, install the jars into MCP4SAS with:
+Point to a local directory containing the three jars to install them into MCP4SAS:
 
 ```bash
-MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
-  bash install/install_saspy_iom_jars.sh
-```
-
-In this workspace, for example:
-
-```bash
-MCP4SAS_MULTIGWAS_ROOT=/mnt/24921E0E921DE4D8/Scripts_Lib/MultiGWAS-Explorer-main/MultiGWAS-Explorer \
-  bash install/install_saspy_iom_jars.sh
-```
-
-Or point directly to the directory containing the three jars:
-
-```bash
-MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/MultiGWAS-Explorer/install/saspy-java-supplement/java/iomclient \
+MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient \
   bash install/install_saspy_iom_jars.sh
 ```
 
@@ -475,6 +462,12 @@ Poll long-running SAS jobs no more than about every 30 seconds. MCP4SAS starts
 SAS work in a background process so the AI agent does not need to hold one MCP
 request open for the whole SAS runtime.
 
+Each MCP job writes user-facing logs and HTML to a unique
+`SAS_Output_MCP4SAS_*` results directory. Generated SAS input, worker stdout,
+and other scratch files are removed automatically when the worker finishes.
+If a worker is forcibly terminated before completing, its scratch directory
+may remain for debugging.
+
 ## Minimal JSON-RPC Smoke Test
 
 In one terminal:
@@ -683,7 +676,70 @@ tool.
   logs as sensitive.
 - Review agent-generated SAS code before running it against sensitive data.
 
+
+## Synchronize Local and Remote Copies
+
+Run from your MCP4SAS checkout in Bash (Cygwin on Windows):
+
+```bash
+bash update_github_upload.sh --dry-run
+bash update_github_upload.sh "Update SAS ODA helpers"
+bash update_github_upload.sh --pull-only
+```
+
+The normal command fetches `origin/main`, commits eligible source and documentation
+changes, merges remote updates, and pushes without force. Run it in each checkout
+to synchronize that local copy with GitHub. `--pull-only` downloads and merges
+updates without committing or pushing your edits. `--dry-run` previews against
+the last fetched state without contacting GitHub or changing the real index.
+
+Credentials, local dependencies, and SAS run artifacts are excluded from new
+commits. New files must have a recognized source/documentation extension;
+review the preview before publishing. Remote or branch overrides use
+`REMOTE_NAME` and `BRANCH_NAME`; the current branch must match the target.
+Git authentication and commit identity must already be configured.
+
+Tracked edits that cannot be committed are temporarily stashed if merging requires
+it. Conflicts stop before pushing, and saved edits remain recoverable in Git.
+Follow the printed recovery instructions before rerunning.
+
 ## Troubleshooting
+
+Standalone CLI calls automatically remove their owned intermediate directory
+on exit while preserving final logs and results. Use `--keep-intermediate-files`
+to retain scratch for debugging. Preview older retained scratch with
+`perl cleanup_mcp4sas_intermediates.pl --directory .`; add `--apply` to remove
+eligible marked directories. See the cleanup examples in the validation report.
+
+For the complete Cygwin/Perl commands, reproduced failures, live results, and
+resulting fixes, see [Real Examples for Improving MCP4SAS](RealExamples4ImprovingMCP4SAS.md).
+
+See [the real SAS examples and failure checks](examples/README.md) for a
+repeatable live SAS ODA validation suite, including GTEx queries, macro control
+flow, and an intentional missing-table failure. Run the offline log/label
+regression with `perl MCPDeps/test_sas_log_and_labels.pl`.
+
+The CLI entry points include the optimized SAS ODA helper behavior:
+
+- Remote macro includes such as `~/Macro.sas` check local `MCPDeps/` and
+  `DiffGWASDeps/` first, avoiding recursive searches for bundled macros.
+- One-shot connections report their subprocess ID, action, shutdown outcome,
+  and follow-up step. Code submissions also summarize SAS log errors and warnings.
+- After verifying the remote bootstrap helper in the same workflow/account,
+  set `SAS_ODA_REUSE_VERIFIED_MACRO_BOOTSTRAP_HELPER=1` for later invocations
+  to skip its repeated upload/check connection. Leave it unset for the first
+  invocation or after changing accounts or removing the remote helper.
+- Failure status files and non-retryable failure markers include `exit_code`,
+  including the configured overrides for statuses `73` and `74`.
+
+Run the offline regression checks from the repository root:
+
+```bash
+perl MCPDeps/test_sas_oda_debug_macro_guard.pl
+perl MCPDeps/test_sas_oda_connection_lifecycle.pl
+perl MCPDeps/test_sas_oda_macro_helper_reuse.pl
+perl MCPDeps/test_sas_oda_include_lookup.pl
+```
 
 Classify a saved SAS log without connecting to ODA:
 
@@ -709,10 +765,10 @@ If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
 SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. The
 most common cause is that the three SAS IOM encryption jars are missing from
-SASPy's `java/iomclient` directory. Copy them from MultiGWAS-Explorer:
+SASPy's `java/iomclient` directory. Copy them from your local jar directory:
 
 ```bash
-MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer \
+MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient \
   bash install/install_saspy_iom_jars.sh
 ```
 

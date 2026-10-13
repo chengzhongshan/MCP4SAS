@@ -130,6 +130,14 @@ use File::Spec;
 use JSON::PP qw(encode_json decode_json);
 use IO::Socket::INET;
 use IO::Select;
+
+sub _runner_temp_dir {
+    my $worker_temp_dir = $ENV{MCP4SAS_WORKER_TEMP_DIR} // '';
+    return File::Spec->rel2abs($worker_temp_dir)
+      if length($worker_temp_dir) && -d $worker_temp_dir;
+    return getcwd();
+}
+
 my $INLINE_PYTHON_SOURCE = <<'END_PYTHON';
 import saspy
 import json
@@ -419,13 +427,25 @@ def _submit_with_heartbeat(sess, sas_code, label="SAS ODA job"):
 def _env_truthy(value):
     return str(value or '').strip().lower() in ('1', 'true', 'yes', 'y', 'on')
 
+_LAST_SASPY_SUBPROCESS_ID = 'unknown'
+
 def get_session(session_obj):
+    global _LAST_SASPY_SUBPROCESS_ID
     if session_obj is None or not hasattr(session_obj, '_session'):
         session_obj = type('SessionWrapper', (), {})()
         session_obj._session = _open_sas_session()
         session_obj._macros_loaded = False
+        _LAST_SASPY_SUBPROCESS_ID = _saspy_subprocess_id(session_obj)
 
     return session_obj._session, session_obj
+
+def _saspy_subprocess_id(session_obj):
+    sess = getattr(session_obj, '_session', None)
+    io_obj = getattr(sess, '_io', None)
+    pid_obj = getattr(io_obj, 'pid', None)
+    if hasattr(pid_obj, 'pid'):
+        pid_obj = pid_obj.pid
+    return str(pid_obj) if pid_obj not in (None, '') else 'unknown'
 
 def ensure_macros_loaded(session_obj):
     session, session_obj = get_session(session_obj)
@@ -2745,6 +2765,13 @@ sub _start_server_if_needed {
         return;
     }
     if ($pid == 0) {
+        # A persistent service outlives the CLI's owned scratch directory.
+        if (length($ENV{MCP4SAS_SESSION_TEMP_DIR} // '')) {
+            $ENV{TMPDIR} = $ENV{MCP4SAS_SESSION_TEMP_DIR};
+        } else {
+            delete $ENV{TMPDIR} if length($ENV{MCP4SAS_WORKER_TEMP_DIR} // '');
+        }
+        delete $ENV{MCP4SAS_WORKER_TEMP_DIR};
         if (defined($site_packages) && length($site_packages) && -d $site_packages) {
             $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
               ? "$site_packages:$ENV{PYTHONPATH}"
@@ -2951,17 +2978,35 @@ sub _normalize_python_action_args {
     return \%normalized;
 }
 
+sub _report_one_shot_connection_lifecycle {
+    my ($result, $default_action) = @_;
+    return unless ref($result) eq 'HASH' && ref($result->{connection_lifecycle}) eq 'HASH';
+    my $life = $result->{connection_lifecycle};
+    print "Pipeline SAS connection lifecycle:\n";
+    print "  subprocess id: " . ($life->{subprocess_id} // 'unknown') . "\n";
+    print "  mode: " . ($life->{mode} // 'one-shot') . "\n";
+    print "  action: " . ($life->{action} // $default_action) . "\n";
+    print "  result: " . ($life->{result} // 'unknown') . "\n";
+    print "  closure reason: " . ($life->{closure_reason} // 'one-shot action completed') . "\n";
+    print "  shutdown outcome: $life->{shutdown_outcome}\n"
+        if defined($life->{shutdown_outcome}) && length($life->{shutdown_outcome});
+    print "  SAS log: $life->{sas_log_summary}\n"
+        if defined($life->{sas_log_summary}) && length($life->{sas_log_summary});
+    print "  next step: $life->{next_step}\n"
+        if defined($life->{next_step}) && length($life->{next_step});
+}
+
 sub _run_nonpersistent_sas_logic_via_python {
     my ($sas_code) = @_;
 
-    my ($codefh, $code_path) = tempfile('sas_inline_code_XXXX', SUFFIX => '.sas', UNLINK => 0, DIR => getcwd());
+    my ($codefh, $code_path) = tempfile('sas_inline_code_XXXX', SUFFIX => '.sas', UNLINK => 0, DIR => _runner_temp_dir());
     print {$codefh} ($sas_code // '');
     close $codefh;
 
-    my ($jsonfh, $json_path) = tempfile('sas_inline_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    my ($jsonfh, $json_path) = tempfile('sas_inline_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => _runner_temp_dir());
     close $jsonfh;
 
-    my ($pyfh, $py_path) = tempfile('sas_inline_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => getcwd());
+    my ($pyfh, $py_path) = tempfile('sas_inline_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => _runner_temp_dir());
     print {$pyfh} $INLINE_PYTHON_SOURCE;
     print {$pyfh} <<'END_NONPERSISTENT_PY';
 
@@ -2979,13 +3024,17 @@ def _export_macro_bootstrap_meta(session_obj):
         'log_path': getattr(session_obj, '_macro_bootstrap_log_path', '') or '',
     }
 
-def _endsas_safely(session_obj):
+def _endsas_safely(session_obj, action, result, next_step=''):
     try:
         sess = getattr(session_obj, '_session', None)
         if sess is not None:
             sess.endsas()
-    except Exception:
-        pass
+            return 'SASPy endsas() returned without exception'
+        return 'no session object was available for SASPy endsas()'
+    except Exception as exc:
+        sys.stderr.write(f'WARNING: SAS connection cleanup raised {type(exc).__name__}: {exc}\n')
+        sys.stderr.flush()
+        return f'SASPy endsas() raised {type(exc).__name__}: {exc}'
 
 if __name__ == '__main__':
     code_path = sys.argv[1]
@@ -3014,7 +3063,40 @@ if __name__ == '__main__':
     except BaseException as exc:
         payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
     finally:
-        _endsas_safely(session_obj)
+        close_result = 'success' if payload.get('status') == 'ok' else 'failure'
+        session = getattr(session_obj, '_session', None)
+        subprocess_id = _saspy_subprocess_id(session_obj) if session is not None else _LAST_SASPY_SUBPROCESS_ID
+        shutdown_outcome = _endsas_safely(
+            session_obj,
+            'SAS code submission (including macro bootstrap when required)',
+            close_result,
+            'No further SAS connection is expected for this one-shot run.',
+        )
+        if subprocess_id != 'unknown':
+            sas_log = str(payload.get('log') or '')
+            log_errors = sum(1 for line in sas_log.splitlines() if line.lstrip().startswith(('ERROR:', 'ERROR ')))
+            log_warnings = sum(1 for line in sas_log.splitlines() if line.lstrip().startswith('WARNING:'))
+            lifecycle_result = close_result
+            next_step = 'No further SAS connection is expected for this one-shot run.'
+            if close_result == 'success' and log_errors:
+                lifecycle_result = f'SAS submit returned with {log_errors} ERROR line{"s" if log_errors != 1 else ""} in its log'
+                next_step = 'Inspect the saved SAS log; the program reported errors even though the connection closed normally.'
+            if session is None:
+                closure_reason = 'the helper ended without a session object; this cleanup call could not close the SASPy connection.'
+            elif close_result == 'success':
+                closure_reason = 'the pipeline intentionally called SASPy endsas() after capturing the one-shot SAS submit response; the connection was no longer needed.'
+            else:
+                closure_reason = 'the pipeline attempted SASPy endsas() during cleanup after the one-shot SAS submit failed; inspect the saved SAS error and log.'
+            payload['connection_lifecycle'] = {
+                'subprocess_id': subprocess_id,
+                'mode': 'one-shot',
+                'action': 'SAS code submission (including macro bootstrap when required)',
+                'result': lifecycle_result,
+                'closure_reason': closure_reason,
+                'shutdown_outcome': shutdown_outcome,
+                'sas_log_summary': f'{log_errors} ERROR lines; {log_warnings} WARNING lines; {len(str(payload.get("lst") or ""))} listing characters',
+                'next_step': next_step,
+            }
         with open(result_path, 'w', encoding='utf-8') as fh:
             json.dump(payload, fh, ensure_ascii=False)
 END_NONPERSISTENT_PY
@@ -3059,6 +3141,8 @@ END_NONPERSISTENT_PY
     unlink $json_path if defined $json_path && -e $json_path;
     unlink $py_path   if defined $py_path   && -e $py_path;
 
+    _report_one_shot_connection_lifecycle($result, 'SAS code submission');
+
     if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {
         my $detail = $result->{error} // 'unknown inline SAS Python helper failure';
         $detail .= " (exit=$exit_code, signal=$signal)";
@@ -3077,24 +3161,28 @@ sub _run_nonpersistent_python_action {
     my ($action, $args_ref) = @_;
     $args_ref = _normalize_python_action_args($args_ref);
 
-    my ($argsfh, $args_path) = tempfile('sas_action_args_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    my ($argsfh, $args_path) = tempfile('sas_action_args_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => _runner_temp_dir());
     print {$argsfh} encode_json($args_ref);
     close $argsfh;
 
-    my ($jsonfh, $json_path) = tempfile('sas_action_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => getcwd());
+    my ($jsonfh, $json_path) = tempfile('sas_action_result_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => _runner_temp_dir());
     close $jsonfh;
 
-    my ($pyfh, $py_path) = tempfile('sas_action_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => getcwd());
+    my ($pyfh, $py_path) = tempfile('sas_action_runner_XXXX', SUFFIX => '.py', UNLINK => 0, DIR => _runner_temp_dir());
     print {$pyfh} $INLINE_PYTHON_SOURCE;
     print {$pyfh} <<'END_NONPERSISTENT_ACTION_PY';
 
-def _endsas_safely(session_obj):
+def _endsas_safely(session_obj, action, result, next_step=''):
     try:
         sess = getattr(session_obj, '_session', None)
         if sess is not None:
             sess.endsas()
-    except Exception:
-        pass
+            return 'SASPy endsas() returned without exception'
+        return 'no session object was available for SASPy endsas()'
+    except Exception as exc:
+        sys.stderr.write(f'WARNING: SAS connection cleanup raised {type(exc).__name__}: {exc}\n')
+        sys.stderr.flush()
+        return f'SASPy endsas() raised {type(exc).__name__}: {exc}'
 
 def _action_dispatch(action, payload):
     session_obj = None
@@ -3178,6 +3266,7 @@ if __name__ == '__main__':
         'value': None,
     }
     session_obj = None
+    action_args = {}
     try:
         with open(args_path, 'r', encoding='utf-8') as fh:
             action_args = json.load(fh)
@@ -3190,7 +3279,28 @@ if __name__ == '__main__':
     except BaseException as exc:
         payload['error'] = f"{type(exc).__name__}: {exc}\n{traceback.format_exc()}"
     finally:
-        _endsas_safely(session_obj)
+        close_result = 'success' if payload.get('status') == 'ok' else 'failure'
+        action_label = str(action_args.get('connection_purpose') or action.replace('_', ' '))
+        next_step = str(action_args.get('connection_next_step') or '')
+        session = getattr(session_obj, '_session', None)
+        subprocess_id = _saspy_subprocess_id(session_obj) if session is not None else _LAST_SASPY_SUBPROCESS_ID
+        shutdown_outcome = _endsas_safely(session_obj, action_label, close_result, next_step)
+        if subprocess_id != 'unknown':
+            if session is None:
+                closure_reason = 'the helper ended without a session object; this cleanup call could not close the SASPy connection.'
+            elif close_result == 'success':
+                closure_reason = 'the pipeline intentionally called SASPy endsas() after the one-shot file action completed; the connection was no longer needed.'
+            else:
+                closure_reason = 'the pipeline attempted SASPy endsas() during cleanup after the one-shot file action failed; inspect the reported error.'
+            payload['connection_lifecycle'] = {
+                'subprocess_id': subprocess_id,
+                'mode': 'one-shot',
+                'action': action_label,
+                'result': close_result,
+                'closure_reason': closure_reason,
+                'shutdown_outcome': shutdown_outcome,
+                'next_step': next_step,
+            }
         with open(result_path, 'w', encoding='utf-8') as fh:
             json.dump(payload, fh, ensure_ascii=False)
 END_NONPERSISTENT_ACTION_PY
@@ -3234,6 +3344,8 @@ END_NONPERSISTENT_ACTION_PY
     unlink $args_path if defined $args_path && -e $args_path;
     unlink $json_path if defined $json_path && -e $json_path;
     unlink $py_path   if defined $py_path   && -e $py_path;
+
+    _report_one_shot_connection_lifecycle($result, $action);
 
     if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {
         my $detail = $result->{error} // 'unknown nonpersistent Python action failure';
@@ -3502,6 +3614,11 @@ sub _ensure_remote_macro_bootstrap_helper {
     my $local_helper = $self->_find_local_macro_bootstrap_helper();
     return '' unless $local_helper;
 
+    if ($ENV{SAS_ODA_REUSE_VERIFIED_MACRO_BOOTSTRAP_HELPER}) {
+        warn "Reusing macro bootstrap helper verified by an earlier locus: $local_helper\n";
+        return "Reusing previously verified remote macro bootstrap helper: " . basename($local_helper);
+    }
+
     warn "Checking SAS ODA macro bootstrap helper upload/reuse: $local_helper\n";
     my $remote = eval {
         $self->upload(
@@ -3510,6 +3627,8 @@ sub _ensure_remote_macro_bootstrap_helper {
                 progress_label => 'macro bootstrap helper: ' . basename($local_helper),
                 skip_if_same   => 1,
                 timeout_seconds => $MACRO_HELPER_UPLOAD_TIMEOUT_SECONDS,
+                connection_purpose => 'macro bootstrap helper upload/reuse check',
+                connection_next_step => 'open a separate one-shot connection for macro bootstrap and SAS code submission',
             }
         );
     };
@@ -3548,7 +3667,8 @@ sub _process_dependencies {
         }
     }
 
-    my @potential_macros = ($scan_code =~ /%(\w+)/g);
+    # A %name: token declares a macro jump label, not a macro invocation.
+    my @potential_macros = ($scan_code =~ /%([A-Za-z_]\w*)\b(?!\s*:)/g);
     my $header_includes = "";
     my @unresolved_macro_names;
     foreach my $m_name (@potential_macros) {
@@ -3751,7 +3871,7 @@ sub run_code {
     my $htmlfilename="";
     if ($self->{open_html} && $result->[1] && length($result->[1]) > 100) {
         my $fh;
-        ($fh, $htmlfilename) = tempfile(TEMPLATE => 'sas_res_XXXXX', SUFFIX => '.html', UNLINK => 0);
+        ($fh, $htmlfilename) = tempfile(TEMPLATE => 'sas_res_XXXXX', SUFFIX => '.html', UNLINK => 0, DIR => _runner_temp_dir());
         print $fh $result->[1];
         close $fh;
 #        system("cygstart", $htmlfilename);
@@ -3822,7 +3942,8 @@ sub filesindir {
 }
 
 sub fileinfo {
-    my ($self, $remote_path) = @_;
+    my ($self, $remote_path, $opts) = @_;
+    $opts = {} unless ref($opts) eq 'HASH';
     if ($self->{persistent} && $self->{session_id}) {
         my $resp = $self->_call_persistent_session_server(
             { cmd => 'fileinfo', session_id => $self->{session_id}, remote_path => $remote_path },
@@ -3836,6 +3957,8 @@ sub fileinfo {
         'fileinfo',
         {
             remote_path => $remote_path,
+            connection_purpose => $opts->{connection_purpose},
+            connection_next_step => $opts->{connection_next_step},
         }
     );
     return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
@@ -3855,7 +3978,15 @@ sub upload {
             $remote_path = $remote_home;
             $remote_path =~ s{[\\/]+$}{};
             $remote_path .= '/' . File::Basename::basename($local_path);
-            my $remote_info = eval { $self->fileinfo($remote_path) };
+            my $remote_info = eval {
+                $self->fileinfo(
+                    $remote_path,
+                    {
+                        connection_purpose => $opts->{connection_purpose},
+                        connection_next_step => $opts->{connection_next_step},
+                    }
+                )
+            };
             if (ref($remote_info) eq 'HASH' && _cached_remote_file_matches_local_upload($remote_info, $local_path)) {
                 my $display_label = $progress_label || ('dependency upload: ' . File::Basename::basename($local_path));
                 warn "Upload step: $display_label -> $remote_path already matches cached local size/creation-time; skipping upload.\n";
@@ -3908,6 +4039,8 @@ sub upload {
             local_path     => $local_path,
             progress_label => $progress_label,
             skip_if_same   => $skip_if_same ? 1 : 0,
+            connection_purpose => $opts->{connection_purpose},
+            connection_next_step => $opts->{connection_next_step},
         }
     );
     if ($resp && ($resp->{status} // '') eq 'ok') {
@@ -4045,7 +4178,7 @@ sub get_sas_home_path {
     my $resp = _run_nonpersistent_python_action('gethome', {});
     return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
     return "PYTHON ERROR: " . ($resp->{error} // 'nonpersistent gethome error');
-}   
+}
 
 =head1 DESCRIPTION
 
