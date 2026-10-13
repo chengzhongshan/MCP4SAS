@@ -1,0 +1,482 @@
+{
+    "E:demo of bquote unquote str to add single and double quote for macro variable.sas":  {
+                                                                                               "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                               "file":  "demo of bquote unquote str to add single and double quote for macro variable.sas",
+                                                                                               "sha256":  "716344531103ec74003057c8aef6d333325b873ed6c0a198e90f927274122709",
+                                                                                               "bytes":  457
+                                                                                           },
+    "E:escape_square_by_str_or_nrquote.sas":  {
+                                                  "collection":  "Easy-For-Error-Codes-SAS",
+                                                  "file":  "escape_square_by_str_or_nrquote.sas",
+                                                  "sha256":  "d540ee2eec49948749679e79fe0ac56569bf481051d4387b1b8bb0516e408f56",
+                                                  "bytes":  145
+                                              },
+    "D:nrstr to mask macro command and not run it.sas":  {
+                                                             "collection":  "SAS_Code_Database",
+                                                             "file":  "nrstr to mask macro command and not run it.sas",
+                                                             "sha256":  "d034f38906dd6065982fb045dc26765bc6f96e3e264b606baf2e4a865674c7b1",
+                                                             "bytes":  516
+                                                         },
+    "E:nrbquote_will_mask_macro_var_but_resolove_it_later_without_using_unquote.sas":  {
+                                                                                           "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                           "file":  "nrbquote_will_mask_macro_var_but_resolove_it_later_without_using_unquote.sas",
+                                                                                           "sha256":  "70a2bb4d448633ca5c1a3d011927906b81b2f9fdf157c9b3047cc9976f2061bc",
+                                                                                           "bytes":  1208
+                                                                                       },
+    "E:use_macro_language_generate_if_conditions..sas":  {
+                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                             "file":  "use_macro_language_generate_if_conditions..sas",
+                                                             "sha256":  "3b9540ebd71dffff301a08e1424e9db5b5e128f112febb30b3df5340a33b2a5d",
+                                                             "bytes":  935
+                                                         },
+    "D:macro qscan syspbuff parmbuff if else eval together with array for making combinations.sas":  {
+                                                                                                         "collection":  "SAS_Code_Database",
+                                                                                                         "file":  "macro qscan syspbuff parmbuff if else eval together with array for making combinations.sas",
+                                                                                                         "sha256":  "b2e446d817e1ec78bf81a23c74521e7d26086ee4c046d4bcd699a603ea93f0ef",
+                                                                                                         "bytes":  1475
+                                                                                                     },
+    "E:resolve_macro_var_with_same_prefix_and_represented_by_a_macro_var.sas":  {
+                                                                                    "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                    "file":  "resolve_macro_var_with_same_prefix_and_represented_by_a_macro_var.sas",
+                                                                                    "sha256":  "107419c0679d9aa4b34573a8bb3af2258e1ecfd74248bf463455dff63c91aa49",
+                                                                                    "bytes":  207
+                                                                                },
+    "E:Macro do loop includes SAS procedures_No need to use _str_ for these procedure.sas":  {
+                                                                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                 "file":  "Macro do loop includes SAS procedures_No need to use _str_ for these procedure.sas",
+                                                                                                 "sha256":  "0b259618f6c12bc06afd075717b2b6a7ac00658725f3913a021c149436e8ca64",
+                                                                                                 "bytes":  1526
+                                                                                             },
+    "E:Macro return to stop macro but not affect other part of the program.sas":  {
+                                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                      "file":  "Macro return to stop macro but not affect other part of the program.sas",
+                                                                                      "sha256":  "0b302a7585d5c62b4bace50bed0a02d97f77dda7278b75fec640afc5b5041b98",
+                                                                                      "bytes":  82
+                                                                                  },
+    "D:dosubl within proc sql to access macro var within it.sas":  {
+                                                                       "collection":  "SAS_Code_Database",
+                                                                       "file":  "dosubl within proc sql to access macro var within it.sas",
+                                                                       "sha256":  "21dda6e5d8e211529d45ea52438d1c0183fc51371aeaae32f974d9f24ec1361f",
+                                                                       "bytes":  294
+                                                                   },
+    "E:Proc SQL select into with order to control macro order.sas":  {
+                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                         "file":  "Proc SQL select into with order to control macro order.sas",
+                                                                         "sha256":  "0b1d0248a9e0db8bec2bcb90000d84cd86a1a89bad863d837e2fd1291043a04d",
+                                                                         "bytes":  428
+                                                                     },
+    "E:creat multiple macro var with proc sql with count function No need for cat function.sas":  {
+                                                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                      "file":  "creat multiple macro var with proc sql with count function No need for cat function.sas",
+                                                                                                      "sha256":  "65f75aa997761a2fff9d2154bebceb15bf17f75d1596d45cccf051ac5d2495cb",
+                                                                                                      "bytes":  150
+                                                                                                  },
+    "E:Need2use_put_when_save_large_number_into_macro_var.sas":  {
+                                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                                     "file":  "Need2use_put_when_save_large_number_into_macro_var.sas",
+                                                                     "sha256":  "47dfba95567f59aad4e8bb92cbe388885611e8c76c005b069eff50a6d4bbb611",
+                                                                     "bytes":  460
+                                                                 },
+    "E:count all characters using countc but not countw or count.sas":  {
+                                                                            "collection":  "Easy-For-Error-Codes-SAS",
+                                                                            "file":  "count all characters using countc but not countw or count.sas",
+                                                                            "sha256":  "46c5c4897dfd4bff562e48c28f35df14e57415892f2447add799395483f93646",
+                                                                            "bytes":  78
+                                                                        },
+    "E:countc_demo.sas":  {
+                              "collection":  "Easy-For-Error-Codes-SAS",
+                              "file":  "countc_demo.sas",
+                              "sha256":  "06df7226696f744eff9d593fe7d53d76c2d1b8210c5f11cc060ecba6e41b6cd7",
+                              "bytes":  413
+                          },
+    "E:When infile too many missing data, need to use dsd with dlm and add m for scan.sas":  {
+                                                                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                 "file":  "When infile too many missing data, need to use dsd with dlm and add m for scan.sas",
+                                                                                                 "sha256":  "8ada1683068496a69d49820163d2a1c2477868e7ba0b0ca6a5ab507bc565a07c",
+                                                                                                 "bytes":  4388
+                                                                                             },
+    "D:Scan to find the first and last character of a string.sas":  {
+                                                                        "collection":  "SAS_Code_Database",
+                                                                        "file":  "Scan to find the first and last character of a string.sas",
+                                                                        "sha256":  "0062c1ba81f801248f5fda3e3bea58e079958a5b1b4cd5d9d017efe6d145850d",
+                                                                        "bytes":  287
+                                                                    },
+    "E:Scan with different dilimeters.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "Scan with different dilimeters.sas",
+                                                 "sha256":  "4e8cf0a8eaff06a67513d78d8176fb5d3a97bf03f1d19c7f58d1e4de501c0163",
+                                                 "bytes":  676
+                                             },
+    "E:powerful function compress to remove black spaces and other digitor or characters.sas":  {
+                                                                                                    "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                    "file":  "powerful function compress to remove black spaces and other digitor or characters.sas",
+                                                                                                    "sha256":  "6a7e94257bad4636081269139d26aac8ffd6c1610782edcaf4ea1d0d24775711",
+                                                                                                    "bytes":  2350
+                                                                                                },
+    "D:cat demo.sas":  {
+                           "collection":  "SAS_Code_Database",
+                           "file":  "cat demo.sas",
+                           "sha256":  "0bb9f33f9103701fb41eaee71e0405940b11958c72a572be43517a6d9aaa3227",
+                           "bytes":  257
+                       },
+    "E:use catx to link character and number.sas":  {
+                                                        "collection":  "Easy-For-Error-Codes-SAS",
+                                                        "file":  "use catx to link character and number.sas",
+                                                        "sha256":  "a461b4fed1582fffae1d5ed7ce134e475555c9a4934c18fa131bdbf2fcc8a5cf",
+                                                        "bytes":  160
+                                                    },
+    "D:Function upcase in Proc SQL.sas":  {
+                                              "collection":  "SAS_Code_Database",
+                                              "file":  "Function upcase in Proc SQL.sas",
+                                              "sha256":  "396b6692572bbcf0067f38ed8576f58e1966d455ce1220bb0d9ad5332f7642bd",
+                                              "bytes":  99
+                                          },
+    "D:Macro use base function with sysfunc for upcase and lowcase.sas":  {
+                                                                              "collection":  "SAS_Code_Database",
+                                                                              "file":  "Macro use base function with sysfunc for upcase and lowcase.sas",
+                                                                              "sha256":  "dff351022b28dd1b9017b47f07b539aabbe31d63045e21f57f4277b83f071d8f",
+                                                                              "bytes":  1096
+                                                                          },
+    "D:Length function in where conditions.sas":  {
+                                                      "collection":  "SAS_Code_Database",
+                                                      "file":  "Length function in where conditions.sas",
+                                                      "sha256":  "19de27e31f94aca4ba55fcc7608f81261384de5aed3e4bac14fb16354615e812",
+                                                      "bytes":  95
+                                                  },
+    "E:Length function in proc sql.sas":  {
+                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                              "file":  "Length function in proc sql.sas",
+                                              "sha256":  "ec02719d90bee5a8c0bbf32a4486d89e41794bd150fe0d31a4c33db5157fed2c",
+                                              "bytes":  191
+                                          },
+    "D:reshape long line into short lines wit specific length.sas":  {
+                                                                         "collection":  "SAS_Code_Database",
+                                                                         "file":  "reshape long line into short lines wit specific length.sas",
+                                                                         "sha256":  "c76e03784c0b9c243e76eee42036f9859f86bf36cbb1d25f00115885753397b7",
+                                                                         "bytes":  272
+                                                                     },
+    "E:when making numeric macro variable, need to use trim left to remove leading space.sas":  {
+                                                                                                    "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                    "file":  "when making numeric macro variable, need to use trim left to remove leading space.sas",
+                                                                                                    "sha256":  "38aabefae2ebed18f6e8611fb8280d988320d1ef15161e1246891d2fc3f491c4",
+                                                                                                    "bytes":  245
+                                                                                                },
+    "E:parse_grasp_covid_database_using_transwrd_and_prxmatch.sas":  {
+                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                         "file":  "parse_grasp_covid_database_using_transwrd_and_prxmatch.sas",
+                                                                         "sha256":  "a1f704d73d7ad471edb94bcf086f74be5540e8dd792c9364e43bf3ea14e55dc9",
+                                                                         "bytes":  1706
+                                                                     },
+    "E:SAS Function Find(string,substrin) Demo.sas":  {
+                                                          "collection":  "Easy-For-Error-Codes-SAS",
+                                                          "file":  "SAS Function Find(string,substrin) Demo.sas",
+                                                          "sha256":  "9d86d5de5da521a633a6e2d1880ad8f8ddd8f4afba06506f2ab5ac49ae2ffd6f",
+                                                          "bytes":  699
+                                                      },
+    "E:Function prxchange need to asign changed variable to a new variable.sas":  {
+                                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                      "file":  "Function prxchange need to asign changed variable to a new variable.sas",
+                                                                                      "sha256":  "9fca8c6a1ccb0f375698a4eeab9b7f50a5a9d2bfd8bf36680c21730b07b81033",
+                                                                                      "bytes":  4415
+                                                                                  },
+    "E:Need to use strip in prxchange.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "Need to use strip in prxchange.sas",
+                                                 "sha256":  "00863f7e1b2706450262acfe6e7118cd67122cbbe3dde9b18cfa3f7d8bb0ff8c",
+                                                 "bytes":  557
+                                             },
+    "E:prxmatch with modifer for case sensitive with i and match once with o.sas":  {
+                                                                                        "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                        "file":  "prxmatch with modifer for case sensitive with i and match once with o.sas",
+                                                                                        "sha256":  "c0cbf40defcec1748774a8e47d0e15a172e9e44d9bc500c6332df015a6c47975",
+                                                                                        "bytes":  86
+                                                                                    },
+    "D:PXRParse PRXsubstr and function quote Demo.sas":  {
+                                                             "collection":  "SAS_Code_Database",
+                                                             "file":  "PXRParse PRXsubstr and function quote Demo.sas",
+                                                             "sha256":  "544526a9de7a73667937fc2efb5afa7344a942a06f9cea8daa5beb459bd1ee55",
+                                                             "bytes":  552
+                                                         },
+    "E:excape path slash in prxchange for replace with prxchange.sas":  {
+                                                                            "collection":  "Easy-For-Error-Codes-SAS",
+                                                                            "file":  "excape path slash in prxchange for replace with prxchange.sas",
+                                                                            "sha256":  "36ab58d370759eb980ed1d9e5c56a7e611f2d3923e386f2b96fc3ba184ac9387",
+                                                                            "bytes":  196
+                                                                        },
+    "D:informat Varyingw. Demo.sas":  {
+                                          "collection":  "SAS_Code_Database",
+                                          "file":  "informat Varyingw. Demo.sas",
+                                          "sha256":  "5657f2a442ceb312bd31f9a05f7e5384c44ecd36bc3a95bb879c1571f0d55a6f",
+                                          "bytes":  966
+                                      },
+    "E:use_input_trailing_at_to_add_line_as_vars_with_another_input_command.sas":  {
+                                                                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                       "file":  "use_input_trailing_at_to_add_line_as_vars_with_another_input_command.sas",
+                                                                                       "sha256":  "8a55bacd20c79ca95e6eeb6ce60fbcb08dd88ad968c4667c120ea09cc414fc18",
+                                                                                       "bytes":  685
+                                                                                   },
+    "D:Function @@ with Array or Lag to select specific Rows.sas":  {
+                                                                        "collection":  "SAS_Code_Database",
+                                                                        "file":  "Function @@ with Array or Lag to select specific Rows.sas",
+                                                                        "sha256":  "1039ba3dc9f9113bde1aebde5587d32767e92d4d19937ad80795b63426da9795",
+                                                                        "bytes":  1939
+                                                                    },
+    "D:Multiple lines input data in Data step and Proc compare ID usage demo.sas":  {
+                                                                                        "collection":  "SAS_Code_Database",
+                                                                                        "file":  "Multiple lines input data in Data step and Proc compare ID usage demo.sas",
+                                                                                        "sha256":  "c231da7560bcb2422bac58244667f1ebaf0295a3115ed51eff5e9cf1609a84d2",
+                                                                                        "bytes":  981
+                                                                                    },
+    "D:datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas":  {
+                                                                                                                          "collection":  "SAS_Code_Database",
+                                                                                                                          "file":  "datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas",
+                                                                                                                          "sha256":  "35d9a1bd7f8f14e2903afbacb1efac422b5b173683ed53419450b19bbe37995c",
+                                                                                                                          "bytes":  690
+                                                                                                                      },
+    "E:read range of lines using proc import function datarow with option obs.sas":  {
+                                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                         "file":  "read range of lines using proc import function datarow with option obs.sas",
+                                                                                         "sha256":  "5a48ea72a25fd4bce07018259943526dc6525476df02475de45867856480bb8e",
+                                                                                         "bytes":  208
+                                                                                     },
+    "D:length and informat for char and number in infile procedure.sas":  {
+                                                                              "collection":  "SAS_Code_Database",
+                                                                              "file":  "length and informat for char and number in infile procedure.sas",
+                                                                              "sha256":  "72cd2ea78af322f37389b69d71d0d54663c0208ba79bf5d6c8f40364ce7365e9",
+                                                                              "bytes":  194
+                                                                          },
+    "D:format character into number with proc format comment invalue.sas":  {
+                                                                                "collection":  "SAS_Code_Database",
+                                                                                "file":  "format character into number with proc format comment invalue.sas",
+                                                                                "sha256":  "8fbd9ebb5f38a280f9120a8b5b4692b695ce53ff40999b274db27ee0350da980",
+                                                                                "bytes":  65
+                                                                            },
+    "D:Function Put and PutC demo.sas":  {
+                                             "collection":  "SAS_Code_Database",
+                                             "file":  "Function Put and PutC demo.sas",
+                                             "sha256":  "f93091990736d5470b17bcce792a52c4d1442e78a7da3ea80f447550c789c185",
+                                             "bytes":  2140
+                                         },
+    "D:20 x as space separator.sas":  {
+                                          "collection":  "SAS_Code_Database",
+                                          "file":  "20 x as space separator.sas",
+                                          "sha256":  "12e13fefee13937c9d8286ca7a99dfd9f37e2f57646da00d7eb3bfdb152c4209",
+                                          "bytes":  59
+                                      },
+    "E:file function to output data without default space separator.sas":  {
+                                                                               "collection":  "Easy-For-Error-Codes-SAS",
+                                                                               "file":  "file function to output data without default space separator.sas",
+                                                                               "sha256":  "32d5fc14c658efbb4906a0b6d1390e9155aaceb0e1718d397059f1620ddbdfe0",
+                                                                               "bytes":  278
+                                                                           },
+    "D:File function to output tab separated file.sas":  {
+                                                             "collection":  "SAS_Code_Database",
+                                                             "file":  "File function to output tab separated file.sas",
+                                                             "sha256":  "4f24770065d707b4a1cd5a9d6c9b315c8a0bd8aa8e021fecd1ac68111334e0fb",
+                                                             "bytes":  158
+                                                         },
+    "D:Add Header to new data file with FILE function.sas":  {
+                                                                 "collection":  "SAS_Code_Database",
+                                                                 "file":  "Add Header to new data file with FILE function.sas",
+                                                                 "sha256":  "8e90817b4e38fc2edeeaabff5a2f43c7043e15e5173f66a06a35b38c376a154c",
+                                                                 "bytes":  269
+                                                             },
+    "D:Put all rows into one line with file and _at_ function.sas":  {
+                                                                         "collection":  "SAS_Code_Database",
+                                                                         "file":  "Put all rows into one line with file and _at_ function.sas",
+                                                                         "sha256":  "661b751f3dccb28d7794600083e1d225e3a7b829a7f9d5fd9dbc1276735b7fb7",
+                                                                         "bytes":  104
+                                                                     },
+    "D:create temp file in WORK dir and then delete it with fdelete and filename function.sas":  {
+                                                                                                     "collection":  "SAS_Code_Database",
+                                                                                                     "file":  "create temp file in WORK dir and then delete it with fdelete and filename function.sas",
+                                                                                                     "sha256":  "ffc28125aa298b8b6db3e3126bc77adf0a03520dc69f8054e1802afa78e0f114",
+                                                                                                     "bytes":  206
+                                                                                                 },
+    "E:Working with data in the Data Step input buffer.sas":  {
+                                                                  "collection":  "Easy-For-Error-Codes-SAS",
+                                                                  "file":  "Working with data in the Data Step input buffer.sas",
+                                                                  "sha256":  "7612d7c9a52e8a8b3914d810c03b7a8bb2d88634edb0f63e1af8f22c2e4e20aa",
+                                                                  "bytes":  305
+                                                              },
+    "D:Rename column names with proc datasets.sas":  {
+                                                         "collection":  "SAS_Code_Database",
+                                                         "file":  "Rename column names with proc datasets.sas",
+                                                         "sha256":  "179f644f3628dd6933b7c5019ba6244ac32599fff0c6e2ac6d1f9af2f1f771b1",
+                                                         "bytes":  641
+                                                     },
+    "E:array_will_NOT_sort_varnames_automatically.sas":  {
+                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                             "file":  "array_will_NOT_sort_varnames_automatically.sas",
+                                                             "sha256":  "b4a39bcd3741e0925190f8718f2bdb72940c83a14ee8e6565631662834cfe8b6",
+                                                             "bytes":  517
+                                                         },
+    "E:sortn_for_sorting_array_in_data_step.sas":  {
+                                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                                       "file":  "sortn_for_sorting_array_in_data_step.sas",
+                                                       "sha256":  "cfb08b32e12a4b5f45118bb99a43cd26f53d16e77598d8b6ac2d0967076053bc",
+                                                       "bytes":  628
+                                                   },
+    "E:generate_random_orders4array_with_ranperm_function.sas":  {
+                                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                                     "file":  "generate_random_orders4array_with_ranperm_function.sas",
+                                                                     "sha256":  "cfb08b32e12a4b5f45118bb99a43cd26f53d16e77598d8b6ac2d0967076053bc",
+                                                                     "bytes":  628
+                                                                 },
+    "D:Order dataset Columns according to user input order with Retain.sas":  {
+                                                                                  "collection":  "SAS_Code_Database",
+                                                                                  "file":  "Order dataset Columns according to user input order with Retain.sas",
+                                                                                  "sha256":  "c7c383412dbfde42483539de783e1dabe2ffc3f40ca3ee3d837d5883e6407bf9",
+                                                                                  "bytes":  948
+                                                                              },
+    "D:Function Notsorted Demo in SAS procedure proc freq.sas":  {
+                                                                     "collection":  "SAS_Code_Database",
+                                                                     "file":  "Function Notsorted Demo in SAS procedure proc freq.sas",
+                                                                     "sha256":  "5b6597097ddb69af869cbd5fbddac93920319c985f8b7218ce1029c30cb9a0e8",
+                                                                     "bytes":  125
+                                                                 },
+    "D:Powerful Retain to link multiple row elements into single row element.sas":  {
+                                                                                        "collection":  "SAS_Code_Database",
+                                                                                        "file":  "Powerful Retain to link multiple row elements into single row element.sas",
+                                                                                        "sha256":  "e61c50ba341b3d5fab8fea5221e80216cc85a8f27573584f9b821ab473d1663d",
+                                                                                        "bytes":  484
+                                                                                    },
+    "E:var_plus_num_in_data_step_will_retain_that_var_like_retain_function.sas":  {
+                                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                      "file":  "var_plus_num_in_data_step_will_retain_that_var_like_retain_function.sas",
+                                                                                      "sha256":  "c921e4c57544e72e8d4e2137a58667c1decd84a0d7dc818193fdb0a12ecec16a",
+                                                                                      "bytes":  1339
+                                                                                  },
+    "D:Function do until vs do while with Array function Demo.sas":  {
+                                                                         "collection":  "SAS_Code_Database",
+                                                                         "file":  "Function do until vs do while with Array function Demo.sas",
+                                                                         "sha256":  "c30fc2f94a2487ba5974c0a13b09ff84863341b72ad9db786a1537ce72a036a2",
+                                                                         "bytes":  1183
+                                                                     },
+    "E:sql_count_generate_missing_value_if_whole_col_is_missing.sas":  {
+                                                                           "collection":  "Easy-For-Error-Codes-SAS",
+                                                                           "file":  "sql_count_generate_missing_value_if_whole_col_is_missing.sas",
+                                                                           "sha256":  "01c224f1bc2a3ac0cf88f087bb97dfcb9ef0acddaf848094c94a99946accb2ca",
+                                                                           "bytes":  4380
+                                                                       },
+    "E:Count need work with Group in Proc SQL.sas":  {
+                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                         "file":  "Count need work with Group in Proc SQL.sas",
+                                                         "sha256":  "8af8db753916fd208bf51543730d6245d9087cb9cb658c279b14b9861d3cdb29",
+                                                         "bytes":  288
+                                                     },
+    "D:Proc SQL with Sum Function.sas":  {
+                                             "collection":  "SAS_Code_Database",
+                                             "file":  "Proc SQL with Sum Function.sas",
+                                             "sha256":  "922d418bf84408564205eb2c70f4c40e6785b91be1270fbd451e7b195545b21b",
+                                             "bytes":  189
+                                         },
+    "D:Proc SQL Max function like numeric operator.sas":  {
+                                                              "collection":  "SAS_Code_Database",
+                                                              "file":  "Proc SQL Max function like numeric operator.sas",
+                                                              "sha256":  "85cfbc174de2dd6e03dfb0df45dfa322effb87fd9200be3f66f0f02c1b3c05a0",
+                                                              "bytes":  260
+                                                          },
+    "D:Function min and scan in Proc SQL.sas":  {
+                                                    "collection":  "SAS_Code_Database",
+                                                    "file":  "Function min and scan in Proc SQL.sas",
+                                                    "sha256":  "a6e6d9c7e66c7b02caf24df0f21c3c3e9d068658f5d15a7c1ab6c6aa43f84cc6",
+                                                    "bytes":  57
+                                                },
+    "D:not in function and obs function in Proc SQL.sas":  {
+                                                               "collection":  "SAS_Code_Database",
+                                                               "file":  "not in function and obs function in Proc SQL.sas",
+                                                               "sha256":  "4cd6e8ada82fea8780ad84e5b4a94b0d1395bb1dc2a8c92b5656b4cba47b7a34",
+                                                               "bytes":  82
+                                                           },
+    "E:contains works with where or in proc sql but not if condition.sas":  {
+                                                                                "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                "file":  "contains works with where or in proc sql but not if condition.sas",
+                                                                                "sha256":  "16d08b9a9551c208827bc210a344d1bce65611455609f154dc73288504b71433",
+                                                                                "bytes":  93
+                                                                            },
+    "E:Need to assign single vairible in Except procedure_Proc SQL to select unique rows from the first table.sas":  {
+                                                                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                                         "file":  "Need to assign single vairible in Except procedure_Proc SQL to select unique rows from the first table.sas",
+                                                                                                                         "sha256":  "5752b82ef16a05153dec6d819efe9fecb813e6a6715de033c4c13085a16a7a0b",
+                                                                                                                         "bytes":  7674
+                                                                                                                     },
+    "D:Proc SQL to select unique rows from the first table.sas":  {
+                                                                      "collection":  "SAS_Code_Database",
+                                                                      "file":  "Proc SQL to select unique rows from the first table.sas",
+                                                                      "sha256":  "e254a84b472d9fd7e142f951bf8054be51c1d856690accad4e4e6b08b37c8825",
+                                                                      "bytes":  7552
+                                                                  },
+    "D:outer union corr keep all columns from other tables.sas":  {
+                                                                      "collection":  "SAS_Code_Database",
+                                                                      "file":  "outer union corr keep all columns from other tables.sas",
+                                                                      "sha256":  "9b9864da08eed2dda23c9900cbf93617eeac91c739df4a9c2186a81e457eff38",
+                                                                      "bytes":  91
+                                                                  },
+    "E:keep_records_with_only_one_record_not_use_nodupkeys.sas":  {
+                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                      "file":  "keep_records_with_only_one_record_not_use_nodupkeys.sas",
+                                                                      "sha256":  "4c82de371bdf928b1018bdfe66a6483d7f4977b23da4a561ec13820f253d5c36",
+                                                                      "bytes":  133
+                                                                  },
+    "D:make index with proc datasets.sas":  {
+                                                "collection":  "SAS_Code_Database",
+                                                "file":  "make index with proc datasets.sas",
+                                                "sha256":  "6e0a470e33b8f48d90a3fae5ad50928f2410a4a650519fe930c5e85d41fd2a63",
+                                                "bytes":  229
+                                            },
+    "D:Delete SAS Index and Tips on Create Index in Proc SQL.sas":  {
+                                                                        "collection":  "SAS_Code_Database",
+                                                                        "file":  "Delete SAS Index and Tips on Create Index in Proc SQL.sas",
+                                                                        "sha256":  "9b3b44a11d6d69741461e7fcb1a5c89d2c2fe464b0a4f25cce694ad87f1eb37e",
+                                                                        "bytes":  1401
+                                                                    },
+    "D:number range format.sas":  {
+                                      "collection":  "SAS_Code_Database",
+                                      "file":  "number range format.sas",
+                                      "sha256":  "228eb0db58b09c18163017dbd864cb90453467a697410fb0fa70ead0c2b05f2a",
+                                      "bytes":  125
+                                  },
+    "E:delete previous format before creating a new format.sas":  {
+                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                      "file":  "delete previous format before creating a new format.sas",
+                                                                      "sha256":  "0646d70f7134860181fe9516c3f2539bb59ae310a1da123ceabc04f8b307af91",
+                                                                      "bytes":  166
+                                                                  },
+    "E:probit function to get Z score based on P.sas":  {
+                                                            "collection":  "Easy-For-Error-Codes-SAS",
+                                                            "file":  "probit function to get Z score based on P.sas",
+                                                            "sha256":  "5f57381bb69bc97b840668e2260513e4d997e715bfab5c15b7dc7a90352d05f1",
+                                                            "bytes":  141
+                                                        },
+    "E:calculate binomial P.sas":  {
+                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                       "file":  "calculate binomial P.sas",
+                                       "sha256":  "a6dfa22d7018595b33a52b157b2c8e5ec5bc9497f7da40322ad89d17ce15e7fb",
+                                       "bytes":  466
+                                   },
+    "E:mod_demo.sas":  {
+                           "collection":  "Easy-For-Error-Codes-SAS",
+                           "file":  "mod_demo.sas",
+                           "sha256":  "1813d00d18b2b2878f2ae6bc3dce2df5f3f067ff3699a306c73f5bee7d1d76fa",
+                           "bytes":  255
+                       },
+    "E:Fisher\u0027s Z transformation and combine correlation form different dataset.sas":  {
+                                                                                                "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                "file":  "Fisher\u0027s Z transformation and combine correlation form different dataset.sas",
+                                                                                                "sha256":  "3dbc6d18f8281a807a1108a3bd37fa34e9c4571782fbc59a1b0c7a50ae2200de",
+                                                                                                "bytes":  1858
+                                                                                            },
+    "E:draw_a_circle_with_sin_and_cos.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "draw_a_circle_with_sin_and_cos.sas",
+                                                 "sha256":  "9b296d693246ce1ae93de2956bb0a77b5bbf133b56c368e5b272dcf79de50fba",
+                                                 "bytes":  296
+                                             },
+    "E:row_sum_in_iml.sas":  {
+                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                 "file":  "row_sum_in_iml.sas",
+                                 "sha256":  "5784376c283511a0f2ffee711ee62e64ef167fac01ab5d3e13defb5799872d32",
+                                 "bytes":  55
+                             }
+}

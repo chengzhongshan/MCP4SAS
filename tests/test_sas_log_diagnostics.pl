@@ -30,4 +30,8 @@ unlike(SAS_Log_Diagnostics::format_summary($summary), qr/3 observations/, 'routi
 is(SAS_Log_Diagnostics::format_summary(SAS_Log_Diagnostics::summarize('')), '', 'no diagnostics for empty log');
 is(SAS_Log_Diagnostics::summarize("NOTE: Numeric values have been converted to character values.\n")->{data_quality_count}, 1, 'raw SAS log supported');
 is(SAS_Log_Diagnostics::summarize("23  _ERROR_=1;\nMPRINT(T): _ERROR_=1;\n")->{data_quality_count}, 0, 'source assignment does not masquerade as runtime input error');
+my $flowover=SAS_Log_Diagnostics::summarize("NOTE: SAS went to a new line when INPUT statement reached past the end of a line.\nNOTE: No observations in data set WORK.E150.\n");
+is($flowover->{data_quality_count},2,'flowover and empty procedure input are surfaced');
+like($flowover->{data_quality}[0],qr/INPUT statement/,'input-record loss diagnostic preserved');
+is(SAS_Log_Diagnostics::summarize("23 NOTE: No observations in data set WORK.SOURCE.\n")->{data_quality_count},0,'empty-data note in a source listing is not counted');
 done_testing();

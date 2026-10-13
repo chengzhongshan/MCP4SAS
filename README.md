@@ -771,6 +771,19 @@ distinguish quoted comment delimiters, inline statement comments, and actual
 SAS code. Commented documentation examples are not treated as executed PUT
 statements, while genuine syntax problems remain detectable.
 
+The library-based batch (`--batch 4`) adds 100 new cases numbered 91-190,
+adapted from 80 source files in the two SAS code collections. Their filename
+and SHA-256 provenance is recorded in `tests/sas_library_source_manifest.json`;
+the original library scripts and datasets are not required to run the
+generated cases. Pass `--library-root` to verify the original sources against
+that snapshot. See the validation report for the complete commands and results.
+
+Macro-quoting contexts now preserve escaped delimiters and unmatched quotes.
+NRSTR literals and ordinary single-quoted DATA text do not trigger macro
+dependency loading; evaluated or deferred executable macro calls remain
+detectable. Input flowover and empty-procedure-input notes are surfaced as
+advisories, and preflight warns about literal format names ending in digits.
+
 See [the real SAS examples and failure checks](examples/README.md) for a
 repeatable live SAS ODA validation suite, including GTEx queries, macro control
 flow, and an intentional missing-table failure. Run the offline log/label

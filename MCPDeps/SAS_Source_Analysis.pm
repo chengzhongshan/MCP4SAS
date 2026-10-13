@@ -2,6 +2,28 @@ package SAS_Source_Analysis;
 use strict;
 use warnings;
 
+# Macro quoting is a separate lexical context: apostrophes may be unmatched,
+# and %(/%)/%' encode literal delimiters rather than SAS source syntax.
+sub _macro_quote_span {
+    my ($text,$offset)=@_;
+    return unless substr($text,$offset) =~ /^%(str|nrstr|quote|nrquote|bquote|nrbquote|superq)\b\s*\(/i;
+    my ($name,$header)=(lc($1),$&);
+    my $body=$offset+length($header);
+    my ($i,$depth)=($body,1);
+    my $len=length($text);
+    while ($i<$len) {
+        my $ch=substr($text,$i,1);
+        if ($ch eq '%' && substr($text,$i+1,1) =~ /^[()'"]$/) { $i+=2; next; }
+        $depth++ if $ch eq '(';
+        if ($ch eq ')') {
+            $depth--;
+            return {name=>$name,start=>$offset,body=>$body,end=>$i+1,closed=>1} if $depth==0;
+        }
+        $i++;
+    }
+    return {name=>$name,start=>$offset,body=>$body,end=>$len,closed=>0};
+}
+
 # Mask raw inline records, preserving character offsets and newlines for
 # preflight context. Locate declarations lexically, outside strings/comments.
 sub analyze_inline_data {
@@ -32,6 +54,9 @@ sub analyze_inline_data {
         if ($pair eq '/*') { $block=1; $i+=2; next; }
         if ($pair eq '%*') { $comment=1; $i+=2; next; }
         if ($ch eq '*' && $statement_start) { $comment=1; $i++; next; }
+        if ($ch eq '%' && (my $span=_macro_quote_span($text,$i))) {
+            $i=$span->{end}; $statement_start=0; next;
+        }
         if ($ch eq "'" || $ch eq '"') { $quote=$ch; $statement_start=0; $i++; next; }
         if ($ch =~ /\s/) { $i++; next; }
         if ($ch eq ';') { $statement_start=1; $i++; next; }
@@ -86,6 +111,8 @@ sub analyze_source {
           message=>"Inline data declaration $_->{keyword} is missing its terminating line",
           context_ref=>[($_->{line}-1)..$last_line]}
     } @{$inline->{unclosed}};
+    my (@macro_quotes,@single_quotes);
+    my $quote_start=0;
     my ($i,$line,$quote,$block,$comment,$statement_start,$start_line)=(0,1,'',0,0,1,0);
     my $comment_start_state=1;
     my $len=length($scan);
@@ -113,7 +140,10 @@ sub analyze_source {
                 $blank->($i,2,0); $i+=2; next;
             }
             $blank->($i,1,0);
-            $quote='' if $ch eq $quote;
+            if ($ch eq $quote) {
+                push @single_quotes,{start=>$quote_start,end=>$i+1} if $quote eq "'";
+                $quote='';
+            }
             $line++ if $ch eq "\n"; $i++; next;
         }
         if ($pair eq '/*') { $start_line=$line; $block=1; $blank->($i,2,1); $i+=2; next; }
@@ -124,8 +154,20 @@ sub analyze_source {
         }
         if ($pair eq '%*') { $comment_start_state=$statement_start; $comment=1; $blank->($i,2,1); $i+=2; next; }
         if ($ch eq '*' && $statement_start) { $comment_start_state=1; $comment=1; $blank->($i,1,1); $i++; next; }
+        if ($ch eq '%' && (my $span=_macro_quote_span($scan,$i))) {
+            push @macro_quotes,$span;
+            if (!$span->{closed}) {
+                push @findings,{type=>'unclosed_macro_invocation',line=>$line,
+                    message=>"Macro quoting function %$span->{name}( is missing its closing ')'",
+                    context_ref=>[($line-2)..$last_line]};
+            }
+            my $chunk=substr($scan,$i,$span->{end}-$i);
+            $line+=($chunk =~ tr/\n//);
+            $blank->($i,$span->{end}-$i,0);
+            $i=$span->{end}; $statement_start=0; next;
+        }
         if ($ch eq "'" || $ch eq '"') {
-            $quote=$ch; $start_line=$line; $statement_start=0; $blank->($i,1,0); $i++; next;
+            $quote=$ch; $quote_start=$i; $start_line=$line; $statement_start=0; $blank->($i,1,0); $i++; next;
         }
         if ($ch eq "\n") { $line++; $i++; next; }
         if ($ch =~ /\s/) { $i++; next; }
@@ -139,9 +181,74 @@ sub analyze_source {
             message=>"Unclosed $description starting on line $start_line",
             context_ref=>[($start_line-2)..$last_line]};
     }
-    return {masked=>$masked,comments_masked=>$comments_masked,findings=>\@findings};
+    return {masked=>$masked,comments_masked=>$comments_masked,findings=>\@findings,macro_quotes=>\@macro_quotes,single_quotes=>\@single_quotes};
 }
 
 sub mask_noncode { return analyze_source($_[0])->{masked}; }
 sub mask_comments { return analyze_source($_[0])->{comments_masked}; }
+sub mask_macro_literals {
+    my ($text)=@_;
+    $text //= '';
+    my $analysis=analyze_source($text);
+    my $masked=$analysis->{comments_masked};
+    for my $span (@{$analysis->{macro_quotes}}) {
+        # NRSTR masks percent/ampersand at compilation. Other quote functions
+        # may evaluate nested calls first, so their real dependencies remain.
+        next unless $span->{name} eq 'nrstr';
+        my $length=$span->{end}-$span->{body}-($span->{closed}?1:0);
+        my $body=substr($masked,$span->{body},$length);
+        $body =~ s/[^\r\n]/ /g;
+        substr($masked,$span->{body},$length,$body);
+    }
+    return $masked;
+}
+sub macro_dependency_view {
+    my ($text)=@_;
+    $text //= '';
+    my $analysis=analyze_source($text);
+    my $masked=mask_macro_literals($text);
+    for my $span (@{$analysis->{single_quotes}}) {
+        my $prefix=substr($analysis->{comments_masked},0,$span->{start});
+        # Literal code passed to these execution APIs is a real dependency.
+        next if $prefix =~ /(?:\bcall\s+execute|\bdosubl)\s*\([^;]*\z/is;
+        my $length=$span->{end}-$span->{start};
+        my $literal=substr($masked,$span->{start},$length);
+        $literal =~ s/[^\r\n]/ /g;
+        substr($masked,$span->{start},$length,$literal);
+    }
+    return $masked;
+}
+sub include_targets {
+    my ($text)=@_;
+    $text //= '';
+    my $active=macro_dependency_view($text);
+    my $paths=mask_comments($text);
+    my @targets;
+    while ($active =~ /%include\b/ig) {
+        my $offset=$-[0];
+        my $tail=substr($paths,$offset);
+        push @targets,$2 if $tail =~ /^%include\s+(["'])(.*?)\1/is;
+    }
+    return \@targets;
+}
+sub format_name_issues {
+    my ($text)=@_;
+    my $masked=mask_noncode($text);
+    my @issues;
+    while ($masked =~ /\bproc\s+format\b[^;]*;(.*?)\b(?:run|quit)\s*;/igs) {
+        my ($body,$offset)=($1,$-[1]);
+        while ($body =~ /\b(value|invalue|picture)\s+\$?([A-Za-z_]\w*)\b/ig) {
+            my ($kind,$name,$start)=(lc($1),$2,$-[2]);
+            next unless $name =~ /\d$/;
+            my $prefix=substr($masked,0,$offset+$start);
+            my $line=1+($prefix =~ tr/\n//);
+            push @issues,{type=>'invalid_literal_format_name',line=>$line,
+                message=>"Literal $kind name '$name' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",
+                context_ref=>[$line]};
+        }
+    }
+    # Advisory only: macro-generated or conditional definitions may differ
+    # at execution. SAS runtime diagnostics still determine failure status.
+    return \@issues;
+}
 1;

@@ -1,6 +1,6 @@
 # Real Examples for Improving MCP4SAS
 
-Validation date: October 12, 2026.
+Validation dates: October 12-13, 2026.
 
 This record describes real SAS OnDemand for Academics (ODA) runs, the failures
 they exposed, and the resulting MCP4SAS changes. The commands and maintained
@@ -926,3 +926,277 @@ case validations. The three new batches contain **90 distinct example
 scenarios** in total. Sources and test/analysis code remain Perl/Bash/SAS;
 SASPy continues as the existing internal bridge. Runtime artifacts remain
 local and ignored by Git. No GitHub push was performed for this update.
+
+## 10. Library-based batch: 100 new real cases (91-190)
+
+Validation date: October 13, 2026, America/Chicago. This batch adds one
+hundred new scenarios, separate from cases 01-90. The generated sources are
+maintained in [tests/new_examples_91_190.pl](tests/new_examples_91_190.pl),
+using the existing Perl HTTP harness with `--batch 4`.
+
+### Source study and provenance
+
+The two requested collections contain 220 and 362 SAS files (582 total):
+
+- `H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Easy-For-Error-Codes-SAS`
+- `H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes/SAS_Code_Database`
+
+The selected lessons were adapted into 100 small generated-data scenarios
+from **80 distinct source files** across those collections. A source can
+inspire more than one case when the cases exercise different behavior, such
+as keeping versus removing digits or compile-time versus runtime macro
+quoting. These are rewritten, self-contained examples, not execution or
+publication of the original scripts with their datasets and environment
+paths. The source manifest records each filename, collection, byte size,
+and SHA-256 hash. The original source files were read and hashed locally;
+no changes were made to either code database.
+
+See [tests/sas_library_source_manifest.json](tests/sas_library_source_manifest.json).
+The harness rejects exact source duplicates within the batch and against
+all three earlier catalogs. The scenario inventory was also reviewed against
+the earlier case descriptions; hash uniqueness alone is not the evidence
+for different scientific/programming behavior. Reruns and supplemental
+regressions are not counted as new examples.
+
+### Exact Cygwin commands used
+
+From the MCP4SAS checkout, the discovery server and run were:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18134
+```
+
+In a second Cygwin terminal:
+
+```bash
+perl tests/run_live_new_examples_30.pl --live --batch 4 \
+  --url http://127.0.0.1:18134/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_initial.log 2>&1
+```
+
+After the diagnostic module was changed, the test server was restarted on
+port `18135`, using the same startup options. The focused repair checks and
+complete verification were:
+
+```bash
+perl tests/run_live_new_examples_30.pl --live --batch 4 \
+  --only 91,92,94,96,145,148,150,153,168,180,181,182 \
+  --url http://127.0.0.1:18135/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_repairs.log 2>&1
+
+perl tests/run_live_new_examples_30.pl --live --batch 4 \
+  --url http://127.0.0.1:18135/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_verified.log 2>&1
+```
+
+The historical harness filename contains `30`; batch 4 deliberately
+requires exactly 100 cases. `--library-root` verifies the selected original
+files against their recorded SHA-256 hashes. It can be omitted when those
+libraries are unavailable: generated SAS inputs are self-contained and
+retain their source provenance from the committed manifest.
+
+```bash
+perl tests/run_live_new_examples_30.pl --generate-only --batch 4
+perl tests/run_live_new_examples_30.pl --live --batch 4 --only 91 \
+  --url http://127.0.0.1:18135/mcp
+```
+
+### Inventory of all 100 scenarios
+
+In the source column, **E** denotes `Easy-For-Error-Codes-SAS` and **D**
+denotes `SAS_Code_Database`. Every final case retains its collection,
+filename, SHA-256 source hash, full generated SAS code, individual MCP
+responses, and expected outcome in `catalog.json`/`results.json`.
+The exact generated code is also available from the maintained Perl catalog.
+
+| ID | Scenario | Expected calculation or condition | Library source |
+| --- | --- | --- | --- |
+| 91 | `str_escaped_apostrophe` | `value="'"` | E:demo of bquote unquote str to add single and double quote for macro variable.sas |
+| 92 | `str_escaped_open_parenthesis` | `value='('` | E:escape_square_by_str_or_nrquote.sas |
+| 93 | `str_escaped_close_parenthesis` | `value=')'` | E:escape_square_by_str_or_nrquote.sas |
+| 94 | `nrstr_unexecuted_macro_call` | `value='%e94_not_executed()'` | D:nrstr to mask macro command and not run it.sas |
+| 95 | `nrstr_deferred_ampersand` | `value='&e95name'` | E:nrbquote_will_mask_macro_var_but_resolove_it_later_without_using_unquote.sas |
+| 96 | `bquote_unmatched_apostrophe` | `value="O'Brien"` | E:demo of bquote unquote str to add single and double quote for macro variable.sas |
+| 97 | `nrstr_embedded_semicolon` | `value='alpha;beta'` | E:use_macro_language_generate_if_conditions..sas |
+| 98 | `parmbuff_argument_count` | `n=3` | D:macro qscan syspbuff parmbuff if else eval together with array for making combinations.sas |
+| 99 | `indirect_macro_lookup` | `value='beta'` | E:resolve_macro_var_with_same_prefix_and_represented_by_a_macro_var.sas |
+| 100 | `macro_descending_do_by` | `total=9` | E:Macro do loop includes SAS procedures_No need to use _str_ for these procedure.sas |
+| 101 | `macro_return_guard` | `value=101` | E:Macro return to stop macro but not affect other part of the program.sas |
+| 102 | `dosubl_immediate_state` | `rc=0 and value=102` | D:dosubl within proc sql to access macro var within it.sas |
+| 103 | `sql_into_ordered_list` | `value='1\|2\|3'` | E:Proc SQL select into with order to control macro order.sas |
+| 104 | `sql_into_numbered_macros` | `total=9` | E:creat multiple macro var with proc sql with count function No need for cat function.sas |
+| 105 | `macro_large_integer_precision` | `value=1234567890123` | E:Need2use_put_when_save_large_number_into_macro_var.sas |
+| 106 | `countc_character_occurrences` | `n=7` | E:count all characters using countc but not countw or count.sas |
+| 107 | `countw_empty_token_modifier` | `ordinary=3 and empty=5` | E:countc_demo.sas |
+| 108 | `scan_missing_middle_token` | `missing(value)` | E:When infile too many missing data, need to use dsd with dlm and add m for scan.sas |
+| 109 | `scan_reverse_word` | `value='last'` | D:Scan to find the first and last character of a string.sas |
+| 110 | `scan_hex_tab_delimiter` | `value='second'` | E:Scan with different dilimeters.sas |
+| 111 | `compress_remove_digits` | `value='AB'` | E:powerful function compress to remove black spaces and other digitor or characters.sas |
+| 112 | `compress_keep_digits` | `value='123'` | E:powerful function compress to remove black spaces and other digitor or characters.sas |
+| 113 | `compress_all_whitespace` | `value='ab'` | E:powerful function compress to remove black spaces and other digitor or characters.sas |
+| 114 | `compress_punctuation` | `value='abc123'` | E:powerful function compress to remove black spaces and other digitor or characters.sas |
+| 115 | `cats_both_end_blanks` | `value='ab'` | D:cat demo.sas |
+| 116 | `catt_preserves_leading_blanks` | `value=' a b'` | D:cat demo.sas |
+| 117 | `cat_preserves_field_padding` | `index(value,'B')=4` | D:cat demo.sas |
+| 118 | `catx_numeric_conversion` | `value='id:12'` | E:use catx to link character and number.sas |
+| 119 | `upcase_sql_filter` | `n=2` | D:Function upcase in Proc SQL.sas |
+| 120 | `sysfunc_lowercase_text` | `value='mixed'` | D:Macro use base function with sysfunc for upcase and lowcase.sas |
+| 121 | `lengthn_blank_difference` | `ordinary=1 and nonblank=0` | D:Length function in where conditions.sas |
+| 122 | `lengthc_storage_padding` | `stored=10 and visible=3` | E:Length function in proc sql.sas |
+| 123 | `substr_assignment` | `value='abXYef'` | D:reshape long line into short lines wit specific length.sas |
+| 124 | `trim_strip_difference` | `a=' alpha' and b='alpha'` | E:when making numeric macro variable, need to use trim left to remove leading space.sas |
+| 125 | `tranwrd_all_occurrences` | `value='bb-bb'` | E:parse_grasp_covid_database_using_transwrd_and_prxmatch.sas |
+| 126 | `translate_character_mapping` | `value='123'` | D:cat demo.sas |
+| 127 | `find_case_insensitive` | `position=3` | E:SAS Function Find(string,substrin) Demo.sas |
+| 128 | `indexc_any_character` | `position=5 and absent=0` | E:SAS Function Find(string,substrin) Demo.sas |
+| 129 | `prxchange_preserves_original` | `original='a-b' and changed='a_b'` | E:Function prxchange need to asign changed variable to a new variable.sas |
+| 130 | `prxchange_strip_before_anchor` | `value='def'` | E:Need to use strip in prxchange.sas |
+| 131 | `prxmatch_ignore_case` | `position=3` | E:prxmatch with modifer for case sensitive with i and match once with o.sas |
+| 132 | `prxsubstr_match_bounds` | `position=2 and size=3` | D:PXRParse PRXsubstr and function quote Demo.sas |
+| 133 | `prxchange_escaped_slash` | `value='a_b_c'` | E:excape path slash in prxchange for replace with prxchange.sas |
+| 134 | `varying_width_input` | `width=3 and name='abc'` | D:informat Varyingw. Demo.sas |
+| 135 | `input_buffer_trailing_at` | `id=1 and label='beta' and score=7 and raw='1 beta 7'` | E:use_input_trailing_at_to_add_line_as_vars_with_another_input_command.sas |
+| 136 | `double_trailing_at_records` | `n=4 and total=10` | D:Function @@ with Array or Lag to select specific Rows.sas |
+| 137 | `multiline_input_record` | `id=1 and score=9` | D:Multiple lines input data in Data step and Proc compare ID usage demo.sas |
+| 138 | `absolute_input_pointer` | `id=1 and name='ABC'` | D:Multiple lines input data in Data step and Proc compare ID usage demo.sas |
+| 139 | `ampersand_list_input` | `name='Mary Jane' and score=7` | E:Scan with different dilimeters.sas |
+| 140 | `truncover_short_record` | `a='abc' and missing(b)` | D:datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas |
+| 141 | `dsd_empty_numeric_field` | `a=1 and missing(b) and c=3` | E:When infile too many missing data, need to use dsd with dlm and add m for scan.sas |
+| 142 | `scanover_skip_nonmatching` | `strip(phone)='555-1234'` | D:datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas |
+| 143 | `infile_firstobs_obs` | `n=3 and total=9` | E:read range of lines using proc import function datarow with option obs.sas |
+| 144 | `quiet_informat_failure` | `missing(value)` | D:length and informat for char and number in infile procedure.sas |
+| 145 | `invalue_character_to_numeric` | `a=0 and b=1` | D:format character into number with proc format comment invalue.sas |
+| 146 | `inputn_dynamic_informat` | `value=12.5` | D:Function Put and PutC demo.sas |
+| 147 | `putn_dynamic_format` | `strip(value)='12.5'` | D:Function Put and PutC demo.sas |
+| 148 | `putc_dynamic_character_format` | `value='YES'` | D:Function Put and PutC demo.sas |
+| 149 | `hexadecimal_space_literal` | `value=32` | D:20 x as space separator.sas |
+| 150 | `put_no_default_separator` | `value='AB'` | E:file function to output data without default space separator.sas |
+| 151 | `tab_delimited_file_output` | `id=1 and label='gene'` | D:File function to output tab separated file.sas |
+| 152 | `file_header_then_values` | `value=55` | D:Add Header to new data file with FILE function.sas |
+| 153 | `put_at_concatenated_records` | `compress(value)='ab'` | D:Put all rows into one line with file and _at_ function.sas |
+| 154 | `fdelete_owned_work_file` | `before=1 and rc=0 and after=0` | D:create temp file in WORK dir and then delete it with fdelete and filename function.sas |
+| 155 | `fread_end_of_file_count` | `n=3 and rc ne 0 and closed=0` | E:Working with data in the Data Step input buffer.sas |
+| 156 | `datasets_column_rename` | `new=156` | D:Rename column names with proc datasets.sas |
+| 157 | `array_explicit_name_order` | `second='d'` | E:array_will_NOT_sort_varnames_automatically.sas |
+| 158 | `call_sortn_temporary_array` | `first=1 and second=3 and last=7` | E:sortn_for_sorting_array_in_data_step.sas |
+| 159 | `ranperm_permutation_invariants` | `good=1` | E:generate_random_orders4array_with_ranperm_function.sas |
+| 160 | `retain_column_reordering` | `good=2` | D:Order dataset Columns according to user input order with Retain.sas |
+| 161 | `by_notsorted_segments` | `n=3` | D:Function Notsorted Demo in SAS procedure proc freq.sas |
+| 162 | `retain_character_accumulation` | `value='a,b,c'` | D:Powerful Retain to link multiple row elements into single row element.sas |
+| 163 | `sum_statement_initialization` | `accumulator=6 and missing(ordinary)` | E:var_plus_num_in_data_step_will_retain_that_var_like_retain_function.sas |
+| 164 | `until_while_initial_condition` | `a=0 and b=1` | D:Function do until vs do while with Array function Demo.sas |
+| 165 | `sql_count_all_missing_column` | `rows=2 and nonmissing=0` | E:sql_count_generate_missing_value_if_whole_col_is_missing.sas |
+| 166 | `sql_distinct_excludes_missing` | `n=2` | E:Count need work with Group in Proc SQL.sas |
+| 167 | `sql_summary_remerge` | `n=3 and smallest=6 and largest=6` | D:Proc SQL with Sum Function.sas |
+| 168 | `sql_rowwise_max_arguments` | `value=5` | D:Proc SQL Max function like numeric operator.sas |
+| 169 | `sql_rowwise_min_arguments` | `total=3` | D:Function min and scan in Proc SQL.sas |
+| 170 | `sql_not_in_filter` | `value=2` | D:not in function and obs function in Proc SQL.sas |
+| 171 | `where_contains_operator` | `text='gene_A'` | E:contains works with where or in proc sql but not if condition.sas |
+| 172 | `if_contains_is_invalid` | `Expected SAS failure: ERROR\s+\d+-\d+` | E:contains works with where or in proc sql but not if condition.sas |
+| 173 | `sql_like_escape_literal_underscore` | `text='gene_A'` | E:contains works with where or in proc sql but not if condition.sas |
+| 174 | `sql_except_set_difference` | `n=2 and total=4` | E:Need to assign single vairible in Except procedure_Proc SQL to select unique rows from the first table.sas |
+| 175 | `sql_intersect_common_values` | `value=2` | D:Proc SQL to select unique rows from the first table.sas |
+| 176 | `outer_union_corr_columns` | `n=2 and a=10 and b=20` | D:outer union corr keep all columns from other tables.sas |
+| 177 | `keep_only_singleton_keys` | `value=2` | E:keep_records_with_only_one_record_not_use_nodupkeys.sas |
+| 178 | `composite_index_create_delete` | `before=2 and after=0` | D:make index with proc datasets.sas |
+| 179 | `composite_index_name_collision` | `Expected SAS failure: index\|same name` | D:Delete SAS Index and Tips on Create Index in Proc SQL.sas |
+| 180 | `exclusive_format_boundary` | `a='unknown' and b='young' and c='middle'` | D:number range format.sas |
+| 181 | `delete_then_recreate_format` | `value='new'` | E:delete previous format before creating a new format.sas |
+| 182 | `character_format_other_category` | `value='unknown'` | D:Function Put and PutC demo.sas |
+| 183 | `probit_probability_to_z` | `abs(center)<1e-10 and abs(upper-1.9599639845)<1e-8` | E:probit function to get Z score based on P.sas |
+| 184 | `binomial_tail_probability` | `abs(value-0.3125)<1e-12` | E:calculate binomial P.sas |
+| 185 | `mod_floating_remainder` | `abs(value-0.1)<1e-8` | E:mod_demo.sas |
+| 186 | `mod_negative_dividend` | `value=-1` | E:mod_demo.sas |
+| 187 | `normal_cdf_inverse` | `abs(center-0.5)<1e-12 and abs(restored-0.025)<1e-10` | E:probit function to get Z score based on P.sas |
+| 188 | `fisher_z_inverse_formula` | `abs(z-0.5493061443)<1e-9 and abs(restored-0.5)<1e-10` | E:Fisher's Z transformation and combine correlation form different dataset.sas |
+| 189 | `circle_trigonometric_identity` | `abs(x*x+y*y-1)<1e-12` | E:draw_a_circle_with_sin_and_cos.sas |
+| 190 | `iml_row_sums` | `n=2 and smallest=6 and largest=15` | E:row_sum_in_iml.sas |
+
+### Failures observed and corrections
+
+The first complete live run passed 90/100 validations in
+`SAS_Output_real30_hJ_ELz`. These were actual ODA submissions through the
+HTTP MCP tool, not mocked executions. Each case checked its calculation
+marker or expected error, worker exit, MCP error flag, structured status,
+HTML retention where applicable, and completed-job marker cleanup.
+
+Cases 91, 92 and 96 exposed false preflight errors for `%str(%')`,
+`%str(%()` and `%bquote(O'Brien)`. The source scanner now balances macro
+quoting functions and recognizes percent-escaped delimiters while retaining
+real unterminated-code errors and original line offsets. Case 94 also
+revealed an unnecessary macro loader injected for literal text. Dependency
+analysis now excludes NRSTR bodies and ordinary single-quoted DATA text;
+evaluated double-quoted calls, BQUOTE calls, CALL EXECUTE and DOSUBL code
+remain visible.
+
+Five failures (145, 148, 180, 181, 182) were mistakes in the generated
+examples: their format names ended in digits. The examples were corrected,
+and PROC FORMAT declarations with these names now receive a nonfatal
+advisory before submission. SAS still decides validity and its errors are
+reported normally. Examples 150 and 153 also needed correction: formatted
+INPUT crossed short physical records and read no observations. TRUNCOVER
+was added to those examples; case 150's PUT statement was corrected to the
+source-library pattern `put a +(-1) b;`. The runner does not silently rewrite
+users' INPUT semantics. Actual flowover and empty-dataset notes are now
+available as structured advisory diagnostics.
+
+The focused repair run passed 10/12 checks in `SAS_Output_real30_XgonGR`;
+the remaining case 94 dependency issue and case 150 delimiter assertion
+were corrected before the complete verification. The final run in
+`SAS_Output_real30_WSPsRM` passed **100/100**, comprising **98 successful
+jobs and two intentional failures**, cases 172 and 179. These deliberate
+syntax/index errors verified correct failure reporting and were not
+converted into success. All 80 selected library files matched their
+recorded hashes. Exact SAS source was checked against the preceding 90
+examples to prevent duplicate submissions.
+
+### Supplemental live checks and regression tests
+
+Two additional diagnostic probes passed 8/8 assertions in
+`SAS_Output_library_probe_VK2dsQ`: a short physical file produced real INPUT
+flowover/empty-data notes without failing the job, while an invalid format
+name produced both its advisory and an actual failed SAS job. An initial
+probe mistakenly used padded DATALINES and was replaced by a physical
+temporary file; these probes are not counted among the 100 cases.
+
+An additional include test uncovered a genuine transfer failure for a
+filename containing an apostrophe and a space. Active `%include` discovery
+now uses matching quote delimiters and ignores masked NRSTR and ordinary
+single-quoted DATA literals. Apostrophe-containing upload filenames use a
+safely named ZIP transfer, extract to the original remote filename and
+verify the byte count. This avoids SASPy's direct single-quoted destination
+handling in both session modes. The fixture is uniquely named, and only
+that uploaded fixture is deleted after the test. Its final calculation,
+retained HTML, ignored masked include and remote cleanup passed 5/5
+assertions. This test is supplemental, not case 191.
+
+Reproduce these checks in Cygwin from the repository root:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/check_library_diagnostics_live.pl --live \
+  --url http://127.0.0.1:18135/mcp
+perl tests/test_live_include_literal_paths.pl --live
+prove tests/test_comment_quote_preflight.pl \
+  tests/test_inline_data_preflight.pl tests/test_inline_macro_preflight.pl \
+  MCPDeps/test_sas_log_and_labels.pl tests/test_mcp_job_reporting.pl \
+  tests/test_sas_log_diagnostics.pl tests/test_macro_quoting_preflight.pl \
+  tests/test_format_name_advisory.pl MCPDeps/test_sas_oda_include_lookup.pl \
+  tests/test_quoted_filename_upload.pl
+perl -I MCPDeps -c MCPDeps/SAS_ODA_Runner.pm
+perl -c run_sas_codes_or_files_in_ODA.pl
+perl -c run_sas_codes_or_script_in_ODA.pl
+```
+
+The offline checks passed 238 assertions (230 across the first nine files,
+plus eight upload-routing assertions). The maintained smoke example is
+`examples/sas_library_macro_quote_smoke.sas`. The shared runner fixes were
+also checked in the companion repository. Test generation, orchestration
+and regression tests use Perl/Bash; the existing SASPy transport remains
+the backend. Runtime output directories and logs remain local; publication
+includes maintained source, examples, provenance, tests and this report.

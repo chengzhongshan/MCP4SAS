@@ -1,0 +1,247 @@
+use strict;
+use warnings;
+my (@cases,$number);
+$number=90;
+my $full=sub {
+    my ($name,$source,$body,$condition,%extra)=@_;
+    my $id=''.++$number;
+    $body =~ s/\@T\@/e$id/g;
+    $condition =~ s/\@T\@/e$id/g if defined $condition;
+    $body .= "\ndata _null_; set e$id; if $condition then put 'MCP30_OK_$id'; else put 'ERROR: MCP30_ASSERT_$id'; run;\nproc print data=e$id; run;\n" if defined $condition;
+    push @cases,{id=>$id,name=>$name,source_ref=>$source,description=>$condition//$name,sas=>$body,%extra};
+};
+my $row=sub {
+    my ($name,$source,$code,$condition,%extra)=@_;
+    $full->($name,$source,"data \@T\@; $code run;",$condition,%extra);
+};
+$full->('str_escaped_apostrophe',q{E:demo of bquote unquote str to add single and double quote for macro variable.sas},q{%let e91quote=%str(%');
+data @T@; length value $10; value=symget('e91quote'); run;},q{value="'"});
+$full->('str_escaped_open_parenthesis',q{E:escape_square_by_str_or_nrquote.sas},q{%let e92text=%str(%();
+data @T@; length value $10; value=symget('e92text'); run;},q{value='('});
+$full->('str_escaped_close_parenthesis',q{E:escape_square_by_str_or_nrquote.sas},q{%let e93text=%str(%));
+data @T@; length value $10; value=symget('e93text'); run;},q{value=')'});
+$full->('nrstr_unexecuted_macro_call',q{D:nrstr to mask macro command and not run it.sas},q{%let e94text=%nrstr(%e94_not_executed());
+data @T@; length value $80; value=symget('e94text'); run;},q{value='%e94_not_executed()'},forbid=>q{Injected targeted remote macro loader for: e94_not_executed});
+$full->('nrstr_deferred_ampersand',q{E:nrbquote_will_mask_macro_var_but_resolove_it_later_without_using_unquote.sas},q{%let e95name=resolved;
+%let e95literal=%nrstr(&e95name);
+data @T@; length value $80; value=symget('e95literal'); run;},q{value='&e95name'});
+$full->('bquote_unmatched_apostrophe',q{E:demo of bquote unquote str to add single and double quote for macro variable.sas},q{%let e96text=%bquote(O'Brien);
+data @T@; length value $40; value=symget('e96text'); run;},q{value="O'Brien"});
+$full->('nrstr_embedded_semicolon',q{E:use_macro_language_generate_if_conditions..sas},q{%let e97text=%nrstr(alpha;beta);
+data @T@; length value $40; value=symget('e97text'); run;},q{value='alpha;beta'});
+$full->('parmbuff_argument_count',q{D:macro qscan syspbuff parmbuff if else eval together with array for making combinations.sas},q{%macro e98args/parmbuff;
+data @T@; n=%sysfunc(countw(%superq(syspbuff),%str(,))); run;
+%mend;
+%e98args(A,B,C);},q{n=3});
+$full->('indirect_macro_lookup',q{E:resolve_macro_var_with_same_prefix_and_represented_by_a_macro_var.sas},q{%let e99item1=alpha;
+%let e99item2=beta;
+%let e99i=2;
+data @T@; length value $20; value="&&e99item&e99i"; run;},q{value='beta'});
+$full->('macro_descending_do_by',q{E:Macro do loop includes SAS procedures_No need to use _str_ for these procedure.sas},q{%macro e100loop;
+data @T@; total=0;
+%do i=5 %to 1 %by -2;
+total+&i;
+%end;
+run;
+%mend;
+%e100loop;},q{total=9});
+$full->('macro_return_guard',q{E:Macro return to stop macro but not affect other part of the program.sas},q{%macro e101guard;
+data @T@; value=101; run;
+%return;
+data @T@; value=-1; run;
+%mend;
+%e101guard;},q{value=101});
+$row->('dosubl_immediate_state',q{D:dosubl within proc sql to access macro var within it.sas},q{rc=dosubl('%let e102state=102;'); value=input(symget('e102state'),best32.);},q{rc=0 and value=102});
+$full->('sql_into_ordered_list',q{E:Proc SQL select into with order to control macro order.sas},q{data e103base; do n=3 to 1 by -1; output; end; run;
+proc sql noprint; select n into :e103list separated by '|' from e103base order by n; quit;
+data @T@; length value $20; value=symget('e103list'); run;},q{value='1|2|3'});
+$full->('sql_into_numbered_macros',q{E:creat multiple macro var with proc sql with count function No need for cat function.sas},q{data e104base; do n=2 to 4; output; end; run;
+proc sql noprint; select n into :e104a1-:e104a3 from e104base order by n; quit;
+data @T@; total=&e104a1+&e104a2+&e104a3; run;},q{total=9});
+$full->('macro_large_integer_precision',q{E:Need2use_put_when_save_large_number_into_macro_var.sas},q{data e105base; position=1234567890123; run;
+proc sql noprint; select put(position,best32.) into :e105text trimmed from e105base; quit;
+data @T@; value=input(symget('e105text'),best32.); run;},q{value=1234567890123});
+$row->('countc_character_occurrences',q{E:count all characters using countc but not countw or count.sas},q{n=countc('-------','-');},q{n=7});
+$row->('countw_empty_token_modifier',q{E:countc_demo.sas},q{ordinary=countw('a..b..c','.'); empty=countw('a..b..c','.','m');},q{ordinary=3 and empty=5});
+$row->('scan_missing_middle_token',q{E:When infile too many missing data, need to use dsd with dlm and add m for scan.sas},q{length value $20; value=scan('a||c',2,'|','m');},q{missing(value)});
+$row->('scan_reverse_word',q{D:Scan to find the first and last character of a string.sas},q{length value $20; value=scan('first middle last',-1,' ');},q{value='last'});
+$row->('scan_hex_tab_delimiter',q{E:Scan with different dilimeters.sas},q{length text $30 value $20; text='first'||'09'x||'second'; value=scan(text,2,'09'x);},q{value='second'});
+$row->('compress_remove_digits',q{E:powerful function compress to remove black spaces and other digitor or characters.sas},q{length value $20; value=compress('A12B3',,'d');},q{value='AB'});
+$row->('compress_keep_digits',q{E:powerful function compress to remove black spaces and other digitor or characters.sas},q{length value $20; value=compress('A12B3',,'kd');},q{value='123'});
+$row->('compress_all_whitespace',q{E:powerful function compress to remove black spaces and other digitor or characters.sas},q{length value $20; value=compress('a'||'09'x||' '||'b',,'s');},q{value='ab'});
+$row->('compress_punctuation',q{E:powerful function compress to remove black spaces and other digitor or characters.sas},q{length value $20; value=compress('abc-1.2!3',,'p');},q{value='abc123'});
+$row->('cats_both_end_blanks',q{D:cat demo.sas},q{length value $20; value=cats(' a ',' b ');},q{value='ab'});
+$row->('catt_preserves_leading_blanks',q{D:cat demo.sas},q{length value $20; value=catt(' a ',' b ');},q{value=' a b'});
+$row->('cat_preserves_field_padding',q{D:cat demo.sas},q{length a b $3 value $10; a='A'; b='B'; value=cat(a,b);},q{index(value,'B')=4});
+$row->('catx_numeric_conversion',q{E:use catx to link character and number.sas},q{length value $20; value=catx(':','id',12);},q{value='id:12'});
+$full->('upcase_sql_filter',q{D:Function upcase in Proc SQL.sas},q{data e119base; length name $20; name='Gene'; output; name='gene'; output; name='other'; output; run;
+proc sql; create table @T@ as select count(*) as n from e119base where upcase(name)='GENE'; quit;},q{n=2});
+$full->('sysfunc_lowercase_text',q{D:Macro use base function with sysfunc for upcase and lowcase.sas},q{%let e120text=%sysfunc(lowcase(MiXeD));
+data @T@; length value $20; value=symget('e120text'); run;},q{value='mixed'});
+$row->('lengthn_blank_difference',q{D:Length function in where conditions.sas},q{ordinary=length(''); nonblank=lengthn('');},q{ordinary=1 and nonblank=0});
+$row->('lengthc_storage_padding',q{E:Length function in proc sql.sas},q{length text $10; text='abc'; stored=lengthc(text); visible=lengthn(text);},q{stored=10 and visible=3});
+$row->('substr_assignment',q{D:reshape long line into short lines wit specific length.sas},q{length value $20; value='abcdef'; substr(value,3,2)='XY';},q{value='abXYef'});
+$row->('trim_strip_difference',q{E:when making numeric macro variable, need to use trim left to remove leading space.sas},q{length a b $20; a=trim(' alpha '); b=strip(' alpha ');},q{a=' alpha' and b='alpha'});
+$row->('tranwrd_all_occurrences',q{E:parse_grasp_covid_database_using_transwrd_and_prxmatch.sas},q{length value $20; value=tranwrd('aa-aa','aa','bb');},q{value='bb-bb'});
+$row->('translate_character_mapping',q{D:cat demo.sas},q{length value $20; value=translate('abc','123','abc');},q{value='123'});
+$row->('find_case_insensitive',q{E:SAS Function Find(string,substrin) Demo.sas},q{position=find('xxGenezz','gene','i');},q{position=3});
+$row->('indexc_any_character',q{E:SAS Function Find(string,substrin) Demo.sas},q{position=indexc('abcXYZ','ZY'); absent=index('abc','q');},q{position=5 and absent=0});
+$row->('prxchange_preserves_original',q{E:Function prxchange need to asign changed variable to a new variable.sas},q{length original changed $20; original='a-b'; changed=prxchange('s/-/_/',-1,original);},q{original='a-b' and changed='a_b'});
+$row->('prxchange_strip_before_anchor',q{E:Need to use strip in prxchange.sas},q{length value $20; value=prxchange('s/^abc$/def/',1,strip(' abc  '));},q{value='def'});
+$row->('prxmatch_ignore_case',q{E:prxmatch with modifer for case sensitive with i and match once with o.sas},q{position=prxmatch('/gene/i','xxGENE');},q{position=3});
+$row->('prxsubstr_match_bounds',q{D:PXRParse PRXsubstr and function quote Demo.sas},q{rx=prxparse('/[0-9]+/'); call prxsubstr(rx,'x123y',position,size);},q{position=2 and size=3});
+$row->('prxchange_escaped_slash',q{E:excape path slash in prxchange for replace with prxchange.sas},q{length value $20; value=prxchange('s/\//_/',-1,'a/b/c');},q{value='a_b_c'});
+$full->('varying_width_input',q{D:informat Varyingw. Demo.sas},q{data @T@; input width 1. name $varying9. width; datalines;
+3abc
+;
+run;},q{width=3 and name='abc'});
+$full->('input_buffer_trailing_at',q{E:use_input_trailing_at_to_add_line_as_vars_with_another_input_command.sas},q{data @T@; length raw $40 label $20; input @; raw=_infile_; input id label $ score; datalines;
+1 beta 7
+;
+run;},q{id=1 and label='beta' and score=7 and raw='1 beta 7'});
+$full->('double_trailing_at_records',q{D:Function @@ with Array or Lag to select specific Rows.sas},q{data e136base; input value @@; datalines;
+1 2 3 4
+;
+run;
+proc sql; create table @T@ as select count(*) as n,sum(value) as total from e136base; quit;},q{n=4 and total=10});
+$full->('multiline_input_record',q{D:Multiple lines input data in Data step and Proc compare ID usage demo.sas},q{data @T@; input #1 id #2 score; datalines;
+1
+9
+;
+run;},q{id=1 and score=9});
+$full->('absolute_input_pointer',q{D:Multiple lines input data in Data step and Proc compare ID usage demo.sas},q{data @T@; input @1 id 1. @3 name $3.; datalines;
+1 ABC
+;
+run;},q{id=1 and name='ABC'});
+$full->('ampersand_list_input',q{E:Scan with different dilimeters.sas},q{data @T@; length name $20; input name $ &20. score; datalines;
+Mary Jane  7
+;
+run;},q{name='Mary Jane' and score=7});
+$full->('truncover_short_record',q{D:datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas},q{data @T@; infile datalines truncover; input a $3. b $3.; datalines;
+abc
+;
+run;},q{a='abc' and missing(b)});
+$full->('dsd_empty_numeric_field',q{E:When infile too many missing data, need to use dsd with dlm and add m for scan.sas},q{data @T@; infile datalines dsd; input a b c; datalines;
+1,,3
+;
+run;},q{a=1 and missing(b) and c=3});
+$full->('scanover_skip_nonmatching',q{D:datastep infile function Demo of truncover and scanover to omit lines that do not contain specific word.sas},q{data @T@; infile datalines truncover scanover; input @'phone:' phone $20.; datalines;
+unrelated header
+record phone:555-1234
+;
+run;},q{strip(phone)='555-1234'});
+$full->('infile_firstobs_obs',q{E:read range of lines using proc import function datarow with option obs.sas},q{filename e143file temp;
+data _null_; file e143file; do value=1 to 5; put value; end; run;
+data e143base; infile e143file firstobs=2 obs=4; input value; run;
+proc sql; create table @T@ as select count(*) as n,sum(value) as total from e143base; quit;
+filename e143file clear;},q{n=3 and total=9});
+$row->('quiet_informat_failure',q{D:length and informat for char and number in infile procedure.sas},q{value=input('bad',??best32.);},q{missing(value)});
+$full->('invalue_character_to_numeric',q{D:format character into number with proc format comment invalue.sas},q{proc format; invalue e145fmt '-'=0 other=1; run;
+data @T@; a=input('-',e145fmt.); b=input('A',e145fmt.); run;},q{a=0 and b=1});
+$row->('inputn_dynamic_informat',q{D:Function Put and PutC demo.sas},q{value=inputn('12.5','best32.');},q{value=12.5});
+$row->('putn_dynamic_format',q{D:Function Put and PutC demo.sas},q{length value $20; value=putn(12.5,'6.1');},q{strip(value)='12.5'});
+$full->('putc_dynamic_character_format',q{D:Function Put and PutC demo.sas},q{proc format; value $e148fmt 'Y'='YES' other='NO'; run;
+data @T@; length value $20; value=putc('Y','$e148fmt.'); run;},q{value='YES'});
+$row->('hexadecimal_space_literal',q{D:20 x as space separator.sas},q{value=rank('20'x);},q{value=32});
+$full->('put_no_default_separator',q{E:file function to output data without default space separator.sas},q{filename e150file temp;
+data _null_; file e150file; a='A'; b='B'; put a +(-1) b; run;
+data @T@; length value $20; infile e150file truncover; input value $20.; run; filename e150file clear;},q{value='AB'});
+$full->('tab_delimited_file_output',q{D:File function to output tab separated file.sas},q{filename e151file temp;
+data _null_; file e151file dlm='09'x; id=1; label='gene'; put id label; run;
+data @T@; infile e151file dsd dlm='09'x; length label $20; input id label $; run; filename e151file clear;},q{id=1 and label='gene'});
+$full->('file_header_then_values',q{D:Add Header to new data file with FILE function.sas},q{filename e152file temp;
+data _null_; file e152file; put 'value'; put '55'; run;
+data @T@; infile e152file firstobs=2; input value; run; filename e152file clear;},q{value=55});
+$full->('put_at_concatenated_records',q{D:Put all rows into one line with file and _at_ function.sas},q{filename e153file temp;
+data _null_; file e153file; put 'a' @; put 'b'; run;
+data @T@; infile e153file truncover; length value $20; input value $20.; run; filename e153file clear;},q{compress(value)='ab'});
+$full->('fdelete_owned_work_file',q{D:create temp file in WORK dir and then delete it with fdelete and filename function.sas},q{filename e154file "%sysfunc(pathname(work))/owned_e154.txt";
+data _null_; file e154file; put 'owned'; run;
+data @T@; before=fexist('e154file'); rc=fdelete('e154file'); after=fexist('e154file'); run;
+filename e154file clear;},q{before=1 and rc=0 and after=0});
+$full->('fread_end_of_file_count',q{E:Working with data in the Data Step input buffer.sas},q{filename e155file temp;
+data _null_; file e155file; put 'a'; put 'b'; put 'c'; run;
+data @T@; fid=fopen('e155file'); n=0; rc=fread(fid); do while(rc=0); n+1; rc=fread(fid); end; closed=fclose(fid); run;
+filename e155file clear;},q{n=3 and rc ne 0 and closed=0});
+$full->('datasets_column_rename',q{D:Rename column names with proc datasets.sas},q{data @T@; old=156; run;
+proc datasets lib=work nolist; modify @T@; rename old=new; quit;},q{new=156});
+$row->('array_explicit_name_order',q{E:array_will_NOT_sort_varnames_automatically.sas},q{a=1; d=2; b=3; array values[*] a d b; length second $20; second=vname(values[2]);},q{second='d'});
+$row->('call_sortn_temporary_array',q{E:sortn_for_sorting_array_in_data_step.sas},q{array values[3] _temporary_ (7 1 3); call sortn(of values[*]); first=values[1]; second=values[2]; last=values[3];},q{first=1 and second=3 and last=7});
+$row->('ranperm_permutation_invariants',q{E:generate_random_orders4array_with_ranperm_function.sas},q{array values[5] _temporary_ (1 2 3 4 5); seed=2718; call ranperm(seed,of values[*]); call sortn(of values[*]); good=1; do i=1 to 5; good=good and values[i]=i; end;},q{good=1});
+$full->('retain_column_reordering',q{D:Order dataset Columns according to user input order with Retain.sas},q{data e160base; x=1; z=2; run;
+data e160reorder; retain z x; set e160base; run;
+proc contents data=e160reorder out=e160meta noprint; run;
+proc sql; create table @T@ as select count(*) as good from e160meta where (name='z' and varnum=1) or (name='x' and varnum=2); quit;},q{good=2});
+$full->('by_notsorted_segments',q{D:Function Notsorted Demo in SAS procedure proc freq.sas},q{data e161base; input group; datalines;
+2
+2
+1
+1
+2
+;
+data e161segments; set e161base; by group notsorted; if first.group; run;
+proc sql; create table @T@ as select count(*) as n from e161segments; quit;},q{n=3});
+$full->('retain_character_accumulation',q{D:Powerful Retain to link multiple row elements into single row element.sas},q{data @T@; length value $40; retain value ''; do i=1 to 3; value=catx(',',value,byte(96+i)); end; run;},q{value='a,b,c'});
+$full->('sum_statement_initialization',q{E:var_plus_num_in_data_step_will_retain_that_var_like_retain_function.sas},q{data @T@; do n=1 to 3; accumulator+n; ordinary=ordinary+n; end; run;},q{accumulator=6 and missing(ordinary)});
+$row->('until_while_initial_condition',q{D:Function do until vs do while with Array function Demo.sas},q{a=0; b=0; do while(0); a+1; end; do until(1); b+1; end;},q{a=0 and b=1});
+$full->('sql_count_all_missing_column',q{E:sql_count_generate_missing_value_if_whole_col_is_missing.sas},q{data e165base; value=.; output; output; run;
+proc sql; create table @T@ as select count(*) as rows,count(value) as nonmissing from e165base; quit;},q{rows=2 and nonmissing=0});
+$full->('sql_distinct_excludes_missing',q{E:Count need work with Group in Proc SQL.sas},q{data e166base; length value $10; value='a'; output; value='b'; output; value=''; output; run;
+proc sql; create table @T@ as select count(distinct value) as n from e166base; quit;},q{n=2});
+$full->('sql_summary_remerge',q{D:Proc SQL with Sum Function.sas},q{data e167base; do value=1 to 3; output; end; run;
+proc sql; create table e167remerge as select value,sum(value) as total from e167base;
+create table @T@ as select count(*) as n,min(total) as smallest,max(total) as largest from e167remerge; quit;},q{n=3 and smallest=6 and largest=6});
+$full->('sql_rowwise_max_arguments',q{D:Proc SQL Max function like numeric operator.sas},q{data e168base; a=3; b=5; run;
+proc sql; create table @T@ as select max(a,b) as value from e168base; quit;},q{value=5});
+$full->('sql_rowwise_min_arguments',q{D:Function min and scan in Proc SQL.sas},q{data e169base; a=1; b=7; output; a=2; b=.; output; run;
+proc sql; create table e169min as select min(a,b) as value from e169base;
+create table @T@ as select sum(value) as total from e169min; quit;},q{total=3});
+$full->('sql_not_in_filter',q{D:not in function and obs function in Proc SQL.sas},q{data e170base; do value=1 to 3; output; end; run;
+proc sql; create table @T@ as select value from e170base where value not in (1,3); quit;},q{value=2});
+$full->('where_contains_operator',q{E:contains works with where or in proc sql but not if condition.sas},q{data e171base; length text $20; text='gene_A'; output; text='other'; output; run;
+data @T@; set e171base; where text contains 'gene'; run;},q{text='gene_A'});
+$full->('if_contains_is_invalid',q{E:contains works with where or in proc sql but not if condition.sas},q{data e172; text='gene'; if text contains 'gene'; run;},undef,fail=>1,diagnostic=>q{ERROR\s+\d+-\d+});
+$full->('sql_like_escape_literal_underscore',q{E:contains works with where or in proc sql but not if condition.sas},q{data e173base; length text $20; text='gene_A'; output; text='geneXA'; output; run;
+proc sql; create table @T@ as select text from e173base where text like 'gene!_%' escape '!'; quit;},q{text='gene_A'});
+$full->('sql_except_set_difference',q{E:Need to assign single vairible in Except procedure_Proc SQL to select unique rows from the first table.sas},q{data e174a; do value=1 to 3; output; end; run; data e174b; value=2; run;
+proc sql; create table e174except as select value from e174a except select value from e174b;
+create table @T@ as select count(*) as n,sum(value) as total from e174except; quit;},q{n=2 and total=4});
+$full->('sql_intersect_common_values',q{D:Proc SQL to select unique rows from the first table.sas},q{data e175a; value=1; output; value=2; output; run; data e175b; value=2; output; value=3; output; run;
+proc sql; create table @T@ as select value from e175a intersect select value from e175b; quit;},q{value=2});
+$full->('outer_union_corr_columns',q{D:outer union corr keep all columns from other tables.sas},q{data e176a; id=1; a=10; run; data e176b; id=2; b=20; run;
+proc sql; create table e176union as select * from e176a outer union corr select * from e176b;
+create table @T@ as select count(*) as n,sum(a) as a,sum(b) as b from e176union; quit;},q{n=2 and a=10 and b=20});
+$full->('keep_only_singleton_keys',q{E:keep_records_with_only_one_record_not_use_nodupkeys.sas},q{data e177base; input value; datalines;
+1
+1
+2
+3
+3
+;
+proc sql; create table @T@ as select value from e177base group by value having count(*)=1; quit;},q{value=2});
+$full->('composite_index_create_delete',q{D:make index with proc datasets.sas},q{data e178base; do a=1 to 2; do b=1 to 3; output; end; end; run;
+proc datasets lib=work nolist; modify e178base; index create pair=(a b); quit;
+proc sql noprint; select count(*) into :e178before from dictionary.indexes where libname='WORK' and memname='E178BASE' and upcase(indxname)='PAIR'; quit;
+proc datasets lib=work nolist; modify e178base; index delete pair; quit;
+proc sql noprint; select count(*) into :e178after from dictionary.indexes where libname='WORK' and memname='E178BASE'; quit;
+data @T@; before=&e178before; after=&e178after; run;},q{before=2 and after=0});
+$full->('composite_index_name_collision',q{D:Delete SAS Index and Tips on Create Index in Proc SQL.sas},q{data e179; a=1; b=2; run; proc datasets lib=work nolist; modify e179; index create a=(a b); quit;},undef,fail=>1,diagnostic=>q{index|same name});
+$full->('exclusive_format_boundary',q{D:number range format.sas},q{proc format; value e180fmt 20<-40='young' 40<-60='middle' other='unknown'; run;
+data @T@; length a b c $20; a=put(20,e180fmt.); b=put(40,e180fmt.); c=put(41,e180fmt.); run;},q{a='unknown' and b='young' and c='middle'});
+$full->('delete_then_recreate_format',q{E:delete previous format before creating a new format.sas},q{proc format; value e181fmt 1='old'; run;
+proc catalog cat=work.formats; delete e181fmt.format; quit;
+proc format; value e181fmt 1='new'; run;
+data @T@; length value $20; value=put(1,e181fmt.); run;},q{value='new'});
+$full->('character_format_other_category',q{D:Function Put and PutC demo.sas},q{proc format; value $e182fmt 'A'='known' other='unknown'; run;
+data @T@; length value $20; value=put('Z',$e182fmt.); run;},q{value='unknown'});
+$row->('probit_probability_to_z',q{E:probit function to get Z score based on P.sas},q{center=probit(0.5); upper=probit(0.975);},q{abs(center)<1e-10 and abs(upper-1.9599639845)<1e-8});
+$row->('binomial_tail_probability',q{E:calculate binomial P.sas},q{value=probbnml(0.5,4,1);},q{abs(value-0.3125)<1e-12});
+$row->('mod_floating_remainder',q{E:mod_demo.sas},q{value=mod(10,0.3);},q{abs(value-0.1)<1e-8});
+$row->('mod_negative_dividend',q{E:mod_demo.sas},q{value=mod(-7,3);},q{value=-1});
+$row->('normal_cdf_inverse',q{E:probit function to get Z score based on P.sas},q{center=probnorm(0); restored=probnorm(probit(0.025));},q{abs(center-0.5)<1e-12 and abs(restored-0.025)<1e-10});
+$row->('fisher_z_inverse_formula',q{E:Fisher's Z transformation and combine correlation form different dataset.sas},q{z=0.5*log((1+0.5)/(1-0.5)); restored=(exp(2*z)-1)/(exp(2*z)+1);},q{abs(z-0.5493061443)<1e-9 and abs(restored-0.5)<1e-10});
+$row->('circle_trigonometric_identity',q{E:draw_a_circle_with_sin_and_cos.sas},q{angle=constant('pi')/6; x=sin(angle); y=cos(angle);},q{abs(x*x+y*y-1)<1e-12});
+$full->('iml_row_sums',q{E:row_sum_in_iml.sas},q{proc iml; a={1 2 3,4 5 6}; value=a[,+]; create e190base from value[colname={'value'}]; append from value; close e190base; quit;
+proc sql; create table @T@ as select count(*) as n,min(value) as smallest,max(value) as largest from e190base; quit;},q{n=2 and smallest=6 and largest=15});
+die "Library catalog must contain exactly 100 cases; got ".scalar(@cases)."\n" unless @cases==100 && $number==190;
+return \@cases;

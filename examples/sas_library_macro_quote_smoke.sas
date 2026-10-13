@@ -1,0 +1,21 @@
+options notes;
+%let library_quote=%str(%');
+%let library_open=%str(%();
+%let library_close=%str(%));
+%let library_surname=%bquote(O'Brien);
+%let library_literal=%nrstr(%library_not_executed());
+data library_quote_check;
+    length quote open close $1 surname $40 literal $80;
+    quote=symget('library_quote');
+    open=symget('library_open');
+    close=symget('library_close');
+    surname=symget('library_surname');
+    literal=symget('library_literal');
+run;
+data _null_;
+    set library_quote_check;
+    if quote="'" and open='(' and close=')' and surname="O'Brien"
+       and literal='%library_not_executed()' then put 'LIBRARY_MACRO_QUOTE_OK';
+    else put 'ERROR: library macro-quoting smoke check failed';
+run;
+proc print data=library_quote_check; run;
