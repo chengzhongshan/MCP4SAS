@@ -1974,3 +1974,285 @@ responses, results JSON and HTML remain in the corresponding run folders.
 Publication contains maintained code, the new catalogue, hashes, Perl
 regressions and this report; runtime artifacts and generated configurations
 remain local.
+
+## 14. Fifth library-derived batch: cases 491–590
+
+This batch adds 100 synthetic, self-contained SAS examples derived from
+40 previously unused files in the two original SAS libraries. Their original
+filenames and raw SHA-256 hashes are retained in
+`tests/sas_library_source_manifest.json`; the programs are in
+`tests/new_examples_491_590.pl`. Original library files remain unchanged.
+The harness rejects code duplicated across cases 1–590 after normalizing
+case IDs, assertion markers and whitespace. This batch is additional to
+the preceding 490 numbered cases.
+
+The new cases cover quoted file lists, macro scope, input pointers,
+word scanning, arrays, loops, lag queues, permutations, binary decoding,
+POINT reads, sorting and duplicates, SQL joins, ranks, scaling, metadata,
+reshaping, PROC COMPARE and ODS graphics. Assertions check calculated
+values. Successful jobs must retain nonempty HTML; this does not by itself
+establish visual correctness of every plotted feature. Two deliberate SAS
+errors exercise failure reporting rather than count as successful SAS jobs.
+
+### Reproduced failures and resulting changes
+
+Cases 491 and 492 reproduced a runner defect with two quoted local files
+in one `%include` statement. The dependency log showed only the first
+file uploaded. SAS reported that it could not open the second local path,
+and MCP correctly returned FAILED. The dependency parser now collects
+each quoted filename, including decoded strings passed to DOSUBL or
+CALL EXECUTE. Regression coverage also checks comment separators, mixed
+quote styles, doubled apostrophes, semicolons within filenames and stopping
+at statement/options boundaries; ordinary quoted data and inactive NRSTR
+text remain excluded.
+
+The Perl harness now writes multiple uniquely named fixtures for a case
+and deletes only those remote fixtures after the run. It retains programs,
+responses, logs, results JSON and cleanup evidence locally.
+
+Case 502 initially failed the unexpected-data-quality-note check despite
+returning the correct three input rows and weighted total of 58. Its `@@`
+input intentionally scans consecutive pairs on one line, producing the SAS
+note about moving to a new line when INPUT reaches past the record end.
+The final case explicitly requires that note and the structured diagnostic,
+while still requiring COMPLETE, exit 0, no MCP error and the computed result.
+Diagnostic reporting is not suppressed.
+
+Case 578 initially used a fileref in `TMPlOUT=`, but SGPLOT requires a
+quoted output pathname. The corrected example writes its template under
+its own SAS WORK directory, verifies existence, and verifies deletion and
+fileref release. The original ERROR 22-322 and failed assertion are retained.
+
+Case 590 originally used DESENDING as an intentional SORT error. This ODA
+installation accepted that spelling with both one and three observations,
+so it was not a reliable failure fixture. The final case supplies three
+rows and a definitely absent BY variable, E590ABSENT. It must diagnose
+that missing variable and return FAILED. The original discovery and
+focused-run responses are retained; their successful SAS jobs are not
+misreported as expected failures.
+
+### Cygwin commands
+
+Start the dedicated MCP test endpoint in one terminal:
+
+```bash
+export PATH=/usr/bin:$PATH
+export SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0
+perl server.pl daemon -m production -l http://127.0.0.1:18140
+```
+
+In another terminal from the MCP4SAS checkout:
+
+```bash
+library_root=/mnt/h/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes
+perl tests/run_live_new_examples_30.pl --batch 8 --generate-only \
+  --library-root "$library_root"
+perl tests/run_live_new_examples_30.pl --batch 8 --live \
+  --url http://127.0.0.1:18140/mcp --library-root "$library_root" \
+  > new_library100_batch8_initial.log 2>&1
+# After fixing and verifying the reproduced dependency failure:
+perl tests/run_live_new_examples_30.pl --batch 8 --live \
+  --only 491,492,502,517,578,590 --url http://127.0.0.1:18140/mcp \
+  --library-root "$library_root" > new_library100_batch8_repairs.log 2>&1
+perl tests/run_live_new_examples_30.pl --batch 8 --live \
+  --url http://127.0.0.1:18140/mcp --library-root "$library_root" \
+  > new_library100_batch8_verified.log 2>&1
+```
+
+Each command creates a fresh owned run folder. Supplemental public CLI tests
+run separately and do not increase the numbered example count:
+
+```bash
+prove tests/test_include_file_lists.pl tests/test_deferred_include_paths.pl
+perl tests/test_live_include_file_lists.pl --live
+```
+
+The companion public wrapper uses the same supplemental Perl test with its
+own dependency module directory. Shared fixes are synchronized to the
+three active companion pipeline copies. No Python test driver is introduced.
+
+Case 517 also exposed a new-example assertion error: LBOUND was referenced
+from a subsequent DATA step where its temporary array was not defined.
+The corrected example stores the bound in the original DATA step and
+checks that retained dataset value. This is an example correction, not a
+runner change; the original failed response remains in the discovery run.
+
+
+
+### Catalogue of the 100 new examples
+
+E and D identify the error-prone and general SAS code collections respectively.
+The expected outcome column describes checks, not an unverified execution claim.
+
+| Case | Example | Computed assertion / expected diagnostic | Library source |
+| --- | --- | --- | --- |
+| 491 | include_two_quoted_local_files | total=29 | E:Add quote to separate var list.sas |
+| 492 | dosubl_two_quoted_local_files | total=42 | E:Add quote to separate var list.sas |
+| 493 | macro_quote_word_list | text='"alpha","beta","gamma"' | E:Add quote to separate var list.sas |
+| 494 | symputx_global_overwrites_shadow | value=21 | E:make_global_macro_var_with_symputx_to_overwrite_macro_vars.sas |
+| 495 | symputx_local_preserves_global | local_value=13 and global_value=8 | E:symputx demo different from symput.sas |
+| 496 | symputx_numeric_trim | text='1234' and n=4 | E:symputx demo different from symput.sas |
+| 497 | macro_repeat_parameter_bound | n=4 and total=30 | D:A macro to Run other Macro repeatedly.sas |
+| 498 | cmpres_reduces_internal_blanks | text='five plus ten' | D:Macro function cmpres and qcmpres.sas |
+| 499 | array_symputx_cutpoints | total=15 | D:Make multiple macro variables with Function array and call symput in data step.sas |
+| 500 | sysfunc_prxparse_then_match | value=1 | E:use prxmatch in sysfunc.sas |
+| 501 | single_at_rereads_same_record | total=16 | E:evaluate_single_and_double_at_in_data_step.sas |
+| 502 | double_at_paired_values | n=3 and total=58; expected INPUT note | E:evaluate_single_and_double_at_in_data_step.sas |
+| 503 | colon_reads_tab_separated_identifier | gene='long_gene_name' and value=18 | E:Tell_sas_to_read_var_in_variable_length.sas |
+| 504 | ampersand_reads_two_word_name | name='Ada Lovelace' and score=28 | D:tell sas to read variable until there are two or more spaces as a delimeter.sas |
+| 505 | ampersand_colon_multiple_spaces | label='single label' and value=35 | D:tell sas to read variable until there are two or more spaces as a delimeter.sas |
+| 506 | scan_split_comma_ids | n=3 and width=10 | D:split_elements_and_output_ids_into_each_row.sas |
+| 507 | scan_min_explicit_numeric_conversion | value=-3 | D:use_scan_countc_to_get_min_value_with_loop.sas |
+| 508 | scan_max_negative_tokens | value=-2 | D:use_scan_countc_to_get_min_value_with_loop.sas |
+| 509 | scan_preserves_empty_field_m | missing(middle) and n=3 | D:split_elements_and_output_ids_into_each_row.sas |
+| 510 | qscan_retains_embedded_comma | item='a,b' | D:split_elements_and_output_ids_into_each_row.sas |
+| 511 | infile_column_pointer_reposition | total=46 | E:evaluate_single_and_double_at_in_data_step.sas |
+| 512 | input_absolute_pointer_character | prefix='ABC' and value=127 | E:Tell_sas_to_read_var_in_variable_length.sas |
+| 513 | countw_quoted_delimiters | n=3 | D:split_elements_and_output_ids_into_each_row.sas |
+| 514 | scan_backward_last_token | value=16 | D:use_scan_countc_to_get_min_value_with_loop.sas |
+| 515 | trimmed_sql_key_preparation | clean='A12' and n=3 | E:strip left for equal condition in proc sql.sas |
+| 516 | array_two_dimensional_trace | trace=9 | E:make data step matrix with array.sas |
+| 517 | array_temporary_lower_bound_zero | value=20 and lower=0 | D:Datastep Array function to make multiple new variables and assign initial value to it.sas |
+| 518 | array_character_initial_values | value='red/green/blue' | D:Datastep Array function to make multiple new variables and assign initial value to it.sas |
+| 519 | array_parallel_scale_columns | total=7 | E:make data step matrix with array.sas |
+| 520 | do_until_executes_once | value=12 | D:Do until Demo.sas |
+| 521 | do_while_zero_iterations | value=12 and n=0 | D:Do until Demo.sas |
+| 522 | do_until_fibonacci_threshold | a=13 and b=21 and n=7 | D:Do until Demo.sas |
+| 523 | retain_prefix_running_total | total=20 | D:Powerful Function retain in datasetp.sas |
+| 524 | by_reset_group_running_total | value=12 and n=2 | D:Demo for data step retain, by, if condition to summarize data.sas |
+| 525 | lag_unconditional_difference | total=9 and first_missing=1 | E:lag_generate_missing_values.sas |
+| 526 | lag_conditional_queue_semantics | total=6 | E:lag_generate_missing_values.sas |
+| 527 | ranperm_preserves_integer_multiset | total=15 and product=120 | E:ranperm_generate_random_matrix.sas |
+| 528 | fisher_yates_permutation_unique | total=21 and product=720 | E:ranperm_generate_random_matrix.sas |
+| 529 | binary_three_bit_decode | b1=1 and b2=0 and b3=1 and reconstructed=5 | E:use_binary_function_in_proc_iml_generate_SNP_haplotype.sas |
+| 530 | binary_bitwise_operations | intersection=2 and union=7 and difference=5 | E:use_binary_function_in_proc_iml_generate_SNP_haplotype.sas |
+| 531 | point_read_reverse_order | x=4 | D:Transform Plink Tped to long format for SAS with point function debugging.sas |
+| 532 | point_repeat_selected_observation | n=3 and total=27 | D:Transform Plink Tped to long format for SAS with point function debugging.sas |
+| 533 | set_in_flags_origin_counts | origins=4 and total=13 | D:Datastep Set demo.sas |
+| 534 | set_dataset_keep_rename | value=7 and doubled=14 | D:Datastep Set demo.sas |
+| 535 | set_obs_firstobs_window | n=3 and total=12 | D:Datastep Set demo.sas |
+| 536 | sort_descending_first_row | x=4 | E:desending should put ahead of the variable used in proc sort.sas |
+| 537 | sort_mixed_direction_by_groups | grp=1 and x=3 | E:desending should put ahead of the variable used in proc sort.sas |
+| 538 | sort_dupout_count_and_value | n=2 and total=60 | E:OUTPUT duplicates into sas dataset.sas |
+| 539 | sort_noduprecs_entire_row | n=2 and total=30 | E:OUTPUT duplicates into sas dataset.sas |
+| 540 | sql_having_multi_column_minima | n=2 and ids=5 | E:Get_minimum_or_max_value_for_any_of_specific_columns_with_having.sas |
+| 541 | sql_having_group_max_ties | n=3 and total=13 | E:Get_minimum_or_max_value_for_any_of_specific_columns_with_having.sas |
+| 542 | sql_catx_chromosome_position | locus='3:127' | E:CAT CATX for Linking variables to create new one in PROC SQL.sas |
+| 543 | sql_cats_padded_character_parts | value='202610' | D:Proc SQL with Cats and other Cat functions.sas |
+| 544 | sql_cat_preserves_internal_blanks | value='A  B' | E:CAT CATX for Linking variables to create new one in PROC SQL.sas |
+| 545 | sql_join_trimmed_keys | total=28 | E:strip left for equal condition in proc sql.sas |
+| 546 | sql_full_join_coalesce_key | ids=3 and total=13 | D:Proc Import only import partial column variables and rename them steamlessly.sas |
+| 547 | sql_left_join_missing_match | n=3 and unmatched=2 | D:Proc Import only import partial column variables and rename them steamlessly.sas |
+| 548 | rank_ties_low_group | total=5 | D:Proc Rank Demo.sas |
+| 549 | rank_ties_high_group | total=7 | D:Proc Rank Demo.sas |
+| 550 | rank_descending_highest_first | r=1 | D:Proc Rank Demo.sas |
+| 551 | sql_range_scaling_signed | low=-1 and high=1 and abs(total)<1e-12 | E:scale ssGSEA score in the range from -1 to 1.sas |
+| 552 | stdize_range_then_signed_scale | low=-1 and high=1 | E:scale ssGSEA score in the range from -1 to 1.sas |
+| 553 | sql_dictionary_specific_member | nobs=1 and nvar=1 | D:check tables with dictionary.tables by proc sql.sas |
+| 554 | sql_dictionary_column_order | varnum=1 and length=8 | D:check tables with dictionary.tables by proc sql.sas |
+| 555 | work_directory_exists | exists=1 and lengthn(path)>0 | D:get sas work dir with sysfunc pathname_work.sas |
+| 556 | transpose_two_measures_one_subject | n=2 and total=11 | D:Proc transpose_transpose rowwide long data into columnwide long data.sas |
+| 557 | transpose_prefix_and_delimiter | visit_1=4 and visit_2=9 | D:Proc transpose_transpose rowwide long data into columnwide long data.sas |
+| 558 | transpose_copy_constant_attribute | total=16 and n=2 | D:Proc transpose_transpose rowwide long data into columnwide long data.sas |
+| 559 | wide_array_to_long_sum | n=3 and total=48 | E:make data step matrix with array.sas |
+| 560 | compare_identical_numeric_rows | status=0 | D:Proc compare with var and id as well as output parameters.sas |
+| 561 | compare_numeric_difference_flag | changed=1 | D:Proc compare with var and id as well as output parameters.sas |
+| 562 | compare_absolute_tolerance | status=0 | D:Proc compare with var and id as well as output parameters.sas |
+| 563 | open_dataset_attribute_counts | n=19 and vars=5 and rc=0 | D:check tables with dictionary.tables by proc sql.sas |
+| 564 | open_custom_dataset_varnum | position=2 and rc=0 | D:check tables with dictionary.tables by proc sql.sas |
+| 565 | metadata_varname_by_position | name='score' | D:Transform Plink Tped to long format for SAS with point function debugging.sas |
+| 566 | array_vvaluex_dynamic_column | text='0017' | D:Transform Plink Tped to long format for SAS with point function debugging.sas |
+| 567 | macro_work_path_matches_data_function | equal=1 | D:get sas work dir with sysfunc pathname_work.sas |
+| 568 | retained_gap_cluster_count | cluster=3 | D:Powerful Function retain in datasetp.sas |
+| 569 | by_first_last_flags_counts | starts=3 and finishes=3 and n=6 | D:Demo for data step retain, by, if condition to summarize data.sas |
+| 570 | scan_numeric_list_mean | average=7.5 and n=4 | D:use_scan_countc_to_get_min_value_with_loop.sas |
+| 571 | gtl_scatter_overlay_computed | total=24 | D:GTL Demo very useful.sas |
+| 572 | gtl_series_computed | total=30 | D:GTL Demo very useful.sas |
+| 573 | gtl_heatmapparm_four_cells | total=12 and n=4 | D:Heatmap Demo.sas |
+| 574 | sgplot_heatmapparm_preaggregated | total=18 | D:Heatmap Demo.sas |
+| 575 | sgplot_vbar_mean_response | average=5.5 | D:sgplot  vbar with mean by using response stat group functions.sas |
+| 576 | sgplot_vbar_sum_response | total=15 | D:sgplot  vbar with mean by using response stat group functions.sas |
+| 577 | sgplot_hbar_grouped_response | total=21 | D:sgplot  vbar with mean by using response stat group functions.sas |
+| 578 | sgplot_tmplout_owned_tempfile | exists=1 and deleted=0 and cleared=0 | D:Get template code with proc sgplot function tmplout.sas |
+| 579 | gtl_layout_lattice_two_panels | total=30 | D:GTL Demo very useful.sas |
+| 580 | gtl_bar_chart_summary | total=24 | D:Proc sgrender with proc template Demo.sas |
+| 581 | sgplot_vbar_weighted_frequency | total=10 | D:sgplot  vbar with mean by using response stat group functions.sas |
+| 582 | sgplot_scatter_style_shapes | total=21 | D:GTL Demo very useful.sas |
+| 583 | sgplot_series_grouped | total=30 | D:GTL Demo very useful.sas |
+| 584 | sgplot_vbox_two_groups | low=2 and high=7 | D:Get template code with proc sgplot function tmplout.sas |
+| 585 | sgplot_histogram_small_dataset | average=6.5 | D:Proc sgrender with proc template Demo.sas |
+| 586 | sgplot_band_intervals | width=8 | D:GTL Demo very useful.sas |
+| 587 | sgplot_reference_line_computed | high=25 | D:GTL Demo very useful.sas |
+| 588 | sgplot_discrete_axis_long_labels | total=14 | D:sgplot  vbar with mean by using response stat group functions.sas |
+| 589 | intentional_array_index_out_of_range | FAILED: Array subscript out of range | D:Datastep Array function to make multiple new variables and assign initial value to it.sas |
+| 590 | intentional_sort_missing_by_variable | FAILED: E590ABSENT.*not found\|not found.*E590ABSENT | E:desending should put ahead of the variable used in proc sort.sas |
+
+### Focused verification and offline checks
+
+The first live run completed all 100 cases in `SAS_Output_real30_gnnAHX`
+and passed 94 validations. Its six failures were 491, 492, 502, 517, 578
+and 590, as described above; remote deletion of its four named include
+fixtures passed. The focused rerun in `SAS_Output_real30_ODwIlm` passed
+491, 492, 502, 517 and 578. Case 590 still demonstrated that DESENDING
+was accepted, so that run passed 5/6. Its four remote fixtures were also
+cleaned successfully. The corrected absent-BY-variable case then passed
+1/1 validation in `SAS_Output_real30_526Yd0`, returning FAILED as required.
+
+The new file-list regression initially failed five of ten assertions;
+after the parser fix all ten passed. The complete offline suites passed
+**300 assertions across 16 Perl files** for MCP4SAS and **162 assertions
+across 13 Perl files** for the companion pipeline. The commands extend
+the preceding section's full suite with `tests/test_include_file_lists.pl`:
+
+```bash
+prove tests/test_comment_quote_preflight.pl tests/test_inline_data_preflight.pl \
+  tests/test_inline_macro_preflight.pl MCPDeps/test_sas_log_and_labels.pl \
+  tests/test_mcp_job_reporting.pl tests/test_sas_log_diagnostics.pl \
+  tests/test_macro_quoting_preflight.pl tests/test_format_name_advisory.pl \
+  MCPDeps/test_sas_oda_include_lookup.pl tests/test_quoted_filename_upload.pl \
+  tests/test_example_uniqueness.pl tests/test_deferred_macro_literals.pl \
+  tests/test_printto_status_guard.pl tests/test_fileref_name_advisory.pl \
+  tests/test_deferred_include_paths.pl tests/test_include_file_lists.pl
+```
+
+### Final live outcome for cases 491–590
+
+The full rerun exited 0 and passed **100/100 validations** in
+`SAS_Output_real30_biOUtX`: **98 COMPLETE jobs and two intentional FAILED
+jobs** (589–590). All 40 original library hashes matched. The catalogue
+passed normalized duplicate checks against the preceding 490 examples.
+Computed markers, retained logs, nonempty HTML for successful jobs,
+structured status/diagnostics, MCP error flags, worker exit codes and
+completion-marker cleanup were verified. Successful jobs had no unexpected
+warnings or data-quality diagnostics; case 502 explicitly requires its
+expected input-flowover note.
+
+Remote cleanup exited 0 and deleted only these four fixtures:
+
+```text
+~/include_491_1_SAS_Output_real30_biOUtX.sas
+~/include_491_2_SAS_Output_real30_biOUtX.sas
+~/include_492_1_SAS_Output_real30_biOUtX.sas
+~/include_492_2_SAS_Output_real30_biOUtX.sas
+```
+
+Its evidence is retained in `fixture_cleanup.json` and `fixture_cleanup.log`
+in the run directory. The companion public-wrapper live test passed all
+**10 assertions** in `SAS_Output_include_lists_Tgn3QJ`, covering direct,
+DOSUBL and CALL EXECUTE file lists, computed values, HTML and removal of its
+two unique remote fixtures. That supplemental test is not counted among
+the 100 numbered examples.
+
+Terminal logs remain local in `SAS_Output_library100_run_logs/`:
+`new_library100_batch8_initial.log`, `new_library100_batch8_repairs.log`,
+`new_library100_batch8_failure_fixture.log`,
+`new_library100_batch8_verified.log`,
+`new_library100_batch8_regression_before.log`,
+`new_library100_batch8_regression_after.log`,
+`new_library100_batch8_baseline.log`, `new_library100_batch8_offline.log`,
+`new_library100_batch8_companion_offline.log` and
+`new_library100_batch8_companion_live.log`.
+Programs, fixtures, responses, results JSON and HTML remain in their owned
+run folders. Publication includes maintained code, the 100-case catalogue,
+source hashes, Perl tests, README and this report. Generated outputs,
+caches and unrelated configuration changes remain local.
