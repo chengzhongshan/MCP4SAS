@@ -360,15 +360,15 @@ def _open_sas_session():
     last_exc = None
     for cfgname in _iter_saspy_cfg_names():
         try:
-            return saspy.SASsession(cfgname=cfgname, results='html')
+            return saspy.SASsession(cfgname=cfgname, results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return saspy.SASsession(results='html')
+            return saspy.SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
             raise last_exc
-    return saspy.SASsession(results='html')
+    return saspy.SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
 
 def _format_elapsed(seconds):
     seconds = max(0, int(seconds or 0))
@@ -737,8 +737,8 @@ def _probe_session_after_empty_submit(session):
         detail = traceback.format_exc()
         return False, f"{type(exc).__name__}: {exc}\n{detail}"
 
-def run_sas_logic(sas_code, session_obj):   
-    try:    
+def run_sas_logic(sas_code, session_obj):
+    try:
         macro_log = ''
         macro_warning = False
         _write_status({
@@ -891,12 +891,12 @@ def download_file(remote_filepath, local_path, session_obj):
         session, session_obj = get_session(session_obj)
         requested_remote_path = str(remote_filepath or '')
         filename = os.path.basename(requested_remote_path)
-        
+
         # Logic to handle empty local_path
         if not local_path or local_path.strip() == '':
             local_path = filename # Removed the leading '.' unless you specifically wanted a hidden file
         local_path = os.path.abspath(local_path)
-            
+
         dir_name = os.path.dirname(local_path)
 
         if dir_name and not os.path.exists(dir_name):
@@ -1378,12 +1378,12 @@ def dirlist(remote_path, session_obj):
     try:
         # Get the active session
         session, session_obj = get_session(session_obj)
-        
+
         # listdir returns a list of filenames in the remote_path
         files = session.dirlist(remote_path)
-        
+
         return files, session_obj
-    
+
     except Exception as e:
         return f"PYTHON ERROR: {str(e)}", session_obj
 
@@ -1683,15 +1683,15 @@ def open_sas_session():
     last_exc = None
     for cfgname in iter_saspy_cfg_names():
         try:
-            return SASsession(cfgname=cfgname, results='html')
+            return SASsession(cfgname=cfgname, results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return SASsession(results='html')
+            return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
             raise last_exc
-    return SASsession(results='html')
+    return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
 def log_event(message):
     stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{stamp}] {message}\n"
@@ -4182,7 +4182,7 @@ sub get_sas_home_path {
 
 =head1 DESCRIPTION
 
-SAS_ODA_Runner provides a Perl interface to run SAS code on remote ODA systems using saspy. 
+SAS_ODA_Runner provides a Perl interface to run SAS code on remote ODA systems using saspy.
 It handles automatic dependency resolution, file uploads/downloads, and macro management.
 
 =head1 METHODS
@@ -4201,7 +4201,7 @@ Creates a new SAS_ODA_Runner instance.
 Executes SAS code and returns results.
 
     my $result = $runner->run_code('proc print data=sashelp.class; run;');
-    
+
     # Returns hashref with keys:
     # - log: SAS log output
     # - lst: SAS listing/HTML output
@@ -4244,15 +4244,15 @@ Gets the SAS home directory path on the remote system.
 =head1 EXAMPLE
 
     use SAS_ODA_Runner;
-    
+
     my $runner = SAS_ODA_Runner->new(local_macro_dir => './my_macros');
-    
+
     my $result = $runner->run_code(q{
         %my_macro(param1=value1);
         proc means data=sashelp.class;
         run;
     });
-    
+
     die $result->{error} if $result->{error};
     print "Log:\n", $result->{log};
 

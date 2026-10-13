@@ -72,15 +72,15 @@ def open_sas_session():
     last_exc = None
     for cfgname in iter_saspy_cfg_names():
         try:
-            return SASsession(cfgname=cfgname, results='html')
+            return SASsession(cfgname=cfgname, results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
         try:
-            return SASsession(results='html')
+            return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
             raise last_exc
-    return SASsession(results='html')
+    return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
 def log_event(message):
     stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{stamp}] {message}\n"
