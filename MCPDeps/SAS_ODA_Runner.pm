@@ -3635,6 +3635,30 @@ sub _ensure_remote_macro_bootstrap_helper {
     die "Could not verify/upload macro bootstrap helper $local_helper before loading ~/Macros: $detail\n";
 }
 
+sub _replace_dependency_path {
+    my ($code,$local,$remote)=@_;
+    my @queue=([$local,$remote]);
+    my %seen;
+    my $source_length=length($code);
+    while (@queue) {
+        my @next;
+        for my $pair (@queue) {
+            my ($source,$target)=@$pair;
+            next if length($source)>$source_length;
+            next if $seen{$source}++;
+            $code =~ s/\Q$source\E/$target/g;
+            for my $quote ("'",'"') {
+                my ($escaped_source,$escaped_target)=($source,$target);
+                $escaped_source =~ s/\Q$quote\E/$quote$quote/g;
+                $escaped_target =~ s/\Q$quote\E/$quote$quote/g;
+                push @next,[$escaped_source,$escaped_target] if $escaped_source ne $source;
+            }
+        }
+        @queue=@next;
+    }
+    return $code;
+}
+
 sub _process_dependencies {
     my ($self, $code) = @_;
     my @logs;
@@ -3657,7 +3681,7 @@ sub _process_dependencies {
             };
             if ($remote && $remote !~ /^PYTHON ERROR/) {
                 push @logs, "Uploaded %include: $remote";
-                $code =~ s/\Q$path\E/$remote/g;
+                $code = _replace_dependency_path($code,$path,$remote);
             }
         }
     }

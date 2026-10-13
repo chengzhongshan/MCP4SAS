@@ -221,15 +221,25 @@ sub mask_macro_literals {
     }
     return $masked;
 }
+sub _literal_is_executable {
+    my ($analysis,$span)=@_;
+    my $prefix=substr($analysis->{masked},0,$span->{start});
+    my @stack;
+    while ($prefix =~ /\b(call\s+execute|dosubl)\s*\(|([()])/ig) {
+        if (defined $1) {push @stack,1;}
+        elsif ($2 eq '(') {push @stack,0;}
+        else {pop @stack;}
+    }
+    return scalar grep {$_} @stack;
+}
 sub macro_dependency_view {
     my ($text)=@_;
     $text //= '';
     my $analysis=analyze_source($text);
     my $masked=mask_macro_literals($text);
     for my $span (@{$analysis->{single_quotes}}) {
-        my $prefix=substr($analysis->{comments_masked},0,$span->{start});
         # Literal code passed to these execution APIs is a real dependency.
-        if ($prefix =~ /(?:\bcall\s+execute|\bdosubl)\s*\([^;]*\z/is) {
+        if (_literal_is_executable($analysis,$span)) {
             my $body=substr($text,$span->{start}+1,$span->{end}-$span->{start}-2);
             my ($decoded,@positions)=('');
             for (my $pos=0;$pos<length($body);) {
@@ -260,10 +270,30 @@ sub include_targets {
     my $active=macro_dependency_view($text);
     my $paths=mask_comments($text);
     my @targets;
+    my $analysis=analyze_source($text);
+    my @deferred;
+    for my $span (@{$analysis->{single_quotes}}) {
+        next unless _literal_is_executable($analysis,$span);
+        push @deferred,$span;
+        my $body=substr($text,$span->{start}+1,$span->{end}-$span->{start}-2);
+        $body =~ s/''/'/g;
+        push @targets,@{include_targets($body)};
+    }
     while ($active =~ /%include\b/ig) {
         my $offset=$-[0];
+        next if grep {$offset>=$_->{start} && $offset<$_->{end}} @deferred;
         my $tail=substr($paths,$offset);
-        push @targets,$2 if $tail =~ /^%include\s+(["'])(.*?)\1/is;
+        next unless $tail =~ /^%include\s+(["'])/i;
+        my ($quote,$pos,$value)=($1,$+[0],'');
+        while ($pos<length($tail)) {
+            my $char=substr($tail,$pos++,1);
+            if ($char eq $quote) {
+                if (substr($tail,$pos,1) eq $quote) {$value.=$quote; $pos++; next;}
+                push @targets,$value if length $value;
+                last;
+            }
+            $value.=$char;
+        }
     }
     return \@targets;
 }

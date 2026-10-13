@@ -1726,3 +1726,251 @@ and HTML remain in their local run directories. Publication includes the
 maintained fixes, catalogue, source hashes, Perl tests, smoke example and
 this report; generated configurations, caches and runtime outputs remain
 local.
+
+## 13. Fourth library-derived batch: 100 new cases (391–490)
+
+This batch adds 100 newly generated examples beyond cases 1–390, adapted
+from 41 additional files in the same two library collections. The catalogue
+is `tests/new_examples_391_490.pl`; the original file hashes are recorded
+in `tests/sas_library_source_manifest.json`. The original scripts remain
+unchanged. All cases use synthetic data, owned WORK files or uniquely
+named local include fixtures. Normalized fingerprints reject earlier
+sources changed only by generated IDs or whitespace.
+
+The new cases cover deferred includes, name literals and attributes,
+physical input and formats, libraries, SQL grouping/subqueries, comparisons,
+correlation, GLM/logistic/survival output, meta-analysis formulas, IML,
+reports, panels, graphics and scalar contracts. Cases 489–490 intentionally
+fail for unsorted BY input and an aggregate function in a SQL WHERE clause.
+
+### Cygwin commands
+
+Terminal 1, from the repository root:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18139
+```
+
+Terminal 2:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/run_live_new_examples_30.pl --generate-only --batch 7 \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes
+perl tests/run_live_new_examples_30.pl --live --batch 7 \
+  --url http://127.0.0.1:18139/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch7_initial.log 2>&1
+perl tests/run_live_new_examples_30.pl --live --batch 7 --only 391,392,394 \
+  --url http://127.0.0.1:18139/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch7_repairs.log 2>&1
+perl tests/run_live_new_examples_30.pl --live --batch 7 \
+  --url http://127.0.0.1:18139/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch7_verified.log 2>&1
+```
+
+`--library-root` verifies the original files' SHA-256 hashes; omit it to
+run the self-contained generated catalogue elsewhere. Perl writes local
+include fixtures and substitutes their paths into the two deferred include
+programs. The fixtures have unique remote basenames. Cleanup deletes only
+submitted fixtures and saves `fixture_cleanup.log` and
+`fixture_cleanup.json`; a cleanup failure makes the harness exit nonzero.
+Local source programs, responses, calculation logs and HTML remain available.
+Generation, orchestration and regressions use Perl/Bash with the existing
+SASPy backend.
+
+### Complete case catalogue
+
+`E:` denotes Easy-For-Error-Codes-SAS; `D:` denotes SAS_Code_Database.
+
+| ID | Example | Oracle | Library source |
+|---|---|---|---|
+| 391 | `dosubl_single_quoted_local_include` | `value=15` | D:import_sas_macros_with_filename.sas |
+| 392 | `execute_single_quoted_local_include` | `value=17` | D:import_sas_macros_with_filename.sas |
+| 393 | `validvarname_any_rename_space` | `sample_type=7` | E:rename_table_variable_name_has_spaces.sas |
+| 394 | `name_literal_percent_is_not_macro` | `value=9` | E:rename_table_variable_name_has_spaces.sas |
+| 395 | `macro_dynamic_symputx_names` | `total=14` | E:create_macro_vars_in_data_step_and_process_it_with_other_macro.sas |
+| 396 | `symexist_after_symdel` | `value=0` | E:create_macro_vars_in_data_step_and_process_it_with_other_macro.sas |
+| 397 | `dictionary_macros_custom_value` | `value='research'` | E:create_macro_vars_in_data_step_and_process_it_with_other_macro.sas |
+| 398 | `vtype_numeric_character` | `nt='N' and ct='C'` | D:check variable type with function vtype demo.sas |
+| 399 | `vlength_character_metadata` | `width=23 and actual=5` | E:format varibales in data step with attrib.sas |
+| 400 | `attrib_length_label_format` | `labeltext='meaning' and formattext='COMMA12.2'` | E:format varibales in data step with attrib.sas |
+| 401 | `import_datarow_skip_metadata` | `total=11 and n=2` | E:firstobs not functional in Proc import but datarow works.sas |
+| 402 | `infile_firstobs_skip_header` | `total=8` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 403 | `infile_obs_limit_records` | `n=2 and total=3` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 404 | `infile_length_actual_record_bytes` | `n=3` | E:read_long_line_into_dataset.sas |
+| 405 | `infile_lrecl_long_record_scan` | `n=400` | E:read_long_line_into_dataset.sas |
+| 406 | `input_colon_character_no_truncation` | `key='long_identifier' and value=12` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 407 | `stop_after_first_noncomment_record` | `text='payload'` | D:Stop function for infile to get specific lines.sas |
+| 408 | `scanover_find_marker_in_record` | `value=42` | D:SAS data step scanover for specific rows.sas |
+| 409 | `format_dosage_threshold_ranges` | `a=0 and b=1 and c=2` | D:make dosage into hard call geno demo.sas |
+| 410 | `format_cntlin_dynamic_lookup` | `value='two'` | D:make dosage into hard call geno demo.sas |
+| 411 | `informat_cntlin_character_to_numeric` | `a=1 and b=0` | D:make dosage into hard call geno demo.sas |
+| 412 | `libname_owned_path_with_space` | `value=14` | E:libname for path with space no need to escape in Linux.sas |
+| 413 | `directory_dopen_nonexistent_returns_zero` | `handle=0 and cleared=0` | D:Dir_existence_Template.sas |
+| 414 | `sysget_path_nonempty` | `n>0` | D:SAS get System Path with Function sysget.sas |
+| 415 | `filter_prefix_variable_mean` | `total=15` | E:filter_data_step_records_with_mean_function_and_variable_shotcut.sas |
+| 416 | `sql_having_group_sum_threshold` | `grp=2 and total=3` | D:Proc SQL aggregate functions need to be used with group and having function.sas |
+| 417 | `sql_where_before_grouping` | `n=4 and total=10` | D:Proc SQL aggregate functions need to be used with group and having function.sas |
+| 418 | `sql_greater_than_all_subquery` | `n=2 and total=7` | D:Proc SQL subset number greate than all of number in a dataset.sas |
+| 419 | `sql_equal_any_subquery` | `n=2 and total=6` | D:Proc SQL subset number greate than all of number in a dataset.sas |
+| 420 | `sql_not_in_subquery_filter` | `total=5` | D:Delete rows with where conditions in proc sql without create table.sas |
+| 421 | `sql_aggregate_then_scalar_max` | `value=10` | D:Proc SQL Max Demo.sas |
+| 422 | `sql_group_count_distinct` | `rows=5 and uniquevals=3` | D:Proc SQL aggregate functions need to be used with group and having function.sas |
+| 423 | `sql_alter_add_column_default` | `x=1 and y=8` | D:Update, modify and alter in proct SQL.sas |
+| 424 | `sql_alter_drop_column_metadata` | `n=1` | D:Update, modify and alter in proct SQL.sas |
+| 425 | `sql_insert_values_into_table` | `n=2 and total=13` | D:Update, modify and alter in proct SQL.sas |
+| 426 | `sql_update_case_by_row` | `total=50` | D:Update, modify and alter in proct SQL.sas |
+| 427 | `sql_round_value_format_independent` | `abs(x-1.2345)<1e-10 and abs(rounded-1.23)<1e-10` | E:round_numeric_var_with_format_and_case_function_demo.sas |
+| 428 | `compare_absolute_tolerance_equal` | `value=0` | D:proc compare Comparing a Variable Multiple Times.sas |
+| 429 | `compare_id_ignores_row_position` | `value=0` | D:proc compare to compare mult variables between two dsd with ID function.sas |
+| 430 | `compare_var_with_different_names` | `value=0` | D:proc compare Comparing a Variable Multiple Times.sas |
+| 431 | `set_same_dataset_twice` | `n=4 and total=6` | D:Use datastep Set function to append the same dataset.sas |
+| 432 | `set_in_dataset_origin_flags` | `origins=3 and total=10` | D:Use datastep Set function to append the same dataset.sas |
+| 433 | `prxmatch_case_insensitive_filter` | `value=1` | E:prxmatch with perl regular expression and modifier.sas |
+| 434 | `prxmatch_negated_character_class` | `value=1 and rejected=0` | E:prxmatch with perl regular expression and modifier.sas |
+| 435 | `sql_like_literal_percent_single_quote` | `n=1` | D:Proc SQL aggregate functions need to be used with group and having function.sas |
+| 436 | `corr_perfect_linear_outp` | `abs(value-1)<1e-10` | E:Get corr P value based on Z, Get Z based on corr R, Get R based on Z.sas |
+| 437 | `corr_covariance_sample_scale` | `abs(value-3)<1e-10` | E:Get corr P value based on Z, Get Z based on corr R, Get R based on Z.sas |
+| 438 | `corr_spearman_reversed_order` | `abs(value+1)<1e-10` | E:Get corr P value based on Z, Get Z based on corr R, Get R based on Z.sas |
+| 439 | `glm_solution_known_slope` | `abs(estimate-2)<1e-10` | D:ods output proc glm statistics Demo.sas |
+| 440 | `glm_anova_degrees_of_freedom` | `df=4` | D:ods output proc glm statistics Demo.sas |
+| 441 | `logistic_grouped_binomial_slope` | `abs(intercept)<1e-5 and abs(x-log(7/3))<1e-5` | D:Logistic_regression_with_ROC_curve.sas |
+| 442 | `logistic_predicted_probabilities` | `abs(low-.3)<1e-5 and abs(high-.7)<1e-5` | D:Logistic_regression_with_ROC_curve.sas |
+| 443 | `lifetest_uncensored_survival_endpoint` | `low=0 and high=1` | D:proc lifttest Demo with ODS.sas |
+| 444 | `lifetest_stratified_output` | `groups=2` | D:proc lifttest Demo with ODS.sas |
+| 445 | `phreg_parameter_table_capture` | `n=1` | D:proc phreg for survival analysis Demo.sas |
+| 446 | `meta_inverse_variance_fixed_mean` | `abs(pooled-.24)<1e-10` | D:Meta-analysis Demo.sas |
+| 447 | `meta_pooled_standard_error` | `abs(se-sqrt(.008))<1e-10` | D:Meta-analysis Demo.sas |
+| 448 | `meta_cochran_q_statistic` | `abs(q-.8)<1e-10` | D:Meta-analysis Demo.sas |
+| 449 | `meta_i_squared_lower_bound` | `value=0` | D:Meta-analysis Demo.sas |
+| 450 | `binomial_exact_symmetric_tail` | `abs(value-.6875)<1e-10` | D:Pbinomal test with proc freq.sas |
+| 451 | `binomial_probability_mass` | `abs(value-.375)<1e-10` | D:Pbinomal test with proc freq.sas |
+| 452 | `odds_ratio_cross_product` | `ratio=6` | E:order_by_data_for_proc_freq_OR_calculation.sas |
+| 453 | `odds_log_standard_error` | `abs(se-sqrt(25/24))<1e-10` | E:order_by_data_for_proc_freq_OR_calculation.sas |
+| 454 | `fisher_z_standard_error` | `abs(se-.2)<1e-10` | E:Get corr P value based on Z, Get Z based on corr R, Get R based on Z.sas |
+| 455 | `correlation_t_statistic` | `abs(t-2)<1e-10` | E:Get corr P value based on Z, Get Z based on corr R, Get R based on Z.sas |
+| 456 | `iml_repeat_row_pattern` | `rows=3 and cols=2 and total=9` | D:Make matrix row_col Index with repeat and create sas dataset from IML matrix.sas |
+| 457 | `iml_repeat_column_pattern` | `rows=2 and cols=3 and total=9` | D:Make matrix row_col Index with repeat and create sas dataset from IML matrix.sas |
+| 458 | `iml_diagonal_extraction` | `total=5` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 459 | `iml_diagonal_matrix_construction` | `total=5 and value=0` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 460 | `iml_row_mean_reduction` | `total=8` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 461 | `iml_column_mean_reduction` | `total=8` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 462 | `iml_matrix_transpose_contract` | `rows=3 and cols=2 and value=6` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 463 | `iml_solve_linear_system` | `err<1e-10` | D:read matrix data, process it in iml, and export it into dataset.sas |
+| 464 | `iml_read_colname_metadata` | `n=2 and value=8` | D:IML use data to rename colname or rowname.sas |
+| 465 | `iml_export_named_columns` | `value=6` | D:IML use data to rename colname or rowname.sas |
+| 466 | `report_group_sum_output` | `value=7` | D:proc report compuate newvar based on know vars.sas |
+| 467 | `report_compute_percentage` | `pct=50` | D:proc report compuate newvar based on know vars.sas |
+| 468 | `report_url_call_define` | `gene='TESTGENE'` | D:Proc report with multiple html links Demo.sas |
+| 469 | `sgpanel_vbox_by_group` | `grp in(1,2) and value>=1 and value<=5` | E:proc sgpanel to make multiple boxplots.sas |
+| 470 | `sgpanel_scatter_by_panel` | `y=x+grp` | E:proc sgpanel to make multiple boxplots.sas |
+| 471 | `sgplot_heart_parametric_curve` | `abs(x)<=16.000001` | E:draw_a_heart_using_proc_sgplot.sas |
+| 472 | `ods_graphics_explicit_size` | `y=2*x` | E:custimze ods graphics output size.sas |
+| 473 | `sgplot_highlow_interval` | `high-low=3` | E:custimze ods graphics output size.sas |
+| 474 | `sgplot_band_with_series` | `upper-lower=1` | E:custimze ods graphics output size.sas |
+| 475 | `sgplot_step_survival_shape` | `survival>=0 and survival<=1` | D:proc lifttest Demo with ODS.sas |
+| 476 | `round_to_tenth` | `abs(value-12.3)<1e-10` | E:round_numeric_var_with_format_and_case_function_demo.sas |
+| 477 | `ceilz_integer_boundary` | `value=3` | E:round_numeric_var_with_format_and_case_function_demo.sas |
+| 478 | `floorz_negative_fraction` | `value=-3` | E:round_numeric_var_with_format_and_case_function_demo.sas |
+| 479 | `inputn_dynamic_date_informat` | `value='13oct2026'd` | E:format varibales in data step with attrib.sas |
+| 480 | `putn_dynamic_zero_padded_format` | `value='0007'` | D:make dosage into hard call geno demo.sas |
+| 481 | `putc_dynamic_character_format` | `value='ALPHA'` | D:make dosage into hard call geno demo.sas |
+| 482 | `datdif_actual_day_count` | `value=60` | E:format varibales in data step with attrib.sas |
+| 483 | `yrdif_actual_year_fraction` | `abs(value-1)<1e-10` | E:format varibales in data step with attrib.sas |
+| 484 | `anydigit_first_position` | `value=4` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 485 | `anyalpha_first_position` | `value=4` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 486 | `notdigit_first_position` | `value=4` | E:infile and length_Only asign intended length of chr in statment LENGTH.sas |
+| 487 | `verify_allowed_character_set` | `good=0 and bad=3` | E:prxmatch with perl regular expression and modifier.sas |
+| 488 | `soundex_similar_names` | `a=b` | E:prxmatch with perl regular expression and modifier.sas |
+| 489 | `unsorted_by_input_failure` | `Expected failure: not properly sorted` | D:proc compare to compare mult variables between two dsd with ID function.sas |
+| 490 | `sql_where_aggregate_failure` | `Expected failure: (?:Summary functions&#124;summary function)` | D:Proc SQL aggregate functions need to be used with group and having function.sas |
+
+### Discovery failures and improvements
+
+The first live run in `SAS_Output_real30_w2vQnT` passed 97/100 validations.
+Cases 391 and 392 failed because single-quoted include paths inside
+DOSUBL/CALL EXECUTE code were encoded with doubled quote delimiters.
+The old extractor found no usable local path, so the file was not uploaded
+and SAS could not open the local Cygwin path on its remote host.
+
+Include discovery now decodes executable single-quoted code strings,
+recursively finds their active includes and parses SAS doubled delimiters
+inside each filename. Dependency rewriting preserves the source's quote
+escaping when replacing local paths with remote ones. A parentheses-aware
+execution-context check handles concatenated code strings and stops treating
+ordinary text after a completed DOSUBL call as executable code. Eleven
+regressions verify direct/deferred paths, apostrophes, active versus masked
+includes, concatenation and replacement escaping.
+
+Case 394 was a generated-fixture ordering error. Its dataset containing a
+percent-sign name literal was created successfully with VALIDVARNAME=ANY,
+but the fixture reset that option to V7 before the assertion/PRINT read the
+dataset. The reset now happens after validation. The runner does not
+silently change a user's VALIDVARNAME policy. The corrected case also checks
+that the quoted name never causes a macro-loader injection.
+
+The focused repair pass in `SAS_Output_real30_dpNJyh` passed all three cases
+and remote fixture cleanup. The harness now gives include fixtures unique
+basenames, deletes only fixtures submitted by the selected cases and
+records the cleanup result separately. Its local input files remain for
+reproduction, and cleanup failure produces a nonzero harness exit.
+
+### Offline and companion verification
+
+```bash
+export PATH=/usr/bin:$PATH
+prove tests/test_comment_quote_preflight.pl \
+  tests/test_inline_data_preflight.pl tests/test_inline_macro_preflight.pl \
+  MCPDeps/test_sas_log_and_labels.pl tests/test_mcp_job_reporting.pl \
+  tests/test_sas_log_diagnostics.pl tests/test_macro_quoting_preflight.pl \
+  tests/test_format_name_advisory.pl MCPDeps/test_sas_oda_include_lookup.pl \
+  tests/test_quoted_filename_upload.pl tests/test_example_uniqueness.pl \
+  tests/test_deferred_macro_literals.pl tests/test_printto_status_guard.pl \
+  tests/test_fileref_name_advisory.pl tests/test_deferred_include_paths.pl
+```
+
+MCP4SAS passed **290 assertions across 15 Perl tests**; the companion
+repository passed **152 assertions across 12 Perl tests**. The companion
+public-wrapper live command is:
+
+```bash
+perl tests/test_live_deferred_includes.pl --live
+```
+
+That supplemental test creates one uniquely named file containing an
+apostrophe and a space, calls it through both DOSUBL and CALL EXECUTE
+using escaped single-quoted paths, checks its result and retained HTML,
+then deletes only its own remote fixture. It is not an extra numbered
+example. The shared source-analysis and runner fixes and regressions
+were synchronized to all three active companion pipeline copies.
+
+### Final live outcome for cases 391–490
+
+The complete frozen-code rerun exited 0 and passed **100/100 validations**
+in `SAS_Output_real30_WC9pBO`: **98 successful SAS jobs and two intentional
+failed jobs** (489–490). All 41 original source hashes matched, and all
+new cases passed normalized duplicate checks against the preceding 390.
+Computed markers, nonempty HTML, retained logs, structured status, MCP error
+flags, exit codes and completion-marker cleanup were checked. Successful
+jobs had no unexpected structured warnings or data-quality notes.
+
+Remote fixture cleanup also passed with exit 0, deleting only
+`~/include_391_SAS_Output_real30_WC9pBO.sas` and
+`~/include_392_SAS_Output_real30_WC9pBO.sas`; its evidence is in
+`fixture_cleanup.json` and `fixture_cleanup.log` in that run directory.
+The companion supplemental test passed all seven assertions in
+`SAS_Output_deferred_includes_g6G3xm`, including deletion of its uniquely
+named apostrophe-containing fixture.
+
+Terminal logs remain local in `SAS_Output_library100_run_logs/` as
+`new_library100_batch7_initial.log`, `new_library100_batch7_repairs.log`
+and `new_library100_batch7_verified.log`. Generated programs, fixtures,
+responses, results JSON and HTML remain in the corresponding run folders.
+Publication contains maintained code, the new catalogue, hashes, Perl
+regressions and this report; runtime artifacts and generated configurations
+remain local.

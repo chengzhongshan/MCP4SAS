@@ -21,7 +21,7 @@ GetOptions('live' => \$live, 'generate-only' => \$generate, 'only=s' => \$only,
     'library-root=s' => \$library_root) or die "Invalid options\n";
 die "Use --live or --generate-only [--only 01,02] [--out directory] [--url URL]\n"
     unless $live || $generate;
-die "--batch must be 1 through 6\n" unless $batch >= 1 && $batch <= 6;
+die "--batch must be 1 through 7\n" unless $batch >= 1 && $batch <= 7;
 my $root = abs_path("$Bin/..");
 chdir $root or die $!;
 $out ||= tempdir('SAS_Output_real30_XXXXXX', DIR => $root, CLEANUP => 0);
@@ -316,7 +316,7 @@ SAS
 if ($batch >= 2) {
     my %previous = map { example_fingerprint($_->{sas}) => 1 } @cases;
     for my $number (2 .. $batch) {
-        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl',6=>'new_examples_291_390.pl'}->{$number};
+        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl',6=>'new_examples_291_390.pl',7=>'new_examples_391_490.pl'}->{$number};
         my $additional = do "$Bin/$filename";
         die "Cannot load batch $number: ".($@ || $! || 'invalid catalog')."\n" unless ref($additional) eq 'ARRAY';
         die "Batch $number repeats a previous source after ID normalization\n" if grep { $previous{example_fingerprint($_->{sas})} } @$additional;
@@ -351,6 +351,12 @@ for my $case (@cases) {
         }
     }
     $case->{path} = "$out/$case->{id}_$case->{name}.sas";
+    if (defined $case->{fixture}) {
+        my $fixture="$out/include_$case->{id}_".basename($out).".sas";
+        save($fixture,$case->{fixture});
+        $case->{sas} =~ s/\@FIXTURE\@/$fixture/g;
+        $case->{fixture_path}=$fixture;
+    }
     save($case->{path}, "options notes nosyntaxcheck obs=max; ods select all; title; footnote;\n".$case->{sas});
 }
 save("$out/catalog.json", $json->encode(\@cases));
@@ -447,5 +453,24 @@ for my $case (@cases) {
     $|=1;
 }
 my $passed=grep { $_->{passed} } @results;
+my @fixtures=map {'~/'.basename($_->{fixture_path})}
+    grep {defined $_->{fixture_path} && (!$selected{$_->{id}} ? !%selected : 1)} @cases;
+my $cleanup_ok=1;
+if (@fixtures) {
+    my $pid=fork(); die "Cannot fork fixture cleanup: $!\n" unless defined $pid;
+    if (!$pid) {
+        open STDOUT,'>',"$out/fixture_cleanup.log" or die $!;
+        open STDERR,'>&STDOUT' or die $!;
+        exec $^X,"$root/run_sas_codes_or_files_in_ODA.pl",
+            (map {('--delete-file',$_)} @fixtures),
+            '--output-prefix',"$out/fixture_cleanup";
+        die $!;
+    }
+    waitpid($pid,0);
+    my $exit=$?>>8;
+    $cleanup_ok=$exit==0;
+    save("$out/fixture_cleanup.json",$json->encode({targets=>\@fixtures,exit_code=>$exit,passed=>$cleanup_ok?1:0}));
+    print "Remote fixture cleanup: ".($cleanup_ok?'PASS':'FAIL')."\n";
+}
 print "RESULT: $passed/".scalar(@results)." cases passed. Artifacts: $out\n";
-exit($passed==@results ? 0 : 1);
+exit($passed==@results && $cleanup_ok ? 0 : 1);
