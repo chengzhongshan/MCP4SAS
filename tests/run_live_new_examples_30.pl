@@ -14,12 +14,14 @@ $| = 1;
 
 my ($live, $generate, $only, $out) = (0, 0, '', '');
 my $batch = 1;
+my $library_root = '';
 my $url = 'http://127.0.0.1:18130/mcp';
 GetOptions('live' => \$live, 'generate-only' => \$generate, 'only=s' => \$only,
-    'out=s' => \$out, 'url=s' => \$url, 'batch=i' => \$batch) or die "Invalid options\n";
+    'out=s' => \$out, 'url=s' => \$url, 'batch=i' => \$batch,
+    'library-root=s' => \$library_root) or die "Invalid options\n";
 die "Use --live or --generate-only [--only 01,02] [--out directory] [--url URL]\n"
     unless $live || $generate;
-die "--batch must be 1, 2 or 3\n" unless $batch >= 1 && $batch <= 3;
+die "--batch must be 1, 2, 3 or 4\n" unless $batch >= 1 && $batch <= 4;
 my $root = abs_path("$Bin/..");
 chdir $root or die $!;
 $out ||= tempdir('SAS_Output_real30_XXXXXX', DIR => $root, CLEANUP => 0);
@@ -306,7 +308,7 @@ SAS
 if ($batch >= 2) {
     my %previous = map { sha256_hex($_->{sas}) => 1 } @cases;
     for my $number (2 .. $batch) {
-        my $filename = $number == 2 ? 'new_examples_31_60.pl' : 'new_examples_61_90.pl';
+        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl'}->{$number};
         my $additional = do "$Bin/$filename";
         die "Cannot load batch $number: ".($@ || $! || 'invalid catalog')."\n" unless ref($additional) eq 'ARRAY';
         die "Batch $number repeats a previous source\n" if grep { $previous{sha256_hex($_->{sas})} } @$additional;
@@ -314,17 +316,34 @@ if ($batch >= 2) {
         @cases = @$additional;
     }
 }
-die "Expected exactly 30 unique examples\n" unless @cases==30;
+my $expected_count=$batch==4 ? 100 : 30;
+die "Expected exactly $expected_count unique examples; got ".scalar(@cases)."\n" unless @cases==$expected_count;
+my $source_manifest = -f "$Bin/sas_library_source_manifest.json"
+    ? decode_json(load_text("$Bin/sas_library_source_manifest.json")) : {};
 my %seen;
 my %source_seen;
 for my $case (@cases) {
     die "Duplicate example ID\n" if $seen{$case->{id}}++;
     die "Duplicate example source\n" if $source_seen{sha256_hex($case->{sas})}++;
+    if ($case->{source_ref}) {
+        my ($collection,$filename)=split /:/,$case->{source_ref},2;
+        $collection=$collection eq 'E' ? 'Easy-For-Error-Codes-SAS' : 'SAS_Code_Database';
+        $case->{source_collection}=$collection;
+        $case->{source_file}=$filename;
+        $case->{source_sha256}=$source_manifest->{$case->{source_ref}}{sha256}
+            if exists $source_manifest->{$case->{source_ref}};
+        if (length $library_root) {
+            my $path="$library_root/$collection/$filename";
+            my $hash=sha256_hex(load_text($path));
+            die "Library source changed: $path\n" if $case->{source_sha256} && $case->{source_sha256} ne $hash;
+            $case->{source_sha256}=$hash;
+        }
+    }
     $case->{path} = "$out/$case->{id}_$case->{name}.sas";
     save($case->{path}, "options notes nosyntaxcheck obs=max; ods select all; title; footnote;\n".$case->{sas});
 }
 save("$out/catalog.json", $json->encode(\@cases));
-print "Generated 30 distinct cases (batch $batch) in $out\n";
+print "Generated $expected_count distinct cases (batch $batch) in $out\n";
 exit 0 if $generate && !$live;
 my %selected = map { sprintf('%02d', $_) => 1 } split /,/, $only;
 die "Unknown --only ID\n" if grep { !exists $seen{$_} } keys %selected;
@@ -388,6 +407,7 @@ for my $case (@cases) {
         my $log=-f $log_path ? load_text($log_path) : '';
         push @problems,'full log missing' unless length $log;
         push @problems,'expected diagnostic absent' if $case->{diagnostic} && $log !~ /$case->{diagnostic}/i;
+        push @problems,'unexpected dependency injection' if $case->{forbid} && $log =~ /$case->{forbid}/i;
         push @problems,'computed result marker absent' if !$case->{fail} && $log !~ /^MCP30_OK_$case->{id}\s*$/m;
         my @html=glob("$directory/sas_res_*.html");
         $result->{html}=[map { +{path=>$_,bytes=>-s $_} } @html];

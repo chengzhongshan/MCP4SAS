@@ -130,6 +130,7 @@ use File::Spec;
 use JSON::PP qw(encode_json decode_json);
 use IO::Socket::INET;
 use IO::Select;
+use SAS_Source_Analysis;
 
 sub _runner_temp_dir {
     my $worker_temp_dir = $ENV{MCP4SAS_WORKER_TEMP_DIR} // '';
@@ -1141,7 +1142,7 @@ def upload_files_archive(items, session_obj):
                 })
         if not prepared:
             return reused_results, session_obj
-        if len(prepared) == 1:
+        if len(prepared) == 1 and "'" not in prepared[0]['remote_name']:
             entry = prepared[0]
             uploaded_path, session_obj = upload_file(
                 entry['local_path'],
@@ -3191,7 +3192,7 @@ def _action_dispatch(action, payload):
         uploads = list(payload.get('uploads') or [])
         downloads = list(payload.get('downloads') or [])
         archive_enabled = _archive_transfer_enabled(payload)
-        if archive_enabled and len(uploads) >= 2:
+        if archive_enabled and (len(uploads) >= 2 or any("'" in os.path.basename(str(item.get('local_path', '')).replace('\\', '/')) for item in uploads)):
             _, session_obj = get_session(session_obj)
             try:
                 results['uploads'], session_obj = upload_files_archive(uploads, session_obj)
@@ -3382,13 +3383,7 @@ sub new {
 
 sub _dependency_scan_code {
     my ($code) = @_;
-    my $scan_code = defined $code ? $code : '';
-    # Ignore commented-out demo/example code when auto-detecting local
-    # dependencies to upload. This prevents large commented datafile paths
-    # from being treated as real runtime inputs.
-    $scan_code =~ s{/\*.*?\*/}{}gs;
-    $scan_code =~ s{^\s*\*[^;]*;[ \t]*$}{}mg;
-    return $scan_code;
+    return SAS_Source_Analysis::mask_macro_literals($code);
 }
 
 sub _warn_dependency_upload {
@@ -3645,11 +3640,11 @@ sub _process_dependencies {
     my @logs;
     my %uploaded;
     my $scan_code = _dependency_scan_code($code);
+    my $macro_code = SAS_Source_Analysis::macro_dependency_view($code);
     my $macro_autoload_enabled = _autoload_macros_enabled() ? 1 : 0;
-    my %defined_in_code = map { lc($_) => 1 } ($scan_code =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
+    my %defined_in_code = map { lc($_) => 1 } ($macro_code =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
 
-    while ($scan_code =~ /%include\s+["'](.+?)["']/gi) {
-        my $path = $1;
+    for my $path (@{SAS_Source_Analysis::include_targets($code)}) {
         if (-e $path && !$uploaded{$path}++) {
             _warn_dependency_upload(kind => '%include target', path => $path);
             my $remote = eval {
@@ -3668,7 +3663,7 @@ sub _process_dependencies {
     }
 
     # A %name: token declares a macro jump label, not a macro invocation.
-    my @potential_macros = ($scan_code =~ /%([A-Za-z_]\w*)\b(?!\s*:)/g);
+    my @potential_macros = ($macro_code =~ /%([A-Za-z_]\w*)\b(?!\s*:)/g);
     my $header_includes = "";
     my @unresolved_macro_names;
     foreach my $m_name (@potential_macros) {
@@ -3970,6 +3965,21 @@ sub upload {
     $opts = {} unless ref($opts) eq 'HASH';
     my $progress_label = $opts->{progress_label} // '';
     my $skip_if_same = exists $opts->{skip_if_same} ? ($opts->{skip_if_same} ? 1 : 0) : 1;
+    # SASPy's direct upload uses a single-quoted destination. Transfer through
+    # a safely named archive when the actual filename contains an apostrophe.
+    if (File::Basename::basename($local_path) =~ /'/) {
+        my $resp = _run_nonpersistent_python_action('bulk_transfer', {
+            uploads => [{ local_path => $local_path, progress_label => $progress_label,
+                          skip_if_same => $skip_if_same }],
+            archive_transfers => 1,
+        });
+        if ($resp && ($resp->{status} // '') eq 'ok') {
+            my $path = $resp->{value}{uploads}[0]{remote_path};
+            _remember_uploaded_file_match($path, $local_path);
+            return $path;
+        }
+        return "PYTHON ERROR: " . ($resp->{error} // 'quoted filename archive upload failed');
+    }
     my $remote_home = '';
     my $remote_path = '';
     if ($skip_if_same) {

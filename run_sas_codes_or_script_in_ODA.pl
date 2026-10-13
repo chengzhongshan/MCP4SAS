@@ -1789,7 +1789,7 @@ sub run_runner_submit_with_timeout {
 sub sas_submission_contains_include {
     my ($text) = @_;
     return 0 unless defined $text && length $text;
-    return ($text =~ /%include\b/i) ? 1 : 0;
+    return SAS_Source_Analysis::macro_dependency_view($text) =~ /%include\b/i ? 1 : 0;
 }
 
 sub is_builtin_macro_name {
@@ -1801,9 +1801,7 @@ sub is_builtin_macro_name {
 sub sas_submission_uses_nonbuiltin_macro {
     my ($text) = @_;
     return 0 unless defined $text && length $text;
-    my $scan = $text;
-    $scan =~ s{/\*.*?\*/}{}gs;
-    $scan =~ s{^\s*\*[^;]*;[ \t]*$}{}mg;
+    my $scan = SAS_Source_Analysis::macro_dependency_view($text);
     while ($scan =~ /%(\w+)/g) {
         my $name = $1;
         next if is_builtin_macro_name($name);
@@ -1822,12 +1820,7 @@ sub should_autoload_macros_for_submission {
 
 sub extract_include_targets {
     my ($text) = @_;
-    my @targets;
-    return @targets unless defined $text && length $text;
-    while ($text =~ /%include\s+(?:["'])([^"']+)(?:["'])/ig) {
-        push @targets, $1 if defined $1 && length $1;
-    }
-    return @targets;
+    return @{SAS_Source_Analysis::include_targets($text)};
 }
 
 sub is_remote_include_path {
@@ -2233,6 +2226,7 @@ sub run_submission_preflight {
     my @warning_findings;
     push @warning_findings, @{ scan_sas_text_for_inline_data_step_cards($submitted_code) };
     push @warning_findings, @{ scan_sas_text_for_common_macro_typos($submitted_code) };
+    push @warning_findings, @{ SAS_Source_Analysis::format_name_issues($submitted_code) };
     my $fatal = @{ $scan->{findings} || [] } ? 1 : 0;
     my $report = format_sas_preflight_report(
         heading => '=== Submission Preflight ===',
