@@ -797,6 +797,14 @@ uninitialized-variable notes appear in structured diagnostics. The live
 test harness starts a fresh session after a timeout/session loss while
 retaining the failed case without automatic replay. See report section 12.
 
+Batch 7 adds cases 391-490 from 41 further library files, covering deferred
+includes, name literals, formats, SQL, statistical procedures, IML and
+reports. Include discovery handles doubled quote delimiters and decoded
+CALL EXECUTE/DOSUBL code. Dependency-path rewriting preserves escaping,
+and execution-context detection stops at closed API calls. Generated
+include fixtures use unique names and are deleted remotely after the run;
+their local programs, cleanup log and results JSON remain available.
+
 Macro-quoting contexts now preserve escaped delimiters and unmatched quotes.
 NRSTR literals and ordinary single-quoted DATA text do not trigger macro
 dependency loading; evaluated or deferred executable macro calls remain
