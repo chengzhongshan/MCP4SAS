@@ -478,5 +478,299 @@
                                  "file":  "row_sum_in_iml.sas",
                                  "sha256":  "5784376c283511a0f2ffee711ee62e64ef167fac01ab5d3e13defb5799872d32",
                                  "bytes":  55
-                             }
+                             },
+    "D:Compare two datasets with Proc compare.sas":  {
+                                                         "collection":  "SAS_Code_Database",
+                                                         "file":  "Compare two datasets with Proc compare.sas",
+                                                         "bytes":  798,
+                                                         "sha256":  "2527a28e27b594a1a704e2178eba3cbab1f5863c75d45af03726d6953bb8ae67"
+                                                     },
+    "D:HTML output with Proc report Demo_create link for all elements in columns.sas":  {
+                                                                                            "collection":  "SAS_Code_Database",
+                                                                                            "file":  "HTML output with Proc report Demo_create link for all elements in columns.sas",
+                                                                                            "bytes":  803,
+                                                                                            "sha256":  "cbc64df305aa94c21a81a1b95fcd72a10f5f8e6f1341376f53665121b8bc7bbb"
+                                                                                        },
+    "D:nrstr qcmpres cmpres demo.sas":  {
+                                            "collection":  "SAS_Code_Database",
+                                            "file":  "nrstr qcmpres cmpres demo.sas",
+                                            "bytes":  1043,
+                                            "sha256":  "bd85906a93b424818266c726594a0db8da195b90a27bc169df1770c8b2a057c5"
+                                        },
+    "D:ODS alternative for NOPRINT.sas":  {
+                                              "collection":  "SAS_Code_Database",
+                                              "file":  "ODS alternative for NOPRINT.sas",
+                                              "bytes":  1931,
+                                              "sha256":  "589691ac321b5423aaa48b8576f7c8574b0c22454a9f1ed3db1f1944173aa6c5"
+                                          },
+    "D:output residual in proc reg for simple regression.sas":  {
+                                                                    "collection":  "SAS_Code_Database",
+                                                                    "file":  "output residual in proc reg for simple regression.sas",
+                                                                    "bytes":  735,
+                                                                    "sha256":  "468949e69468e4a0e41f24aa0862a4a587f48ade93a355a192d28e5b17112f51"
+                                                                },
+    "D:Proc Append Demo.sas":  {
+                                   "collection":  "SAS_Code_Database",
+                                   "file":  "Proc Append Demo.sas",
+                                   "bytes":  53,
+                                   "sha256":  "5e1ecdc1783a0618449f64be3357047996bba91287edfcb5d771704418b6633c"
+                               },
+    "D:Proc contents output variable information without ODS print.sas":  {
+                                                                              "collection":  "SAS_Code_Database",
+                                                                              "file":  "Proc contents output variable information without ODS print.sas",
+                                                                              "bytes":  69,
+                                                                              "sha256":  "5670a6b1830cf63b2a3b9c817335fa305a01b2a9f5be61f80c44d06c42a52f8c"
+                                                                          },
+    "D:proc fcmp Demo.sas":  {
+                                 "collection":  "SAS_Code_Database",
+                                 "file":  "proc fcmp Demo.sas",
+                                 "bytes":  225,
+                                 "sha256":  "e48f170f945c6dcd2a2f601861d790515bb9c2d00c3c1d53f15ea973e168ad7b"
+                             },
+    "D:Proc Multtest for P value adjustment.sas":  {
+                                                       "collection":  "SAS_Code_Database",
+                                                       "file":  "Proc Multtest for P value adjustment.sas",
+                                                       "bytes":  663,
+                                                       "sha256":  "6e783ccfc903e02a7947980d377a377fa186f12e9fe64c0dffacf65e7e6fd728"
+                                                   },
+    "D:proc sgplot demo.sas":  {
+                                   "collection":  "SAS_Code_Database",
+                                   "file":  "proc sgplot demo.sas",
+                                   "bytes":  124,
+                                   "sha256":  "35e6d67e625fd0c342949c4a1bc8d8a7316b031e8afb21e594ec7416cca0a86a"
+                               },
+    "D:Proc SQL delete Demo.sas":  {
+                                       "collection":  "SAS_Code_Database",
+                                       "file":  "Proc SQL delete Demo.sas",
+                                       "bytes":  55,
+                                       "sha256":  "b695e9371353cb5f99f2b7cba4fbffdb646aa8e108635b1dda21aa7f15cf145f"
+                                   },
+    "D:Proc SQL Except  Union Union all Intersect Demo.sas":  {
+                                                                  "collection":  "SAS_Code_Database",
+                                                                  "file":  "Proc SQL Except  Union Union all Intersect Demo.sas",
+                                                                  "bytes":  8131,
+                                                                  "sha256":  "309e2190c04436dd9a908e1efc1fdc45d340a4d81843ba88970d84f8df26c20a"
+                                                              },
+    "D:Proc SQL Full Join with Function Coalesce.sas":  {
+                                                            "collection":  "SAS_Code_Database",
+                                                            "file":  "Proc SQL Full Join with Function Coalesce.sas",
+                                                            "bytes":  322,
+                                                            "sha256":  "741ba1625f9765dfe67089b09d9dc7b8b4d6473f6fdb6b918c4490cbc585c574"
+                                                        },
+    "D:Proc SQL function Group with having conditions.sas":  {
+                                                                 "collection":  "SAS_Code_Database",
+                                                                 "file":  "Proc SQL function Group with having conditions.sas",
+                                                                 "bytes":  241,
+                                                                 "sha256":  "ec1e313e4f3e19ce48f7983af998ac45ac474a9de758783e29827df1b86ce820"
+                                                             },
+    "D:Proc SQL update Demo.sas":  {
+                                       "collection":  "SAS_Code_Database",
+                                       "file":  "Proc SQL update Demo.sas",
+                                       "bytes":  112,
+                                       "sha256":  "5617a227958fb4c82546bae3115be73eac6b436dc62783af85f6bef82a810a3e"
+                                   },
+    "D:Proc SQL View Demo.sas":  {
+                                     "collection":  "SAS_Code_Database",
+                                     "file":  "Proc SQL View Demo.sas",
+                                     "bytes":  414,
+                                     "sha256":  "678dd728d02c01d22f40c0a3f857a88fe8205146c3938d4d03edd5ccff7f6f5d"
+                                 },
+    "D:Proc SQL with conditions by using case function.sas":  {
+                                                                  "collection":  "SAS_Code_Database",
+                                                                  "file":  "Proc SQL with conditions by using case function.sas",
+                                                                  "bytes":  263,
+                                                                  "sha256":  "7184bef4f19c55644a57b1d9b9f6fb50d4a4453cc3edd5ee60a72a3839f588e1"
+                                                              },
+    "D:Rename file, dataset and directory Demo.sas":  {
+                                                          "collection":  "SAS_Code_Database",
+                                                          "file":  "Rename file, dataset and directory Demo.sas",
+                                                          "bytes":  1225,
+                                                          "sha256":  "bbb3613b112114cb207c9ce8837c39ece185ec8f5803dd193e5667fb357dcaef"
+                                                      },
+    "D:Resolve Macro varible with _bquote_ and _str_ in SAS Macro.sas":  {
+                                                                             "collection":  "SAS_Code_Database",
+                                                                             "file":  "Resolve Macro varible with _bquote_ and _str_ in SAS Macro.sas",
+                                                                             "bytes":  378,
+                                                                             "sha256":  "250ccd6111afc70c0099d32494f0be221dd1939864446329a13b959ab819f9ed"
+                                                                         },
+    "D:Retrieve the number of observations in a dataset.sas":  {
+                                                                   "collection":  "SAS_Code_Database",
+                                                                   "file":  "Retrieve the number of observations in a dataset.sas",
+                                                                   "bytes":  227,
+                                                                   "sha256":  "00c63ba2841cbfc536b0103f1e1bc43f52a93b39333513a280a5e0779e1edc87"
+                                                               },
+    "D:Run macro repeatedly with macro dosubl.sas":  {
+                                                         "collection":  "SAS_Code_Database",
+                                                         "file":  "Run macro repeatedly with macro dosubl.sas",
+                                                         "bytes":  517,
+                                                         "sha256":  "13178c0bd951f68ec94cda51f0a8930e6e019c3abbcb043e7e27f03bbea1a460"
+                                                     },
+    "D:SAS file function dopen dnum dread Demo.sas":  {
+                                                          "collection":  "SAS_Code_Database",
+                                                          "file":  "SAS file function dopen dnum dread Demo.sas",
+                                                          "bytes":  411,
+                                                          "sha256":  "ee233fd808a259f1e131c4a1aae9bcecaa6e3f4f9c773701665150a81a8d3b86"
+                                                      },
+    "D:SAS Function Missing and IFC Demo.sas":  {
+                                                    "collection":  "SAS_Code_Database",
+                                                    "file":  "SAS Function Missing and IFC Demo.sas",
+                                                    "bytes":  611,
+                                                    "sha256":  "e3b7b7ec4656e86facfcc336fa3c575ae0c17a676053a15c34599c52db37b803"
+                                                },
+    "D:SAS transpose long to wide and wide to long Demo Very useful.sas":  {
+                                                                               "collection":  "SAS_Code_Database",
+                                                                               "file":  "SAS transpose long to wide and wide to long Demo Very useful.sas",
+                                                                               "bytes":  6575,
+                                                                               "sha256":  "ba64b69987c2cbe3a2361cf505263f88fc1baf349459b8f11b6890f8c983b4c7"
+                                                                           },
+    "D:Select When function in data step.sas":  {
+                                                    "collection":  "SAS_Code_Database",
+                                                    "file":  "Select When function in data step.sas",
+                                                    "bytes":  398,
+                                                    "sha256":  "60d86e1d633a4a48c0beecf04b8b4d8deaca336679d64290eab70c9f1443abda"
+                                                },
+    "D:simple FDR for raw P values.sas":  {
+                                              "collection":  "SAS_Code_Database",
+                                              "file":  "simple FDR for raw P values.sas",
+                                              "bytes":  1505,
+                                              "sha256":  "d29103ffa6814c28787fe5e316d318d41142cffe94f359f3710fbac041d6d56f"
+                                          },
+    "D:specify mssing types in data step.sas":  {
+                                                    "collection":  "SAS_Code_Database",
+                                                    "file":  "specify mssing types in data step.sas",
+                                                    "bytes":  173,
+                                                    "sha256":  "359e4e053c25a4180957c94fc10a3f269f76fc03e6aa078fc371d878bc2dc4aa"
+                                                },
+    "D:symget functions like that of a hash.sas":  {
+                                                       "collection":  "SAS_Code_Database",
+                                                       "file":  "symget functions like that of a hash.sas",
+                                                       "bytes":  526,
+                                                       "sha256":  "83e45ea20d6ce4f0b398ae534b64f6c2818d578a0609198aac7de0d66836fb32"
+                                                   },
+    "D:temporary numeric array.sas":  {
+                                          "collection":  "SAS_Code_Database",
+                                          "file":  "temporary numeric array.sas",
+                                          "bytes":  119,
+                                          "sha256":  "9ee2c736db115f6d79f37834b28414598a27c55e71006ea61be3bcaca6337cf1"
+                                      },
+    "D:time format with do loop.sas":  {
+                                           "collection":  "SAS_Code_Database",
+                                           "file":  "time format with do loop.sas",
+                                           "bytes":  1157,
+                                           "sha256":  "b30559fd4a24d28cf64d073701c36c2109d0d2577cf755cd00c495b832dd0d42"
+                                       },
+    "D:Verifying the existence of a SAS dataset.sas":  {
+                                                           "collection":  "SAS_Code_Database",
+                                                           "file":  "Verifying the existence of a SAS dataset.sas",
+                                                           "bytes":  1991,
+                                                           "sha256":  "4747c155fdc91cd1178648820c1d2529db4c80bcdfcfac5c0359e18421868146"
+                                                       },
+    "D:Wilcoxon rank sum test_Mann Whitney U test Demo.sas":  {
+                                                                  "collection":  "SAS_Code_Database",
+                                                                  "file":  "Wilcoxon rank sum test_Mann Whitney U test Demo.sas",
+                                                                  "bytes":  720,
+                                                                  "sha256":  "2ea33b8ee9f88686dc1f87158acea4855cd4177578cc9667b719904d0a5be183"
+                                                              },
+    "E:assign_number_to_alphabet_word.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "assign_number_to_alphabet_word.sas",
+                                                 "bytes":  528,
+                                                 "sha256":  "7b03522041f5f6294d3e8678e192f5479ac4efaa636a39b6a30212a0e5a4c7da"
+                                             },
+    "E:Be caution about Proc SQL Left Join when there are duplicates in the right table.sas":  {
+                                                                                                   "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                   "file":  "Be caution about Proc SQL Left Join when there are duplicates in the right table.sas",
+                                                                                                   "bytes":  589,
+                                                                                                   "sha256":  "bec6f97b196a466ad8cb25a27c7fb600a15a4b54a88e4ec3edb2602deac4eac1"
+                                                                                               },
+    "E:cmiss_function2get_missing_variables_among_variables.sas":  {
+                                                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                                                       "file":  "cmiss_function2get_missing_variables_among_variables.sas",
+                                                                       "bytes":  442,
+                                                                       "sha256":  "d0c5616859f98e93a647c8025a0ef5c3cde1f4a0f5b0e82dbc92baa62daf01a8"
+                                                                   },
+    "E:colwide z score with proc standard.sas":  {
+                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                     "file":  "colwide z score with proc standard.sas",
+                                                     "bytes":  575,
+                                                     "sha256":  "a880dc45ce1e788b3960e36fdb6b56c9a1a098de8dcd35b16b78bc8b6f04439b"
+                                                 },
+    "E:create dir in sas data step with dcreate.sas":  {
+                                                           "collection":  "Easy-For-Error-Codes-SAS",
+                                                           "file":  "create dir in sas data step with dcreate.sas",
+                                                           "bytes":  207,
+                                                           "sha256":  "3e5893605cbb396e85d97eeef79185110c2e41cae736d360ade9d4959d8a5132"
+                                                       },
+    "E:datalines4 demo.sas":  {
+                                  "collection":  "Easy-For-Error-Codes-SAS",
+                                  "file":  "datalines4 demo.sas",
+                                  "bytes":  201,
+                                  "sha256":  "d910f8ce55ef4a75fae834274e7e675462045668e1cc182ef97bbb7660d33c64"
+                              },
+    "E:different usage of avg and mean in proc sql.sas":  {
+                                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                                              "file":  "different usage of avg and mean in proc sql.sas",
+                                                              "bytes":  3486,
+                                                              "sha256":  "19c2d796973b0182a4f5cb72880eeadbbb13e1c669ad283e823ab03eb333cb9b"
+                                                          },
+    "E:get_index_for_nonmissing_values_in_proc_iml.sas":  {
+                                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                                              "file":  "get_index_for_nonmissing_values_in_proc_iml.sas",
+                                                              "bytes":  73,
+                                                              "sha256":  "96d48557b497f37162c20f9c243237091df8f8b31f479a7fc9f628f69dcaaae8"
+                                                          },
+    "E:lag_with_by_and_last_statement.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "lag_with_by_and_last_statement.sas",
+                                                 "bytes":  844,
+                                                 "sha256":  "f95c6842a3008a2e09b7036187ea814634757cc40228e8b4733b6ea925690d32"
+                                             },
+    "E:Merge Function IMPORTANT NOTES.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "file":  "Merge Function IMPORTANT NOTES.sas",
+                                                 "bytes":  2198,
+                                                 "sha256":  "a77af3c600916c5cb58cd27ea6c8e86fc894896016a6b15ce52e85fc1bd26df6"
+                                             },
+    "E:ODS output Tables failed with noprint in Proc Freq.sas":  {
+                                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                                     "file":  "ODS output Tables failed with noprint in Proc Freq.sas",
+                                                                     "bytes":  341,
+                                                                     "sha256":  "0f90377b7c19bb59323d7d020a089acee289956decf602fe31f62c9c7c42c57f"
+                                                                 },
+    "E:output_first_and_last_record_by_grp_at_the_same_row.sas":  {
+                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                      "file":  "output_first_and_last_record_by_grp_at_the_same_row.sas",
+                                                                      "bytes":  820,
+                                                                      "sha256":  "c186bca0b6ffa94d21066d6e147d3719aee46e8a356989ff90e0148a980e9c18"
+                                                                  },
+    "E:proc rank with tiers.sas":  {
+                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                       "file":  "proc rank with tiers.sas",
+                                       "bytes":  529,
+                                       "sha256":  "af900096f0e3b8690f8e1ba9cacc3a1c49445f5fdc2caeace7cf1a2aa8415f2e"
+                                   },
+    "E:prxchange_replace_elements_within_multiple_quotes.sas":  {
+                                                                    "collection":  "Easy-For-Error-Codes-SAS",
+                                                                    "file":  "prxchange_replace_elements_within_multiple_quotes.sas",
+                                                                    "bytes":  1349,
+                                                                    "sha256":  "99fee910f1dfea7935c7c7e4c76997914699fbf571b9a2ccc12b506c287df90c"
+                                                                },
+    "E:prxposn need to be used with prxparse and prxmatch.sas":  {
+                                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                                     "file":  "prxposn need to be used with prxparse and prxmatch.sas",
+                                                                     "bytes":  178,
+                                                                     "sha256":  "53fb31bdc29373003f95faf0c438887bfa45bf6a0811ce00c92ff44e3124b273"
+                                                                 },
+    "E:recover ods with ods select all after using ods select none.sas":  {
+                                                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                                                              "file":  "recover ods with ods select all after using ods select none.sas",
+                                                                              "bytes":  141,
+                                                                              "sha256":  "57c0469a24556f36ccbac7f266713af0e8d78c521957b12aa505b9681ba515f0"
+                                                                          },
+    "E:scale data to range with proc stdize but not proc standard.sas":  {
+                                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                                             "file":  "scale data to range with proc stdize but not proc standard.sas",
+                                                                             "bytes":  945,
+                                                                             "sha256":  "c1b9ffb746fa74e58c8634f845a04d594599c2fba17881c0efb184dddc502bd0"
+                                                                         }
 }

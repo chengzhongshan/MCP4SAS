@@ -778,6 +778,15 @@ the original library scripts and datasets are not required to run the
 generated cases. Pass `--library-root` to verify the original sources against
 that snapshot. See the validation report for the complete commands and results.
 
+A further library batch (`--batch 5`) adds 100 distinct cases numbered
+191-290, adapted from 49 additional library files. Its catalogue is
+`tests/new_examples_191_290.pl`. Duplicate checking also normalizes generated
+IDs and whitespace, rejecting earlier examples merely renamed for another
+batch. Successful batch-5 jobs reject unexpected structured warnings and
+data-quality notes. The scanner now follows nested macro quoting and macro
+functions evaluated inside double-quoted strings, preserving NRSTR literals
+without requesting unrelated macro uploads.
+
 Macro-quoting contexts now preserve escaped delimiters and unmatched quotes.
 NRSTR literals and ordinary single-quoted DATA text do not trigger macro
 dependency loading; evaluated or deferred executable macro calls remain

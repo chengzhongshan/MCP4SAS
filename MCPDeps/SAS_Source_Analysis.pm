@@ -10,18 +10,28 @@ sub _macro_quote_span {
     my ($name,$header)=(lc($1),$&);
     my $body=$offset+length($header);
     my ($i,$depth)=($body,1);
+    my @children;
     my $len=length($text);
     while ($i<$len) {
         my $ch=substr($text,$i,1);
         if ($ch eq '%' && substr($text,$i+1,1) =~ /^[()'"]$/) { $i+=2; next; }
+        if ($ch eq '%' && (my $child=_macro_quote_span($text,$i))) {
+            push @children,$child;
+            $i=$child->{end}; next;
+        }
         $depth++ if $ch eq '(';
         if ($ch eq ')') {
             $depth--;
-            return {name=>$name,start=>$offset,body=>$body,end=>$i+1,closed=>1} if $depth==0;
+            return {name=>$name,start=>$offset,body=>$body,end=>$i+1,closed=>1,children=>\@children} if $depth==0;
         }
         $i++;
     }
-    return {name=>$name,start=>$offset,body=>$body,end=>$len,closed=>0};
+    return {name=>$name,start=>$offset,body=>$body,end=>$len,closed=>0,children=>\@children};
+}
+
+sub _macro_quote_spans {
+    my ($span)=@_;
+    return ($span,map {_macro_quote_spans($_)} @{$span->{children}||[]});
 }
 
 # Mask raw inline records, preserving character offsets and newlines for
@@ -139,6 +149,15 @@ sub analyze_source {
             if ($ch eq $quote && substr($scan,$i+1,1) eq $quote) {
                 $blank->($i,2,0); $i+=2; next;
             }
+            # SAS evaluates macro functions inside double-quoted strings.
+            # Escaped delimiters must not close the surrounding string.
+            if ($quote eq '"' && $ch eq '%' && (my $span=_macro_quote_span($scan,$i))) {
+                push @macro_quotes,_macro_quote_spans($span);
+                my $chunk=substr($scan,$i,$span->{end}-$i);
+                $line+=($chunk =~ tr/\n//);
+                $blank->($i,$span->{end}-$i,0);
+                $i=$span->{end}; next;
+            }
             $blank->($i,1,0);
             if ($ch eq $quote) {
                 push @single_quotes,{start=>$quote_start,end=>$i+1} if $quote eq "'";
@@ -155,7 +174,7 @@ sub analyze_source {
         if ($pair eq '%*') { $comment_start_state=$statement_start; $comment=1; $blank->($i,2,1); $i+=2; next; }
         if ($ch eq '*' && $statement_start) { $comment_start_state=1; $comment=1; $blank->($i,1,1); $i++; next; }
         if ($ch eq '%' && (my $span=_macro_quote_span($scan,$i))) {
-            push @macro_quotes,$span;
+            push @macro_quotes,_macro_quote_spans($span);
             if (!$span->{closed}) {
                 push @findings,{type=>'unclosed_macro_invocation',line=>$line,
                     message=>"Macro quoting function %$span->{name}( is missing its closing ')'",
