@@ -748,6 +748,29 @@ eligible marked directories. See the cleanup examples in the validation report.
 For the complete Cygwin/Perl commands, reproduced failures, live results, and
 resulting fixes, see [Real Examples for Improving MCP4SAS](RealExamples4ImprovingMCP4SAS.md).
 
+The report also includes 30 additional generated SAS cases run through the
+real MCP HTTP interface. Generate their SAS files without connecting to ODA
+with `perl tests/run_live_new_examples_30.pl --generate-only`, or follow the
+report's server and `--live` commands to execute them. Completed ODA polls
+include `structuredContent.status`, `exit_code`, `log_path`, and a separate
+warning/data-quality diagnostic summary. A warning or data-quality NOTE does
+not change a successful job into a failure. Use SAS `options notes;` when
+you want SAS to emit those NOTES.
+
+A second independent batch generates cases 31-60: add `--batch 2` to the
+generator or live command. Its catalog is maintained in
+`tests/new_examples_31_60.pl`. The harness rejects source duplicates across
+the two batches. Preflight now recognizes raw DATALINES/CARDS records,
+including their four-semicolon variants, so apostrophes and comment tokens
+in those records are accepted as data. Missing inline-data terminators and
+malformed SAS after the data block are still reported.
+
+Use `--batch 3` for thirty further examples numbered 61-90, maintained in
+`tests/new_examples_61_90.pl`. Preflight uses shared source analysis to
+distinguish quoted comment delimiters, inline statement comments, and actual
+SAS code. Commented documentation examples are not treated as executed PUT
+statements, while genuine syntax problems remain detectable.
+
 See [the real SAS examples and failure checks](examples/README.md) for a
 repeatable live SAS ODA validation suite, including GTEx queries, macro control
 flow, and an intentional missing-table failure. Run the offline log/label

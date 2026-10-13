@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 use FindBin qw($Bin);
+use lib "$Bin/../MCPDeps";
+use SAS_Log_Diagnostics;
 use Cwd qw(abs_path getcwd);
 use File::Temp qw(tempdir);
 use File::Path qw(remove_tree);
@@ -102,6 +104,14 @@ for my $code (0, 1, 73, 74, 127, 143) {
 }
 ok(-f "$dir/custom.txt", 'polling preserves the SAS log');
 ok(!-f $pid_file, 'polling removes the completed PID marker');
+write_text_file("$dir/custom.txt", "=== SAS Log ===\nNOTE: Division by zero detected at line 3 column 5.\n=== Output ===\n");
+write_text_file($pid_file, 123);
+write_text_file("$dir/worker.result.json", encode_json({exit_code => 0, log_path => "$dir/custom.txt"}));
+my $quality_success = run_sas_oda_tool({pid => 123});
+ok(!$quality_success->{isError}, 'data-quality NOTE preserves successful exit status');
+is($quality_success->{structuredContent}{status}, 'COMPLETE', 'structured status matches text');
+is($quality_success->{structuredContent}{diagnostics}{data_quality_count}, 1, 'structured response includes runtime data-quality NOTE');
+like($quality_success->{content}[0]{text}, qr/SAS diagnostics: 0 warning\(s\), 1 data-quality/, 'successful poll surfaces data-quality summary');
 unlink "$dir/worker.result.json";
 write_text_file($pid_file, 123);
 my $unknown = run_sas_oda_tool({pid => 123});
