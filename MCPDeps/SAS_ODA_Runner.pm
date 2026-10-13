@@ -3759,9 +3759,27 @@ sub _process_dependencies {
     return ($header_includes . $code, join("\n", @logs));
 }
 
+sub _guard_redirected_sas_log {
+    my ($code)=@_;
+    return $code unless SAS_Source_Analysis::mask_noncode($code) =~ /\bproc\s+printto\b/i;
+    # PRINTTO can hide fatal log lines. Reset stale status before this job,
+    # restore logging afterwards and surface error condition codes (8+).
+    return "%let syscc=0;\n" . $code . <<'SAS_STATUS';
+
+proc printto; run;
+%macro _mcp4sas_printto_status;
+  %if %sysevalf(&syscc >= 8,boolean) %then
+    %put ERROR: SAS submission ended with SYSCC=&syscc - inspect the redirected SAS log for details.;
+%mend;
+%_mcp4sas_printto_status;
+%sysmacdelete _mcp4sas_printto_status;
+SAS_STATUS
+}
+
 sub run_code {
     my ($self, $sas_code) = @_;
     my ($processed_code, $dep_logs) = $self->_process_dependencies($sas_code);
+    $processed_code = _guard_redirected_sas_log($processed_code);
     my $has_local_macro_upload = ($dep_logs // '') =~ /Uploaded overlay to/ ? 1 : 0;
     my $has_targeted_remote_loader = ($dep_logs // '') =~ /Injected targeted remote macro loader/ ? 1 : 0;
     my $macro_autoload_enabled = _autoload_macros_enabled() ? 1 : 0;

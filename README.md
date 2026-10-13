@@ -787,6 +787,16 @@ data-quality notes. The scanner now follows nested macro quoting and macro
 functions evaluated inside double-quoted strings, preserving NRSTR literals
 without requesting unrelated macro uploads.
 
+Batch 6 adds another 100 examples (291-390) from 42 additional library
+files, including hashes, held-record input, ZIP/GZIP, IML and redirected
+logs. Deferred CALL EXECUTE/DOSUBL strings are decoded for dependency
+analysis while preserving source offsets. Explicit PROC PRINTTO jobs
+restore logging and check SYSCC so redirected errors cannot silently
+report success. Long literal filerefs receive an advisory, and actual
+uninitialized-variable notes appear in structured diagnostics. The live
+test harness starts a fresh session after a timeout/session loss while
+retaining the failed case without automatic replay. See report section 12.
+
 Macro-quoting contexts now preserve escaped delimiters and unmatched quotes.
 NRSTR literals and ordinary single-quoted DATA text do not trigger macro
 dependency loading; evaluated or deferred executable macro calls remain

@@ -19,7 +19,7 @@ sub summarize {
         my $kind;
         if ($line =~ /^WARNING(?:\s+\d+-\d+)?:/i) {
             $kind = 'warnings';
-        } elsif ($line =~ /^NOTE:\s+(?:Invalid (?:data|argument)|Division by zero|Mathematical operations could not be performed|Missing values were generated|(?:Character|Numeric) values have been converted|SAS went to a new line when INPUT statement reached past the end of a line|No observations in data set)/i
+        } elsif ($line =~ /^NOTE:\s+(?:Invalid (?:data|argument)|Variable .+ is uninitialized\.|Division by zero|Mathematical operations could not be performed|Missing values were generated|(?:Character|Numeric) values have been converted|SAS went to a new line when INPUT statement reached past the end of a line|No observations in data set)/i
             || $line =~ /^(?!\d+\s|MPRINT\b|SYMBOLGEN\b|NOTE:).*\b_ERROR_=1\b/) {
             $kind = 'data_quality';
         }

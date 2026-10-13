@@ -1449,3 +1449,280 @@ The discovery and final terminal logs are retained locally in
 Generated programs, per-job responses, diagnostics and the full results
 JSON remain in the run directories. These runtime artifacts are excluded
 from GitHub; the two repositories publish the maintained fixes and tests.
+
+## 12. Third library-derived batch: 100 new cases (291–390)
+
+Another 100 new examples were adapted from 42 additional library files.
+The source catalogue is `tests/new_examples_291_390.pl`, and source hashes
+are included in `tests/sas_library_source_manifest.json`. Originals remain
+unchanged. All examples use synthetic data and owned WORK files rather
+than original external datasets. ID/whitespace-normalized fingerprints
+check the new sources against all preceding 290 examples.
+
+The new cases cover CALL EXECUTE/DOSUBL semantics, hash mutation and
+multidata iteration, held records, FILEVAR, CSV/ZIP/GZIP, array reshaping,
+IML matrix operations, dataset/index management, frequency denominators,
+beta distributions, FCMP/macro interaction, character functions and
+redirected logs. Cases 389–390 intentionally fail: a missing dataset with
+its error redirected by PRINTTO, and an undefined hash key.
+
+### Cygwin commands
+
+Terminal 1, from the repository root:
+
+```bash
+export PATH=/usr/bin:$PATH
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  perl server.pl daemon -m production -l http://127.0.0.1:18137
+```
+
+Terminal 2:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tests/run_live_new_examples_30.pl --generate-only --batch 6 \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes
+perl tests/run_live_new_examples_30.pl --live --batch 6 \
+  --url http://127.0.0.1:18137/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch6_initial.log 2>&1
+perl tests/run_live_new_examples_30.pl --live --batch 6 \
+  --only 291,292,312,316,317,333,343,344,350,367,372,375,389,390 \
+  --url http://127.0.0.1:18137/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch6_repairs.log 2>&1
+```
+
+The dedicated HTTP test server was then restarted on port 18138 to load
+the changed diagnostic module; the shared SASPy session service was not
+stopped. With the same server startup options and port 18138:
+
+```bash
+perl tests/run_live_new_examples_30.pl --live --batch 6 \
+  --only 366,367,372,389 --url http://127.0.0.1:18138/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch6_guard_verified.log 2>&1
+perl tests/run_live_new_examples_30.pl --live --batch 6 \
+  --url http://127.0.0.1:18138/mcp \
+  --library-root H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes \
+  > new_library100_batch6_verified.log 2>&1
+```
+
+The library-root option verifies the original snapshot; omit it when
+running the self-contained cases without the H drive. Generation and
+orchestration use Perl/Bash with the existing SASPy transport.
+
+### Complete new case catalogue
+
+`E:` refers to Easy-For-Error-Codes-SAS; `D:` refers to SAS_Code_Database.
+
+| ID | Example | Oracle | Library source |
+|---|---|---|---|
+| 291 | `execute_nrstr_literal_dependency` | `value='%e291_literal()'` | D:dosubl vs call execut to run sas macro.sas |
+| 292 | `dosubl_nrstr_literal_dependency` | `rc=0 and value='%e292_literal()'` | D:dosubl Demo with _str_ function and return var by macro.sas |
+| 293 | `execute_data_step_is_deferred` | `observed='before' and symget('e293value')='after'` | D:dosubl vs call execut to run sas macro.sas |
+| 294 | `dosubl_data_step_is_synchronous` | `rc=0 and observed='after'` | D:dosubl vs call execut to run sas macro.sas |
+| 295 | `execute_generated_procedure` | `total=10` | D:dosubl vs call execut to run sas macro.sas |
+| 296 | `dosubl_concat_split_arguments` | `rc=0 and value=23` | D:dosubl Demo with _str_ function and return var by macro.sas |
+| 297 | `sysevalf_boolean_fraction` | `value=1` | D:sysevalf demo with macro SizeIt.sas |
+| 298 | `sysevalf_integer_ceiling` | `value=3` | D:sysevalf demo with macro SizeIt.sas |
+| 299 | `sysevalf_integer_floor` | `value=-3` | D:sysevalf demo with macro SizeIt.sas |
+| 300 | `macro_sysfunc_dosubl_side_effect` | `value=31` | D:dosubl Demo with _str_ function and return var by macro.sas |
+| 301 | `hash_check_does_not_load_data` | `rc=0 and value=99` | D:hash4bigdata_demo.sas |
+| 302 | `hash_find_restores_data` | `rc=0 and value=10` | D:hash4bigdata_demo.sas |
+| 303 | `hash_replace_existing_key` | `rc=0 and value=25` | D:hash4bigdata_demo.sas |
+| 304 | `hash_remove_then_find_missing` | `removed=0 and rc ne 0 and n=0` | D:hash4bigdata_demo.sas |
+| 305 | `hash_iterator_ordered_keys` | `smallest=1 and total=60` | D:hash4bigdata_demo.sas |
+| 306 | `hash_multidata_find_next` | `total=11` | E:demo4hash_find_next_with_do_while_loop.sas |
+| 307 | `hash_clear_all_entries` | `cleared=0 and n=0` | D:hash4bigdata_demo.sas |
+| 308 | `hash_suminc_counter` | `total=3` | D:hash4bigdata_demo.sas |
+| 309 | `hash_duplicate_add_rejected` | `duplicate ne 0 and value=4` | E:demo4hash_find_next_with_do_while_loop.sas |
+| 310 | `hash_tree_parent_chain` | `depth=2 and root=1` | E:demo4hash_find_next_with_do_while_loop4tree_branches.sas |
+| 311 | `input_at_hold_then_release` | `total=19 and n=2 and matches=2` | E:datastep_escape_columns_with_input_infile_and_scan.sas |
+| 312 | `input_double_at_multiple_records` | `n=3 and total=6` | E:use @ and @@ to split data in the same line to separated rows.sas |
+| 313 | `input_group_label_shared_fields` | `n=4 and total=100 and groups=2` | E:use @ and @@ to split data in the same line to separated rows.sas |
+| 314 | `input_column_pointer_fixed_width` | `total=168` | E:use_double_and_single_at2read_multiple_lines_and_provide_common_variables_to_each_line.sas |
+| 315 | `input_line_pointer_two_lines` | `total=46 and n=2` | E:use_double_and_single_at2read_multiple_lines_and_provide_common_variables_to_each_line.sas |
+| 316 | `filevar_two_owned_files` | `n=2 and total=7` | E:Multiple files with infile statement only functional with dummy.sas |
+| 317 | `csv_dsd_embedded_comma` | `word='alpha,beta' and value=7` | E:import_compressed_csv_file_with_quotes.sas |
+| 318 | `csv_dsd_doubled_quote` | `word='author"s' and value=9` | E:import_compressed_csv_file_with_quotes.sas |
+| 319 | `input_question_modifier_invalid_missing` | `missing(value) and _error_=0` | E:datastep_escape_columns_with_input_infile_and_scan.sas |
+| 320 | `input_hexadecimal_informat` | `value=255` | E:datastep_escape_columns_with_input_infile_and_scan.sas |
+| 321 | `import_csv_guessingrows_types` | `total=30 and n=2` | D:Proc Import with GuessingRows.sas |
+| 322 | `import_pipe_delimited_no_headers` | `total=10` | D:very useful Proc Import with different delimiter in dbms_dlm part.sas |
+| 323 | `file_dsd_export_roundtrip` | `word='a,b' and value=7` | D:export data with file function along with dlm to separate cols with specific delimiter.sas |
+| 324 | `zip_member_owned_roundtrip` | `x=7 and y=11` | E:ImportFileHeadersFromZIP_works_with_variable_char_length_demo.sas |
+| 325 | `gzip_owned_roundtrip` | `x=8 and y=12` | E:ImportFileHeadersFromZIP_works_with_variable_char_length_demo.sas |
+| 326 | `array_wide_to_long_named_columns` | `n=2 and total=10 and names=2` | D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas |
+| 327 | `array_lower_bound_nonzero` | `value=10 and lower=0 and upper=2` | D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas |
+| 328 | `array_two_dimensional_row_major` | `value=3 and total=10` | D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas |
+| 329 | `array_call_sortn_order` | `low=1 and high=8` | E:randomply_select_columns_from_large_wide_table_using_temporary_array_with_ranperm.sas |
+| 330 | `array_call_sortc_order` | `first='alpha' and last='zeta'` | D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas |
+| 331 | `ranperm_preserves_multiset` | `total=15 and low=1 and high=5` | E:randomply_select_columns_from_large_wide_table_using_temporary_array_with_ranperm.sas |
+| 332 | `array_implicit_element_names` | `total=14` | E:data stop array to create variables.sas |
+| 333 | `if_zero_set_nobs_without_read` | `count=7` | E:data stop array to create variables.sas |
+| 334 | `genotype_sort_allele_pair` | `value='01'` | E:make_allele_columns_into_single_genotype_column.sas |
+| 335 | `genotype_missing_guard` | `value='NA'` | E:make_allele_columns_into_single_genotype_column.sas |
+| 336 | `iml_horizontal_concatenation` | `n=4 and total=10` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 337 | `iml_vertical_concatenation` | `n=2 and total=10` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 338 | `iml_shape_row_major` | `value=4` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 339 | `iml_cshape_character_vector` | `value=4` | E:convert_string_into_vector_using_cshape_in_proc_iml.sas |
+| 340 | `iml_loc_positive_indices` | `n=2 and total=7` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 341 | `iml_matrix_product` | `value=22` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 342 | `iml_inverse_identity` | `err<1e-10` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 343 | `iml_determinant_trace` | `abs(determinant-3)<1e-10 and diagonal=4` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 344 | `iml_current_dataset_contents` | `n=2` | E:proc_iml_to_get_sas_dataset_variable_names_using_contents.sas |
+| 345 | `iml_choose_masked_values` | `total=5` | E:concatenate_vector_vertically_or_horizontally_in_iml.sas |
+| 346 | `datasets_change_member_name` | `value=8 and oldexists=0` | D:Proc dataset change dataset name and copy with select to new lib.sas |
+| 347 | `datasets_modify_variable_rename` | `renamed=9` | D:Delete datasets with Proc datasets.sas |
+| 348 | `datasets_delete_selected_only` | `removed=1 and retained=1` | D:Delete datasets with Proc datasets.sas |
+| 349 | `set_prefix_list_concatenation` | `n=2 and total=11` | D:Set multiple datasets with similar names in SAS.sas |
+| 350 | `sort_dupout_counts_removed` | `kept=3 and removed=2` | D:Proc sort to output duplicates in new dataset.sas |
+| 351 | `update_statement_missing_preserved` | `x=10 and y=30` | D:SAS Merge for update missing values from other dataset very useful.sas |
+| 352 | `update_updatemode_nomissingcheck` | `missing(x)` | D:SAS Merge for update missing values from other dataset very useful.sas |
+| 353 | `sql_ceil_bucket_assignment` | `total=9` | D:Proc SQL Works with Array Function as well as ceil index functions.sas |
+| 354 | `dataset_simple_index_lookup` | `value=21` | D:SAS make Index codes.sas |
+| 355 | `by_notsorted_contiguous_groups` | `n=2 and total=3` | D:SAS Function First.obs and Last.obs in datastep Demo.sas |
+| 356 | `freq_by_group_percent_denominator` | `high=100 and low=50` | E:output proc freq summary with out function.sas |
+| 357 | `freq_missing_category_included` | `n=3 and categories=2` | E:output proc freq summary with out function.sas |
+| 358 | `freq_weighted_counts` | `n=10 and high=70` | D:ODA_fisher_test_demo_codes.sas |
+| 359 | `fisher_exact_ods_rows` | `n>0` | D:ODA_fisher_test_demo_codes.sas |
+| 360 | `sign_test_location_capture` | `n=3` | D:GWAS sign test with proc univariate.sas |
+| 361 | `beta_uniform_cdf` | `abs(value-.3)<1e-10` | E:generate_random_beta_values.sas |
+| 362 | `beta_symmetric_median` | `abs(value-.5)<1e-10` | E:generate_random_beta_values.sas |
+| 363 | `beta_moments_parameter_recovery` | `alpha=2 and beta=2` | E:generate_random_beta_values.sas |
+| 364 | `quantile_norm_sorted_column_means` | `total=9 and low=1.5 and high=4.5` | D:Quantile normalization demo.sas |
+| 365 | `seeded_beta_draw_valid_range` | `low>0 and high<1` | E:generate_random_beta_values.sas |
+| 366 | `printto_log_restore_success` | `value=12` | D:Proc Printto demo.sas |
+| 367 | `printto_print_owned_listing` | `value=5` | D:Proc Printto output log to sepecific file demo.sas |
+| 368 | `ods_exclude_none_restores_output` | `value=6` | E:ods select and exclude demo.sas |
+| 369 | `glm_quit_before_ods_recovery` | `n=2` | E:add quit to restore ods output before using ods select none in proc glm.sas |
+| 370 | `fcmp_macro_function_bridge` | `value=5` | D:proc fcmp demo with sas macro.sas |
+| 371 | `ifn_missing_fourth_argument` | `value=11` | D:ifn demo for if not condition.sas |
+| 372 | `ifn_uninitialized_input_advisory` | `value=11` | D:ifn demo for if not condition.sas |
+| 373 | `compbl_internal_space_normalization` | `value='alpha beta'` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 374 | `translate_tab_to_space` | `value='a b'` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 375 | `compress_keep_alphabetic` | `value='abc'` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 376 | `scan_quoted_delimiter_modifier` | `value='"a,b"'` | E:import_compressed_csv_file_with_quotes.sas |
+| 377 | `scan_empty_tokens_m_modifier` | `missing(value) and n=3` | E:import_compressed_csv_file_with_quotes.sas |
+| 378 | `findw_whole_word_boundary` | `a=1 and b=0` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 379 | `substrn_out_of_range_nonfatal` | `missing(value)` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 380 | `repeat_count_is_extra_repetitions` | `value='ababab'` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 381 | `transtrn_remove_token` | `value='abc'` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 382 | `countc_character_set` | `value=3` | D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas |
+| 383 | `sum_statement_missing_ignored` | `total=4` | E:data stop array to create variables.sas |
+| 384 | `whichn_first_matching_position` | `value=2` | D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas |
+| 385 | `largest_order_statistic` | `value=7` | D:Quantile normalization demo.sas |
+| 386 | `smallest_order_statistic` | `value=4` | D:Quantile normalization demo.sas |
+| 387 | `geomean_positive_values` | `abs(value-4)<1e-10` | D:Quantile normalization demo.sas |
+| 388 | `harmonic_mean_positive_values` | `abs(value-3)<1e-10` | D:Quantile normalization demo.sas |
+| 389 | `printto_hidden_error_status` | `Expected failure: (?:E389_MISSING&#124;SYSCC)` | D:Proc Printto demo.sas |
+| 390 | `hash_undefined_key_failure` | `Expected failure: (?:missing_key&#124;not.*declared)` | D:hash4bigdata_demo.sas |
+
+### Observed failures and corrections
+
+The discovery run in `SAS_Output_real30_AuYESW` passed 88/100 validations.
+Cases 291 and 292 computed correct results but injected loaders for
+NRSTR literals embedded in CALL EXECUTE/DOSUBL strings. Dependency analysis
+now decodes doubled apostrophes in these code strings, analyzes their real
+SAS lexical contexts and maps masking back to original offsets. Deferred
+NRSTR and ordinary single-quoted DATA text remain literal, while actual
+evaluated calls and active double-quoted include paths remain visible.
+Twelve regressions cover those distinctions.
+
+Case 389 exposed a real false-success bug: a missing dataset's ERROR was
+redirected by PROC PRINTTO, and MCP reported COMPLETE with exit 0. Explicit
+PRINTTO submissions now reset stale SYSCC before the job, restore logging
+afterwards and emit a fatal summary when SYSCC is at least 8. Warning-only
+condition codes remain nonfatal. The corrected live error reported
+`SYSCC=1012`, a nonzero exit and failed MCP status. The redirected file itself
+is not automatically downloaded; the default retained log points to it
+through the condition-code summary. Ordinary submissions are unchanged.
+
+Case 316 did not complete within the 180-second submit limit, and 317
+subsequently lost that SAS process. No definitive remote log was returned,
+so the remote failure's precise cause is unconfirmed. The fixture now reads
+one FILEVAR path per input dataset row, with a bounded loop of at most ten
+records per owned one-record file. Case 375 also had a separate remote
+session-termination failure. The harness now selects a fresh session for
+the next case after timeout/session-loss responses, retains the failed case
+and never replays it automatically.
+
+Other failures were generated-example corrections. Case 312 legitimately
+uses DOUBLE-AT input and produces an end-of-line advisory; that note is now
+explicitly expected and checked along with its correct count/sum. In 333,
+automatic NOBS was not stored in the output dataset; an explicit `count=n`
+retains it. The determinant in 343 needed a floating-point tolerance rather
+than exact equality. Case 344 counts all elements of the IML contents vector
+instead of assuming a row-vector orientation. The unsupported SELECT-list
+scalar subqueries in 350 were replaced by two aggregate derived tables.
+Case 367's fileref was too long; it now uses the valid `e367lst` name.
+
+The fileref failure led to a nonfatal preflight advisory for literal
+FILENAME names longer than eight characters. It excludes comments, string
+data, valid names and macro-generated declarations. The uninitialized-NOBS
+observation led to structured nonfatal diagnostics for actual uninitialized
+variable NOTES. Case 372 now explicitly verifies that behavior; source
+listing text cannot manufacture the diagnostic. Neither improvement
+silently rewrites user SAS code or turns advisory notes into failed jobs.
+
+The first focused repair pass passed 12/14 checks in
+`SAS_Output_real30_iicHyH`. Its remaining failures revealed an unescaped
+semicolon in the new status summary and an HTTP server still holding the
+old diagnostic module. The summary was corrected and the dedicated HTTP
+server restarted. All four follow-up checks passed in
+`SAS_Output_real30_RI2NhS`, including both normal PRINTTO jobs, the
+uninitialized-variable advisory and the actual redirected error.
+
+### Offline and companion-runner verification
+
+```bash
+export PATH=/usr/bin:$PATH
+prove tests/test_comment_quote_preflight.pl \
+  tests/test_inline_data_preflight.pl tests/test_inline_macro_preflight.pl \
+  MCPDeps/test_sas_log_and_labels.pl tests/test_mcp_job_reporting.pl \
+  tests/test_sas_log_diagnostics.pl tests/test_macro_quoting_preflight.pl \
+  tests/test_format_name_advisory.pl MCPDeps/test_sas_oda_include_lookup.pl \
+  tests/test_quoted_filename_upload.pl tests/test_example_uniqueness.pl \
+  tests/test_deferred_macro_literals.pl tests/test_printto_status_guard.pl \
+  tests/test_fileref_name_advisory.pl
+```
+
+These checks passed **279 assertions across 14 Perl tests**. The companion
+repository passed **141 assertions across 11 Perl tests**. Its public-wrapper
+live checks used:
+
+```bash
+perl tests/test_live_deferred_and_printto.pl --live
+```
+
+All seven assertions passed in `SAS_Output_deferred_printto_tdbPRQ`:
+deferred quoted calculations completed, no literal-name loaders were
+injected, nonempty HTML was retained, and the real redirected error returned
+a nonzero exit plus SYSCC summary without guard syntax errors. These are
+supplemental compatibility checks, not additional numbered examples.
+The portable smoke source is `examples/sas_library_deferred_quote_smoke.sas`.
+Shared changes, tests and examples were synchronized to the three active
+companion copies. Runtime outputs remain local.
+
+### Final frozen-code outcome
+
+The full rerun exited 0 and passed **100/100 validations** in
+`SAS_Output_real30_Dxz4eN`: **98 successful jobs and two intentional failed
+jobs** (389–390). All 42 original source hashes matched, and all new sources
+passed ID/whitespace-normalized duplicate checks against the preceding
+290 examples. Expected notes in 312 and 372 remained advisory; other
+successful jobs had no unexpected warning/data-quality diagnostics.
+Computed markers, retained HTML, full default logs, structured status,
+MCP error flags, exit codes and completion-marker cleanup were validated.
+
+The discovery, focused-repair, guard-verification and complete verification
+terminal logs are retained in `SAS_Output_library100_run_logs/` with the
+names `new_library100_batch6_initial.log`,
+`new_library100_batch6_repairs.log`,
+`new_library100_batch6_guard_verified.log` and
+`new_library100_batch6_verified.log`. Program files, responses, results JSON
+and HTML remain in their local run directories. Publication includes the
+maintained fixes, catalogue, source hashes, Perl tests, smoke example and
+this report; generated configurations, caches and runtime outputs remain
+local.

@@ -21,7 +21,7 @@ GetOptions('live' => \$live, 'generate-only' => \$generate, 'only=s' => \$only,
     'library-root=s' => \$library_root) or die "Invalid options\n";
 die "Use --live or --generate-only [--only 01,02] [--out directory] [--url URL]\n"
     unless $live || $generate;
-die "--batch must be 1, 2, 3, 4 or 5\n" unless $batch >= 1 && $batch <= 5;
+die "--batch must be 1 through 6\n" unless $batch >= 1 && $batch <= 6;
 my $root = abs_path("$Bin/..");
 chdir $root or die $!;
 $out ||= tempdir('SAS_Output_real30_XXXXXX', DIR => $root, CLEANUP => 0);
@@ -316,7 +316,7 @@ SAS
 if ($batch >= 2) {
     my %previous = map { example_fingerprint($_->{sas}) => 1 } @cases;
     for my $number (2 .. $batch) {
-        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl'}->{$number};
+        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl',6=>'new_examples_291_390.pl'}->{$number};
         my $additional = do "$Bin/$filename";
         die "Cannot load batch $number: ".($@ || $! || 'invalid catalog')."\n" unless ref($additional) eq 'ARRAY';
         die "Batch $number repeats a previous source after ID normalization\n" if grep { $previous{example_fingerprint($_->{sas})} } @$additional;
@@ -378,6 +378,7 @@ my @results;
 for my $case (@cases) {
     next if %selected && !$selected{$case->{id}};
     my $case_started = time;
+    my $last_message = '';
     my $result = {id=>$case->{id}, name=>$case->{name}, expected_failure=>$case->{fail}?1:0};
     eval {
         my $started = call_tool({sas_codes_or_file=>$case->{path},
@@ -398,6 +399,7 @@ for my $case (@cases) {
             last unless $message =~ /STATUS: RUNNING/;
         }
         save("$out/$case->{id}_response.json", $json->encode($finished));
+        $last_message = $message;
         my ($status) = $message =~ /STATUS: (\w+)/;
         my ($exit) = $message =~ /Exit code: (\d+)/;
         $result->{status}=$status//''; $result->{exit}=defined($exit)?0+$exit:undef;
@@ -432,11 +434,16 @@ for my $case (@cases) {
         $result->{passed}=@problems?0:1;
         1;
     } or do { $result->{passed}=0; $result->{problems}=[$@||'unknown exception']; };
+    if (!$result->{passed} && $last_message =~ /timed out after|SASIOConnectionTerminated|remote SAS ODA session terminated|NetworkException|session was no longer usable/i) {
+        $session = 'mcp30_recovery_'.time.'_'.$$.'_'.$case->{id};
+        $result->{next_session_refreshed}=1;
+    }
     $result->{elapsed_seconds}=time-$case_started;
     push @results,$result;
     save("$out/results.json", $json->encode(\@results));
     print "$case->{id} $case->{name}: ".($result->{passed}?'PASS':'FAIL')." (${\($result->{elapsed_seconds})}s)\n";
     print "  $_\n" for @{$result->{problems}||[]};
+    print "  Next case uses a fresh session; failed case is retained without replay.\n" if $result->{next_session_refreshed};
     $|=1;
 }
 my $passed=grep { $_->{passed} } @results;

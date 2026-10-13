@@ -2227,6 +2227,7 @@ sub run_submission_preflight {
     push @warning_findings, @{ scan_sas_text_for_inline_data_step_cards($submitted_code) };
     push @warning_findings, @{ scan_sas_text_for_common_macro_typos($submitted_code) };
     push @warning_findings, @{ SAS_Source_Analysis::format_name_issues($submitted_code) };
+    push @warning_findings, @{ SAS_Source_Analysis::fileref_name_issues($submitted_code) };
     my $fatal = @{ $scan->{findings} || [] } ? 1 : 0;
     my $report = format_sas_preflight_report(
         heading => '=== Submission Preflight ===',
