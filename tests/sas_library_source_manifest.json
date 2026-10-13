@@ -1270,5 +1270,245 @@
                                                                        "file":  "round_numeric_var_with_format_and_case_function_demo.sas",
                                                                        "bytes":  189,
                                                                        "sha256":  "8fa7d3075c720f57e809fdf6c723e053ad82e238be3ae291be09a263f5415d6e"
-                                                                   }
+                                                                   },
+    "E:Add quote to separate var list.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "sha256":  "3fc93abbc7a9b8e07c4b391ad2f71e70b00f574041a6705493437a488d4d59c7",
+                                                 "file":  "Add quote to separate var list.sas",
+                                                 "bytes":  301
+                                             },
+    "E:CAT CATX for Linking variables to create new one in PROC SQL.sas":  {
+                                                                               "collection":  "Easy-For-Error-Codes-SAS",
+                                                                               "sha256":  "6f9295764128c7e561cdd3095f8fc705c6e7a5ecb939a6672ca5e542039b5c56",
+                                                                               "file":  "CAT CATX for Linking variables to create new one in PROC SQL.sas",
+                                                                               "bytes":  172
+                                                                           },
+    "E:desending should put ahead of the variable used in proc sort.sas":  {
+                                                                               "collection":  "Easy-For-Error-Codes-SAS",
+                                                                               "sha256":  "7838facb3fe8f6f12b81252fbdcce32253069ca16555fdbbd230bb12bb50c28d",
+                                                                               "file":  "desending should put ahead of the variable used in proc sort.sas",
+                                                                               "bytes":  91
+                                                                           },
+    "E:evaluate_single_and_double_at_in_data_step.sas":  {
+                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                             "sha256":  "c06b9e4e2cec94cf1cbbbd8eecb286e5fec6c38ee08acaeb14e9a802b36e361d",
+                                                             "file":  "evaluate_single_and_double_at_in_data_step.sas",
+                                                             "bytes":  1385
+                                                         },
+    "E:Get_minimum_or_max_value_for_any_of_specific_columns_with_having.sas":  {
+                                                                                   "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                   "sha256":  "18f4c480bfb4a547875443f3a030e4a14fb53d648ec3d173f145a6ef09a85dd1",
+                                                                                   "file":  "Get_minimum_or_max_value_for_any_of_specific_columns_with_having.sas",
+                                                                                   "bytes":  213
+                                                                               },
+    "E:lag_generate_missing_values.sas":  {
+                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                              "sha256":  "eaa59b21aaf229f49403c13d7995085f5240874fd0676f5afed3834bdb885ac7",
+                                              "file":  "lag_generate_missing_values.sas",
+                                              "bytes":  692
+                                          },
+    "E:make data step matrix with array.sas":  {
+                                                   "collection":  "Easy-For-Error-Codes-SAS",
+                                                   "sha256":  "fe713de9eab1834d01c8b9949f9c417648f2099c6b43b951e5f24b27efe1918c",
+                                                   "file":  "make data step matrix with array.sas",
+                                                   "bytes":  2443
+                                               },
+    "E:make_global_macro_var_with_symputx_to_overwrite_macro_vars.sas":  {
+                                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                                             "sha256":  "d445eea6fc356d86189e7731a7b8edabead904a5ef25e647317fbfc9dbf6a6e3",
+                                                                             "file":  "make_global_macro_var_with_symputx_to_overwrite_macro_vars.sas",
+                                                                             "bytes":  1612
+                                                                         },
+    "E:OUTPUT duplicates into sas dataset.sas":  {
+                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                     "sha256":  "0f7f66960c1dde83608a6f16f6de697ed92b03d914b957f1f9f3dff3e4d127e4",
+                                                     "file":  "OUTPUT duplicates into sas dataset.sas",
+                                                     "bytes":  125
+                                                 },
+    "E:ranperm_generate_random_matrix.sas":  {
+                                                 "collection":  "Easy-For-Error-Codes-SAS",
+                                                 "sha256":  "341bbd8b8b332c10100c8feef5b69586494245c69b17359d602dfc3efb44aac9",
+                                                 "file":  "ranperm_generate_random_matrix.sas",
+                                                 "bytes":  627
+                                             },
+    "E:scale ssGSEA score in the range from -1 to 1.sas":  {
+                                                               "collection":  "Easy-For-Error-Codes-SAS",
+                                                               "sha256":  "e1c2de736b644bd2ab2b440b3c73a149158b0097df1c149661253fdcb805ba0d",
+                                                               "file":  "scale ssGSEA score in the range from -1 to 1.sas",
+                                                               "bytes":  987
+                                                           },
+    "E:strip left for equal condition in proc sql.sas":  {
+                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                             "sha256":  "5e9614bc69bde6c67439fa87c397425807c0c3b884faff30ea0487708e6fe145",
+                                                             "file":  "strip left for equal condition in proc sql.sas",
+                                                             "bytes":  338
+                                                         },
+    "E:symputx demo different from symput.sas":  {
+                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                     "sha256":  "6ac84f1e0cbf53d2344c224ba67b63e5cbdf5a0bfeee17dd3e1ffb5bd7ed0049",
+                                                     "file":  "symputx demo different from symput.sas",
+                                                     "bytes":  190
+                                                 },
+    "E:Tell_sas_to_read_var_in_variable_length.sas":  {
+                                                          "collection":  "Easy-For-Error-Codes-SAS",
+                                                          "sha256":  "3c9598c1cd066c9bfca7310d6c57e6560980a842e9ba63d1941cbe67e9450846",
+                                                          "file":  "Tell_sas_to_read_var_in_variable_length.sas",
+                                                          "bytes":  731
+                                                      },
+    "E:use prxmatch in sysfunc.sas":  {
+                                          "collection":  "Easy-For-Error-Codes-SAS",
+                                          "sha256":  "3c429b3b1f4917d0662859fcd0bc2adca746f2a8f80ae905c3db81d53475fd8d",
+                                          "file":  "use prxmatch in sysfunc.sas",
+                                          "bytes":  828
+                                      },
+    "E:use_binary_function_in_proc_iml_generate_SNP_haplotype.sas":  {
+                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                         "sha256":  "27ada02878f8f972397d11aa73cab27ad78fcfe0c26e166bdbcd9ba4391369d2",
+                                                                         "file":  "use_binary_function_in_proc_iml_generate_SNP_haplotype.sas",
+                                                                         "bytes":  25521
+                                                                     },
+    "D:A macro to Run other Macro repeatedly.sas":  {
+                                                        "collection":  "SAS_Code_Database",
+                                                        "sha256":  "b708241ff915882a17b59ffe12fcd9c425fbd4fb00bba101b4ddb849b796265b",
+                                                        "file":  "A macro to Run other Macro repeatedly.sas",
+                                                        "bytes":  233
+                                                    },
+    "D:check tables with dictionary.tables by proc sql.sas":  {
+                                                                  "collection":  "SAS_Code_Database",
+                                                                  "sha256":  "7534badae71f554f3877e1835662e4a1a13f27cbeb4ea2b609563d5cb7dcd938",
+                                                                  "file":  "check tables with dictionary.tables by proc sql.sas",
+                                                                  "bytes":  113
+                                                              },
+    "D:Datastep Array function to make multiple new variables and assign initial value to it.sas":  {
+                                                                                                        "collection":  "SAS_Code_Database",
+                                                                                                        "sha256":  "d8df49d31099ed7527e0c3686820de1de3cbcb66b815bd85f58f894dcf874ad8",
+                                                                                                        "file":  "Datastep Array function to make multiple new variables and assign initial value to it.sas",
+                                                                                                        "bytes":  1700
+                                                                                                    },
+    "D:Datastep Set demo.sas":  {
+                                    "collection":  "SAS_Code_Database",
+                                    "sha256":  "0c80649a29176d7403b7e151558b770d2d185b8f93e71e0cbc58a3d35e01eb54",
+                                    "file":  "Datastep Set demo.sas",
+                                    "bytes":  145
+                                },
+    "D:Demo for data step retain, by, if condition to summarize data.sas":  {
+                                                                                "collection":  "SAS_Code_Database",
+                                                                                "sha256":  "2fb018aae072a1108297f1472eec3eddb87c0a3744c7c43f913851dcc6506a20",
+                                                                                "file":  "Demo for data step retain, by, if condition to summarize data.sas",
+                                                                                "bytes":  1294
+                                                                            },
+    "D:Do until Demo.sas":  {
+                                "collection":  "SAS_Code_Database",
+                                "sha256":  "b7ab89b0416cbb67cc8f104b8e986a65196b0d97425f48353f846cfd9842b584",
+                                "file":  "Do until Demo.sas",
+                                "bytes":  157
+                            },
+    "D:get sas work dir with sysfunc pathname_work.sas":  {
+                                                              "collection":  "SAS_Code_Database",
+                                                              "sha256":  "ee358ccaf01e5e4335f95017b601f71a58317531e82828a3da91a2d9bda101be",
+                                                              "file":  "get sas work dir with sysfunc pathname_work.sas",
+                                                              "bytes":  27
+                                                          },
+    "D:Macro function cmpres and qcmpres.sas":  {
+                                                    "collection":  "SAS_Code_Database",
+                                                    "sha256":  "5448261d8432b3c233735625408866371e954e7776f384290d3b93bcdd3b2e75",
+                                                    "file":  "Macro function cmpres and qcmpres.sas",
+                                                    "bytes":  634
+                                                },
+    "D:Make multiple macro variables with Function array and call symput in data step.sas":  {
+                                                                                                 "collection":  "SAS_Code_Database",
+                                                                                                 "sha256":  "7332add5994d7b1354c306c3316aa9c6aae3e99d787d845408c8e5af2a25b6ac",
+                                                                                                 "file":  "Make multiple macro variables with Function array and call symput in data step.sas",
+                                                                                                 "bytes":  955
+                                                                                             },
+    "D:Powerful Function retain in datasetp.sas":  {
+                                                       "collection":  "SAS_Code_Database",
+                                                       "sha256":  "b41ef889ff327cfd9bd361803504a751ed7df060e0274bc8ecb80659168bbb8a",
+                                                       "file":  "Powerful Function retain in datasetp.sas",
+                                                       "bytes":  1522
+                                                   },
+    "D:Proc Import only import partial column variables and rename them steamlessly.sas":  {
+                                                                                               "collection":  "SAS_Code_Database",
+                                                                                               "sha256":  "741ba1625f9765dfe67089b09d9dc7b8b4d6473f6fdb6b918c4490cbc585c574",
+                                                                                               "file":  "Proc Import only import partial column variables and rename them steamlessly.sas",
+                                                                                               "bytes":  322
+                                                                                           },
+    "D:Proc Rank Demo.sas":  {
+                                 "collection":  "SAS_Code_Database",
+                                 "sha256":  "acdccbf74cf370dc24383aac2aa5afc7160efbd9e8835d3dce317b7b79c80773",
+                                 "file":  "Proc Rank Demo.sas",
+                                 "bytes":  142
+                             },
+    "D:Proc SQL with Cats and other Cat functions.sas":  {
+                                                             "collection":  "SAS_Code_Database",
+                                                             "sha256":  "63e87bbbd1841a35912049ffa412f890f31f5dbdd384b76ba9442cb7527b653c",
+                                                             "file":  "Proc SQL with Cats and other Cat functions.sas",
+                                                             "bytes":  80
+                                                         },
+    "D:Proc transpose_transpose rowwide long data into columnwide long data.sas":  {
+                                                                                       "collection":  "SAS_Code_Database",
+                                                                                       "sha256":  "b484c3d92150083cc69240e344aac4d1d00d2baadc25893496588d25265cbbb9",
+                                                                                       "file":  "Proc transpose_transpose rowwide long data into columnwide long data.sas",
+                                                                                       "bytes":  1649
+                                                                                   },
+    "D:split_elements_and_output_ids_into_each_row.sas":  {
+                                                              "collection":  "SAS_Code_Database",
+                                                              "sha256":  "f78c0324799e03f136c71d48b0b615426330fc1dc088f7b323c1428050b22d13",
+                                                              "file":  "split_elements_and_output_ids_into_each_row.sas",
+                                                              "bytes":  438
+                                                          },
+    "D:tell sas to read variable until there are two or more spaces as a delimeter.sas":  {
+                                                                                              "collection":  "SAS_Code_Database",
+                                                                                              "sha256":  "d70895d0408499d6d136a993c36a1282bc6c436482001bbc7c052364063aafdc",
+                                                                                              "file":  "tell sas to read variable until there are two or more spaces as a delimeter.sas",
+                                                                                              "bytes":  432
+                                                                                          },
+    "D:Transform Plink Tped to long format for SAS with point function debugging.sas":  {
+                                                                                            "collection":  "SAS_Code_Database",
+                                                                                            "sha256":  "258356378ed69058340accde89bcf2373e79f0fa104fdcd4946d3f8b4ca5b0c1",
+                                                                                            "file":  "Transform Plink Tped to long format for SAS with point function debugging.sas",
+                                                                                            "bytes":  1550
+                                                                                        },
+    "D:use_scan_countc_to_get_min_value_with_loop.sas":  {
+                                                             "collection":  "SAS_Code_Database",
+                                                             "sha256":  "5976b325c85f2a22d5a0ce400e3504f6daed4b43b5796300d506b22243733ffb",
+                                                             "file":  "use_scan_countc_to_get_min_value_with_loop.sas",
+                                                             "bytes":  333
+                                                         },
+    "D:Heatmap Demo.sas":  {
+                               "collection":  "SAS_Code_Database",
+                               "sha256":  "14eac8fe323396b45bf4538381f26cb0f99e0ec04ff012c5f3c63b87b6898d99",
+                               "file":  "Heatmap Demo.sas",
+                               "bytes":  1042
+                           },
+    "D:GTL Demo very useful.sas":  {
+                                       "collection":  "SAS_Code_Database",
+                                       "sha256":  "1804af6ac8d0ea6bbd2555d54caf581e59907d0c725cd0e8257a6506a39c0fcf",
+                                       "file":  "GTL Demo very useful.sas",
+                                       "bytes":  7270
+                                   },
+    "D:Proc sgrender with proc template Demo.sas":  {
+                                                        "collection":  "SAS_Code_Database",
+                                                        "sha256":  "62e304a714199868e482930d006a33b07b387200038c5777d7c916bbd08e481d",
+                                                        "file":  "Proc sgrender with proc template Demo.sas",
+                                                        "bytes":  301
+                                                    },
+    "D:sgplot  vbar with mean by using response stat group functions.sas":  {
+                                                                                "collection":  "SAS_Code_Database",
+                                                                                "sha256":  "16a2d08efc1602cc1d1a5cde54c3cf65da0fa87f43d2d6b2323a1334d919f12e",
+                                                                                "file":  "sgplot  vbar with mean by using response stat group functions.sas",
+                                                                                "bytes":  1091
+                                                                            },
+    "D:Get template code with proc sgplot function tmplout.sas":  {
+                                                                      "collection":  "SAS_Code_Database",
+                                                                      "sha256":  "7b66a64d431c5ab99ba52e15a6c6e67ce27b43d3e6f4f70cff0b4c1b2c43eaff",
+                                                                      "file":  "Get template code with proc sgplot function tmplout.sas",
+                                                                      "bytes":  126
+                                                                  },
+    "D:Proc compare with var and id as well as output parameters.sas":  {
+                                                                            "collection":  "SAS_Code_Database",
+                                                                            "sha256":  "1d2d9efafa28d49ff8cc34b2dd34561af45c3ffad728824068cd532163afb778",
+                                                                            "file":  "Proc compare with var and id as well as output parameters.sas",
+                                                                            "bytes":  180
+                                                                        }
 }

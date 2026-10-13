@@ -21,7 +21,7 @@ GetOptions('live' => \$live, 'generate-only' => \$generate, 'only=s' => \$only,
     'library-root=s' => \$library_root) or die "Invalid options\n";
 die "Use --live or --generate-only [--only 01,02] [--out directory] [--url URL]\n"
     unless $live || $generate;
-die "--batch must be 1 through 7\n" unless $batch >= 1 && $batch <= 7;
+die "--batch must be 1 through 8\n" unless $batch >= 1 && $batch <= 8;
 my $root = abs_path("$Bin/..");
 chdir $root or die $!;
 $out ||= tempdir('SAS_Output_real30_XXXXXX', DIR => $root, CLEANUP => 0);
@@ -316,7 +316,7 @@ SAS
 if ($batch >= 2) {
     my %previous = map { example_fingerprint($_->{sas}) => 1 } @cases;
     for my $number (2 .. $batch) {
-        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl',6=>'new_examples_291_390.pl',7=>'new_examples_391_490.pl'}->{$number};
+        my $filename = {2=>'new_examples_31_60.pl',3=>'new_examples_61_90.pl',4=>'new_examples_91_190.pl',5=>'new_examples_191_290.pl',6=>'new_examples_291_390.pl',7=>'new_examples_391_490.pl',8=>'new_examples_491_590.pl'}->{$number};
         my $additional = do "$Bin/$filename";
         die "Cannot load batch $number: ".($@ || $! || 'invalid catalog')."\n" unless ref($additional) eq 'ARRAY';
         die "Batch $number repeats a previous source after ID normalization\n" if grep { $previous{example_fingerprint($_->{sas})} } @$additional;
@@ -351,6 +351,16 @@ for my $case (@cases) {
         }
     }
     $case->{path} = "$out/$case->{id}_$case->{name}.sas";
+    if ($case->{fixtures}) {
+        my $index=0;
+        for my $body (@{$case->{fixtures}}) {
+            ++$index;
+            my $fixture="$out/include_$case->{id}_${index}_".basename($out).".sas";
+            save($fixture,$body);
+            $case->{sas} =~ s/\@FIXTURE_$index\@/$fixture/g;
+            push @{$case->{fixture_paths}},$fixture;
+        }
+    }
     if (defined $case->{fixture}) {
         my $fixture="$out/include_$case->{id}_".basename($out).".sas";
         save($fixture,$case->{fixture});
@@ -453,8 +463,9 @@ for my $case (@cases) {
     $|=1;
 }
 my $passed=grep { $_->{passed} } @results;
-my @fixtures=map {'~/'.basename($_->{fixture_path})}
-    grep {defined $_->{fixture_path} && (!$selected{$_->{id}} ? !%selected : 1)} @cases;
+my @fixtures=map {'~/'.basename($_)} map {
+    (defined $_->{fixture_path} ? ($_->{fixture_path}) : (), @{$_->{fixture_paths}//[]})
+} grep {!%selected || $selected{$_->{id}}} @cases;
 my $cleanup_ok=1;
 if (@fixtures) {
     my $pid=fork(); die "Cannot fork fixture cleanup: $!\n" unless defined $pid;

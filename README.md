@@ -805,6 +805,14 @@ and execution-context detection stops at closed API calls. Generated
 include fixtures use unique names and are deleted remotely after the run;
 their local programs, cleanup log and results JSON remain available.
 
+Batch 8 adds 100 distinct cases (491-590) from 40 previously unused library
+files. It covers input pointers, macro scope, arrays, SQL, sorting, metadata,
+reshaping and ODS plots. Multiple quoted filenames in one `%include`
+statement are discovered and uploaded, including statements inside DOSUBL
+and CALL EXECUTE strings. The Perl harness supports multiple owned fixtures
+per case and retains cleanup evidence. See report section 14 for commands,
+observed failures, example corrections and verification results.
+
 Macro-quoting contexts now preserve escaped delimiters and unmatched quotes.
 NRSTR literals and ordinary single-quoted DATA text do not trigger macro
 dependency loading; evaluated or deferred executable macro calls remain

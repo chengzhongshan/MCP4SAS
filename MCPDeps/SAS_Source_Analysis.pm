@@ -283,16 +283,27 @@ sub include_targets {
         my $offset=$-[0];
         next if grep {$offset>=$_->{start} && $offset<$_->{end}} @deferred;
         my $tail=substr($paths,$offset);
-        next unless $tail =~ /^%include\s+(["'])/i;
-        my ($quote,$pos,$value)=($1,$+[0],'');
+        next unless $tail =~ /^%include\s+/i;
+        my $pos=$+[0];
+        # A statement can name several quoted files. Stop at an option,
+        # statement boundary or nonliteral operand, never a later statement.
         while ($pos<length($tail)) {
-            my $char=substr($tail,$pos++,1);
-            if ($char eq $quote) {
-                if (substr($tail,$pos,1) eq $quote) {$value.=$quote; $pos++; next;}
-                push @targets,$value if length $value;
-                last;
+            $pos++ while $pos<length($tail) && substr($tail,$pos,1) =~ /\s/;
+            my $quote=substr($tail,$pos,1);
+            last unless $quote eq "'" || $quote eq '"';
+            ++$pos;
+            my ($value,$closed)=('',0);
+            while ($pos<length($tail)) {
+                my $char=substr($tail,$pos++,1);
+                if ($char eq $quote) {
+                    if (substr($tail,$pos,1) eq $quote) {$value.=$quote; $pos++; next;}
+                    $closed=1;
+                    last;
+                }
+                $value.=$char;
             }
-            $value.=$char;
+            last unless $closed;
+            push @targets,$value if length $value;
         }
     }
     return \@targets;
