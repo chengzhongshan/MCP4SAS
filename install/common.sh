@@ -114,10 +114,7 @@ candidate_iom_jar_dirs() {
     printf '%s\n' "${MCP4SAS_MULTIGWAS_ROOT}/install/saspy-java-supplement/java/iomclient"
     printf '%s\n' "${MCP4SAS_MULTIGWAS_ROOT}/.venv-pipeline/lib/python3.8/site-packages/saspy/java/iomclient"
   fi
-  printf '%s\n' \
-    "${MCP4SAS_ROOT}/install/saspy-java-supplement/java/iomclient" \
-    "${MCP4SAS_ROOT}/../MultiGWAS-Explorer/install/saspy-java-supplement/java/iomclient" \
-    "${MCP4SAS_ROOT}/../MultiGWAS-Explorer-main/MultiGWAS-Explorer/install/saspy-java-supplement/java/iomclient"
+  printf '%s\n' "${MCP4SAS_ROOT}/install/saspy-java-supplement/java/iomclient"
 }
 
 install_saspy_iom_encryption_jars() {
@@ -147,7 +144,7 @@ install_saspy_iom_encryption_jars() {
 
   log "WARNING: SAS ODA IOM encryption jars were not found."
   log "SAS ODA on SAS 9.4M7 requires: ${MCP4SAS_SASPY_IOM_JARS[*]}"
-  log "Set MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient or MCP4SAS_MULTIGWAS_ROOT=/path/to/MultiGWAS-Explorer and rerun install/install_saspy_iom_jars.sh."
+  log "Set MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient and rerun install/install_saspy_iom_jars.sh."
   return 0
 }
 
