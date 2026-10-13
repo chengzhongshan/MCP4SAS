@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 BEGIN {
     require File::Basename;
     require File::Spec;
@@ -140,6 +140,7 @@ my ($internal_runner_result_json, $internal_execution_file, $internal_execution_
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
+my ($saspy_cfgname, $saspy_cfgfile);
 my $classify_sas_log;
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
@@ -461,7 +462,9 @@ GetOptions(
     'sas-oda-password=s' => \$sas_oda_password,
     'prompt-sas-oda-auth!' => \$force_sas_oda_auth_prompt,
     'skip-sas-oda-auth-bootstrap!' => \$skip_sas_oda_auth_bootstrap,
-    'check-sas-oda-login-only!' => \$check_sas_oda_login_only,
+    'check-sas-oda-login-only|check-saspy-connection-only!' => \$check_sas_oda_login_only,
+    'saspy-cfgname=s' => \$saspy_cfgname,
+    'saspy-cfgfile=s' => \$saspy_cfgfile,
     'classify-sas-log=s' => \$classify_sas_log,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
@@ -479,6 +482,9 @@ GetOptions(
     '_internal-persistent!' => \$internal_persistent,
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
+
+$ENV{SASPY_CFGNAME} = $saspy_cfgname if defined($saspy_cfgname) && length($saspy_cfgname);
+$ENV{SASPY_CFGFILE} = $saspy_cfgfile if defined($saspy_cfgfile) && length($saspy_cfgfile);
 
 sub collect_sas_oda_session_pids {
     my %seen;
@@ -743,10 +749,14 @@ def iter_cfg_names():
 
 def main():
     last_error = None
+    session_options = {'results': 'html'}
+    cfgfile = os.environ.get('SASPY_CFGFILE')
+    if cfgfile:
+        session_options['cfgfile'] = cfgfile
     for cfgname in iter_cfg_names():
         sess = None
         try:
-            sess = saspy.SASsession(cfgname=cfgname, results='html')
+            sess = saspy.SASsession(cfgname=cfgname, **session_options)
             res = sess.submit("proc setinit;run;")
             log = res.get('LOG', '') or ''
             ok = ('ERROR:' not in log and 'FATAL' not in log)
@@ -992,7 +1002,7 @@ Options:
                              Repeat this option to apply multiple regex patterns.
       --delete-dir <dir>     Remote directory to scan for --delete-file-rgx matches
                              (default: '~')
-  --dir4listing              list out files in remote directory in SAS ODA, 
+  --dir4listing              list out files in remote directory in SAS ODA,
                              such as '~/Macros', remember to restrict it to eval using single quote
   --file-info <file>         Return remote file existence, size, and timestamp metadata.
                              Repeat this option to inspect multiple files.
@@ -1010,6 +1020,9 @@ Options:
   --sas-oda-password <pass>  Optional SAS ODA password for first-run credential bootstrap.
   --prompt-sas-oda-auth      Force an interactive SAS ODA credential refresh before connecting.
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
+  --saspy-cfgname <name>     Select the SASPy configuration (default: oda).
+  --saspy-cfgfile <file>     Use a specific SASPy configuration file.
+  --check-saspy-connection-only Alias for the selected-target login probe.
   --classify-sas-log <file>  Inspect an existing SAS log without connecting to ODA.
                              Space exhaustion returns JSON with retryable=false
                              and exits 73; other logs exit 0.
@@ -3384,7 +3397,7 @@ if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
     }
 }
 
-#Put the download part after running the code, so that users can specify the dataset to be downloaded in the code if needed. 
+#Put the download part after running the code, so that users can specify the dataset to be downloaded in the code if needed.
 #For example, users can create a dataset in the code and then specify that dataset to be downloaded.
 if (@download_files) {
     print "Bulk download manifest: " . scalar(@download_files) . " file(s); using one SASPy session.\n";
@@ -3646,7 +3659,7 @@ if ($sas_execution_failed) {
 #    print "\n=== Output Directory ===\n$output_dir\n\n";
 #    print "=== Dependency Logs ===\n" . ($result->{dep_logs} || "None") . "\n\n" if $result->{dep_logs};
 #    print "=== SAS Log ===\n" . $result->{log} . "\n\n" if $result->{log};
-#    print "=== Output ===\n" . ("HTML output saved to: $output_dir/" . $result->{htmlfilename} || $result->{lst} || "No output") . "\n" 
+#    print "=== Output ===\n" . ("HTML output saved to: $output_dir/" . $result->{htmlfilename} || $result->{lst} || "No output") . "\n"
 #    if ($result->{htmlfilename} || $result->{lst});
 # }
 

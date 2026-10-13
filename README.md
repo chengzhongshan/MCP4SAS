@@ -1,5 +1,11 @@
 # MCP4SAS
-<img width="1272" height="801" alt="image" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
+
+<p align="center">
+  <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
+    <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
+  </a>
+</p>
+<p align="center"><sub>Click the workflow figure to open the full-resolution version.</sub></p>
 
 MCP4SAS is a small Model Context Protocol (MCP) server for running SAS code
 through SASPy. It can use SAS OnDemand for Academics (SAS ODA), local SAS on
@@ -17,8 +23,85 @@ includes:
   server for faster repeated SAS ODA calls.
 - `MCPDeps/test_sas_oda_debug_macro_guard.pl`: regression test for the SAS
   32-character macro-name limit and bootstrap/session-server compatibility.
+- `MCPDeps/test_sas_oda_connection_lifecycle.pl`: regression test for clear
+  one-shot SASPy connection shutdown diagnostics.
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
+
+## Install MCP4SAS
+
+Choose your platform below. Each installer provisions the required local
+dependencies and finishes with an installation smoke test.
+
+### Ubuntu or Linux
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_ubuntu.sh
+```
+
+If system packages are already installed, skip `apt`:
+
+```bash
+MCP4SAS_SKIP_APT=1 bash install/install_ubuntu.sh
+```
+
+### macOS
+
+Install Xcode Command Line Tools when prompted, then run:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_macos.sh
+```
+
+The macOS installer uses Homebrew for Perl/Python/Java support.
+
+### Windows with Cygwin
+
+Open a Cygwin terminal, then run:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_cygwin.sh
+```
+
+If you already installed the required Cygwin packages, skip the package update:
+
+```bash
+MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh
+```
+
+### Conda
+
+This is useful on Linux, macOS, WSL, or a Unix-like shell with Conda available:
+
+```bash
+git clone https://github.com/chengzhongshan/MCP4SAS.git
+cd MCP4SAS
+bash install/install_conda.sh
+```
+
+By default this creates a Conda environment named `mcp4sas`. To choose another
+name:
+
+```bash
+MCP4SAS_CONDA_ENV=my_sas_env bash install/install_conda.sh
+```
+
+Every installer finishes by running the local smoke check. You can repeat it
+without reinstalling dependencies:
+
+```bash
+bash install/check_mcp4sas_install.sh
+```
+
+The GitHub Installation workflow runs fresh Ubuntu, Apple Silicon macOS, Intel
+macOS, Windows/Cygwin, and Conda installations on every pull request and push
+to `main`.
 
 ## Requirements
 
@@ -50,12 +133,16 @@ template with ODA and local SAS examples, force a repo-local copy:
 MCP4SAS_OVERWRITE_SASPY_CONFIG=1 bash install/install_saspy_config.sh
 ```
 
-MCP4SAS searches these config files in order:
+The full installer writes the default configuration into the isolated SASPy
+package so commands launched outside the repository use the same settings. A
+repo-local copy is also created for inspection and customization. To use a
+different file, pass it explicitly:
 
-```text
-./sascfg_personal.py
-~/.config/saspy/sascfg_personal.py
-~/sascfg_personal.py
+```bash
+./run_sas_codes_or_files_in_ODA.pl \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
 ```
 
 Select a target with `SASPY_CFGNAME` or `--saspy-cfgname`.
@@ -126,10 +213,8 @@ or `windows`) as MCP tool arguments.
 
 Important limitation: this direct batch tool is not persistent. Each tool call
 launches a new SAS process, so `WORK` data sets, macro variables, librefs,
-options, and loaded macros do not carry over to the next call. Polling reports
-the helper exit code and flags nonzero exits as MCP errors; after polling, it
-removes the PID and completion markers while preserving the run's logs and
-HTML results.
+options, and loaded macros do not carry over to the next call. Polling reports the helper exit code and flags nonzero exits as MCP errors.
+Logs and HTML are retained after worker scratch cleanup.
 
 If you need persistent local SAS state, use the SASPy-backed runner instead:
 
@@ -144,65 +229,6 @@ the same process, marks log/listing boundaries, handles interrupts and
 timeouts, and shuts the process down cleanly. That is a larger design than the
 current batch helper. For now, SASPy `linuxlocal`, `winlocal`, or another SASPy
 configuration is the recommended persistent-session path.
-
-## Install On Ubuntu Or Linux
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_ubuntu.sh
-```
-
-If system packages are already installed, skip `apt`:
-
-```bash
-MCP4SAS_SKIP_APT=1 bash install/install_ubuntu.sh
-```
-
-## Install On macOS
-
-Install Xcode Command Line Tools when prompted, then run:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_macos.sh
-```
-
-The macOS installer uses Homebrew for Perl/Python/Java support.
-
-## Install On Windows With Cygwin
-
-Open a Cygwin terminal, then run:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_cygwin.sh
-```
-
-If you already installed the required Cygwin packages, skip the package update:
-
-```bash
-MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh
-```
-
-## Install With Conda
-
-This is useful on Linux, macOS, WSL, or a Unix-like shell with Conda available:
-
-```bash
-git clone https://github.com/chengzhongshan/MCP4SAS.git
-cd MCP4SAS
-bash install/install_conda.sh
-```
-
-By default this creates a Conda environment named `mcp4sas`. To choose another
-name:
-
-```bash
-MCP4SAS_CONDA_ENV=my_sas_env bash install/install_conda.sh
-```
 
 ## Use With Vagrant
 
@@ -222,7 +248,7 @@ host system.
 
 ## First SAS ODA Login
 
-SAS ODA now requires the SAS IOM encryption jars used by SASPy:
+SAS ODA requires the SAS IOM encryption jars used by SASPy:
 
 ```text
 sas.rutil.jar
@@ -233,11 +259,13 @@ sastpj.rutil.jar
 SASPy documents this requirement for SAS ODA/SAS 9.4M7 here:
 https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption-jars
 
-Point to a local directory containing the three jars to install them into MCP4SAS:
+The MCP4SAS installers include the tested SASPy Java bridge, IOM client,
+encryption, CORBA, and logging JARs. They copy these files into the isolated
+Python environment and build the ODA classpath automatically. To repair or
+refresh those files without reinstalling everything, run:
 
 ```bash
-MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient \
-  bash install/install_saspy_iom_jars.sh
+bash install/install_saspy_iom_jars.sh
 ```
 
 Interactive credential setup:
@@ -329,6 +357,13 @@ validated ZIP transfer by default. Pass `--no-archive-transfers` only when
 diagnosing compatibility problems. Existing uploads are reused when their
 remote size and timestamp match; pass `--no-skip-upload-if-same` to force a
 replacement.
+
+One-shot actions now print a structured connection lifecycle message before
+calling SASPy `endsas()`. It identifies the subprocess, completed action,
+result, closure reason, and expected next step. This distinguishes an expected
+one-shot connection shutdown from an unexpected SAS ODA transport failure.
+Persistent sessions remain open until they are stopped, expire, or encounter a
+transport failure.
 
 Upload:
 
@@ -676,7 +711,6 @@ tool.
   logs as sensitive.
 - Review agent-generated SAS code before running it against sensitive data.
 
-
 ## Synchronize Local and Remote Copies
 
 Run from your MCP4SAS checkout in Bash (Cygwin on Windows):
@@ -741,6 +775,7 @@ perl MCPDeps/test_sas_oda_macro_helper_reuse.pl
 perl MCPDeps/test_sas_oda_include_lookup.pl
 ```
 
+
 Classify a saved SAS log without connecting to ODA:
 
 ```bash
@@ -765,11 +800,12 @@ If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
 SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. The
 most common cause is that the three SAS IOM encryption jars are missing from
-SASPy's `java/iomclient` directory. Copy them from your local jar directory:
+SASPy's `java/iomclient` directory or that SASPy is using an incomplete
+classpath. Restore the bundled, tested Java assets and generated profile:
 
 ```bash
-MCP4SAS_SASPY_IOM_JAR_DIR=/path/to/iomclient \
-  bash install/install_saspy_iom_jars.sh
+bash install/install_saspy_iom_jars.sh
+bash install/check_mcp4sas_install.sh
 ```
 
 Then refresh or validate the saved SAS ODA credentials:
@@ -780,21 +816,14 @@ Then refresh or validate the saved SAS ODA credentials:
   --check-sas-oda-login-only
 ```
 
-Also confirm that your SASPy config file is visible. MCP4SAS searches these
-locations, in order:
-
-```text
-./sascfg_personal.py
-~/.config/saspy/sascfg_personal.py
-~/sascfg_personal.py
-```
-
-You can force a specific config file or config name:
+You can force a specific config file or config name with CLI options or their
+environment-variable equivalents:
 
 ```bash
-SASPY_CFGFILE=~/sascfg_personal.py \
-SASPY_CFGNAME=oda \
-./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
+./run_sas_codes_or_files_in_ODA.pl \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
 ```
 
 If the jars are installed and credentials are correct but the same error
