@@ -229,7 +229,24 @@ sub macro_dependency_view {
     for my $span (@{$analysis->{single_quotes}}) {
         my $prefix=substr($analysis->{comments_masked},0,$span->{start});
         # Literal code passed to these execution APIs is a real dependency.
-        next if $prefix =~ /(?:\bcall\s+execute|\bdosubl)\s*\([^;]*\z/is;
+        if ($prefix =~ /(?:\bcall\s+execute|\bdosubl)\s*\([^;]*\z/is) {
+            my $body=substr($text,$span->{start}+1,$span->{end}-$span->{start}-2);
+            my ($decoded,@positions)=('');
+            for (my $pos=0;$pos<length($body);) {
+                my $size=substr($body,$pos,2) eq "''" ? 2 : 1;
+                push @positions,[$pos,$size];
+                $decoded.=substr($body,$pos,1);
+                $pos+=$size;
+            }
+            my $view=macro_dependency_view($decoded);
+            for my $idx (0..$#positions) {
+                next if substr($view,$idx,1) eq substr($decoded,$idx,1);
+                my ($pos,$size)=@{$positions[$idx]};
+                my $blank=substr($body,$pos,$size); $blank =~ s/[^\r\n]/ /g;
+                substr($masked,$span->{start}+1+$pos,$size,$blank);
+            }
+            next;
+        }
         my $length=$span->{end}-$span->{start};
         my $literal=substr($masked,$span->{start},$length);
         $literal =~ s/[^\r\n]/ /g;
@@ -268,6 +285,21 @@ sub format_name_issues {
     }
     # Advisory only: macro-generated or conditional definitions may differ
     # at execution. SAS runtime diagnostics still determine failure status.
+    return \@issues;
+}
+sub fileref_name_issues {
+    my ($text)=@_;
+    my $masked=mask_noncode($text);
+    my @issues;
+    while ($masked =~ /\bfilename\s+([A-Za-z_]\w*)\b/ig) {
+        my ($name,$offset)=($1,$-[1]);
+        next unless length($name)>8;
+        my $prefix=substr($masked,0,$offset);
+        my $line=1+($prefix =~ tr/\n//);
+        push @issues,{type=>'invalid_literal_fileref_name',line=>$line,
+            message=>"Literal fileref '$name' exceeds the SAS limit of 8 characters; choose a shorter fileref.",
+            context_ref=>[$line]};
+    }
     return \@issues;
 }
 1;

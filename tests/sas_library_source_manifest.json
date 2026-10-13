@@ -772,5 +772,257 @@
                                                                              "file":  "scale data to range with proc stdize but not proc standard.sas",
                                                                              "bytes":  945,
                                                                              "sha256":  "c1b9ffb746fa74e58c8634f845a04d594599c2fba17881c0efb184dddc502bd0"
-                                                                         }
+                                                                         },
+    "D:Delete datasets with Proc datasets.sas":  {
+                                                     "collection":  "SAS_Code_Database",
+                                                     "file":  "Delete datasets with Proc datasets.sas",
+                                                     "bytes":  460,
+                                                     "sha256":  "fd7595825ebacd7dcca49419c32925f6c2748b0ca6bdaccebee1068355096265"
+                                                 },
+    "D:dosubl Demo with _str_ function and return var by macro.sas":  {
+                                                                          "collection":  "SAS_Code_Database",
+                                                                          "file":  "dosubl Demo with _str_ function and return var by macro.sas",
+                                                                          "bytes":  528,
+                                                                          "sha256":  "3586996f4174996d2927a6c46d35f45e7997cc369a489d522d1bfe8e20eff816"
+                                                                      },
+    "D:dosubl vs call execut to run sas macro.sas":  {
+                                                         "collection":  "SAS_Code_Database",
+                                                         "file":  "dosubl vs call execut to run sas macro.sas",
+                                                         "bytes":  748,
+                                                         "sha256":  "83ab823ac987110546fd0a8e480f7a026fe3e6cd56d01a88ee8db38ad6d1e516"
+                                                     },
+    "D:export data with file function along with dlm to separate cols with specific delimiter.sas":  {
+                                                                                                         "collection":  "SAS_Code_Database",
+                                                                                                         "file":  "export data with file function along with dlm to separate cols with specific delimiter.sas",
+                                                                                                         "bytes":  106,
+                                                                                                         "sha256":  "ef40846dd9aa72c786938751ae5530a6689f914b3729c515dc087702bf4334b7"
+                                                                                                     },
+    "D:GWAS sign test with proc univariate.sas":  {
+                                                      "collection":  "SAS_Code_Database",
+                                                      "file":  "GWAS sign test with proc univariate.sas",
+                                                      "bytes":  584,
+                                                      "sha256":  "5f5e7ed07da7e3d7ee307e052c9ff24c6a03c2aca4b51db9400db5484bf2d125"
+                                                  },
+    "D:hash4bigdata_demo.sas":  {
+                                    "collection":  "SAS_Code_Database",
+                                    "file":  "hash4bigdata_demo.sas",
+                                    "bytes":  1196,
+                                    "sha256":  "08fe7c72f3aa7760683750d1987e8f3afcf4558e5bf98932e0dfeed09e3583ac"
+                                },
+    "D:ifn demo for if not condition.sas":  {
+                                                "collection":  "SAS_Code_Database",
+                                                "file":  "ifn demo for if not condition.sas",
+                                                "bytes":  109,
+                                                "sha256":  "3fda3ef693e46194a25627ca8095c03b80423dea6a771853f379f2a2c6b1d9eb"
+                                            },
+    "D:ODA_fisher_test_demo_codes.sas":  {
+                                             "collection":  "SAS_Code_Database",
+                                             "file":  "ODA_fisher_test_demo_codes.sas",
+                                             "bytes":  13111,
+                                             "sha256":  "cb4569b41ef1fd01b188a939127aaeb98262a3eb42d482b338d2f6b43b632269"
+                                         },
+    "D:Proc dataset change dataset name and copy with select to new lib.sas":  {
+                                                                                   "collection":  "SAS_Code_Database",
+                                                                                   "file":  "Proc dataset change dataset name and copy with select to new lib.sas",
+                                                                                   "bytes":  154,
+                                                                                   "sha256":  "93a35ac294c232fec21f47b9234c41cc5704ba92635eee3abd12f3b700d4401b"
+                                                                               },
+    "D:proc fcmp demo with sas macro.sas":  {
+                                                "collection":  "SAS_Code_Database",
+                                                "file":  "proc fcmp demo with sas macro.sas",
+                                                "bytes":  594,
+                                                "sha256":  "bd285f6ebad9b4966c7d6f44f92b74584ab47fd8d390cecb05062b6c2e93e363"
+                                            },
+    "D:Proc Import with GuessingRows.sas":  {
+                                                "collection":  "SAS_Code_Database",
+                                                "file":  "Proc Import with GuessingRows.sas",
+                                                "bytes":  242,
+                                                "sha256":  "8122ce7ea745fab15f6e9e024d531a3ff632309dca8bae34d809756ffed5e4c5"
+                                            },
+    "D:Proc Printto demo.sas":  {
+                                    "collection":  "SAS_Code_Database",
+                                    "file":  "Proc Printto demo.sas",
+                                    "bytes":  540,
+                                    "sha256":  "a1001cad29e009fd48a9149470fecec2b8c8030219c34ae32c96e75e7e12370f"
+                                },
+    "D:Proc Printto output log to sepecific file demo.sas":  {
+                                                                 "collection":  "SAS_Code_Database",
+                                                                 "file":  "Proc Printto output log to sepecific file demo.sas",
+                                                                 "bytes":  2065,
+                                                                 "sha256":  "5734d7961cc89d00251a2c85aa2f4268bb6f6477bcdcda0f9aa200123371449b"
+                                                             },
+    "D:Proc sort to output duplicates in new dataset.sas":  {
+                                                                "collection":  "SAS_Code_Database",
+                                                                "file":  "Proc sort to output duplicates in new dataset.sas",
+                                                                "bytes":  362,
+                                                                "sha256":  "a75611dd1866254eb3ec909dd6f6023e01a5473d559f43fd760f5adc073793fe"
+                                                            },
+    "D:Proc SQL Works with Array Function as well as ceil index functions.sas":  {
+                                                                                     "collection":  "SAS_Code_Database",
+                                                                                     "file":  "Proc SQL Works with Array Function as well as ceil index functions.sas",
+                                                                                     "bytes":  1592,
+                                                                                     "sha256":  "11e9d7f144c361456528131017f142dc20e0f86bb82c87a3e6c64ba4a610fe6e"
+                                                                                 },
+    "D:Quantile normalization demo.sas":  {
+                                              "collection":  "SAS_Code_Database",
+                                              "file":  "Quantile normalization demo.sas",
+                                              "bytes":  2688,
+                                              "sha256":  "946e15bde3730dfdc305dfc0e822fc4b57117d8568ca33923d824b091209ad87"
+                                          },
+    "D:SAS Function First.obs and Last.obs in datastep Demo.sas":  {
+                                                                       "collection":  "SAS_Code_Database",
+                                                                       "file":  "SAS Function First.obs and Last.obs in datastep Demo.sas",
+                                                                       "bytes":  2819,
+                                                                       "sha256":  "9c1c1b2a2da821eb0cd992415544c1987b610a386e347120eb2d18d1eaeeacad"
+                                                                   },
+    "D:SAS make Index codes.sas":  {
+                                       "collection":  "SAS_Code_Database",
+                                       "file":  "SAS make Index codes.sas",
+                                       "bytes":  20967,
+                                       "sha256":  "01d2a75579cc91b855463607d93ebb16beee70f99cff853ce8c51b009a794c77"
+                                   },
+    "D:SAS Merge for update missing values from other dataset very useful.sas":  {
+                                                                                     "collection":  "SAS_Code_Database",
+                                                                                     "file":  "SAS Merge for update missing values from other dataset very useful.sas",
+                                                                                     "bytes":  483,
+                                                                                     "sha256":  "86ac1dc47a9e2b49a6b84c2b6dac67b91a8085f08867f3afc528558519322db8"
+                                                                                 },
+    "D:Set multiple datasets with similar names in SAS.sas":  {
+                                                                  "collection":  "SAS_Code_Database",
+                                                                  "file":  "Set multiple datasets with similar names in SAS.sas",
+                                                                  "bytes":  36,
+                                                                  "sha256":  "bfa4cc84e9877b46a3f8952106f9fbebcb31f94ed6a77712be03abae3e5c8b19"
+                                                              },
+    "D:sysevalf demo with macro SizeIt.sas":  {
+                                                  "collection":  "SAS_Code_Database",
+                                                  "file":  "sysevalf demo with macro SizeIt.sas",
+                                                  "bytes":  2369,
+                                                  "sha256":  "dd7a8ed59ccb433148ea6dc61672158957a7f29235431a85cfd481fce9264763"
+                                              },
+    "D:Use array, especially temporary array of colnames, to change wide form data into long format data.sas":  {
+                                                                                                                    "collection":  "SAS_Code_Database",
+                                                                                                                    "file":  "Use array, especially temporary array of colnames, to change wide form data into long format data.sas",
+                                                                                                                    "bytes":  605,
+                                                                                                                    "sha256":  "dec04e25c5816d51f5555b074cdb6960ed08ba0a94718341d12e3912718bf8b6"
+                                                                                                                },
+    "D:Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas":  {
+                                                                                           "collection":  "SAS_Code_Database",
+                                                                                           "file":  "Use Strip and Compbl functions for SAS Infile Blank Space Sparated Files.sas",
+                                                                                           "bytes":  930,
+                                                                                           "sha256":  "25332e169f55c11a50e90bee5c13a6ad461841eb9b8b77c66eb3469bcadab0b2"
+                                                                                       },
+    "D:very useful Proc Import with different delimiter in dbms_dlm part.sas":  {
+                                                                                    "collection":  "SAS_Code_Database",
+                                                                                    "file":  "very useful Proc Import with different delimiter in dbms_dlm part.sas",
+                                                                                    "bytes":  252,
+                                                                                    "sha256":  "c72ffc0b731ed7b175bd8986ddb386caf7513b01308ec8950a4fe7f42e066302"
+                                                                                },
+    "E:add quit to restore ods output before using ods select none in proc glm.sas":  {
+                                                                                          "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                          "file":  "add quit to restore ods output before using ods select none in proc glm.sas",
+                                                                                          "bytes":  187,
+                                                                                          "sha256":  "8d2c07de9199b3989323262ad3952fa72668c1cbffe37d9245d8a7694c7d6d4b"
+                                                                                      },
+    "E:concatenate_vector_vertically_or_horizontally_in_iml.sas":  {
+                                                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                                                       "file":  "concatenate_vector_vertically_or_horizontally_in_iml.sas",
+                                                                       "bytes":  145,
+                                                                       "sha256":  "37981887ca889998eaef38dd35205bd344e436dad8eb0c824703811895a536b6"
+                                                                   },
+    "E:convert_string_into_vector_using_cshape_in_proc_iml.sas":  {
+                                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                                      "file":  "convert_string_into_vector_using_cshape_in_proc_iml.sas",
+                                                                      "bytes":  187,
+                                                                      "sha256":  "8d38de577f384892ba0d776fde4911b750cb818a193cf65656f7995c7d051783"
+                                                                  },
+    "E:data stop array to create variables.sas":  {
+                                                      "collection":  "Easy-For-Error-Codes-SAS",
+                                                      "file":  "data stop array to create variables.sas",
+                                                      "bytes":  451,
+                                                      "sha256":  "70bf5783d7158c123e1dccadce002c1e16c270c0fe605475a38aff0fd75e3710"
+                                                  },
+    "E:datastep_escape_columns_with_input_infile_and_scan.sas":  {
+                                                                     "collection":  "Easy-For-Error-Codes-SAS",
+                                                                     "file":  "datastep_escape_columns_with_input_infile_and_scan.sas",
+                                                                     "bytes":  588,
+                                                                     "sha256":  "dc5f6d4493c1ce874951c8405d62cc6b7defcce725462fa5a42bea6da4208c9c"
+                                                                 },
+    "E:demo4hash_find_next_with_do_while_loop.sas":  {
+                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                         "file":  "demo4hash_find_next_with_do_while_loop.sas",
+                                                         "bytes":  1110,
+                                                         "sha256":  "70a54eef407fa8b2b1c66d1f44ab132289ab8ed1479a2cfb9ab6047582009061"
+                                                     },
+    "E:demo4hash_find_next_with_do_while_loop4tree_branches.sas":  {
+                                                                       "collection":  "Easy-For-Error-Codes-SAS",
+                                                                       "file":  "demo4hash_find_next_with_do_while_loop4tree_branches.sas",
+                                                                       "bytes":  4672,
+                                                                       "sha256":  "72c897f006cc46769e9cb3fb1ec6239114229b7fdc61b30ea769c3a00e246024"
+                                                                   },
+    "E:generate_random_beta_values.sas":  {
+                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                              "file":  "generate_random_beta_values.sas",
+                                              "bytes":  349,
+                                              "sha256":  "1a0160f5a52a74c3fb4dcf12cec11a622534543a2b75c1640dc4d10d40b126a4"
+                                          },
+    "E:import_compressed_csv_file_with_quotes.sas":  {
+                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                         "file":  "import_compressed_csv_file_with_quotes.sas",
+                                                         "bytes":  2287,
+                                                         "sha256":  "877cfdc145a00b798a35e2286e27a1b66dfbf2dbff2228d4e22fe71945b9ea1b"
+                                                     },
+    "E:ImportFileHeadersFromZIP_works_with_variable_char_length_demo.sas":  {
+                                                                                "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                "file":  "ImportFileHeadersFromZIP_works_with_variable_char_length_demo.sas",
+                                                                                "bytes":  488,
+                                                                                "sha256":  "81e603802f99097b3aca660b51f970714eb5213f98cd439c4d8540bfdf215588"
+                                                                            },
+    "E:make_allele_columns_into_single_genotype_column.sas":  {
+                                                                  "collection":  "Easy-For-Error-Codes-SAS",
+                                                                  "file":  "make_allele_columns_into_single_genotype_column.sas",
+                                                                  "bytes":  1848,
+                                                                  "sha256":  "0c316f1dd64628d406017bb500444548ba28cc87e4fac2a67296462eab630660"
+                                                              },
+    "E:Multiple files with infile statement only functional with dummy.sas":  {
+                                                                                  "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                  "file":  "Multiple files with infile statement only functional with dummy.sas",
+                                                                                  "bytes":  450,
+                                                                                  "sha256":  "549afbae61a7d0081d1f903f1ca8fe2ea844c8cac0b516f99a3831f75518bd91"
+                                                                              },
+    "E:ods select and exclude demo.sas":  {
+                                              "collection":  "Easy-For-Error-Codes-SAS",
+                                              "file":  "ods select and exclude demo.sas",
+                                              "bytes":  674,
+                                              "sha256":  "f89e08ddc2ebbe1583e9ee1304c20ce094c7194591e95a260c7c51306e56fdf5"
+                                          },
+    "E:output proc freq summary with out function.sas":  {
+                                                             "collection":  "Easy-For-Error-Codes-SAS",
+                                                             "file":  "output proc freq summary with out function.sas",
+                                                             "bytes":  307,
+                                                             "sha256":  "5eda4c21c34b2bc992a759e4b21cc755abfbce3bff332b4c4e1dc0fa98d0b41c"
+                                                         },
+    "E:proc_iml_to_get_sas_dataset_variable_names_using_contents.sas":  {
+                                                                            "collection":  "Easy-For-Error-Codes-SAS",
+                                                                            "file":  "proc_iml_to_get_sas_dataset_variable_names_using_contents.sas",
+                                                                            "bytes":  535,
+                                                                            "sha256":  "3fba2b0793c6ca6ddd0f0e2e2318efd7f1650b5bcca2e5cc0de03a50a9c0ae4b"
+                                                                        },
+    "E:randomply_select_columns_from_large_wide_table_using_temporary_array_with_ranperm.sas":  {
+                                                                                                    "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                    "file":  "randomply_select_columns_from_large_wide_table_using_temporary_array_with_ranperm.sas",
+                                                                                                    "bytes":  6006,
+                                                                                                    "sha256":  "762514bc22735f8d129b21e40207569841eb8afc35043fb18d823e8ca3bde17f"
+                                                                                                },
+    "E:use @ and @@ to split data in the same line to separated rows.sas":  {
+                                                                                "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                "file":  "use @ and @@ to split data in the same line to separated rows.sas",
+                                                                                "bytes":  194,
+                                                                                "sha256":  "2cb84aec6a84317066c12f6f97b33287812c0109994e1008c314fd6ba2d91e3e"
+                                                                            },
+    "E:use_double_and_single_at2read_multiple_lines_and_provide_common_variables_to_each_line.sas":  {
+                                                                                                         "collection":  "Easy-For-Error-Codes-SAS",
+                                                                                                         "file":  "use_double_and_single_at2read_multiple_lines_and_provide_common_variables_to_each_line.sas",
+                                                                                                         "bytes":  844,
+                                                                                                         "sha256":  "0e0e51a77cdd187ed8ab4fc7fe7988460ce029ee9a73989e423177c55a4ace4f"
+                                                                                                     }
 }

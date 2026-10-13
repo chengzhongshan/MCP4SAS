@@ -34,4 +34,6 @@ my $flowover=SAS_Log_Diagnostics::summarize("NOTE: SAS went to a new line when I
 is($flowover->{data_quality_count},2,'flowover and empty procedure input are surfaced');
 like($flowover->{data_quality}[0],qr/INPUT statement/,'input-record loss diagnostic preserved');
 is(SAS_Log_Diagnostics::summarize("23 NOTE: No observations in data set WORK.SOURCE.\n")->{data_quality_count},0,'empty-data note in a source listing is not counted');
+is(SAS_Log_Diagnostics::summarize("NOTE: Variable n is uninitialized.\n")->{data_quality_count},1,'uninitialized variable is an advisory diagnostic');
+is(SAS_Log_Diagnostics::summarize("42 NOTE: Variable n is uninitialized.\n")->{data_quality_count},0,'source listing does not fabricate an uninitialized-variable note');
 done_testing();
