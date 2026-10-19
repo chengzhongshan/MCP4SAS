@@ -1,0 +1,39 @@
+
+=== Submitted SAS Codes or file ===
+<BOOK_ROOT>/.audit-local/setup_revision/live_project/tmpeG_EcO/input.sas
+
+
+=== Output Directory ===
+<BOOK_ROOT>/.audit-local/setup_revision/live_project/SAS_Output_MCP4SAS_cDJvj7
+
+=== Dependency Logs ===
+Global importallmacros_ue bootstrap disabled via SAS_ODA_AUTOLOAD_MACROS=0 for this submit.
+
+=== Macro Bootstrap Diagnostics ===
+Bootstrap Warning: 0
+
+=== Status Snapshot ===
+state: running
+phase: submit_returned
+message: SAS submit returned to the wrapper
+last_update: 2026-10-19 09:22:03
+
+=== SAS Log ===
+5                                                          The SAS System                       Monday, October 19, 2026 02:21:00 PM
+
+24         ods listing close;ods html5 (id=saspy_internal) file=_tomods1 options(bitmap_mode='inline') device=svg style=HTMLBlue;
+24       ! ods graphics on / outputfmt=png;
+25         
+26         proc means data=sashelp.class noprint; var Age; output out=work.editor_check n=known nmiss=absent min=youngest max=oldest
+26       ! ; run; data _null_; set work.editor_check; put "EDITOR_CHECK: " known= absent= youngest= oldest=; run;
+EDITOR_CHECK: known=19 absent=0 youngest=11 oldest=16
+27         
+28         
+29         ods html5 (id=saspy_internal) close;ods listing;
+30         
+6                                                          The SAS System                       Monday, October 19, 2026 02:21:00 PM
+
+31         
+
+=== Output ===
+

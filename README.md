@@ -28,7 +28,21 @@ includes:
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
 
-## Install MCP4SAS
+## Easiest setup: VS Code extension for Copilot and Codex
+
+Download [mcp4sas-0.1.0.vsix](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.0/mcp4sas-0.1.0.vsix), then choose **Extensions → … → Install from VSIX…** in VS Code. Open your local SAS project and run **MCP4SAS: Quick Setup**. Select an existing MCP4SAS installation or let the extension install it, choose your project folder, then select **GitHub Copilot**, **OpenAI Codex**, or both.
+
+On Windows, setup offers Cygwin **before** the MCP4SAS installer and helps locate/install Windows Java. macOS and Ubuntu/Debian use the existing platform installers. The extension registers Copilot through VS Code's MCP provider API and adds a backed-up, marked Codex configuration entry. It starts an owned loopback backend automatically; a separate server terminal is unnecessary.
+
+Run **MCP4SAS: Check Connection**, then use the offered test prompt to verify an actual SAS result. SAS account registration and private SASPy authentication are still required; discovery alone does not test them. Local desktop folders are supported; remote SSH/WSL/containers need separate configuration. See the [extension guide and validation scope](integrations/vscode/README.md).
+
+Runnable alternatives from a checkout: double-click `install/install_vscode_extension.cmd` on Windows, or run `bash install/install_vscode_extension.sh` on macOS/Linux. They download the published VSIX, check its release SHA-256, and invoke `code --install-extension`. You can always use the Extensions menu if the `code` command is unavailable. This is a GitHub-distributed extension, not a Marketplace listing.
+
+### Automatic local dependencies in the editor
+
+The extension starts MCP4SAS in the selected project folder and selects `SAS_ODA_AUTOLOAD_MACROS=0`. The existing runner can then upload recognized local file references and discovered macros automatically. For `%my_macro`, place `my_macro.sas` in the project's `Macros/` directory. Relative paths are resolved from that project folder. This differs from the default remote macro-collection bootstrap and does not resolve every dynamically constructed filename. Original SAS execution and macro implementations are unchanged.
+
+## Manual installation
 
 Choose your platform below. Each installer provisions the required local
 dependencies and finishes with an installation smoke test.

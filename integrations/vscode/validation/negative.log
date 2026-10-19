@@ -1,0 +1,41 @@
+
+=== Submitted SAS Codes or file ===
+<BOOK_ROOT>/.audit-local/setup_revision/live_project/tmpe2ZGPt/input.sas
+
+
+=== Output Directory ===
+<BOOK_ROOT>/.audit-local/setup_revision/live_project/SAS_Output_MCP4SAS_RDM7ps
+
+=== Dependency Logs ===
+Global importallmacros_ue bootstrap disabled via SAS_ODA_AUTOLOAD_MACROS=0 for this submit.
+
+=== Macro Bootstrap Diagnostics ===
+Bootstrap Warning: 0
+
+=== Status Snapshot ===
+state: running
+phase: submit_returned
+message: SAS submit returned to the wrapper
+last_update: 2026-10-19 09:22:33
+
+=== Error ===
+SAS log contains fatal errors: ERROR: File WORK.EDITOR_INTENTIONALLY_ABSENT.DATA does not exist.
+
+=== SAS Log ===
+5                                                          The SAS System                       Monday, October 19, 2026 02:22:00 PM
+
+24         ods listing close;ods html5 (id=saspy_internal) file=_tomods1 options(bitmap_mode='inline') device=svg style=HTMLBlue;
+24       ! ods graphics on / outputfmt=png;
+25         
+26         proc print data=work.editor_intentionally_absent; run;
+ERROR: File WORK.EDITOR_INTENTIONALLY_ABSENT.DATA does not exist.
+27         
+28         
+29         ods html5 (id=saspy_internal) close;ods listing;
+30         
+6                                                          The SAS System                       Monday, October 19, 2026 02:22:00 PM
+
+31         
+
+=== Output ===
+
