@@ -10,3 +10,6 @@
 /.DS_Store
 *.pyc
 __pycache__/
+/integrations/vscode/node_modules/
+/integrations/vscode/.vscode-test/
+/dist/

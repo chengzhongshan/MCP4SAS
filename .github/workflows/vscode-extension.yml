@@ -1,0 +1,34 @@
+name: VS Code integration
+on:
+  push:
+    branches: [main, feature/vscode-guided-setup]
+    paths: ['integrations/vscode/**', '.github/workflows/vscode-extension.yml']
+  pull_request:
+    paths: ['integrations/vscode/**', '.github/workflows/vscode-extension.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: integrations/vscode
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: integrations/vscode/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mcp4sas-vsix-${{ matrix.os }}
+          path: dist/*.vsix

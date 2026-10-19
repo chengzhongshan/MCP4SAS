@@ -1,0 +1,63 @@
+{
+   "copilot_model_conversation_executed" : false,
+   "date" : "2026-10-19",
+   "evidence" : [
+      {
+         "file" : "validation/live-protocol.json",
+         "raw_sha256" : "905a9e12051734a3d7a50d6278f64be6570d12d62b5ed1cfc1955c5befef0079",
+         "sha256" : "8ed50351aee649ffa9fd75595142e54c4cb89bab4738c9054687009b4fd281c8"
+      },
+      {
+         "file" : "validation/native-protocol.json",
+         "raw_sha256" : "6b9a09806e8f33f9c760fc0d2c631eb67fc149c273abd994451f5a05000f8675",
+         "sha256" : "9ff101fe87e92ec5ff5e5668be90328e749eaa049ee6b1bf342c00b56f2bc154"
+      },
+      {
+         "file" : "validation/positive.log",
+         "raw_sha256" : "dc35b0114eef51616b038e8361b5d81b08dca26b01aafd197dce6432d87cf73d",
+         "sha256" : "22cc3243aa3063dc4c8f28f239e38f9f3a21875e68a512cbbad88df0177170eb"
+      },
+      {
+         "file" : "validation/negative.log",
+         "raw_sha256" : "775b890f44a72d799c1dcc1a87796242566261242de914bc14f8e669e31daf9a",
+         "sha256" : "9cf78d919c36904d93126c7c0ddb89a7f3317b2c7363a2ee1d0c7dfc9c6a1a4b"
+      }
+   ],
+   "execution_environment" : {
+      "PIPELINE_PYTHON_BIN" : "existing isolated book SASPy environment",
+      "SASPY_CFGFILE" : "existing private SASPy profile",
+      "SAS_ODA_AUTOLOAD_MACROS" : "0",
+      "SUBMISSION_PREFLIGHT_ENABLED" : "0"
+   },
+   "failed" : 0,
+   "fresh_os_installs_executed" : false,
+   "host" : "Windows x64 / Cygwin / VS Code 1.142.0 / SAS ODA",
+   "limitations" : [
+      "Clean Cygwin/Java bootstrap not executed on this already configured host",
+      "macOS and Linux installation branches not exercised locally",
+      "No interactive Copilot model turn or account login was fabricated",
+      "Original SAS engine and macro source unchanged",
+      "A first live-check attempt used an incorrect polling schema; the harness was corrected to actual PID polling before successful retained runs; first attempt remains in private book evidence"
+   ],
+   "native_codex" : "Actual Codex app-server native tool calls: positive and deliberate failure; not a language-model conversation",
+   "real_extension_host" : "PASS: activation, four commands, provider registration, isolated profile, bundled Electron Node",
+   "relay" : "PASS: initialize, notification suppression, tools/list, EOF; owned listener closed",
+   "sas" : [
+      "COMPLETE: known=19 absent=0 youngest=11 oldest=16",
+      "FAILED: deliberately missing WORK.EDITOR_INTENTIONALLY_ABSENT"
+   ],
+   "server_base_commit" : "af05aed11a74a2146823023f3bf4b6132aaa4a1c",
+   "source_sha256" : {
+      "package.json" : "0f23dfe7d58f1423d5759ba9ea842979e98a236f70f0b9e0879260caed2834e9",
+      "src/core.js" : "e744e8ba4f95250adadfcbd416fad28680e668eb0fb47f4cec01d60bc173e66e",
+      "src/extension.js" : "0a7ac0fbceb6f8f1fb6a83276464b718d5245e91b8a1fccbd458aa87b41227e1",
+      "src/relay.js" : "a74343e0d19a8f141891dc2e9c549ff26668d53b2ba097c0c2fbcdc019b9d7e0",
+      "test/core.test.js" : "f1f7c3786f7253d73da6fe5392247fde1370db27ac430a0b7ebeb33f247046cf",
+      "test/host.cjs" : "f0b953fe24545ffd196a9b47208ba592cabef3540a157cccc6101a9007ca27a8",
+      "test/live-smoke.cjs" : "a006b656e1f4bf379d49dce118013560e772f1ca73e0771098c3e35a486a8f6f"
+   },
+   "unit_tests" : {
+      "failed" : 0,
+      "passed" : 10
+   }
+}

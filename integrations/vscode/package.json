@@ -1,0 +1,33 @@
+{
+  "name": "mcp4sas",
+  "displayName": "MCP4SAS — SAS for Copilot and Codex",
+  "description": "Guided MCP4SAS installation and SAS tool connections for GitHub Copilot and OpenAI Codex.",
+  "version": "0.1.0",
+  "publisher": "chengzhongshan",
+  "engines": { "vscode": "^1.102.0" },
+  "categories": ["AI", "Data Science"],
+  "keywords": ["SAS", "MCP", "Copilot", "Codex", "SASPy"],
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "repository": { "type": "git", "url": "https://github.com/chengzhongshan/MCP4SAS.git", "directory": "integrations/vscode" },
+  "main": "./src/extension.js",
+  "extensionKind": ["ui"],
+  "activationEvents": ["onStartupFinished"],
+  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": false },
+  "scripts": { "test": "node --test test/*.test.js", "prepackage": "node -e \"require('node:fs').mkdirSync('../../dist',{recursive:true})\"", "package": "vsce package --out ../../dist/mcp4sas-0.1.0.vsix", "test:host": "node test/run-host.cjs" },
+  "dependencies": { "@iarna/toml": "2.2.5" },
+  "devDependencies": { "@vscode/vsce": "3.7.1", "@vscode/test-electron": "2.5.2" },
+  "contributes": {
+    "commands": [
+      { "command": "mcp4sas.setup", "title": "MCP4SAS: Quick Setup" },
+      { "command": "mcp4sas.connect", "title": "MCP4SAS: Connect Copilot and/or Codex" },
+      { "command": "mcp4sas.check", "title": "MCP4SAS: Check Connection" },
+      { "command": "mcp4sas.help", "title": "MCP4SAS: Open Setup Guide" }
+    ],
+    "mcpServerDefinitionProviders": [{ "id": "mcp4sas.local", "label": "MCP4SAS" }],
+    "walkthroughs": [{ "id": "mcp4sas.start", "title": "Connect SAS to your AI assistant", "description": "Install the runtime, connect an assistant, and check SAS.", "steps": [
+      { "id": "runtime", "title": "1. Set up MCP4SAS", "description": "Reuse an installation or install the runtime for this computer.\n[Quick Setup](command:mcp4sas.setup)", "media": {"markdown": "media/setup.md"}, "completionEvents": ["onCommand:mcp4sas.setup"] },
+      { "id": "assistant", "title": "2. Connect Copilot or Codex", "description": "Register the server without copying configuration by hand.\n[Connect](command:mcp4sas.connect)", "media": {"markdown": "media/connect.md"}, "completionEvents": ["onCommand:mcp4sas.connect"] },
+      { "id": "check", "title": "3. Check the connection", "description": "Discover tools, then optionally run a small SAS test.\n[Check Connection](command:mcp4sas.check)", "media": {"markdown": "media/check.md"}, "completionEvents": ["onCommand:mcp4sas.check"] }
+    ] }]
+  }
+}
