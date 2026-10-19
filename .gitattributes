@@ -5,3 +5,6 @@
 *.sas text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+integrations/vscode/** text eol=lf
+integrations/vscode/validation/*.log whitespace=-blank-at-eol,-blank-at-eof
+*.cmd text eol=crlf
