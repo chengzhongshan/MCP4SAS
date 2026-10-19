@@ -8,7 +8,8 @@ if errorlevel 1 (
   exit /b 1
 )
 set "MCP4SAS_VSIX=%TEMP%\mcp4sas-0.1.0.vsix"
-powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; $base='https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.0/'; Invoke-WebRequest ($base+'mcp4sas-0.1.0.vsix') -OutFile $env:MCP4SAS_VSIX; $s=(Invoke-WebRequest ($base+'SHA256SUMS') -UseBasicParsing).Content; $m=[regex]::Match($s,'(?m)^([a-fA-F0-9]{64})\s+\*?mcp4sas-0\.1\.0\.vsix\s*$'); if(-not $m.Success -or (Get-FileHash -LiteralPath $env:MCP4SAS_VSIX -Algorithm SHA256).Hash -ne $m.Groups[1].Value){throw 'Release checksum mismatch'}"
+set "MCP4SAS_SUMS=%TEMP%\mcp4sas-0.1.0.SHA256SUMS"
+powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; $base='https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.0/'; Invoke-WebRequest ($base+'mcp4sas-0.1.0.vsix') -OutFile $env:MCP4SAS_VSIX; Invoke-WebRequest ($base+'SHA256SUMS') -OutFile $env:MCP4SAS_SUMS; $s=[IO.File]::ReadAllText($env:MCP4SAS_SUMS); $m=[regex]::Match($s,'(?m)^([a-fA-F0-9]{64})\s+\*?mcp4sas-0\.1\.0\.vsix\s*$'); if(-not $m.Success -or (Get-FileHash -LiteralPath $env:MCP4SAS_VSIX -Algorithm SHA256).Hash -ne $m.Groups[1].Value){throw 'Release checksum mismatch'}"
 if errorlevel 1 (
   echo Download or checksum verification failed. No extension was installed.
   pause
