@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if ! command -v code >/dev/null 2>&1; then
-  printf '%s\n' 'VS Code command not found. Use Extensions -> Install from VSIX in VS Code.' 
+  printf '%s\n' 'VS Code command not found. Use Extensions -> Install from VSIX in VS Code.'
   printf '%s\n' 'Download: https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.0'
   exit 1
 fi
