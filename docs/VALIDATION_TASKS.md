@@ -48,6 +48,18 @@ python3 tests/test_github_sync.py
 This tier covers parsing, dependency discovery, upload decisions, status and
 error reporting, cleanup ownership, macro loading, and Git synchronization.
 
+Run the independent 100-task adversarial batch separately so its stable task
+IDs remain visible:
+
+```bash
+prove -v tests/new_validation_tasks_001_100.pl
+```
+
+`T001`-`T025` cover include discovery, `T026`-`T050` cover format and fileref
+advisories, `T051`-`T075` cover SAS-log classification, and `T076`-`T100`
+cover temporary-directory ownership and removal safety. These cases are
+distinct from the earlier offline assertions.
+
 ## 3. Minimal ODA Gate
 
 Use a bounded login probe before expensive live tests:
