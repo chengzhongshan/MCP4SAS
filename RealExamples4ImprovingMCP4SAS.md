@@ -2381,3 +2381,86 @@ Both CLI scripts, the MCP server and the two changed/new Perl modules
 passed syntax checks. Download/probe logs, suite outputs, live-test terminal
 logs and the read-only copy of the inspected online macro remain local in
 `SAS_Output_directory_cleanup_validation/`, which is ignored by Git.
+
+## 16. Case-insensitive targeted remote macro filenames
+
+Targeted loading previously constructed an exact Linux source path from the
+macro invocation spelling. It now preserves the old exact-match precedence,
+then resolves case-only differences by scanning remote directories inside
+SAS. It includes the actual directory entry, without renaming source files,
+uploading substitutes or changing the filesystem's case sensitivity.
+
+Resolution policy:
+
+1. Check exact `macro_name.sas` paths in both search folders, in priority order.
+2. If neither exact path exists, scan the primary folder and compare the whole
+   filename, including `.sas`, using UPCASE. If it has no matches, scan the
+   fallback folder.
+3. Include the single matching file using its actual spelling. Directories
+   whose names end in `.sas` are excluded. Multiple folded matches within
+   the selected folder emit ERROR; no candidate from that lookup is included.
+
+Ordinary macros retain `~` then `~/Macros` priority. The known deletion macro
+retains `~/Macros` then `~` priority and its canonical source alias. Exact
+matches in either folder precede all case-insensitive matches, preserving
+existing behavior. Resolution state is local to the helper and directory
+handles and filerefs are released. `MCP4SAS_TARGETED_MACRO` and
+`MCP4SAS_MACRO_CANDIDATE` log messages remain visible with NONOTES enabled.
+
+This handles case-only differences, not arbitrary typos or macros defined
+in an unrelated source filename. It changes the targeted loader; the global
+importer's own directory-loading rules are unchanged. Explicit `%include`
+continues to work. Existing compiled macros in persistent sessions retain
+normal SAS semantics; an ambiguity error does not roll back other SAS code.
+
+### Real checks and observed test failures
+
+`tests/test_live_case_insensitive_macro_lookup.pl` creates eight uniquely
+named synthetic source files in remote HOME and Macros. It checks mixed-case
+macro basenames and `.SaS`/`.SAS` extensions, exact preference despite two
+case variants, a fallback-folder exact match beating a primary-folder folded
+match, primary-folder preference when both folders have folded matches, and
+an ambiguous pair with neither source loaded/executed. Computed values prove
+which source was included. Cleanup deletes and verifies only its eight files.
+
+The first fixture setup incorrectly checked existence in the same DATA step
+as its FILE statement; SAS had already opened/created the output files.
+Existence checks now run in a separate submission before any FILE statements.
+The eight files from that failed setup were explicitly deleted and verified;
+evidence remains in `SAS_Output_macro_case_hI9EKm/cleanup.cli.log`.
+
+The next live run computed all expected macro results and correctly rejected
+the ambiguous pair, but passed only 16/21 assertions: NONOTES suppressed five
+resolution messages beginning with NOTE. The loader now uses explicit log
+markers instead. That run (`SAS_Output_macro_case_BLMwf0`) and its successful
+fixture cleanup remain available. The final MCP4SAS live run passed **21/21**,
+exit 0, in `SAS_Output_macro_case_wGySmW`.
+
+The full MCP4SAS offline suite passed **369 assertions across 19 Perl files**.
+The companion public-wrapper live run passed **21/21**, exit 0, in
+`SAS_Output_macro_case_uArZC1`. Its initial offline run found two stale
+assertions expecting an old generated literal path; those assertions now
+check the canonical requested filename rather than the previous layout.
+The corrected companion suite passed **220 assertions across 15 Perl files**.
+These supplemental checks do not add to the preceding numbered 100-case batches.
+
+### Cygwin commands
+
+```bash
+export PATH=/usr/bin:$PATH
+prove tests/test_case_insensitive_macro_lookup.pl tests/test_remote_directory_cleanup.pl
+perl tests/test_live_case_insensitive_macro_lookup.pl --live
+```
+
+For example, an invocation `%my_macro` can now load remote `My_Macro.SAS`
+when no exact-case source path exists. To inspect a standalone submission,
+disable global autoload to exercise the targeted path explicitly:
+
+```bash
+SAS_ODA_AUTOLOAD_MACROS=0 perl run_sas_codes_or_files_in_ODA.pl \
+  --file my_program.sas --persistent --session-id case_lookup
+```
+
+Programs, SAS/CLI logs and verified cleanup results remain in the ignored
+owned run folders. Suite and terminal logs are retained locally in
+`SAS_Output_macro_case_validation/`.

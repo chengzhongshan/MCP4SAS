@@ -3529,9 +3529,9 @@ SAS
 
     for my $name (@names) {
         next unless $name =~ /^[A-Za-z_]\w*$/;
-        my ($primary, $fallback) = lc($name) eq 'del_dir_recursive'
-          ? ("&_macro_home/$name.sas", "&_home/$name.sas")
-          : ("&_home/$name.sas", "&_macro_home/$name.sas");
+        my ($primary_dir, $fallback_dir) = lc($name) eq 'del_dir_recursive'
+          ? ('&_macro_home', '&_home') : ('&_home', '&_macro_home');
+        my ($primary, $fallback) = ("$primary_dir/$name.sas", "$fallback_dir/$name.sas");
         my $required_check = lc($name) eq 'del_dir_recursive'
           ? "%if not %sysmacexist(Del_Dir_Recursive) %then %put ERROR: Remote Del_Dir_Recursive macro could not be loaded;\n"
           : '';
@@ -3539,17 +3539,67 @@ SAS
                      "checking $primary (primary choice), then $fallback for: $name\n\n";
         $code .= qq{
 %macro _pipeline_load_macro_tmp;
-%let _pipeline_targeted_macro_path=;
-
-%if %sysfunc(fileexist("$primary")) %then %do;
-    %let _pipeline_targeted_macro_path=$primary;
-%end;
-
-%if %length(&_pipeline_targeted_macro_path)=0 %then %do;
-    %if %sysfunc(fileexist("$fallback")) %then %let _pipeline_targeted_macro_path=$fallback;
-%end;
-%if %length(&_pipeline_targeted_macro_path) > 0 %then %do;
-    %include "&_pipeline_targeted_macro_path";
+%local _pipeline_targeted_macro_path _pipeline_targeted_macro_error;
+data _null_;
+ length wanted entry \$256 root candidate selected \$4096 dirref fileref \$8 match_kind \$20;
+ array roots[2] \$4096 _temporary_ ("$primary_dir" "$fallback_dir");
+ wanted='$name.sas';
+ selected=''; failed=0;
+ /* Preserve existing exact-case resolution across both search folders. */
+ do phase=1 to 2;
+   do folder=1 to dim(roots);
+     root=roots[folder];
+     if phase=1 then do;
+       candidate=cats(trim(root),'/',trim(wanted));
+       rc=filename(fileref,trim(candidate));
+       if rc=0 and fexist(fileref) then do;
+         child=dopen(fileref);
+         if child>0 then rc=dclose(child);
+         else do; selected=candidate; match_kind='EXACT'; end;
+       end;
+       if not missing(fileref) then rc=filename(fileref);
+     end;
+     else do;
+       matches=0;
+       rc=filename(dirref,trim(root));
+       handle=dopen(dirref);
+       if handle>0 then do;
+         do index=1 to dnum(handle);
+           entry=dread(handle,index);
+           if upcase(trim(entry))=upcase(trim(wanted)) then do;
+             candidate=cats(trim(root),'/',trim(entry));
+             rc=filename(fileref,trim(candidate));
+             if rc=0 and fexist(fileref) then do;
+               child=dopen(fileref);
+               if child>0 then rc=dclose(child);
+               else do;
+                 matches+1; selected=candidate;
+                 put 'MCP4SAS_MACRO_CANDIDATE: ' candidate;
+               end;
+             end;
+             if not missing(fileref) then rc=filename(fileref);
+           end;
+         end;
+         rc=dclose(handle);
+       end;
+       if not missing(dirref) then rc=filename(dirref);
+       if matches>1 then do;
+         put 'ERROR: Ambiguous case-insensitive macro filename: ' wanted ' in ' root;
+         selected=''; failed=1;
+       end;
+       else if matches=1 then match_kind='CASE_INSENSITIVE';
+     end;
+     if not missing(selected) or failed then leave;
+   end;
+   if not missing(selected) or failed then leave;
+ end;
+ call symputx('_pipeline_targeted_macro_path',selected,'L');
+ call symputx('_pipeline_targeted_macro_error',failed,'L');
+ if not missing(selected) then put 'MCP4SAS_TARGETED_MACRO: $name ' match_kind ' ' selected;
+run;
+%if &_pipeline_targeted_macro_error %then %return;
+%if %length(%superq(_pipeline_targeted_macro_path)) > 0 %then %do;
+    %include "%superq(_pipeline_targeted_macro_path)";
 %end;
 $required_check
 %mend;

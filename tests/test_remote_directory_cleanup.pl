@@ -42,7 +42,7 @@ for my $autoload (0,1) {
  local $ENV{SAS_ODA_AUTOLOAD_MACROS}=$autoload;
  my $runner=bless {},'SAS_ODA_Runner';
  my ($code,$log)=$runner->_process_dependencies(q{%del_dir_recursive(/home/test,owned);});
- like($code,qr{&_macro_home/Del_Dir_Recursive\.sas},"canonical filename loaded with autoload=$autoload");
+ like($code,qr{wanted='Del_Dir_Recursive\.sas'},"canonical filename loaded with autoload=$autoload");
  like($log,qr/Injected targeted remote macro loader for: Del_Dir_Recursive/,"explicit remote loading with autoload=$autoload");
  unlike($log,qr/Uploaded overlay/,'remote macro not overwritten by a local copy');
 }
