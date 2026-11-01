@@ -267,10 +267,13 @@ sub macro_dependency_view {
 sub include_targets {
     my ($text)=@_;
     $text //= '';
-    my $active=macro_dependency_view($text);
+    my $analysis=analyze_source($text);
+    # A direct %INCLUDE inside a quoted string is data, even though ordinary
+    # macro references may resolve in double quotes. Deferred executable
+    # single-quoted code is handled recursively below.
+    my $active=$analysis->{masked};
     my $paths=mask_comments($text);
     my @targets;
-    my $analysis=analyze_source($text);
     my @deferred;
     for my $span (@{$analysis->{single_quotes}}) {
         next unless _literal_is_executable($analysis,$span);

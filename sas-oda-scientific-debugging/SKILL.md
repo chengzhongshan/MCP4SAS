@@ -79,6 +79,17 @@ For a slow live request, inspect the status phase before calling it a hang.
 boundaries. Let the configured timeout own termination, then verify descendant
 process cleanup and the final status JSON.
 
+Treat `%include` discovery as a lexical execution question. A direct
+`%include` inside a double-quoted DATA-step string is text, even though ordinary
+macro references can resolve inside double quotes. Do not upload or wrap that
+path. Continue to recurse into single-quoted code only when it is an argument
+to an execution API such as `DOSUBL` or `CALL EXECUTE`.
+
+An ownership marker authorizes deletion only when its canonical root matches,
+its directory has the owned basename, and both timestamp and PID are numeric.
+Require PID to be positive: PID zero has process-group semantics on Unix and
+must never be accepted as an owned-process identity.
+
 ## Scientific Validation
 
 Once execution is clean, validate the scientific contract independently:

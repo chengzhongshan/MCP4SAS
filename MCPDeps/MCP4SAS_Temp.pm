@@ -43,7 +43,8 @@ sub inspect_owned {
     my $info = eval { local $/; decode_json(<$fh>) };
     close $fh;
     return unless ref($info) eq 'HASH' && ($info->{root} // '') eq $root
-        && ($info->{pid} // '') =~ /^\d+$/ && ($info->{created} // '') =~ /^\d+$/;
+        && ($info->{pid} // '') =~ /^\d+$/ && $info->{pid} > 0
+        && ($info->{created} // '') =~ /^\d+$/;
     return ($resolved, $info);
 }
 

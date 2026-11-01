@@ -31,6 +31,8 @@ includes:
   bootstrap rules for debugging SAS ODA scientific workflows.
 - `docs/VALIDATION_TASKS.md`: ordered offline and live validation tasks with
   safety gates and acceptance evidence.
+- `tests/new_validation_tasks_001_100.pl`: independent adversarial batch for
+  include parsing, diagnostics, advisories, and scratch ownership safety.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
