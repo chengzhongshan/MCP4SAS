@@ -90,6 +90,19 @@ its directory has the owned basename, and both timestamp and PID are numeric.
 Require PID to be positive: PID zero has process-group semantics on Unix and
 must never be accepted as an owned-process identity.
 
+Treat `run_sas_codes_or_files_in_ODA.pl` and
+`run_sas_codes_or_script_in_ODA.pl` as synchronized compatibility entry
+points. A one-sided edit passes Perl syntax checks but fails every platform's
+installation smoke test. After changing either helper, run the parity test and
+the installer check before pushing:
+
+```bash
+prove tests/test_helper_entrypoint_parity.pl
+cmp -s run_sas_codes_or_files_in_ODA.pl \
+  run_sas_codes_or_script_in_ODA.pl
+bash install/check_mcp4sas_install.sh
+```
+
 ## Scientific Validation
 
 Once execution is clean, validate the scientific contract independently:
