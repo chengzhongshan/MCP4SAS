@@ -8,6 +8,25 @@ sub sas_literal {
     return "'$value'";
 }
 
+sub exact_name_patterns {
+    my ($names)=@_;
+    die "Directory names must be a nonempty array\n" unless ref($names) eq 'ARRAY' && @$names;
+    my @patterns;
+    for my $name (@$names) {
+        die "Directory name must be nonempty\n" unless defined($name) && length($name);
+        $name =~ s{/+\z}{};
+        die "Directory name must be an immediate child basename\n"
+            if !length($name) || $name =~ m{/|[\x00-\x1f%&,'"();\\]};
+        die "Refusing protected directory name: $name\n"
+            if $name eq '.' || $name eq '..' || $name eq '_DELETE_'
+              || $name eq 'Macros' || $name eq '._mcp4sas_directory_cleanup_lock';
+        my $quoted=$name;
+        $quoted =~ s/([^A-Za-z0-9_-])/\\$1/g;
+        push @patterns,"^${quoted}\$";
+    }
+    return \@patterns;
+}
+
 sub build_code {
     my (%args)=@_;
     my $parent=$args{parent}//'~';
@@ -16,7 +35,9 @@ sub build_code {
     die "Unsafe directory parent\n" if $parent =~ m{(?:\A|/)\.\.?(/|\z)|[\x00-\x1f%&,'"();\\]};
     $parent =~ s{/+\z}{};
     die "Cannot scan the filesystem root for recursive deletion\n" unless length $parent;
-    my $patterns=$args{patterns};
+    die "Provide either directory patterns or exact names, not both\n"
+        if exists($args{patterns}) && exists($args{names});
+    my $patterns=exists($args{names}) ? exact_name_patterns($args{names}) : $args{patterns};
     die "At least one nonempty directory regex is required\n" unless ref($patterns) eq 'ARRAY' && @$patterns;
     my (@init,@match);
     for my $index (0..$#$patterns) {

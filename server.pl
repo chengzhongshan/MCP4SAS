@@ -312,7 +312,7 @@ sub mcp4sas_tool_schema {
                     { type => 'string' },
                     { type => 'array', items => { type => 'string' } },
                 ],
-                description => 'Optional regex pattern(s) for deleting remote files after listing delete_dir.',
+                description => 'Optional regex pattern(s) for deleting matching remote files and recursively deleting matching immediate-child directories after listing delete_dir.',
             },
             delete_dir => {
                 type => 'string',

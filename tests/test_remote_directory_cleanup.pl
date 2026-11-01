@@ -28,6 +28,11 @@ like($apply,qr/dcreate\('\._mcp4sas_directory_cleanup_lock'/,'operations on the 
 like($apply,qr/if deleted ne 0 then put 'ERROR:/,'lock removal failure is not hidden');
 is_deeply(SAS_Source_Analysis::analyze_source($apply)->{findings},[],'generated apply program has balanced SAS quotes/comments');
 is_deeply(SAS_Source_Analysis::analyze_source($preview)->{findings},[],'generated preview has balanced SAS quotes/comments');
+{
+ local $ENV{SAS_ODA_AUTOLOAD_MACROS}=0;
+ my (undef,$dependency_log)=(bless {},'SAS_ODA_Runner')->_process_dependencies($apply);
+ unlike($dependency_log,qr/(?:for: to\b|to[.]sas)/i,'macro loop %to keyword does not trigger a targeted macro lookup');
+}
 for my $bad ('/','~/../Macros','relative','~/bad&macro','~/bad;code') {
  eval {SAS_ODA_Directory_Cleanup::build_code(parent=>$bad,patterns=>['^tmp'])};
  ok($@,"unsafe parent rejected: $bad");
@@ -38,6 +43,18 @@ for my $bad ('','[',"tmp\n") {
 }
 my $quoted=SAS_ODA_Directory_Cleanup::build_code(patterns=>[q{^a'b/c$}],dry_run=>1);
 like($quoted,qr/a''b\\\/c/,'regex quotes and delimiter escaped without macro interpolation');
+is_deeply(
+ SAS_ODA_Directory_Cleanup::exact_name_patterns(['mgxviz_123','plot.v1']),
+ ['^mgxviz_123$','^plot\\.v1$'],
+ 'matched directory basenames become exact escaped cleanup patterns',
+);
+my $named=SAS_ODA_Directory_Cleanup::build_code(parent=>'~',names=>['mgxviz_123','plot.v1']);
+like($named,qr{prxparse\('/\(\?:\^mgxviz_123\$\)/'\)},'first exact directory name is anchored');
+like($named,qr{prxparse\('/\(\?:\^plot\\\.v1\$\)/'\)},'regex metacharacters in exact directory names are escaped');
+for my $bad_name ('../escape','Macros','_DELETE_','bad&macro') {
+ eval {SAS_ODA_Directory_Cleanup::exact_name_patterns([$bad_name])};
+ ok($@,"unsafe exact directory name rejected: $bad_name");
+}
 for my $autoload (0,1) {
  local $ENV{SAS_ODA_AUTOLOAD_MACROS}=$autoload;
  my $runner=bless {},'SAS_ODA_Runner';
@@ -50,8 +67,18 @@ open my $fh,'<',"$Bin/../server.pl" or die $!; my $server=do {local $/; <$fh>}; 
 like($server,qr/delete_directory_rgx =>/,'MCP schema exposes directory regex');
 like($server,qr/delete_directory_dry_run =>/,'MCP schema exposes preview');
 like($server,qr/\('--delete-directory-rgx', \$_\)/,'MCP forwards every regex');
+like($server,qr/delete_file_rgx.*?recursively deleting matching immediate-child directories/s,
+    'MCP schema documents recursive directories for file regex deletion');
 for my $entry (qw(run_sas_codes_or_files_in_ODA.pl run_sas_codes_or_script_in_ODA.pl)) {
  open my $cli,'<',"$Bin/../$entry" or die $!; my $text=do {local $/; <$cli>}; close $cli;
  like($text,qr/!\@delete_directory_rgxs && sas_submission_contains_include\(\$code\)/,"$entry keeps cleanup errors in the primary SAS log");
+ like($text,qr/if \(\$entry =~ m\{\/\$\}\).*?\$selected_directories\{\$directory_name\}/s,
+    "$entry separates matched directory entries from regular files");
+ like($text,qr/SAS_ODA_Directory_Cleanup::build_code\(\s*parent => \$delete_dir,\s*names => \\\@directory_names/s,
+    "$entry sends exact matched names to guarded recursive cleanup");
+ like($text,qr/MCP4SAS_DIRECTORY_SUMMARY:.*matched=\$directory_count.*deleted=\$directory_count/s,
+    "$entry requires a verified recursive deletion summary");
+ like($text,qr/--delete-file-rgx <regex>\s+Delete matching remote files and recursively delete matching immediate-child directories/,
+    "$entry help documents recursive directory deletion for --delete-file-rgx");
 }
 done_testing();

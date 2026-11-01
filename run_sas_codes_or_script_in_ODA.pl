@@ -1003,7 +1003,7 @@ Options:
                              If omitted, downloads default to the current directory.
   --delete-file <file>       Delete a remote file by name/path.
                              Repeat this option to delete multiple files in one run.
-  --delete-file-rgx <regex>  Delete every remote file whose basename matches the regex.
+  --delete-file-rgx <regex>  Delete matching remote files and recursively delete matching immediate-child directories.
                              Repeat this option to apply multiple regex patterns.
   --delete-directory-rgx <regex>
                              Recursively delete matching immediate child directories
@@ -1816,7 +1816,7 @@ sub sas_submission_contains_include {
 sub is_builtin_macro_name {
     my ($name) = @_;
     return 1 unless defined $name && length $name;
-    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|sysmacexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
+    return $name =~ /^(?:let|put|do|to|by|while|until|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|sysmacexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
 }
 
 sub sas_submission_uses_nonbuiltin_macro {
@@ -3293,6 +3293,7 @@ if (@download_files) {
 
 if (@delete_files || @delete_file_rgxs) {
     my @all_delete_targets = @delete_files;
+    my %selected_directories;
     my $delete_runner = (!$persistent && @delete_file_rgxs)
       ? transient_batch_fileops_runner()
       : undef;
@@ -3318,40 +3319,87 @@ if (@delete_files || @delete_file_rgxs) {
         for my $regex_text (@delete_file_rgxs) {
             my $regex = eval { qr/$regex_text/ };
             die "Invalid delete regex '$regex_text': $@\n" if $@;
-            my @matched_entries;
             my @matched_display;
             for my $entry (@{$files_ref}) {
                 next unless defined $entry;
                 my $full_path = compose_remote_path_for_match($delete_dir, $entry);
                 next unless ($entry =~ $regex || $full_path =~ $regex);
-                push @matched_entries, $entry;
                 push @matched_display, $full_path;
+                # Regex deletion covers both entry types: files use fdelete;
+                # directories use the guarded recursive cleanup workflow.
+                if ($entry =~ m{/$}) {
+                    (my $directory_name = $entry) =~ s{/+\z}{};
+                    $selected_directories{$directory_name} = 1;
+                } else {
+                    $selected{$entry} = 1;
+                }
             }
             print "Delete regex '$regex_text' matched: " . (@matched_display ? join(', ', @matched_display) : '(none)') . "\n";
-            $selected{$_} = 1 for @matched_entries;
         }
         @all_delete_targets = sort keys %selected;
     }
-    print "Bulk delete manifest: " . scalar(@all_delete_targets) . " file(s); using one SASPy session and one SAS submit.\n";
-    my @delete_items = map {
-        +{ remote_file => $_, remote_dir => $delete_dir }
-    } @all_delete_targets;
-    my $delete_results = run_with_possible_fallback(
-        'bulk delete',
-        sub {
-            my ($active_runner) = @_;
-            return $active_runner->delete_many(\@delete_items);
-        },
-    );
-    if (!ref($delete_results) || ref($delete_results) ne 'ARRAY') {
-        my $msg = defined($delete_results) ? $delete_results : 'unknown bulk delete error';
-        die "Bulk delete failed: $msg\n";
+
+    my @directory_names = sort keys %selected_directories;
+    if (@directory_names) {
+        print "Recursive delete manifest: " . scalar(@directory_names)
+          . " director" . (@directory_names == 1 ? 'y' : 'ies')
+          . "; using guarded immediate-child directory cleanup.\n";
+        my $directory_code = SAS_ODA_Directory_Cleanup::build_code(
+            parent => $delete_dir,
+            names => \@directory_names,
+        );
+        my $active_runner = $delete_runner || $runner;
+        my $directory_result = run_scalar_action_with_timeout(
+            'SAS ODA recursive regex directory delete',
+            sub {
+                local $ENV{SAS_ODA_AUTOLOAD_MACROS} = 0;
+                local $ENV{PERLMCP_SASPY_LOAD_MACROS} = 0;
+                return $active_runner->run_code($directory_code);
+            },
+        );
+        my $directory_error = ref($directory_result) eq 'HASH'
+          ? ($directory_result->{error} // '')
+          : (defined($directory_result) ? $directory_result : 'unknown recursive delete error');
+        die "Recursive regex directory delete failed: $directory_error\n"
+          if !ref($directory_result) || ref($directory_result) ne 'HASH' || length($directory_error);
+        my $directory_log = $directory_result->{log} // '';
+        my $directory_count = scalar @directory_names;
+        my $summary = qr/MCP4SAS_DIRECTORY_SUMMARY:\s+matched=$directory_count\s+deleted=$directory_count\s+dry_run=0/;
+        if (sas_log_contains_fatal_error($directory_log) || $directory_log !~ $summary) {
+            my $detail = first_fatal_sas_log_line($directory_log)
+              || "expected verified deletion summary for $directory_count director"
+                 . ($directory_count == 1 ? 'y' : 'ies');
+            die "Recursive regex directory delete failed: $detail\n";
+        }
+        print "Deleted/verified remote directory: "
+          . compose_remote_path_for_match($delete_dir, "$_/") . "\n"
+          for @directory_names;
     }
-    for my $item (@{$delete_results}) {
-        my $path = ref($item) eq 'HASH'
-          ? ($item->{remote_path} // $item->{remote_file} // '')
-          : '';
-        print "Deleted/verified remote file: $path\n" if length $path;
+
+    if (@all_delete_targets) {
+        print "Bulk delete manifest: " . scalar(@all_delete_targets) . " file(s); using one SASPy session and one SAS submit.\n";
+        my @delete_items = map {
+            +{ remote_file => $_, remote_dir => $delete_dir }
+        } @all_delete_targets;
+        my $delete_results = run_with_possible_fallback(
+            'bulk delete',
+            sub {
+                my ($active_runner) = @_;
+                return $active_runner->delete_many(\@delete_items);
+            },
+        );
+        if (!ref($delete_results) || ref($delete_results) ne 'ARRAY') {
+            my $msg = defined($delete_results) ? $delete_results : 'unknown bulk delete error';
+            die "Bulk delete failed: $msg\n";
+        }
+        for my $item (@{$delete_results}) {
+            my $path = ref($item) eq 'HASH'
+              ? ($item->{remote_path} // $item->{remote_file} // '')
+              : '';
+            print "Deleted/verified remote file: $path\n" if length $path;
+        }
+    } elsif (@delete_file_rgxs) {
+        print "Bulk delete manifest: 0 file(s); no regular-file delete submit needed.\n";
     }
 }
 
