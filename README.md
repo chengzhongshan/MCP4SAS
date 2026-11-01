@@ -425,6 +425,57 @@ Delete:
   --session-id demo
 ```
 
+### Delete ODA directories by regular expression
+
+Preview matching immediate child directories in SAS ODA home:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --delete-directory-dry-run --persistent --session-id cleanup
+```
+
+Delete the matches, including their contents:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --persistent --session-id cleanup
+```
+
+`--delete-dir` defaults to remote `~`; quote remote paths so Bash does not
+expand them locally. Patterns use SAS PRX syntax and match directory
+basenames, not full paths. Repeat `--delete-directory-rgx` to combine
+patterns. Regular files are excluded even when their names match. Run
+directory cleanup separately from `--code` or `--file`. Both CLI entry
+points support these options.
+
+The operation explicitly includes `~/Macros/Del_Dir_Recursive.sas` and calls
+`%Del_Dir_Recursive(upper_dir,lower_dir)` with positional arguments. It
+verifies that each selected directory and the macro's `_DELETE_` staging
+path disappear. A preexisting `_DELETE_` or cleanup lock blocks deletion;
+`Macros`, the staging/lock names and macro-unsafe path characters are
+protected. The parent lock serializes MCP4SAS directory cleanup operations
+under that parent. The original recursive macro determines how contents
+are traversed. No macro file is uploaded or replaced by this operation.
+
+MCP tool arguments for `run_sas_codes_or_files_in_ODA`:
+
+```json
+{
+  "delete_directory_rgx": "^tmp_.*$",
+  "delete_dir": "~",
+  "delete_directory_dry_run": true,
+  "persistent": "true",
+  "session_id": "cleanup"
+}
+```
+
+Set `delete_directory_dry_run` to `false` to delete. Regex arrays are also
+accepted. Poll the returned PID using the existing MCP status workflow.
+See [the real-example report](RealExamples4ImprovingMCP4SAS.md) for live
+verification, including nonempty directories and the staging collision test.
+
 ## SAS Macro Loading
 
 By default, if submitted SAS code calls non-built-in macros, MCP4SAS loads
@@ -432,6 +483,9 @@ macros from SAS ODA `~/Macros` through `importallmacros_ue.sas`.
 
 Useful behavior:
 
+- `%Del_Dir_Recursive` explicitly loads its case-correct remote source from
+  `~/Macros`, independently of the global bootstrap, so its supporting
+  `recursiveDelete` macro is available. Lowercase invocations are supported.
 - Reusing `--persistent --session-id <id>` avoids repeating expensive bootstrap
   work on every command.
 - If the local `importallmacros_ue.sas` helper already matches the remote copy

@@ -3430,7 +3430,7 @@ sub _resolve_local_dependency_path {
 sub _is_builtin_macro_name {
     my ($name) = @_;
     return 1 unless defined $name && length $name;
-    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
+    return $name =~ /^(?:let|put|do|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|symdel|sysmacexist|sysmacdelete|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
 }
 
 sub _find_local_macro_file {
@@ -3529,22 +3529,29 @@ SAS
 
     for my $name (@names) {
         next unless $name =~ /^[A-Za-z_]\w*$/;
+        my ($primary, $fallback) = lc($name) eq 'del_dir_recursive'
+          ? ("&_macro_home/$name.sas", "&_home/$name.sas")
+          : ("&_home/$name.sas", "&_macro_home/$name.sas");
+        my $required_check = lc($name) eq 'del_dir_recursive'
+          ? "%if not %sysmacexist(Del_Dir_Recursive) %then %put ERROR: Remote Del_Dir_Recursive macro could not be loaded;\n"
+          : '';
         print STDERR "\nSASPy automatically preparing targeted remote macro loader\n",
-                     "either located in the directory ~ (primary choice) or ~/Macros (fallback choice) for: $name\n\n";
+                     "checking $primary (primary choice), then $fallback for: $name\n\n";
         $code .= qq{
 %macro _pipeline_load_macro_tmp;
 %let _pipeline_targeted_macro_path=;
 
-%if %sysfunc(fileexist("&_home/$name.sas")) %then %do;
-    %let _pipeline_targeted_macro_path=&_home/$name.sas;
+%if %sysfunc(fileexist("$primary")) %then %do;
+    %let _pipeline_targeted_macro_path=$primary;
 %end;
 
 %if %length(&_pipeline_targeted_macro_path)=0 %then %do;
-    %if %sysfunc(fileexist("&_macro_home/$name.sas")) %then %let _pipeline_targeted_macro_path=&_macro_home/$name.sas;
+    %if %sysfunc(fileexist("$fallback")) %then %let _pipeline_targeted_macro_path=$fallback;
 %end;
 %if %length(&_pipeline_targeted_macro_path) > 0 %then %do;
     %include "&_pipeline_targeted_macro_path";
 %end;
+$required_check
 %mend;
 %_pipeline_load_macro_tmp;
 };
@@ -3563,6 +3570,7 @@ sub _expanded_targeted_remote_macro_names {
     my @names;
     for my $requested (@$macro_names_ref) {
         next unless defined($requested) && length($requested);
+        $requested = 'Del_Dir_Recursive' if lc($requested) eq 'del_dir_recursive';
         next if _is_builtin_macro_name($requested);
         my @expanded = (
             @{ $targeted_macro_dependencies{lc $requested} || [] },
@@ -3693,6 +3701,12 @@ sub _process_dependencies {
     foreach my $m_name (@potential_macros) {
         next if _is_builtin_macro_name($m_name);
         next if $defined_in_code{lc $m_name};
+        if (lc($m_name) eq 'del_dir_recursive') {
+            # The remote file also defines recursiveDelete. Load that file
+            # explicitly, independent of the global bootstrap or local overlays.
+            push @unresolved_macro_names, 'Del_Dir_Recursive';
+            next;
+        }
         if ($macro_autoload_enabled) {
             push @unresolved_macro_names, $m_name;
             next;
@@ -3735,9 +3749,14 @@ sub _process_dependencies {
             push @logs, "Injected targeted remote macro loader for: " . join(', ', @expanded_targeted_names);
         }
     } elsif (@unresolved_macro_names) {
+        my @explicit_remote = grep {lc($_) eq 'del_dir_recursive'} @unresolved_macro_names;
+        if (@explicit_remote) {
+            $header_includes = $self->_build_targeted_remote_macro_loader(\@explicit_remote) . "\n" . $header_includes;
+            push @logs, 'Injected targeted remote macro loader for: Del_Dir_Recursive';
+        }
         my %seen;
         my @unique = grep { defined($_) && length($_) && !$seen{lc $_}++ } @unresolved_macro_names;
-        push @logs, "Using colocated importallmacros_ue bootstrap only for unresolved macros: " . join(', ', @unique);
+        push @logs, "Using colocated importallmacros_ue bootstrap for unresolved macros: " . join(', ', @unique);
         push @logs, 'No additional macro files were uploaded because importallmacros_ue.sas is treated as self-contained.';
     }
 
