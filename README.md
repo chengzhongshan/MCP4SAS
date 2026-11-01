@@ -483,6 +483,15 @@ macros from SAS ODA `~/Macros` through `importallmacros_ue.sas`.
 
 Useful behavior:
 
+- Targeted remote loading first checks exact-case `.sas` paths in both
+  search folders. If neither exists, it scans the directories and compares
+  filenames case-insensitively, including the extension, then includes the
+  actual Linux filename. Ordinary macros search `~` before `~/Macros`;
+  `Del_Dir_Recursive` retains its Macros-first preference. Multiple folded
+  matches in the selected folder produce an ERROR and no candidate is
+  included. Resolution messages remain visible with SAS `NONOTES` enabled.
+  This handles case differences; it does not guess spelling mistakes or
+  discover macros stored under unrelated filenames.
 - `%Del_Dir_Recursive` explicitly loads its case-correct remote source from
   `~/Macros`, independently of the global bootstrap, so its supporting
   `recursiveDelete` macro is available. Lowercase invocations are supported.
