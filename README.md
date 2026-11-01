@@ -27,6 +27,8 @@ includes:
   one-shot SASPy connection shutdown diagnostics.
 - `MCPDeps/importallmacros_ue.sas`: helper for loading SAS macros from
   the SAS ODA `~/Macros` directory.
+- `sas-oda-scientific-debugging/SKILL.md`: reusable evidence ladder and macro
+  bootstrap rules for debugging SAS ODA scientific workflows.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
