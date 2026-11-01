@@ -2256,3 +2256,128 @@ Programs, fixtures, responses, results JSON and HTML remain in their owned
 run folders. Publication includes maintained code, the 100-case catalogue,
 source hashes, Perl tests, README and this report. Generated outputs,
 caches and unrelated configuration changes remain local.
+
+## 15. Recursive remote directory cleanup with Del_Dir_Recursive
+
+Validation date: October 31, 2026.
+
+The user reported that `%Del_Dir_Recursive` worked after a manual include
+but was not reliably available through MCP4SAS. The online source was
+downloaded read-only and inspected. It defines both `recursiveDelete` and
+`Del_Dir_Recursive(upper_dir,lower_dir)`, with positional parameters, and
+renames each selected target to its parent's fixed `_DELETE_` staging name.
+The macro itself was not changed or uploaded.
+
+### Implementation
+
+`MCPDeps/SAS_ODA_Directory_Cleanup.pm` builds the SAS cleanup program in Perl.
+Both CLI scripts now accept repeatable `--delete-directory-rgx` patterns
+and `--delete-directory-dry-run`, reusing `--delete-dir` as the remote parent
+(default `~`). The MCP tool exposes `delete_directory_rgx` (string or array),
+`delete_directory_dry_run` (boolean) and the existing `delete_dir` field.
+Patterns match immediate child basenames using SAS PRX expressions; DOPEN
+filters out regular files. Deleting a selected directory recursively removes
+its contents through the existing online macro.
+
+The cleanup operation explicitly includes `~/Macros/Del_Dir_Recursive.sas`.
+Direct ordinary SAS calls also receive a targeted remote loader for that
+macro, with canonical filename casing and preference for the Macros folder,
+even when global macro autoload is enabled. This avoids relying entirely on
+`importallmacros_ue` to have compiled both definitions. It does not overlay a
+local macro copy. Built-in `%SYSMACEXIST`, `%SYSMACDELETE`, and `%SYMDEL`
+are excluded from remote dependency lookup.
+
+Before invoking the recursive macro, the generated program snapshots all
+matches and rejects protected or macro-unsafe directory names. It acquires
+an owned directory lock under the selected parent and refuses a preexisting
+`_DELETE_` staging path. It releases its lock on normal completion and early
+returns. After each call it verifies disappearance of the original path and
+staging path; unverified removal is a failure. A stale lock is preserved
+rather than treated as permission to continue deletion.
+
+The dry run loads no deletion macro and deletes no files or directories.
+Its logs list each selected path and a matched/deleted summary. Directory
+cleanup runs separately from a user code/file submission. Existing file
+cleanup flags retain their behavior.
+
+### Live failures encountered and fixes
+
+The first read-only download command accidentally allowed the local shell
+to expand `~/Macros` to `/home/admin/Macros`. The corrected command escaped
+remote `~` and downloaded the actual online macro successfully. Commands
+below quote remote paths for use directly in Cygwin Bash; the Perl test
+uses list-form exec arguments so no shell expands remote paths.
+
+The first full live run passed 17/18 assertions in
+`SAS_Output_remote_directory_cleanup_GZrk5Z`. The staging collision was
+correctly blocked and all files were preserved, but its CLI exit status
+was incorrectly zero. The generic explicit-include debug wrapper had
+redirected the ERROR line out of the primary SAS log. Generated directory
+cleanup submissions now keep their runtime log in the normal submission
+path instead of using that wrapper, so a blocked cleanup reports a nonzero
+exit and the MCP worker can report FAILED.
+
+### Reproducible Cygwin commands
+
+```bash
+export PATH=/usr/bin:$PATH
+# Preview only, matching immediate child directory names:
+perl run_sas_codes_or_files_in_ODA.pl \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --delete-directory-dry-run --persistent --session-id cleanup
+
+# Delete the selected directories and their contents:
+perl run_sas_codes_or_files_in_ODA.pl \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --persistent --session-id cleanup
+
+# Repeat patterns to combine them under a particular remote parent:
+perl run_sas_codes_or_script_in_ODA.pl \
+  --delete-dir '~/scratch' \
+  --delete-directory-rgx '^old_run_[0-9]+$' \
+  --delete-directory-rgx '^temporary_[0-9]+$' \
+  --delete-directory-dry-run
+
+prove tests/test_remote_directory_cleanup.pl tests/test_mcp_job_reporting.pl
+perl tests/test_live_remote_directory_cleanup.pl --live
+# A one-shot-session alternative is also available:
+# perl tests/test_live_remote_directory_cleanup.pl --live --oneshot
+```
+
+The MCP tool takes the following arguments for preview; set the boolean to
+false for deletion and poll the returned worker PID as usual:
+
+```json
+{
+  "delete_directory_rgx": ["^tmp_.*$", "^old_run_[0-9]+$"],
+  "delete_dir": "~",
+  "delete_directory_dry_run": true,
+  "persistent": "true",
+  "session_id": "cleanup"
+}
+```
+
+### Final live verification
+
+The corrected live run passed **18/18 assertions**, exit 0, in
+`SAS_Output_remote_directory_cleanup__x9sa4`. It created only a uniquely
+named parent under remote HOME, with two matching directories (one containing
+another nonempty directory), an unmatched directory containing a file, and
+a regular file whose name also matched the pattern. It verified preview
+preservation, rejection of an owned `_DELETE_` collision with nonzero exit,
+retention of the collision sentinel and original files, successful deletion
+of the two matching trees, preservation of the unmatched directory and
+matching regular file, release of the cleanup lock, successful no-match
+behavior, and deletion of all remaining owned test fixtures and their parent.
+
+All programs and CLI/SAS logs remain in the owned run directory. The original
+17/18 discovery run remains available separately. No existing user directory
+was selected by the live tests.
+
+The final offline regression suite passed **351 assertions across 18 Perl
+test files**, including the new directory-cleanup checks and existing CLI,
+MCP job reporting, include, macro quoting, diagnostic and cleanup tests.
+Both CLI scripts, the MCP server and the two changed/new Perl modules
+passed syntax checks. Download/probe logs, suite outputs, live-test terminal
+logs and the read-only copy of the inspected online macro remain local in
+`SAS_Output_directory_cleanup_validation/`, which is ignored by Git.

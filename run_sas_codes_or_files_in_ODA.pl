@@ -86,12 +86,12 @@ BEGIN {
             next;
         }
 
-        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--dir4listing|--file-info)$/) {
+        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--delete-directory-rgx|--dir4listing|--file-info)$/) {
             $has_file_op = 1;
             shift @argv if @argv;
             next;
         }
-        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--dir4listing|--file-info)=/) {
+        if ($arg =~ /^(?:--upload-file|--download-file|--delete-file|--delete-file-rgx|--delete-directory-rgx|--dir4listing|--file-info)=/) {
             $has_file_op = 1;
             next;
         }
@@ -118,6 +118,7 @@ use lib "$Bin/DiffGWASDeps";
 use lib "$Bin/MCPDeps";
 use Getopt::Long;
 use SAS_ODA_Runner;
+use SAS_ODA_Directory_Cleanup;
 use SAS_Source_Analysis;
 use MCP4SAS_Temp;
 use JSON::PP qw(encode_json decode_json);
@@ -139,6 +140,7 @@ my ($code, $file, $macro_dir, $no_html, $output_prefix, $help, $persistent, $ses
 my ($internal_runner_result_json, $internal_execution_file, $internal_execution_code_file,
     $internal_macro_dir, $internal_open_html, $internal_persistent, $internal_session_id);
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
+my (@delete_directory_rgxs, $delete_directory_dry_run);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
 my ($saspy_cfgname, $saspy_cfgfile);
@@ -454,6 +456,8 @@ GetOptions(
     'download-local-path=s@' => \@download_local_paths,
     'delete-file|k=s@' => \@delete_files,
     'delete-file-rgx=s@' => \@delete_file_rgxs,
+    'delete-directory-rgx=s@' => \@delete_directory_rgxs,
+    'delete-directory-dry-run!' => \$delete_directory_dry_run,
     'delete-dir=s' => \$delete_dir,
     'dir4listing|l=s' => \$dir4listing,
     'file-info=s@' => \@file_infos,
@@ -960,7 +964,7 @@ if (!$help && defined($classify_sas_log) && length($classify_sas_log)) {
     exit($has_space_failure ? 73 : ($has_remote_termination ? 74 : 0));
 }
 
-if ($help || (!$check_sas_oda_login_only && !$classify_sas_log && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !$dir4listing && !@file_infos)
+if ($help || (!$check_sas_oda_login_only && !$classify_sas_log && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !@delete_directory_rgxs && !$delete_directory_dry_run && !$dir4listing && !@file_infos)
    || ($code && $file) ) {
     print <<USAGE;
 Usage: $0 [OPTIONS]
@@ -1001,7 +1005,12 @@ Options:
                              Repeat this option to delete multiple files in one run.
   --delete-file-rgx <regex>  Delete every remote file whose basename matches the regex.
                              Repeat this option to apply multiple regex patterns.
-      --delete-dir <dir>     Remote directory to scan for --delete-file-rgx matches
+  --delete-directory-rgx <regex>
+                             Recursively delete matching immediate child directories
+                             in --delete-dir using ~/Macros/Del_Dir_Recursive.sas.
+                             Repeatable; matches basenames using SAS PRX syntax.
+  --delete-directory-dry-run Preview directory matches without loading/deleting.
+      --delete-dir <dir>     Remote parent to scan for file or directory regex matches
                              (default: '~')
   --dir4listing              list out files in remote directory in SAS ODA,
                              such as '~/Macros', remember to restrict it to eval using single quote
@@ -1103,6 +1112,18 @@ if ($dry_run) {
 if ($monitor_status_file) {
     monitor_status_loop($monitor_status_file, $monitor_interval_seconds);
     exit 0;
+}
+
+if (@delete_directory_rgxs) {
+    die "Directory cleanup must run separately from --code or --file\n" if defined($code) || defined($file);
+    $ENV{SAS_ODA_AUTOLOAD_MACROS} = 0;
+    $ENV{PERLMCP_SASPY_LOAD_MACROS} = 0;
+    $code = SAS_ODA_Directory_Cleanup::build_code(
+        parent => $delete_dir, patterns => \@delete_directory_rgxs,
+        dry_run => $delete_directory_dry_run,
+    );
+} elsif ($delete_directory_dry_run) {
+    die "--delete-directory-dry-run requires --delete-directory-rgx\n";
 }
 
 if (defined $code && $code eq '-') {
@@ -2882,7 +2903,9 @@ if ($file) {
         print "Submission preflight is disabled by SUBMISSION_PREFLIGHT_ENABLED=0 for inline SAS code.\n";
     }
 
-    if (!$skip_execution_due_to_preflight && sas_submission_contains_include($code)) {
+    # The generated cleanup program owns its explicit remote include and
+    # verification. Keep its runtime errors in the primary SAS log.
+    if (!$skip_execution_due_to_preflight && !@delete_directory_rgxs && sas_submission_contains_include($code)) {
         $saw_explicit_include = 1;
         my $base = basename($output_dir);
         $base =~ s/[^A-Za-z0-9_.-]+/_/g;
