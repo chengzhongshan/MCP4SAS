@@ -33,6 +33,12 @@ includes:
   safety gates and acceptance evidence.
 - `tests/new_validation_tasks_001_100.pl`: independent adversarial batch for
   include parsing, diagnostics, advisories, and scratch ownership safety.
+- `tests/covid19_gwas_validation_tasks_001_500.pl`: 500 source-provenanced
+  parser and dependency tasks derived from the macros and demos in
+  `chengzhongshan/COVID19_GWAS_Analyzer` at the commit recorded in
+  `tests/covid19_gwas_validation_corpus.json`.
+- `tools/build_covid19_validation_corpus.pl`: reproducibly rebuilds that
+  pinned validation manifest from a local COVID19_GWAS_Analyzer checkout.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
