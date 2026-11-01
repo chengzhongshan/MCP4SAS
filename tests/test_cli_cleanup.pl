@@ -27,7 +27,10 @@ my $pid = fork(); die $! unless defined $pid;
 if (!$pid) { exit 0 }
 waitpid($pid, 0);
 die "child removed parent scratch" unless -d $path;
-die "intentional test failure\n" if $ARGV[2];
+if ($ARGV[2]) {
+    $! = 0;
+    die "intentional test failure\n";
+}
 CHILD
 close $fh;
 for my $failure (0, 1) {

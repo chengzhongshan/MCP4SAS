@@ -12,6 +12,8 @@ like($code,qr/do phase=1 to 2/,'exact pass precedes case-insensitive pass');
 like($code,qr/upcase\(trim\(entry\)\)=upcase\(trim\(wanted\)\)/,'case folding covers basename and extension');
 like($code,qr/selected=candidate/,'actual directory entry retained for include');
 like($code,qr/%include "%superq\(_pipeline_targeted_macro_path\)"/,'include uses resolved Linux spelling');
+unlike($code,qr/%if not %sysmacexist\(mIxEd_name\) %then %include/,
+    'explicit targeted loading refreshes a macro already compiled in a persistent session');
 like($code,qr/if matches>1 then do/,'multiple case-folded candidates detected');
 like($code,qr/ERROR: Ambiguous case-insensitive macro filename/,'ambiguity is an explicit error');
 like($code,qr/selected=''; failed=1/,'ambiguous source is never selected');
@@ -25,5 +27,9 @@ my $del=$runner->_build_targeted_remote_macro_loader(['DEL_DIR_RECURSIVE']);
 like($del,qr/wanted='Del_Dir_Recursive\.sas'/,'known source alias remains canonical');
 like($del,qr/array roots\[2\].*\("&_macro_home" "&_home"\)/,'deletion macro retains Macros-first priority');
 like($del,qr/%sysmacexist\(Del_Dir_Recursive\)/,'deletion macro availability check retained');
+my $del_fallback=$runner->_build_targeted_remote_macro_loader(
+    ['DEL_DIR_RECURSIVE'], {only_if_missing => 1});
+like($del_fallback,qr/%if not %sysmacexist\(Del_Dir_Recursive\) %then %include/,
+    'post-bootstrap fallback preserves a macro already loaded by the full import');
 is($runner->_build_targeted_remote_macro_loader([]),'','no lookup for empty dependency list');
 done_testing();
