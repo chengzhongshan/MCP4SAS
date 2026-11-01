@@ -34,19 +34,21 @@ for my $block (@runner_blocks, @server_blocks) {
     ++$block_number;
     my $probe = '%let _pipeline_debug_macro_exists=%sysmacexist(debug_macro);';
     my $guard = '%if &_pipeline_debug_macro_exists %then %do;';
-    my $skip = '%let _pipeline_macro_boot_skipped=1;';
+    my $import = '%importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);';
     my $include = '%include';
 
     my $probe_at = index($block, $probe);
-    my $guard_at = index($block, $guard);
-    my $skip_at = index($block, $skip);
+    my $import_at = index($block, $import);
     my $include_at = index($block, $include);
     die "Block $block_number lacks the debug_macro %sysmacexist probe\n" if $probe_at < 0;
-    die "Block $block_number lacks the debug_macro bootstrap guard\n" if $guard_at < 0;
-    die "Block $block_number lacks the bootstrap-skipped marker\n" if $skip_at < 0;
+    die "Block $block_number still treats debug_macro as proof that all macros were loaded\n"
+        if index($block, $guard) >= 0;
+    die "Block $block_number can still mark the all-macro import as skipped\n"
+        if $block =~ /%let\s+_pipeline_macro_boot_skipped\s*=\s*1\s*;/i;
     die "Block $block_number lacks the fallback macro include\n" if $include_at < 0;
+    die "Block $block_number lacks the all-macro import call\n" if $import_at < 0;
     die "Block $block_number probes debug_macro after macro-library inclusion\n"
-        unless $probe_at < $include_at && $guard_at < $include_at && $skip_at < $include_at;
+        unless $probe_at < $include_at;
     die "Block $block_number does not expose the skip diagnostic\n"
         unless $block =~ /PIPELINE_MACRO_BOOTSTRAP_SKIPPED=/;
     while ($block =~ /%global\s+([^;]+);/g) {
@@ -72,4 +74,17 @@ for my $required (qw(debug_macro_exists bootstrap_skipped)) {
     die "Session-server diagnostics do not expose $required\n" unless $server =~ /\Q$required\E/;
 }
 
-print "SAS ODA debug_macro bootstrap guard: PASS\n";
+die "Embedded server caches a failed macro bootstrap as loaded\n"
+    unless $runner =~ /session_macros_loaded\[session_id\]\s*=\s*bootstrap_ok\s*==\s*'1'/;
+die "Standalone server caches a failed macro bootstrap as loaded\n"
+    unless $server =~ /session_macros_loaded\[session_id\]\s*=\s*bootstrap_ok\s*==\s*'1'/;
+die "One-shot session caches a failed macro bootstrap as loaded\n"
+    unless $runner =~ /session_obj\._macros_loaded\s*=\s*bootstrap_ok\s*==\s*'1'/;
+die "Requested macros are not conditionally restored after the all-macro import\n"
+    unless $runner =~ /%if not %sysmacexist\(\$name\) %then %include/;
+die "Del_Dir_Recursive lacks its supplemental post-bootstrap loader\n"
+    unless $runner =~ /my \@explicit_remote = grep \{lc\(\$_\) eq 'del_dir_recursive'\}/;
+die "Targeted macro verification still runs inside the include wrapper\n"
+    unless $runner =~ /%_pipeline_load_macro_tmp;\s*%macro _pipeline_verify_macro_tmp;/;
+
+print "SAS ODA macro bootstrap sentinel regression: PASS\n";

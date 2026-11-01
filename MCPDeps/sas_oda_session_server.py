@@ -30,29 +30,23 @@ LOAD_MACROS_CODE = '''
 %let _pipeline_opt_source=%sysfunc(getoption(source,keyword));
 %let _pipeline_opt_source2=%sysfunc(getoption(source2,keyword));
 options nomprint nomlogic nosymbolgen nonotes nosource nosource2;
-%if &_pipeline_debug_macro_exists %then %do;
-    %let _pipeline_macro_bootstrap_ok=1;
-    %let _pipeline_macro_boot_skipped=1;
+%if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
+    %include "&_home/importallmacros_ue.sas";
+%end;
+%else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
+    %include "&_macro_home/importallmacros_ue.sas";
 %end;
 %else %do;
-    %if %sysfunc(fileexist("&_home/importallmacros_ue.sas")) %then %do;
-        %include "&_home/importallmacros_ue.sas";
-    %end;
-    %else %if %sysfunc(fileexist("&_macro_home/importallmacros_ue.sas")) %then %do;
-        %include "&_macro_home/importallmacros_ue.sas";
-    %end;
-    %else %do;
-        filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
-        %include M;
-        filename M clear;
-    %end;
-    %if %sysmacexist(importallmacros_ue) %then %do;
-        %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
-        %let _pipeline_macro_bootstrap_ok=1;
-    %end;
+    filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+    %include M;
+    filename M clear;
+%end;
+%if %sysmacexist(importallmacros_ue) %then %do;
+    %importallmacros_ue(MacroDir=&_macro_home,fileRgx=.,verbose=0);
+    %let _pipeline_macro_bootstrap_ok=1;
 %end;
 options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_pipeline_opt_notes &_pipeline_opt_source &_pipeline_opt_source2;
-%put NOTE: PIPELINE_DEBUG_MACRO_EXISTS=&_pipeline_debug_macro_exists;
+%put NOTE: PIPELINE_DEBUG_MACRO_EXISTS=&_pipeline_debug_macro_exists (diagnostic only, SAS ODA may preload DEBUG_MACRO);
 %put NOTE: PIPELINE_MACRO_BOOTSTRAP_SKIPPED=&_pipeline_macro_boot_skipped;
 %put NOTE: PIPELINE_MACRO_BOOTSTRAP_OK=&_pipeline_macro_bootstrap_ok;
 %mend;
@@ -230,7 +224,7 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             "Bootstrap End: ",
             "Elapsed Seconds: ",
             "Bootstrap OK: ",
-            "Debug Macro Exists: ",
+            "Debug Macro Preexisted (diagnostic only): ",
             "Bootstrap Skipped: ",
             "Warning: ",
             "Status: running",
@@ -285,7 +279,7 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             f"Bootstrap End: {bootstrap_finished_at}",
             f"Elapsed Seconds: {bootstrap_elapsed_seconds}",
             f"Bootstrap OK: {bootstrap_ok or '0'}",
-            f"Debug Macro Exists: {debug_macro_exists or '0'}",
+            f"Debug Macro Preexisted (diagnostic only): {debug_macro_exists or '0'}",
             f"Bootstrap Skipped: {bootstrap_skipped or '0'}",
             f"Warning: {1 if warning else 0}",
             "",
@@ -327,7 +321,7 @@ def ensure_macros_loaded(session_id, sess, progress_callback=None):
             'skipped': bootstrap_skipped or '0',
             'warning': bool(warning),
         })
-    session_macros_loaded[session_id] = True
+    session_macros_loaded[session_id] = bootstrap_ok == '1'
     log_event(f"macro_bootstrap done session_id={session_id}")
     return macro_log
 

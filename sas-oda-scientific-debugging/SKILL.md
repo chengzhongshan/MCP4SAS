@@ -1,0 +1,69 @@
+---
+name: sas-oda-scientific-debugging
+description: Debug SAS OnDemand scientific workflows through MCP4SAS using reproducible probes, bootstrap evidence, preserved logs, and minimal live reruns.
+---
+
+# SAS ODA Scientific Debugging
+
+Use this skill when a SAS ODA scientific workflow hangs, cannot resolve a macro,
+returns contradictory bootstrap diagnostics, or produces output that needs both
+software and scientific validation.
+
+## Evidence Order
+
+1. Preserve the generated SAS log, bootstrap-only log, status JSON, and rendered
+   SAS source before changing code.
+2. Reproduce with the smallest named persistent session and a bounded timeout.
+3. Separate connection, macro bootstrap, macro availability, execution, output
+   transfer, and scientific-result checks. Success at one layer proves nothing
+   about the next layer.
+4. Probe the exact required capability, such as
+   `%sysmacexist(Del_Dir_Recursive)`, rather than an unrelated familiar macro.
+5. Rerun the original scientific call after the narrow probe passes.
+
+## Macro Bootstrap Rule
+
+Never use the existence of one macro as proof that a complete macro library was
+loaded. SAS ODA can precompile `DEBUG_MACRO` in `WORK.SASMAC1` while user macros
+in `~/Macros` remain absent. Therefore `_pipeline_debug_macro_exists=1` is a
+diagnostic observation only, not a valid bootstrap sentinel.
+
+For a new SAS ODA session:
+
+- run `importallmacros_ue` against the complete `~/Macros` directory;
+- cache the session as loaded only when that bootstrap reports success;
+- verify the macro requested by the submission after the full import;
+- conditionally include its source from `~` or `~/Macros` only if the requested
+  macro is still missing; and
+- keep that targeted include supplemental. It must not replace the complete
+  library import when the workflow depends on interconnected macros.
+
+Do not report a targeted include as failed from inside the same wrapper macro
+that issued `%include`. Macro compilation can become visible only after that
+wrapper returns. Place the `%sysmacexist` verification after the loader wrapper
+call, or perform it in a later SAS submit.
+
+## Required Regression Checks
+
+Before accepting a bootstrap fix, verify all of the following:
+
+```text
+Bootstrap OK: 1
+Bootstrap Skipped: 0
+Bootstrap Warning: 0
+<REQUESTED_MACRO_CHECK>=1
+```
+
+Also search both the bootstrap and job logs for `ERROR`, `WARNING`, unresolved
+macro invocations, and timeout messages. A generated HTML file or an exit code
+of zero is not sufficient evidence by itself.
+
+Use a nonexistent scratch directory when testing destructive cleanup macros.
+Never point a diagnostic deletion call at real scientific inputs or results.
+
+## Scientific Validation
+
+Once execution is clean, validate the scientific contract independently:
+expected sample and variant counts, genomic bounds, group labels, missing-value
+handling, output tables, and plot contents. Preserve the exact inputs and
+configuration used for the successful rerun so the result is reproducible.
