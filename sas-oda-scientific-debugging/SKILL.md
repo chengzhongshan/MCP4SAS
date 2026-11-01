@@ -97,6 +97,14 @@ its directory has the owned basename, and both timestamp and PID are numeric.
 Require PID to be positive: PID zero has process-group semantics on Unix and
 must never be accepted as an owned-process identity.
 
+Treat remote regex deletion results as typed directory entries. SASPy directory
+listings mark directories with a trailing `/`; never pass those entries to
+SAS `fdelete`, which is file-only. Split matched directories from regular
+files, convert directory basenames to exact anchored patterns, route them
+through the guarded recursive cleanup workflow, and require its matched/deleted
+summary before reporting success. A verification rerun of the same regex must
+return no matches.
+
 Treat `run_sas_codes_or_files_in_ODA.pl` and
 `run_sas_codes_or_script_in_ODA.pl` as synchronized compatibility entry
 points. A one-sided edit passes Perl syntax checks but fails every platform's

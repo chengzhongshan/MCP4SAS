@@ -437,6 +437,12 @@ Delete:
   --session-id demo
 ```
 
+`--delete-file-rgx` matches both regular files and immediate-child
+directories returned by the remote listing. Matching files are bulk-deleted;
+matching directories and all of their contents are deleted recursively through
+the same guarded `Del_Dir_Recursive` workflow described below. Explicit
+`--delete-file` remains a file-only operation.
+
 ### Delete ODA directories by regular expression
 
 Preview matching immediate child directories in SAS ODA home:
