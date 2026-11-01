@@ -3504,8 +3504,10 @@ sub _local_macro_should_overlay_remote {
 }
 
 sub _build_targeted_remote_macro_loader {
-    my ($self, $macro_names_ref) = @_;
+    my ($self, $macro_names_ref, $opts) = @_;
     return '' unless ref($macro_names_ref) eq 'ARRAY' && @$macro_names_ref;
+    $opts = {} unless ref($opts) eq 'HASH';
+    my $only_if_missing = $opts->{only_if_missing} ? 1 : 0;
 
     my @names = _expanded_targeted_remote_macro_names($macro_names_ref);
     return '' unless @names;
@@ -3523,6 +3525,9 @@ SAS
         my $required_check = lc($name) eq 'del_dir_recursive'
           ? "%if not %sysmacexist(Del_Dir_Recursive) %then %put ERROR: Remote Del_Dir_Recursive macro could not be loaded;\n"
           : '';
+        my $include_statement = $only_if_missing
+          ? qq{%if not %sysmacexist($name) %then %include "%superq(_pipeline_targeted_macro_path)";}
+          : qq{%include "%superq(_pipeline_targeted_macro_path)";};
         print STDERR "\nSASPy automatically preparing targeted remote macro loader\n",
                      "checking $primary (primary choice), then $fallback for: $name\n\n";
         $code .= qq{
@@ -3587,7 +3592,7 @@ data _null_;
 run;
 %if &_pipeline_targeted_macro_error %then %return;
 %if %length(%superq(_pipeline_targeted_macro_path)) > 0 %then %do;
-    %if not %sysmacexist($name) %then %include "%superq(_pipeline_targeted_macro_path)";
+    $include_statement
 %end;
 %mend;
 %_pipeline_load_macro_tmp;
@@ -3792,7 +3797,10 @@ sub _process_dependencies {
     } elsif (@unresolved_macro_names) {
         my @explicit_remote = grep {lc($_) eq 'del_dir_recursive'} @unresolved_macro_names;
         if (@explicit_remote) {
-            $header_includes = $self->_build_targeted_remote_macro_loader(\@explicit_remote) . "\n" . $header_includes;
+            $header_includes = $self->_build_targeted_remote_macro_loader(
+                \@explicit_remote,
+                {only_if_missing => 1},
+            ) . "\n" . $header_includes;
             push @logs, 'Injected targeted remote macro loader for: Del_Dir_Recursive';
         }
         my %seen;

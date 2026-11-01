@@ -43,6 +43,14 @@ that issued `%include`. Macro compilation can become visible only after that
 wrapper returns. Place the `%sysmacexist` verification after the loader wrapper
 call, or perform it in a later SAS submit.
 
+Distinguish two targeted-loading policies in persistent sessions:
+
+- after the complete `~/Macros` bootstrap, a supplemental fallback may include
+  a requested source only when the macro is still missing; but
+- when global autoload is disabled and a targeted lookup resolves an explicit
+  source, include that source even if `%sysmacexist` is already true. Otherwise
+  a compiled fallback-folder macro can mask a newer or higher-priority source.
+
 ## Required Regression Checks
 
 Before accepting a bootstrap fix, verify all of the following:
@@ -60,6 +68,16 @@ of zero is not sufficient evidence by itself.
 
 Use a nonexistent scratch directory when testing destructive cleanup macros.
 Never point a diagnostic deletion call at real scientific inputs or results.
+
+Keep test harness failures deterministic. In Perl fixtures that intentionally
+use `die` and assert exit `255`, set `$! = 0` immediately before `die`; stale
+errno from an earlier filesystem call can otherwise become the process exit
+code. Prefer asserting the behavioral contract over incidental runtime state.
+
+For a slow live request, inspect the status phase before calling it a hang.
+`upload_progress`, `submit_active`, and `submit_returned` identify different
+boundaries. Let the configured timeout own termination, then verify descendant
+process cleanup and the final status JSON.
 
 ## Scientific Validation
 

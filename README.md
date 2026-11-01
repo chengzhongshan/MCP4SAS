@@ -29,6 +29,8 @@ includes:
   the SAS ODA `~/Macros` directory.
 - `sas-oda-scientific-debugging/SKILL.md`: reusable evidence ladder and macro
   bootstrap rules for debugging SAS ODA scientific workflows.
+- `docs/VALIDATION_TASKS.md`: ordered offline and live validation tasks with
+  safety gates and acceptance evidence.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
