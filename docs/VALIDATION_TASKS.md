@@ -117,6 +117,10 @@ that all owned fixtures are gone.
 Before committing:
 
 ```bash
+prove tests/test_helper_entrypoint_parity.pl
+cmp -s run_sas_codes_or_files_in_ODA.pl \
+  run_sas_codes_or_script_in_ODA.pl
+bash install/check_mcp4sas_install.sh
 git diff --check
 git diff --cached
 git status -sb
