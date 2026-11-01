@@ -34,6 +34,46 @@ sub _macro_quote_spans {
     return ($span,map {_macro_quote_spans($_)} @{$span->{children}||[]});
 }
 
+# Macro-language PRX calls commonly use an unquoted slash-delimited pattern.
+# A greedy quantifier at the end of that pattern produces `*/`, which is not a
+# block-comment terminator in this lexical context.
+sub _inside_unquoted_prx_literal {
+    my ($text,$offset)=@_;
+    return 0 unless defined $text && defined $offset && $offset>=0;
+    my $prefix=substr($text,0,$offset+1);
+    my ($kind,$argument_start);
+    while ($prefix =~ /\bprx(match|change)\s*\(/ig) {
+        ($kind,$argument_start)=(lc($1),pos($prefix));
+    }
+    return 0 unless defined $argument_start;
+
+    my $pos=$argument_start;
+    $pos++ while $pos<length($text) && substr($text,$pos,1)=~/\s/;
+    my $first=substr($text,$pos,1);
+    return 0 if $first eq q{'} || $first eq q{"};
+    if ($kind eq 'change') {
+        return 0 unless lc($first) eq 's';
+        $pos++;
+    } elsif (lc($first) eq 'm') {
+        $pos++;
+    }
+    my $delimiter=substr($text,$pos,1);
+    return 0 unless length($delimiter) && $delimiter!~/[A-Za-z0-9_\s]/;
+    $pos++;
+    my $closures_needed=$kind eq 'change' ? 2 : 1;
+    my $closures=0;
+    my $escaped=0;
+    for (;$pos<length($text);$pos++) {
+        my $char=substr($text,$pos,1);
+        if ($escaped) {$escaped=0; next;}
+        if ($char eq '\\') {$escaped=1; next;}
+        next unless $char eq $delimiter;
+        $closures++;
+        return $offset<=$pos ? 1 : 0 if $closures==$closures_needed;
+    }
+    return 0;
+}
+
 # Mask raw inline records, preserving character offsets and newlines for
 # preflight context. Locate declarations lexically, outside strings/comments.
 sub analyze_inline_data {
@@ -166,6 +206,9 @@ sub analyze_source {
             $line++ if $ch eq "\n"; $i++; next;
         }
         if ($pair eq '/*') { $start_line=$line; $block=1; $blank->($i,2,1); $i+=2; next; }
+        if ($pair eq '*/' && _inside_unquoted_prx_literal($scan,$i+1)) {
+            $i+=2; $statement_start=0; next;
+        }
         if ($pair eq '*/') {
             push @findings,{type=>'unexpected_comment_close',line=>$line,
                 message=>"Unexpected closing block comment '*/'",context_ref=>[($line-2)..($line+2)]};

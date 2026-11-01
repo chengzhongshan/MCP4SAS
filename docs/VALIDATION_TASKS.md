@@ -60,6 +60,24 @@ advisories, `T051`-`T075` cover SAS-log classification, and `T076`-`T100`
 cover temporary-directory ownership and removal safety. These cases are
 distinct from the earlier offline assertions.
 
+Run the independently numbered COVID19_GWAS_Analyzer corpus batch:
+
+```bash
+prove -v tests/covid19_gwas_validation_tasks_001_500.pl
+```
+
+`C001`-`C200` validate real macro declarations, `C201`-`C400` validate their
+invocation dependency tokens, `C401`-`C486` cover real `%include` sites,
+`C487`-`C493` protect unquoted PRX boundaries containing `*/`, and
+`C494`-`C500` analyze all seven top-level demo programs. The manifest records
+the upstream repository commit and source path for every task. Rebuild it only
+when intentionally advancing that source revision:
+
+```bash
+perl tools/build_covid19_validation_corpus.pl \
+  /path/to/COVID19_GWAS_Analyzer
+```
+
 ## 3. Minimal ODA Gate
 
 Use a bounded login probe before expensive live tests:

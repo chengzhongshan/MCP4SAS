@@ -85,6 +85,13 @@ macro references can resolve inside double quotes. Do not upload or wrap that
 path. Continue to recurse into single-quoted code only when it is an argument
 to an execution API such as `DOSUBL` or `CALL EXECUTE`.
 
+Classify unquoted PRX literals before diagnosing block-comment boundaries.
+Macro-language calls such as `prxmatch(/\s*&linker\s*/,&value)` legitimately
+contain `*/` where a greedy quantifier meets the closing regex delimiter. That
+pair is not an unexpected comment close. Preserve warnings for a real stray
+`*/` and for malformed nested constructs such as `/* /* text */ */`; use
+source-provenanced PRX cases to keep those behaviors separate.
+
 An ownership marker authorizes deletion only when its canonical root matches,
 its directory has the owned basename, and both timestamp and PID are numeric.
 Require PID to be positive: PID zero has process-group semantics on Unix and
