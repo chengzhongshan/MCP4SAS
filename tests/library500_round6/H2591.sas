@@ -1,0 +1,11 @@
+/* H2591 hash_explicit_key_argument, N=2; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/demo4hash_find_next_with_do_while_loop.sas:25 */
+
+data h2591a; do k=1 to 2; value=2*k; output; end; run;
+data h2591o; if 0 then set h2591a; declare hash h(dataset:'h2591a'); h.definekey('k'); h.definedata('value'); h.definedone();
+actual=0; do j=1 to 2; rc=h.find(key:j); if rc=0 then actual=actual+value; end; output; stop; run;
+
+data _null_; if 0 then set h2591o nobs=rows;
+if rows ne 1 then put 'ERROR: ROUND6_ROWS=H2591 rows=' rows;
+else do; set h2591o; if not missing(actual) and abs(actual-(6))<=1e-9*max(1,abs(6)) then put 'ROUND6_PASS=H2591';
+else put 'ERROR: ROUND6_FAIL=H2591 actual=' actual; end; stop; run;
+proc datasets library=work nolist; delete h2591:; quit;

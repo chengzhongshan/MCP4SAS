@@ -80,6 +80,133 @@ perl tools/build_covid19_validation_corpus.pl \
 
 ## 3. Minimal ODA Gate
 
+An additional library-derived executable batch is available independently of
+the source-analysis corpus:
+
+```bash
+prove tests/test_library500_evaluations.pl tests/test_include_source_order.pl
+perl tests/run_live_library500.pl --live
+```
+
+This adds 500 runnable SAS cases across 50 behavior families with ten inputs
+each. See `tests/library500/README.md` and section 17 of
+`RealExamples4ImprovingMCP4SAS.md` for provenance, oracles, failure history and
+the verified live results. The live command needs configured ODA credentials.
+
+A second, different batch covers dataset operations, SQL, input/output and
+macro execution:
+
+```bash
+prove tests/test_library500_round2.pl tests/test_resolve_macro_dependencies.pl \
+  tests/test_evaluation_log.pl
+perl tests/run_live_library500.pl --live --round 2
+perl tests/test_live_resolve_macro_loading.pl --live
+```
+
+Its 500 scripts are `tests/library500_round2/R501.sas` through `R1000.sas`.
+See the README in that directory and section 18 of the real-example report.
+
+A third batch covers metadata, formats/catalogs, views, dates, macro quoting
+and file handles:
+
+```bash
+prove tests/test_library500_round3.pl tests/test_unquote_macro_dependencies.pl
+perl tests/run_live_library500.pl --live --round 3
+prove -v tests/test_live_resolve_macro_loading.pl :: --live --mode unquote
+```
+
+Its 500 scripts are `tests/library500_round3/T1001.sas` through `T1500.sas`.
+See that directory's README and section 19 of the real-example report.
+
+The fourth round adds 450 numerical/statistical calculations and 50 intentional
+SAS failures, each requiring its specific error and a failed terminal status:
+
+```bash
+prove tests/test_library500_round4.pl tests/test_expected_failure_evaluation.pl
+perl tests/run_live_library500.pl --live --round 4
+prove -v tests/test_live_sas_error_recovery.pl :: --live
+```
+
+Its scripts are `tests/library500_round4/F1501.sas` through `F2000.sas`.
+Negative cases run individually; a verified expected failure remains a failed
+SAS job. See section 20 of the real-example report for the distinction and results.
+
+The fifth round adds dataset-handle, in-place update, structured-input and
+macro-processing coverage, including abbreviated include discovery:
+
+```bash
+prove tests/test_library500_round5.pl tests/test_include_abbreviation.pl
+perl tests/run_live_library500.pl --live --round 5
+prove -v tests/test_live_include_abbreviation.pl :: --live
+prove -v tests/test_live_builtin_macro_bootstrap.pl :: --live
+```
+
+Its 500 scripts are `tests/library500_round5/G2001.sas` through `G2500.sas`.
+See section 21 of the real-example report for the %INC fix and final evidence.
+
+The sixth round adds hash objects, PRX captures, calendar intervals, CSV/file
+lifecycle and double-quoted deferred includes:
+
+```bash
+prove tests/test_library500_round6.pl tests/test_double_quoted_deferred_includes.pl \
+  tests/test_corpus_prevalidation.pl tests/test_expected_failure_evaluation.pl
+perl tests/run_live_library500.pl --live --round 6
+prove -v tests/test_live_include_abbreviation.pl :: --live --style dosubl
+prove -v tests/test_live_include_abbreviation.pl :: --live --style execute
+```
+
+See `tests/library500_round6/README.md` and section 22 of the real-example report.
+Intentional errors require ordinary SAS exit 1; infrastructure/termination or
+timeout exits never substitute for the expected program diagnostic. A collector
+can combine verified rerun evidence while retaining failed attempts and counting
+each case only once.
+
+The seventh round uses the requested SAS book TXT samples, with provenance from
+eight actual book titles and 50 new families (450 positives and 50 intentional
+errors). It also validates actual source hashes before submission and rejects
+duplicate selected IDs. Novelty checks ignore generated case and round labels.
+
+```bash
+perl tools/build_library500_round7.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove tests/test_library500_round7.pl tests/test_evaluation_corpus_integrity.pl
+perl tests/run_live_library500.pl --live --round 7
+```
+
+See `tests/library500_round7/README.md` and section 23 of the real-example report
+for fixtures, corrections, commands and verified evidence.
+
+The eighth round adds PRINCOMP/ANOVA/TABULATE, normal-score ranks, array/PDV
+boundaries, SQL multisets and formatted class coverage from ten book samples.
+It binds evidence to the numerical oracle, tolerance and error matcher as well
+as the executable source; changed evaluation contracts require a fresh run.
+
+```bash
+perl tools/build_library500_round8.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove tests/test_library500_round8.pl tests/test_evaluation_contract.pl \
+  tests/test_evaluation_collection.pl tests/test_evaluation_corpus_integrity.pl
+perl tests/run_live_library500.pl --live --round 8
+```
+
+See `tests/library500_round8/README.md` and section 24 of the real-example report.
+
+The ninth round is a focused **50-example** suite for open-code macro problems:
+
+```bash
+perl tools/build_macro_open_code50.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove tests/test_macro_open_code50.pl tests/test_open_code_macro_diagnostics.pl
+perl tests/run_live_macro_open_code50.pl --live --raw
+perl tests/test_live_open_code_preflight.pl --live
+```
+
+The diagnostic runner explicitly bypasses static preflight and isolates every
+case in a fresh connection. Ordinary helpers retain preflight. It verifies SAS
+errors, successful warning cases, and the existing strict unresolved-invocation
+policy separately. See `tests/macro_open_code50/README.md` and section 25 of the
+real-example report for the full audit and bounded reproductions.
+
 Use a bounded login probe before expensive live tests:
 
 ```bash

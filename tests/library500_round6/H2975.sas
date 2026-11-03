@@ -1,0 +1,6 @@
+/* H2975 failure_corr_character_variable, N=6; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/Fisher's Z transformation and combine correlation form different dataset.sas:21 */
+
+data h2975a; length text $12; do x=1 to 6; text='6'; output; end; run;
+proc corr data=h2975a; var text x; run;
+
+proc datasets library=work nolist; delete h2975:; quit;

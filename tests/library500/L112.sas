@@ -1,0 +1,6 @@
+/* L112: min boundary 1; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/Get_minimum_or_max_value_for_any_of_specific_columns_with_having.sas:5 */
+data _null_;
+actual=min(.,1,-2);
+if not missing(actual) and abs(actual-(-2)) <= 1e-11*max(1,abs(-2)) then put 'LIB500_PASS=L112';
+else put 'ERROR: LIB500_FAIL=L112 actual=' actual;
+run;
