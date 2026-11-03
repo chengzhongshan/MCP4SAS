@@ -259,6 +259,7 @@ install_saspy_iom_encryption_jars() {
 
 install_perl_deps() {
   local use_bootstrap_cpanm=0
+  local -a download_options=()
   local cpan_mirror="${MCP4SAS_CPAN_MIRROR:-https://cpan.metacpan.org/}"
   log "Installing Perl dependencies under ${MCP4SAS_LOCAL_PERL}"
   mkdir -p "${MCP4SAS_ROOT}/local"
@@ -267,6 +268,9 @@ install_perl_deps() {
     # Cygwin. Their cpanm executable and modules are ABI-incompatible with
     # Cygwin Perl, so always bootstrap a Cygwin-native copy here.
     use_bootstrap_cpanm=1
+    # Bootstrap curl already works here. Avoid cpanm's earlier-choice wget/LWP
+    # backends, which failed to create the package index on the fresh CI image.
+    download_options=(--no-lwp --no-wget --curl --verbose)
   elif ! command_exists cpanm; then
     use_bootstrap_cpanm=1
   fi
@@ -279,7 +283,7 @@ install_perl_deps() {
   fi
   # Use the mirror's index directly. cpanm's default MetaDB lookup and HTTP
   # fallback can fail on fresh Windows runners before any module is installed.
-  "$CPANM" --from "$cpan_mirror" --notest --local-lib-contained "${MCP4SAS_LOCAL_PERL}" --installdeps "${MCP4SAS_ROOT}"
+  "$CPANM" --from "$cpan_mirror" --notest --local-lib-contained "${MCP4SAS_LOCAL_PERL}" --installdeps "${MCP4SAS_ROOT}" "${download_options[@]}"
 }
 
 finish_install() {
