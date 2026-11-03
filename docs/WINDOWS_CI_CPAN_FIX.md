@@ -24,6 +24,11 @@ than its earlier-choice downloaders. Curl successfully downloads the bootstrap
 on the same image. Verbose output records the selected backend and download
 errors; the precise earlier backend/network failure remains unproven.
 
+The [curl-backed rerun](https://github.com/chengzhongshan/MCP4SAS/actions/runs/41606096519)
+passed Windows, Ubuntu and Conda. It exposed a macOS Bash 3 nounset error when
+expanding the empty platform-specific options array. The installer now constructs
+one nonempty argument array and appends curl options only on Cygwin.
+
 `tests/test_installer_perl_deps.sh` verifies 30 assertions without network access:
 Cygwin bootstrap, existing-cpanm reuse, the explicit default/custom mirror,
 paths containing spaces and dependency-install failure propagation. All
