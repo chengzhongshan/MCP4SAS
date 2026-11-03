@@ -1,0 +1,11 @@
+/* B3434 sql_order_calculated, N=5; source: Getting Started with the SQL Procedure, Version 6, First Edition.txt:808 */
+
+data b3434a; do x=1 to 5; output; end; run;
+proc sql; create table b3434b as select x,x*x as square from b3434a order by calculated square desc; quit;
+data b3434o; set b3434b; if _n_=1; actual=x; run;
+
+data _null_; if 0 then set b3434o nobs=rows;
+if rows ne 1 then put 'ERROR: ROUND7_ROWS=B3434 rows=' rows;
+else do; set b3434o; if not missing(actual) and abs(actual-(5))<=1e-9*max(1,abs(5)) then put 'ROUND7_PASS=B3434';
+else put 'ERROR: ROUND7_FAIL=B3434 actual=' actual; end; stop; run;
+proc datasets library=work nolist; delete b3434:; quit;

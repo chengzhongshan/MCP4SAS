@@ -2,6 +2,14 @@ package SAS_Source_Analysis;
 use strict;
 use warnings;
 
+# Reserved macro functions/statements share one classifier across the CLI and
+# dependency runner. They never require a user macro source upload/bootstrap.
+sub is_builtin_macro_name {
+    my ($name)=@_;
+    return 1 unless defined($name) && length($name);
+    return $name=~/^(?:let|put|do|to|by|while|until|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|syscall|sysget|symexist|symdel|symglobl|symlocal|sysmacexist|sysmacdelete|scan|qscan|substr|qsubstr|upcase|qupcase|lowcase|qlowcase|length|index|eval|sysevalf|quote|nrquote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include|inc)$/i ? 1:0;
+}
+
 # Macro quoting is a separate lexical context: apostrophes may be unmatched,
 # and %(/%)/%' encode literal delimiters rather than SAS source syntax.
 sub _macro_quote_span {
@@ -161,7 +169,7 @@ sub analyze_source {
           message=>"Inline data declaration $_->{keyword} is missing its terminating line",
           context_ref=>[($_->{line}-1)..$last_line]}
     } @{$inline->{unclosed}};
-    my (@macro_quotes,@single_quotes);
+    my (@macro_quotes,@single_quotes,@double_quotes);
     my $quote_start=0;
     my ($i,$line,$quote,$block,$comment,$statement_start,$start_line)=(0,1,'',0,0,1,0);
     my $comment_start_state=1;
@@ -201,6 +209,7 @@ sub analyze_source {
             $blank->($i,1,0);
             if ($ch eq $quote) {
                 push @single_quotes,{start=>$quote_start,end=>$i+1} if $quote eq "'";
+                push @double_quotes,{start=>$quote_start,end=>$i+1} if $quote eq '"';
                 $quote='';
             }
             $line++ if $ch eq "\n"; $i++; next;
@@ -243,10 +252,59 @@ sub analyze_source {
             message=>"Unclosed $description starting on line $start_line",
             context_ref=>[($start_line-2)..$last_line]};
     }
-    return {masked=>$masked,comments_masked=>$comments_masked,findings=>\@findings,macro_quotes=>\@macro_quotes,single_quotes=>\@single_quotes};
+    return {masked=>$masked,comments_masked=>$comments_masked,findings=>\@findings,macro_quotes=>\@macro_quotes,single_quotes=>\@single_quotes,double_quotes=>\@double_quotes};
 }
 
 sub mask_noncode { return analyze_source($_[0])->{masked}; }
+sub open_code_macro_issues {
+    my ($text)=@_; $text //= '';
+    my $masked=mask_noncode($text);
+    my @lines=split /\n/,$masked,-1;
+    my (@findings,@groups); my ($macro_depth,$pending_if)=(0,0);
+    my $add=sub {my ($type,$line,$message)=@_; push @findings,{type=>$type,line=>$line,message=>$message,context_ref=>[($line-2)..($line+2)]};};
+    while ($masked=~/%(macro|mend|local|goto|return|do|end|if|then|else|let|global)\b/ig) {
+        my ($word,$start,$end)=(lc($1),$-[0],$+[0]);
+        next if substr($masked,$end)=~/^\s*:/; # Macro labels, not statements.
+        my $prefix=substr($masked,0,$start); my $line=1+($prefix=~tr/\n//);
+        if ($word eq 'macro') {++$macro_depth; next;}
+        if ($word eq 'mend') {
+            if ($macro_depth) {--$macro_depth;}
+            else {$add->('open_code_mend',$line,'Macro end statement %mend appears outside a %macro/%mend block');}
+            next;
+        }
+        next if $macro_depth;
+        if ($word=~/^(?:local|goto|return)$/) {
+            $add->('open_code_macro_control',$line,"Macro control statement %$word appears in open SAS code; place it inside a %macro/%mend definition");
+        } elsif ($word eq 'if') {
+            $add->('nested_open_code_if',$line,'Nested %IF in open code is unsupported; put nested conditional logic inside a macro definition') if @groups;
+            my $tail=substr($masked,$end);
+            $add->('open_code_if_action',$line,'Open-code %IF requires %THEN %DO; ... %END; (SAS 9.4M5 or later), or a macro wrapper')
+                unless $tail=~/\A[^;]*?%then\s+%do\s*;/i;
+            $pending_if=1;
+        } elsif ($word eq 'then') {
+            $add->('open_code_then',$line,'Orphan %THEN in open code has no preceding %IF') unless $pending_if;
+            $pending_if=0;
+        } elsif ($word eq 'else') {
+            $add->('open_code_else',$line,'Orphan %ELSE in open code requires a preceding conditional %DO/%END group') unless $prefix=~/%end\s*;\s*\z/i;
+        } elsif ($word eq 'do') {
+            my $tail=substr($masked,$end);
+            my $conditional=$prefix=~/%(?:then|else)\s*\z/i && $tail=~/^\s*;/;
+            $add->('open_code_do',$line,'Indexed, %WHILE, %UNTIL and standalone %DO loops require a macro definition; open code permits conditional %THEN/%ELSE %DO groups') unless $conditional;
+            push @groups,$line;
+        } elsif ($word eq 'end') {
+            if (@groups) {pop @groups;}
+            else {$add->('open_code_end',$line,'Orphan %END in open code has no matching %DO group');}
+        } elsif ($word eq 'let' || $word eq 'global') {
+            my $tail=substr($masked,$end); $tail=~s/;.*\z//s;
+            if ($tail=~/%(?:put|let|global|local|if|do|macro)\b/i) {
+                $add->('macro_statement_recursion',$line,"Possible missing semicolon after %$word before another macro statement; this can cause open-code statement recursion");
+            }
+        }
+    }
+    if ($macro_depth) {$add->('unclosed_macro_definition',scalar(@lines)||1,'A %macro block appears to be missing its matching %mend');}
+    for my $line (@groups) {$add->('unclosed_open_code_do',$line,'Open-code %DO group is missing a matching %END; finish the conditional before submission');}
+    return \@findings;
+}
 sub mask_comments { return analyze_source($_[0])->{comments_masked}; }
 sub mask_macro_literals {
     my ($text)=@_;
@@ -257,6 +315,14 @@ sub mask_macro_literals {
         # NRSTR masks percent/ampersand at compilation. Other quote functions
         # may evaluate nested calls first, so their real dependencies remain.
         next unless $span->{name} eq 'nrstr';
+        # An immediately enclosing UNQUOTE releases this NRSTR expression for
+        # rescanning. Do not release a second, nested NRSTR: after rescanning
+        # it still supplies its own independent protection.
+        my $nested=grep {$_->{name} eq 'nrstr' && $_->{start}<$span->{start} && $_->{end}>=$span->{end}}
+            @{$analysis->{macro_quotes}};
+        my $prefix=substr($analysis->{masked},0,$span->{start});
+        my $quoted_prefix=substr($analysis->{comments_masked},0,$span->{start});
+        next if !$nested && ($prefix=~/%unquote\s*\(\s*$/i || $quoted_prefix=~/%unquote\s*\(\s*$/i);
         my $length=$span->{end}-$span->{body}-($span->{closed}?1:0);
         my $body=substr($masked,$span->{body},$length);
         $body =~ s/[^\r\n]/ /g;
@@ -265,10 +331,14 @@ sub mask_macro_literals {
     return $masked;
 }
 sub _literal_is_executable {
-    my ($analysis,$span)=@_;
+    my ($analysis,$span,$include_macro_evaluation)=@_;
     my $prefix=substr($analysis->{masked},0,$span->{start});
+    # RESOLVE evaluates macro expressions, but does not submit arbitrary SAS
+    # statements. Only dependency discovery opts into that narrower context;
+    # include_targets must continue to recognize full code execution only.
+    my $calls=$include_macro_evaluation ? qr/call\s+execute|dosubl|resolve/i : qr/call\s+execute|dosubl/i;
     my @stack;
-    while ($prefix =~ /\b(call\s+execute|dosubl)\s*\(|([()])/ig) {
+    while ($prefix =~ /\b($calls)\s*\(|([()])/ig) {
         if (defined $1) {push @stack,1;}
         elsif ($2 eq '(') {push @stack,0;}
         else {pop @stack;}
@@ -281,8 +351,9 @@ sub macro_dependency_view {
     my $analysis=analyze_source($text);
     my $masked=mask_macro_literals($text);
     for my $span (@{$analysis->{single_quotes}}) {
-        # Literal code passed to these execution APIs is a real dependency.
-        if (_literal_is_executable($analysis,$span)) {
+        # Code execution APIs and RESOLVE can evaluate macro calls in otherwise
+        # single-quoted strings. Ordinary quoted DATA text stays inert.
+        if (_literal_is_executable($analysis,$span,1)) {
             my $body=substr($text,$span->{start}+1,$span->{end}-$span->{start}-2);
             my ($decoded,@positions)=('');
             for (my $pos=0;$pos<length($body);) {
@@ -313,23 +384,25 @@ sub include_targets {
     my $analysis=analyze_source($text);
     # A direct %INCLUDE inside a quoted string is data, even though ordinary
     # macro references may resolve in double quotes. Deferred executable
-    # single-quoted code is handled recursively below.
+    # quoted code in execution APIs is handled recursively below.
     my $active=$analysis->{masked};
     my $paths=mask_comments($text);
-    my @targets;
+    my @located;
+    my $sequence=0;
     my @deferred;
-    for my $span (@{$analysis->{single_quotes}}) {
+    for my $span (@{$analysis->{single_quotes}},@{$analysis->{double_quotes}}) {
         next unless _literal_is_executable($analysis,$span);
         push @deferred,$span;
         my $body=substr($text,$span->{start}+1,$span->{end}-$span->{start}-2);
-        $body =~ s/''/'/g;
-        push @targets,@{include_targets($body)};
+        my $quote=substr($text,$span->{start},1);
+        $body =~ s/\Q$quote$quote\E/$quote/g;
+        push @located,map {[$span->{start},$sequence++,$_]} @{include_targets($body)};
     }
-    while ($active =~ /%include\b/ig) {
+    while ($active =~ /%inc(?:lude)?\b/ig) {
         my $offset=$-[0];
         next if grep {$offset>=$_->{start} && $offset<$_->{end}} @deferred;
         my $tail=substr($paths,$offset);
-        next unless $tail =~ /^%include\s+/i;
+        next unless $tail =~ /^%inc(?:lude)?\s+/i;
         my $pos=$+[0];
         # A statement can name several quoted files. Stop at an option,
         # statement boundary or nonliteral operand, never a later statement.
@@ -349,10 +422,12 @@ sub include_targets {
                 $value.=$char;
             }
             last unless $closed;
-            push @targets,$value if length $value;
+            push @located,[$offset,$sequence++,$value] if length $value;
         }
     }
-    return \@targets;
+    # Recursive executable strings and direct statements share source order.
+    # Preserve duplicates and the operand order of multi-file statements.
+    return [map {$_->[2]} sort {$a->[0]<=>$b->[0] || $a->[1]<=>$b->[1]} @located];
 }
 sub format_name_issues {
     my ($text)=@_;

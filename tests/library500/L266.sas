@@ -1,0 +1,7 @@
+/* L266: substr boundary 5; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/Adding nowd in Proc Report to avoid of useless interactive table.sas:6 */
+data _null_;
+length actual $256;
+actual=substr('abcdefghij',6,1);
+if actual='f' and lengthn(actual)=1 then put 'LIB500_PASS=L266';
+else put 'ERROR: LIB500_FAIL=L266 actual=' actual;
+run;

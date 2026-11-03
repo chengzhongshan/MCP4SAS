@@ -1,0 +1,6 @@
+/* L078: sqrt boundary 7; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/3d scatter plot adding data labels with anno.sas:11 */
+data _null_;
+actual=sqrt(49);
+if not missing(actual) and abs(actual-(7)) <= 1e-11*max(1,abs(7)) then put 'LIB500_PASS=L078';
+else put 'ERROR: LIB500_FAIL=L078 actual=' actual;
+run;

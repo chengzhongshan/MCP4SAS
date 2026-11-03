@@ -1,0 +1,1092 @@
+{
+   "cases" : [
+      {
+         "body_sha256" : "4bdb8fba482e4e0c8462895c9efbea1746c67a01a82b30228f1d7e6cedf8410e",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 11,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "open_if_then_group",
+         "file" : "M4001.sas",
+         "id" : "M4001",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "59f27267f52b0d2c5af5aaad61185523e3667954a78cbd7ae731d37fa9a67f0f",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 12,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "open_if_false_else_group",
+         "file" : "M4002.sas",
+         "id" : "M4002",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "467c088355e7fca647ce7f7aba7ef421ed9b8d22a759c52324037d66dc99fbab",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 5,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "sequential_open_if_groups",
+         "file" : "M4003.sas",
+         "id" : "M4003",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "5895f075c9b52491ee5c2fb11f29acad5731ba05ee3c19034b618eaf4f555bbc",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8affeed144f02631a89b24a268205380d49f0b8ca061cf1c0f79287e834a64e3",
+            "line" : 441,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 10,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "wrapped_indexed_loop",
+         "file" : "M4004.sas",
+         "id" : "M4004",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "e4ebec52a9603427aa2b2ccb6480932bb3f08f9dd24fec4a90b159621de7897d",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "40f190c1c93dd25e2ae5fa280b17f797b832dad98b7afe40df7f54bebff8f0c9",
+            "line" : 503,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 5,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "wrapped_while_loop",
+         "file" : "M4005.sas",
+         "id" : "M4005",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "6c50145ec21b7f10dabd180c70b8a8824f5f38f8bc7eb01dcb81da70e56035a5",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "543ec34335597049c02091974be1b16da83faabe86b513709d26f5fa5ce6d569",
+            "line" : 480,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 3,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "wrapped_until_loop",
+         "file" : "M4006.sas",
+         "id" : "M4006",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "5faf76fd9c7f50b11f97ec951b72f2cb35f769a1c4a4185bb93c8299770ea6ea",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "d298a4c3799f315ca448b388a32d18d8064f47cfae8aee7f028b03a72dc243a8",
+            "line" : 584,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 17,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "local_shadows_global",
+         "file" : "M4007.sas",
+         "id" : "M4007",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "cf5cb6ba97f8320a36f44f0072b0090ce336e74ede0c941e9c2b503b56d21748",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "derived_extension" : true,
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 18,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "wrapped_return",
+         "file" : "M4008.sas",
+         "id" : "M4008",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "edf292f561bbf6098b0eaadc6d368d4ef33af983b0450367c487be51dff18b51",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "18cf7834b88c61ad69efb5f09ad7db1dbabb484a38d95033d4b08b62780372bb",
+            "line" : 3038,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 19,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "wrapped_goto",
+         "file" : "M4009.sas",
+         "id" : "M4009",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "063bf9023cbdcea0be1ac4873ba3bf3b616c047ae29b5c38b2694cdb53c7c54b",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 0,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "uninvoked_macro_local_is_inert",
+         "file" : "M4010.sas",
+         "id" : "M4010",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "6745827310b6109891512909602cb59bcbd48361ebc655240b806760a52c36cd",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 21,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "nested_if_inside_macro",
+         "file" : "M4011.sas",
+         "id" : "M4011",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "221c65c60932ca2cf2ac19717f245850cea4e10e35f5a083e99044aa6dcb989f",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "382e851aa2a8a81a222a9d07dd339a5cdb0daa496b3250f9e18f568aa2b15266",
+            "line" : 1357,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 6,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "str_protects_semicolon",
+         "file" : "M4012.sas",
+         "id" : "M4012",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "15ebee89cda1223138c2f5d697f506ca7223e1f98232e647698f85a4f435d033",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "d4454efbe5fb5e1b8647bb337d1fc96634d4cb274f886a0bb15d20d2d72b892b",
+            "line" : 1419,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 1,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "nrstr_protects_open_controls",
+         "file" : "M4013.sas",
+         "id" : "M4013",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "04e780a6e6b18d71923c67a7c2aeaf9c7ef5f68f643452ce8351e72de2537777",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 16,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "single_quoted_controls_are_data",
+         "file" : "M4014.sas",
+         "id" : "M4014",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "51cfb50c0018f0cbfac7af31b1abd15d078cbe3853cf09d767ec34520e62cd78",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 25,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "block_comment_controls",
+         "file" : "M4015.sas",
+         "id" : "M4015",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "a7e6ae4648715db07f0d760a53524d5e68357b5a95fbce8543cf84dce26db4b6",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 26,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "macro_comment_controls",
+         "file" : "M4016.sas",
+         "id" : "M4016",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "a70ccfa42f5e425077e9bb68a7364477eead326bef57c13d26e0b3df862267fc",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 16,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "inline_records_are_not_macro_code",
+         "file" : "M4017.sas",
+         "id" : "M4017",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "119f0f8230ebf98ab7c0ec0014750e45c04392a293f171fd2916be880acd52f5",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "d4454efbe5fb5e1b8647bb337d1fc96634d4cb274f886a0bb15d20d2d72b892b",
+            "line" : 1419,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 1,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "quoted_nrstr_controls",
+         "file" : "M4018.sas",
+         "id" : "M4018",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "6490f5bda2e0f47a7fbb2f28413603834c7eabc18f80348a77a07517ff424797",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "3845afdf4978dce0ba1934652d654869ae8ef615c21a1ece1df09e3cd6960851",
+            "line" : 1530,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 1,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "macro_option_restoration",
+         "file" : "M4019.sas",
+         "id" : "M4019",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "05e626ba64f4bce0e8a5f40c7855206c4918f04662847e2a36736206d989d1ac",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "875ce7a1d0a2c3ded4df4ca4039f3d2e67915f02b3d5e829dad576caa5431944",
+            "line" : 481,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 20,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "integer_eval_open_code",
+         "file" : "M4020.sas",
+         "id" : "M4020",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "77e7a9dee3d8a53bac22c0bceb6f9abb3ebbfab3095e5ab2447bdf0f1cd9be45",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "cc3661898575a4505274d2542e5221c2e5c5817f933839b4f6c1abeb0800c3d9",
+            "line" : 1495,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 3.75,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "decimal_sysevalf_open_code",
+         "file" : "M4021.sas",
+         "id" : "M4021",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "4793fd5f883eca76d0c239c745b63d59c2f48d366bea94da0837380e39a8169b",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "SAS Macro Programming Made Easy, Second Edition",
+            "evidence_sha256" : "ddafdaa0c9355b7c924c1aaa456a969f0a924bbc06075b1e25b4dec2e5df0374",
+            "line" : 1686,
+            "path" : "SAS Macro Programming Made Easy, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "43e4cd86e17d92311dbb7084fb7c4486012eabbe6b5ad7818864fabfc0398a21"
+         },
+         "expected" : 1,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "superq_protects_mnemonic",
+         "file" : "M4022.sas",
+         "id" : "M4022",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "554c4e29228187c352d9d3ce2a6066ab8330970e2a5f94def6ed1d4af20d71e3",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "905012968d6d2827b721b8c838dbc15e75676f29095bfd4daba28c71df66cd7e",
+            "line" : 104,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 1,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "macro_name_delimiter",
+         "file" : "M4023.sas",
+         "id" : "M4023",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "ed90ecf52d8de89aad5ea6a92c5d2c5ad6587bad88be07a715b69ca8f3dc6a1a",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "905012968d6d2827b721b8c838dbc15e75676f29095bfd4daba28c71df66cd7e",
+            "line" : 104,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 34,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "indirect_macro_variable",
+         "file" : "M4024.sas",
+         "id" : "M4024",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "374f8ee7c79aac8b29c522f38a4102ee43e196847d6c9f8b41236d6bd6cdd8b0",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "905012968d6d2827b721b8c838dbc15e75676f29095bfd4daba28c71df66cd7e",
+            "line" : 104,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 35,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "symputx_after_run_boundary",
+         "file" : "M4025.sas",
+         "id" : "M4025",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "90176c2966692b2092bc7e284d7ee022957964938beb493f8cc52ad6655e3ff1",
+         "diagnostic" : "LOCAL.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "d298a4c3799f315ca448b388a32d18d8064f47cfae8aee7f028b03a72dc243a8",
+            "line" : 584,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_macro_control"
+         ],
+         "family" : "invalid_open_local",
+         "file" : "M4026.sas",
+         "id" : "M4026",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "b54ebef8465b687dac76183c53e62778d00747eefa1bfeb6807208c71ce47531",
+         "diagnostic" : "DO.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8affeed144f02631a89b24a268205380d49f0b8ca061cf1c0f79287e834a64e3",
+            "line" : 441,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_do"
+         ],
+         "family" : "invalid_open_indexed_do",
+         "file" : "M4027.sas",
+         "id" : "M4027",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "35e36b479af76c316c8796621efbddcd96c7eb866f77682cc7e4dbda0a76a11d",
+         "diagnostic" : "DO.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "40f190c1c93dd25e2ae5fa280b17f797b832dad98b7afe40df7f54bebff8f0c9",
+            "line" : 503,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_do"
+         ],
+         "family" : "invalid_open_while_do",
+         "file" : "M4028.sas",
+         "id" : "M4028",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "1247407e0b464a80b22dac9f38dbbc88bb484d9f3e659780418ae99acec533bd",
+         "diagnostic" : "DO.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "543ec34335597049c02091974be1b16da83faabe86b513709d26f5fa5ce6d569",
+            "line" : 480,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_do"
+         ],
+         "family" : "invalid_open_until_do",
+         "file" : "M4029.sas",
+         "id" : "M4029",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "ff3e934ce226052eed326efb34cb72e870cbbc37fb75db527e3a653cbceaa760",
+         "diagnostic" : "DO.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "1fa280fe3cafe27bb900c89a7b5d5c6eb5a0cf935ccd03f4939104a2eb2f81be",
+            "line" : 3044,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_do"
+         ],
+         "family" : "invalid_bare_open_do",
+         "file" : "M4030.sas",
+         "id" : "M4030",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "35466979c6db1dbca3839ac84bf08b8bfdbf7307b440884b322f8acaf2818141",
+         "diagnostic" : "(?:END.*not valid|no matching.*DO)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "65dc7a39f21b0d1816683edac0412d709ac2263bbf1ce4b09c955d128be0fb28",
+            "line" : 419,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_end"
+         ],
+         "family" : "orphan_open_end",
+         "file" : "M4031.sas",
+         "id" : "M4031",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "c0ce8bbe879a3289c74a0b5f5f6dbfc926a6cb77b9e3215089284b856b5082f8",
+         "diagnostic" : "(?:ELSE.*not valid|no matching.*IF)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "ac046b27f4d7717f107896fdcaec0f214ca5f4ca772ecd2e692756318ae24a27",
+            "line" : 1364,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_else"
+         ],
+         "family" : "orphan_open_else",
+         "file" : "M4032.sas",
+         "id" : "M4032",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "c0dabb149c1423709cab8043da83688e557a041c6619694d56e5bb98b9ac1f21",
+         "diagnostic" : "THEN.*not valid",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_then"
+         ],
+         "family" : "orphan_open_then",
+         "file" : "M4033.sas",
+         "id" : "M4033",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "cde4a54e6f1d83904cda98a9415e64d2806033e532011d5a4a54c9e8e2bb5776",
+         "diagnostic" : "(?:nesting of.*IF|nested.*IF|IF.*not valid)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "nested_open_code_if"
+         ],
+         "family" : "nested_open_if",
+         "file" : "M4034.sas",
+         "id" : "M4034",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "e5c69a17503a392776b16fe93906e71d50015c3a062088a9a406089a1e87caf4",
+         "diagnostic" : "Expected %DO not found",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_if_action"
+         ],
+         "family" : "open_if_requires_do_group",
+         "file" : "M4035.sas",
+         "id" : "M4035",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "1a28e394bc3214c8f1a2e1a6a68e37daeaec1493164fd00feeacb64e5e648c8c",
+         "diagnostic" : "open code statement recursion",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "905012968d6d2827b721b8c838dbc15e75676f29095bfd4daba28c71df66cd7e",
+            "line" : 104,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "macro_statement_recursion"
+         ],
+         "family" : "missing_let_semicolon_recursion",
+         "file" : "M4036.sas",
+         "id" : "M4036",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "7e5c03d3ab48c8b6d31577d5d2d07b5e0af729a3458527aeb49ac69bf3711e09",
+         "diagnostic" : "GOTO.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "18cf7834b88c61ad69efb5f09ad7db1dbabb484a38d95033d4b08b62780372bb",
+            "line" : 3038,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_macro_control"
+         ],
+         "family" : "invalid_open_goto",
+         "file" : "M4037.sas",
+         "id" : "M4037",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "de755132179a88cac5361f6d70944cc8fe3a425aba872a30fd83e3a88c1d0836",
+         "diagnostic" : "RETURN.*not valid in open code",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "derived_extension" : true,
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_macro_control"
+         ],
+         "family" : "invalid_open_return",
+         "file" : "M4038.sas",
+         "id" : "M4038",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "3312313a278e99060dab81a3ae824456c590fe54d0bbfe208defb91d27f2e971",
+         "diagnostic" : "(?:no matching.*MACRO|MEND.*not valid)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "c252e57fd09936c4b1dba5b6342669164ce8d462cf404132fa6d34a6095af1d1",
+            "line" : 188,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [
+            "open_code_mend"
+         ],
+         "family" : "orphan_mend",
+         "file" : "M4039.sas",
+         "id" : "M4039",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "a49f896a9b576d80f4c39246c7449c2bfa5d933e1ee2f397ed58b65aabcdfdf4",
+         "diagnostic" : "(?:division by zero|divide by zero)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "875ce7a1d0a2c3ded4df4ca4039f3d2e67915f02b3d5e829dad576caa5431944",
+            "line" : 481,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "eval_division_zero",
+         "file" : "M4040.sas",
+         "id" : "M4040",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "e2e3c23e0e961b7525358ed115750c2851459a2ac270f09df527a6c3c70842ec",
+         "diagnostic" : "(?:character operand|EVAL.*integer)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "875ce7a1d0a2c3ded4df4ca4039f3d2e67915f02b3d5e829dad576caa5431944",
+            "line" : 481,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "eval_decimal_operand",
+         "file" : "M4041.sas",
+         "id" : "M4041",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "a0c862942c86515cff83df166ca6b99e4d701bdc67c74c3f7977cc2409f0cdb1",
+         "diagnostic" : "(?:function.*not found|function.*not.*known|not located)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "3845afdf4978dce0ba1934652d654869ae8ef615c21a1ece1df09e3cd6960851",
+            "line" : 1530,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "sysfunc_unknown_function",
+         "file" : "M4042.sas",
+         "id" : "M4042",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "f6c3bd3f73bc70b3150f1c59c54589456de1761979164493a91482a61ea97ec7",
+         "diagnostic" : "more than one parameter.*same name",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "macro_duplicate_parameters",
+         "file" : "M4043.sas",
+         "id" : "M4043",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "c9ea94d5f06cb2609ae4db4a55a390855b4d07d04c0fe0c8252886763764eeba",
+         "diagnostic" : "(?:positional.*keyword|keyword.*positional|more positional)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "positional_after_keyword_argument",
+         "file" : "M4044.sas",
+         "id" : "M4044",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "e14b051dc2333ebc4ea57bbc80dfb0ef6687d47053adc09685e53785537cf6ff",
+         "diagnostic" : "(?:IF.*expression|condition|operand|expression.*missing)",
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "8c3e8b7f7a5402554630499c089856e6b957d8de41880d084d77979d41d63ed8",
+            "line" : 400,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : null,
+         "expected_failure" : true,
+         "expected_lint" : [],
+         "family" : "empty_if_expression_in_macro",
+         "file" : "M4045.sas",
+         "id" : "M4045",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : null
+      },
+      {
+         "body_sha256" : "fd9e37137c02ce2290a3787e25aa11cb4430a1d03148e04d978e644ad03d02d6",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "905012968d6d2827b721b8c838dbc15e75676f29095bfd4daba28c71df66cd7e",
+            "line" : 104,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 46,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "warning_unresolved_symbol",
+         "file" : "M4046.sas",
+         "id" : "M4046",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : "apparent symbolic reference.*not resolved"
+      },
+      {
+         "body_sha256" : "03a7edd797b875038cfa8385ef1e1619bfa99c6ef1051975cb602847e96b6d2e",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 47,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "warning_unresolved_invocation_in_put",
+         "file" : "M4047.sas",
+         "id" : "M4047",
+         "policy_failure" : true,
+         "tolerance" : "1e-9",
+         "warning_pattern" : "apparent invocation of macro.*not resolved"
+      },
+      {
+         "body_sha256" : "9a0d12eaa854503510f3b74e15da417a207618090ac937130ded97b537ff9f38",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "67de5a77e5b32e832c682ffec30876bd1713dd008c07a8355d1bf864d4b98fd9",
+            "line" : 5022,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 48,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "warning_symdel_missing",
+         "file" : "M4048.sas",
+         "id" : "M4048",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : "(?:not found|does not exist|could not be deleted)"
+      },
+      {
+         "body_sha256" : "cc60e710dce05072236de08477815d2530100d225671da610f51ab6572fbefec",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "derived_extension" : true,
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 49,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "warning_sysmacdelete_missing",
+         "file" : "M4049.sas",
+         "id" : "M4049",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : "(?:not found|does not exist|could not be deleted)"
+      },
+      {
+         "body_sha256" : "d3650b285a9bcb54f5b1fdba7b769e8803e3f7a998657b03e41e041a9a3e885f",
+         "diagnostic" : null,
+         "evidence" : {
+            "book_title" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition",
+            "evidence_sha256" : "a42ace7fbb4039cd888100588d38592f4d007547eecfcbb88160106bc1359d0d",
+            "line" : 179,
+            "path" : "Carpenter's Complete Guide to the SAS Macro Language, Second Edition.txt",
+            "source_kind" : "book_sample",
+            "source_sha256" : "0749d523625bbc39d516419981aa1e04ccd151887e33715ecfd639b9f84b516f"
+         },
+         "expected" : 50,
+         "expected_failure" : false,
+         "expected_lint" : [],
+         "family" : "warning_recursive_parameter_default",
+         "file" : "M4050.sas",
+         "id" : "M4050",
+         "policy_failure" : false,
+         "tolerance" : "1e-9",
+         "warning_pattern" : "(?:recursive reference|apparent symbolic reference.*not resolved)"
+      }
+   ],
+   "count" : 50,
+   "expected_failure_cases" : 20,
+   "policy_failure_cases" : 1,
+   "round" : 9,
+   "schema" : 1,
+   "success_cases" : 29,
+   "warning_cases" : 5
+}

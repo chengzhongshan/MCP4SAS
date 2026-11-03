@@ -1,0 +1,7 @@
+/* L324: translate boundary 3; source: SAS-Useful-Codes/Macros/CompareGenoA1A2.sas:8 */
+data _null_;
+length actual $256;
+actual=translate('ab3','XY','ab');
+if actual='XY3' and lengthn(actual)=3 then put 'LIB500_PASS=L324';
+else put 'ERROR: LIB500_FAIL=L324 actual=' actual;
+run;

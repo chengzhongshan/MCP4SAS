@@ -2464,3 +2464,1534 @@ SAS_ODA_AUTOLOAD_MACROS=0 perl run_sas_codes_or_files_in_ODA.pl \
 Programs, SAS/CLI logs and verified cleanup results remain in the ignored
 owned run folders. Suite and terminal logs are retained locally in
 `SAS_Output_macro_case_validation/`.
+
+## 17. Another 500 runnable library-derived evaluations (2026-11-02)
+
+### Scope and source provenance
+
+Added `tests/library500/L001.sas` through `L500.sas`: **50 behavior families,
+ten distinct boundary inputs per family**. These are 500 new executable cases,
+not 500 unrelated algorithms or 500 independent ODA login sessions. The prior
+590 examples and existing 500 source-analysis tasks remain intact. An ID-only
+normalization rejects repeated executable bodies within this new batch.
+
+The generator reads these directories under `H:/F_Queens/360yunpan/SASCodesLibrary`:
+
+- `SAS-Useful-Codes/Easy-For-Error-Codes-SAS`
+- `SAS-Useful-Codes/SAS_Code_Database`
+- `SAS-Useful-Codes/Macros`
+
+`tests/library500/manifest.json` identifies a real function-use site for each
+family across 40 original source files, including relative filename, line number, complete-source SHA-256 and
+evidence-line SHA-256. Original library files are read only. Generated programs
+use small synthetic inputs; no original personal datasets, macro libraries or
+directory-deletion operations are submitted. Expected answers are calculated
+in Perl rather than copied from current analyzer output or a SAS result.
+
+| New IDs | Coverage |
+| --- | --- |
+| L001–L100 | Numeric rounding, signs, roots, exponentials and logarithms |
+| L101–L200 | Numeric aggregates, special missing values and coalescing |
+| L201–L300 | Case, whitespace, reversal, substrings, word/character counting |
+| L301–L400 | Replacement, translation, concatenation, searches and month intervals |
+| L401–L500 | Dates, PRX match/replacement, missing values, input/output formats, repeat/trim |
+
+See `tests/library500/README.md` for the exact family-to-ID map.
+
+### Failures investigated and resulting changes
+
+1. **Invalid PRX fixtures, not a confirmed MCP scanner bug.** The first offline
+   draft failed seven case subtests. An attempted scanner change assumed an
+   unescaped slash inside a PRX bracket class was valid. Live SAS rejected
+   `/[a/]*/` with `Invalid characters "]*/" after end delimiter "/"`.
+   That scanner change was removed; the final implementation retains the
+   original PRX scanner. Slash delimiters are now escaped in the fixtures.
+   A malformed comment-like expression stalled an early 20-case probe until
+   its 180-second CLI timeout. The separate direct diagnostic process was
+   explicitly identified and stopped; the shared session server was preserved.
+   A later draft passed 400 cases but preflight blocked the last 100-case batch
+   because one remaining fixture contained a comment opener. That fixture was
+   replaced with a valid asterisk character-class pattern. These failed drafts
+   are not counted as final successes or as seven product bugs.
+2. **Include dependency order was a product defect.** Focused investigation
+   found `include_targets()` collected all deferred executable-string includes
+   before direct statements. For `first.sas`, a deferred `middle.sas`, then
+   `last.sas`, the old result began with `middle.sas`. Discovery now merges
+   direct and deferred targets by source offset, preserving repeated includes,
+   multiple quoted operands, and recursive executable-string order. This is
+   lexical dependency ordering; it does not claim to simulate CALL EXECUTE's
+   runtime scheduling. The new four-check regression failed **2/4** against
+   the original module and passes **4/4** after the fix.
+3. **Successful calculations should not imply a rendering failure.** Every
+   new script uses DATA _NULL_ and writes its assertion to the SAS log. Both
+   equivalent CLI entry points now explain that successful calculations or
+   log-only programs may produce no HTML. Failure status remains governed by
+   actual execution and SAS diagnostics.
+4. **Reviewable evaluation tooling.** The Perl builder, offline verifier and
+   live harness are checked in. Each case has its own oracle and marker; the
+   harness rejects missing/duplicate markers, echoed source, SAS ERROR lines,
+   unexpected markers and nonzero CLI exits. A failed batch leaves its cases
+   unverified; `--batch-size 1` isolates a case. The harness preserves artifacts
+   and structured per-case results even when a submission fails.
+
+### Final evidence
+
+- Final live run: **500/500 passed**, five batches of 100, every CLI exit zero,
+  no SAS ERROR lines, exactly one anchored marker for each ID.
+- Live run directory: `SAS_Output_library500_live_fN6Zaz/`; each batch retains
+  submitted code, CLI output, SAS log and status files.
+- Portable results: `tests/library500/verified_results_2026-11-02.json`.
+- Final independent PRX smoke rerun: **2/2 passed**, one case per submission,
+  in `SAS_Output_library500_live_4etKas/`, after the CLI message change.
+- Offline regression run: **25 files, 1,501 top-level checks passed**, including
+  500 new case subtests with six checks each, the four include-order checks,
+  and the existing adversarial/source-analysis suites.
+- Diagnostic history: `SAS_Output_library500/` holds baseline and corrected
+  TAP, terminal output and the old-module include-order reproduction.
+  The initial 20-case timeout is in `SAS_Output_library500_live_fRzHmE/`;
+  the isolated invalid-slash diagnosis is in `SAS_Output_library500_live_Aum6QE/`;
+  the first 400/500 draft is in `SAS_Output_library500_live_o8ajqh/`.
+
+These tests validate focused Base SAS behavior through the public CLI, lexical
+preflight and dependency ordering. They do not validate every original library
+macro, statistical procedure, plot, upload path or cleanup option.
+
+### Reproduce in Cygwin using Perl/Bash
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_evaluations.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_evaluations.pl tests/test_include_source_order.pl
+perl tests/run_live_library500.pl --live
+perl tests/run_live_library500.pl --live --only L431,L441 --batch-size 1
+```
+
+Full offline regression selection, including the two existing task corpora:
+
+```bash
+tests=()
+for file in MCPDeps/test_*.pl tests/test_*.pl; do
+  case "$file" in tests/test_live_*) continue;; esac
+  if rg -q 'use Test::More|use Test2' "$file"; then tests+=("$file"); fi
+done
+prove "${tests[@]}" tests/new_validation_tasks_001_100.pl \
+  tests/covid19_gwas_validation_tasks_001_500.pl
+```
+
+Submit any generated script individually without the harness:
+
+```bash
+OPEN_RESULT=0 SAS_ODA_AUTOLOAD_MACROS=0 \
+  perl run_sas_codes_or_files_in_ODA.pl \
+  --file tests/library500/L001.sas --run-timeout-seconds 180 \
+  --output-prefix SAS_Output_library500_individual_L001
+```
+
+Its success evidence is the exact SAS log line `LIB500_PASS=L001`; HTML is
+unnecessary. Generated source and runtime output are separate: the 500 scripts
+are maintained fixtures; ignored `SAS_Output*` directories hold diagnostic runs.
+
+## 18. Second different 500-script library round (2026-11-02)
+
+### New coverage: relational data, macros and input/output
+
+Added **500 new SAS scripts**, `tests/library500_round2/R501.sas` through
+`R1000.sas`. These cover 50 operation families at ten synthetic input sizes
+(N=2 through 11). They supplement the preceding function-focused L001–L500
+batch; the earlier cases remain intact. The new manifest references **43 real
+source files** from the same read-only SAS library directories.
+
+Each case has an independently calculated Perl oracle, source filename/line,
+original source and evidence-line SHA-256, and normalized executable-body
+fingerprint. The offline verifier rejects ID-only duplicate bodies within this
+batch and checks against the previous batch's fingerprints. This verifies
+distinct generated programs, not semantic uniqueness of every SAS concept
+across all historical tests.
+
+| IDs | New coverage |
+| --- | --- |
+| R501–R600 | DISTINCT, HAVING, join cardinality, UNION/UNION ALL, EXCEPT, INTERSECT, CASE |
+| R601–R700 | Correlated queries, CALCULATED, table updates/deletes/inserts, sort stability, BY-group summaries |
+| R701–R800 | RETAIN, missing-aware sum statements, LAG/DIF queues, POINT/NOBS, arrays, TRANSPOSE, weighted summaries, tied ranks |
+| R801–R900 | FREQ/COMPARE, hash lookup, RESOLVE macro expressions, MERGE/SET flags, DSD fields, TRUNCOVER, SCANOVER |
+| R901–R1000 | INPUT modifiers, literal DATALINES4 source text, TEMP files, macro scope, CALL EXECUTE, DOSUBL, metadata, fileref INCLUDE |
+
+Cases create only their own uniquely prefixed WORK tables in a newly named
+test session. Each must produce exactly one result row before its value can
+pass, then deletes only its own table prefix. TEMP files are cleared and local
+test macros removed. A failed submission may retain its own WORK fixtures for
+inspection. The tests do not change the original library or permanent user
+datasets and do not delete user directories. These are 50 algorithms with ten
+scenarios each, not 500 unrelated algorithms or separate login tests.
+
+### Confirmed MCP4SAS defect: RESOLVE hid a real macro dependency
+
+The library contains real patterns such as
+`resolve('%AddSpaces4str(str='||aa||',add2end=1,nspaces=3,char4space=-)')`
+in `Macros/AddSpaces4str.sas` and similar code in `Macros/leftalign4catstr.sas`.
+The analyzer previously preserved macro calls in single-quoted arguments to
+DOSUBL and CALL EXECUTE, but masked those passed to **RESOLVE** as ordinary
+string data. Targeted loading therefore missed a macro called only through
+`resolve('%macro_name()')`.
+
+The baseline regression failed **3/16** checks. A live reproduction created
+one uniquely named harmless source file in online `~/Macros`, returning 42.
+With global autoload disabled, the old analyzer did not load it: the SAS log
+reported `WARNING: Apparent invocation of macro ... not resolved`, followed
+by the test's `ERROR: RESOLVE_LOADING_ASSERT`. Cleanup deleted and verified
+the exact owned fixture. Baseline evidence is in
+`SAS_Output_resolve_live__3pfca/` and
+`SAS_Output_library500_round2/resolve_live_before.tap`.
+
+`SAS_Source_Analysis.pm` now treats RESOLVE arguments as macro-evaluation
+contexts for dependency discovery, including nested function calls and
+case-insensitive function spelling. It retains the narrower distinction for
+include discovery: RESOLVE alone is not DOSUBL/CALL EXECUTE submission of
+arbitrary SAS statements, so quoted `%include` text is not invented as a
+file dependency. Ordinary string data and NRSTR-protected calls stay masked.
+
+An intermediate refactoring compiled a function-name regex without its own
+case-insensitive flag. The uppercase nested RESOLVE check and two existing
+uppercase deferred-include checks caught this regression. Adding `/i` to the
+compiled patterns corrected it. Final regression: **16/16 passed**. Final live
+targeted loading: **6/6 passed**, including uppercase `RESOLVE(strip(...))`,
+the computed value 42, an EXACT loader marker, and verified fixture deletion.
+Live evidence: `SAS_Output_resolve_live_TmkPbG/`. A final Cygwin `prove` run
+also passed **6/6**, exit zero, with artifacts in
+`SAS_Output_resolve_live_woDqX6/` and transcript
+`SAS_Output_library500_round2/resolve_live_prove_final.log`.
+
+Ten final corpus cases, R831–R840, now exercise locally defined macro return
+values through lowercase/uppercase RESOLVE. They replaced a redundant draft
+hash-replacement family; the separately counted remote-fixture test proves
+that dependency loading works when the macro is not already compiled.
+
+### Evaluation harness improvements
+
+`tests/run_live_library500.pl` now accepts `--round 2` while preserving the
+first round's default. Required script files cannot silently disappear: missing
+or empty inputs stop submission. Both rounds use `SAS_Evaluation_Log.pm` to
+count assertions only in the SAS runtime-log section. Numbered source echoes,
+MPRINT traces, submitted source, and trailing report output cannot supply
+ordinary assertion markers.
+
+The evaluator fails closed on a missing runtime log, nonzero worker exit,
+runtime ERROR (including indented numbered errors), missing/duplicate markers,
+and unexpected or malformed marker IDs. Warnings retain their original SAS
+severity. Its **13 regression checks passed**, including backward compatibility
+with the L001–L500 marker format and CRLF logs. Structured results include
+whether a runtime-log section was present; per-case markers and batch exit
+codes remain reviewable. A failed batch marks its members unverified; use
+`--batch-size 1` to isolate individual behavior.
+
+### Verified results and artifacts
+
+- Final corpus run: **500/500 live cases passed**, five 100-case submissions,
+  each exit zero, exactly one marker per expected ID, no unexpected markers
+  and no SAS ERROR lines. Artifacts: `SAS_Output_library500_live_LYsmuu/`.
+- Dated per-case results:
+  `tests/library500_round2/verified_results_2026-11-02.json`.
+- Complete offline regression: **28 files, 2,034 top-level checks passed**,
+  including the 500 new case subtests (six checks each), prior corpus tests,
+  the RESOLVE checks and the evaluation-log checks.
+- Supplemental remote macro loading: **6/6 passed**, with verified cleanup.
+- Previous-round compatibility smoke: **2/2 passed** through the updated
+  harness's default mode (`L001` and `L441`), in
+  `SAS_Output_library500_live_lIkadp/`.
+- Development TAP and terminal evidence remain in the ignored
+  `SAS_Output_library500_round2/` directory. The initial draft batch also passed
+  500 cases in `SAS_Output_library500_live_VLjUdv/`; the final evidence above
+  covers the revised RESOLVE family and stricter harness.
+
+These checks cover bounded synthetic data transformations and macro-loading
+behavior. They do not validate all original library macros, statistical models,
+plots, user datasets, network downloads or concurrent sessions.
+
+### Cygwin commands (Perl/Bash)
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round2.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_round2.pl \
+  tests/test_resolve_macro_dependencies.pl tests/test_evaluation_log.pl
+perl tests/run_live_library500.pl --live --round 2
+perl tests/test_live_resolve_macro_loading.pl --live
+prove -v tests/test_live_resolve_macro_loading.pl :: --live
+```
+
+Isolate input, RESOLVE or INCLUDE cases:
+
+```bash
+perl tests/run_live_library500.pl --live --round 2 \
+  --only R831,R832,R991,R1000 --batch-size 1
+OPEN_RESULT=0 SAS_ODA_AUTOLOAD_MACROS=0 \
+  perl run_sas_codes_or_files_in_ODA.pl --file tests/library500_round2/R831.sas \
+  --run-timeout-seconds 180 --output-prefix SAS_Output_round2_R831
+```
+
+Run the full offline selection using the Bash loop in section 17. The old-failure
+diagnostic command is `perl tests/test_live_resolve_macro_loading.pl --live
+--expect-missing`; it is intended for the old analyzer and should fail against
+the repaired implementation. Normal validation uses `--live` alone. Programs,
+logs, fixtures, generators and harnesses use SAS, Perl and Bash; no Python
+evaluation script was introduced.
+
+## 19. Third different 500-script library round (2026-11-02)
+
+### Coverage and provenance
+
+Added **500 new runnable SAS evaluations**, `tests/library500_round3/T1001.sas`
+through `T1500.sas`, based on operation-use sites in **39 original source
+files**. The builder reads the same read-only `Easy-For-Error-Codes-SAS`,
+`SAS_Code_Database` and `Macros` directories under the user's SAS library.
+The preceding L001–L500 and R501–R1000 cases remain intact.
+
+This round has **50 behavior families with ten scenarios each**, N=2 through
+11. It tests bounded synthetic behavior; it is not 500 unrelated algorithms or
+500 separate account logins. The manifest records source filenames/lines,
+source and evidence-line SHA-256, independently calculated Perl answers and
+normalized executable fingerprints. The verifier rejects repeated normalized
+bodies within the batch and checks fingerprints against the preceding two
+batches; it does not claim semantic uniqueness of every SAS concept.
+
+| New IDs | Coverage |
+| --- | --- |
+| T1001–T1100 | PROC CONTENTS, variable attributes, dataset handles, dictionary indexes/tables |
+| T1101–T1200 | Numeric/character formats, informats, CNTLIN/CNTLOUT, metadata attributes, APPEND FORCE, RENAME |
+| T1201–T1300 | WHERE/IF iteration, FIRSTOBS/OBS, empty schema, missing classes, zero weights, tied ranks, TRANSPOSE LET, views |
+| T1301–T1400 | SQL filtering/order/OUTOBS, leap dates, datetime components, weekend selection, UNQUOTE/NRSTR |
+| T1401–T1500 | Macro indirection/quoting/scope, SYSFUNC handles, PRX lifetime, FREAD/FGET, FILEREF, owned TEMP deletion |
+
+Every test must produce exactly one result row and exactly one matching runtime
+assertion. Cleanup targets only its WORK table prefix, explicitly created view,
+format/informat entry or owned TEMP file. Local macros and variables are
+removed. Original library files, user datasets, permanent catalogs and user
+directories are not cleanup targets. A failed case can retain its own session
+resources for diagnosis. The new cases intentionally include warnings from
+APPEND FORCE, TRANSPOSE LET and OUTOBS; warnings keep their SAS severity.
+
+### Confirmed loading defect: UNQUOTE releases a hidden NRSTR call
+
+The library uses `%UNQUOTE` to release quoted macro text, including an example
+in `Macros/SAS-macros-master/distance.sas`. The dependency scanner previously
+masked every `%NRSTR` body, so a macro called only through
+`%UNQUOTE(%NRSTR(%macro_name()))` was absent from targeted loading.
+
+The initial focused regression failed **4/12** checks. A live reproduction
+created a uniquely named harmless source in `~/Macros` returning 42, with
+global autoload disabled. SAS reported an unresolved macro invocation, and the
+assertion failed. The baseline test's `--expect-missing` mode confirmed that
+failure and deleted/verified its exact owned source file. Evidence:
+`SAS_Output_unquote_live_1uY2LP/` and
+`SAS_Output_library500_round3/unquote_live_before.log`.
+
+`SAS_Source_Analysis::mask_macro_literals()` now recognizes direct UNQUOTE
+release of an NRSTR expression, including double-quoted source and deferred
+RESOLVE expressions. Independent inner NRSTR protection, enclosing protected
+NRSTR text, ordinary single-quoted DATA strings and comments remain masked.
+Source offsets stay unchanged. This is bounded static dependency discovery;
+it does not expand arbitrary macro variables or simulate every possible macro
+rescan/data-flow sequence.
+
+Final focused regression: **15/15 passed**. The supplemental live loader test
+now accepts `--mode unquote`, while keeping RESOLVE as its default. Both modes
+create only one uniquely named source, require the computed value 42 and an
+EXACT targeted-loader marker, then delete and verify that source. The final
+UNQUOTE mode tests release inside a double-quoted DATA expression; the earlier
+successful live check also covered a direct `%LET` expression.
+
+### Fixture failures investigated instead of counted as product defects
+
+The first full live run verified only **100/500 cases** under the strict batch
+policy: four batches contained errors. Although 450 individual pass markers
+appeared, an errored batch is not accepted as verified. The following were
+mistakes in the new SAS fixtures, not confirmed MCP4SAS bugs:
+
+1. SAS SQL rejected function calls inside the literal IN list used for two
+   metadata table names. Replaced it with two equality predicates joined by OR.
+2. PROC CATALOG rejected `NOLIST`. Removed that option and retained exact
+   format/informat entry deletion. Numeric, character and informat entries use
+   their corresponding FORMAT, FORMATC and INFMT types.
+3. The WHERE-vs-IF test attempted a SELECT expression without a valid outer
+   FROM source. Replaced it with separate scalar aggregate tables and a join.
+4. PROC CONTENTS supplies informat width as `INFORML`, not `INFORMATL`.
+   Corrected the metadata column; the original spelling produced a missing
+   result and failed the case assertion.
+5. CALL PRXFREE cannot modify a numeric constant. Using a variable corrected
+   that compile error, but the macro-created handle was still invalid in the
+   later DATA step in this run. The final fixture allocates, uses and frees its
+   PRX handle together in one DATA step.
+6. A TEMP fileref had not yet been materialized into a file when the assignment
+   check expected the existing-file status. The fixture now writes its owned
+   file first and checks for a nonzero status after clearing the fileref.
+
+The intermediate corrected batch verified **400/500**; its final batch still
+contained the PRX-handle and FILEREF assumptions. Those 20 cases then passed
+in isolation before the final complete rerun.
+
+### Final evidence
+
+- Final live batch: **500/500 passed**, all five CLI exits zero, exactly one
+  expected marker per case, no unexpected markers and no SAS ERROR lines.
+  Artifacts: `SAS_Output_library500_live_M74lkr/`.
+- Portable per-case evidence:
+  `tests/library500_round3/verified_results_2026-11-02.json`.
+- Complete offline selection: **30 test files, 2,553 top-level checks passed**,
+  including 500 new subtests with six checks each and 15 UNQUOTE checks.
+- UNQUOTE targeted-loading validation: **6/6 passed**, including source cleanup.
+- RESOLVE compatibility validation: **6/6 passed**, including source cleanup.
+- Their final owned artifacts are respectively
+  `SAS_Output_unquote_live_6avUVD/` and `SAS_Output_resolve_live_Xc4spL/`.
+- Isolated PRX/FILEREF cases: **20/20 passed**, in
+  `SAS_Output_library500_live_wz7AMl/`.
+- Initial and intermediate full-run evidence remains respectively in
+  `SAS_Output_library500_live_3xgw8d/` and
+  `SAS_Output_library500_live_ibqpZz/`.
+- Cygwin live macro transcripts, focused TAP and terminal results remain in
+  `SAS_Output_library500_round3/`. These ignored artifacts are kept separate
+  from the maintained SAS fixtures and dated result JSON.
+
+These checks do not validate every original library macro, plot, statistical
+model, external dataset, network download or concurrent-session scenario.
+
+### Cygwin reproduction commands
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round3.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_round3.pl tests/test_unquote_macro_dependencies.pl
+perl tests/run_live_library500.pl --live --round 3
+prove -v tests/test_live_resolve_macro_loading.pl :: --live --mode unquote
+prove -v tests/test_live_resolve_macro_loading.pl :: --live
+```
+
+Isolate the format, metadata, quoting or handle cases:
+
+```bash
+perl tests/run_live_library500.pl --live --round 3 \
+  --only T1121,T1201,T1391,T1461,T1481 --batch-size 1
+OPEN_RESULT=0 SAS_ODA_AUTOLOAD_MACROS=0 \
+  perl run_sas_codes_or_files_in_ODA.pl \
+  --file tests/library500_round3/T1391.sas --run-timeout-seconds 180 \
+  --output-prefix SAS_Output_round3_T1391
+```
+
+The full offline Bash selection from section 17 includes both new test files.
+The old-failure command appends `--expect-missing` to the UNQUOTE live command;
+use it only when intentionally reproducing the old analyzer. The repaired
+implementation should not satisfy that expected-failure mode. No Python
+evaluation scripts were introduced.
+
+## 20. Fourth 500-script round: statistics and expected errors (2026-11-02)
+
+### Coverage and independent oracles
+
+Added `tests/library500_round4/F1501.sas` through `F2000.sas`: **500 new
+executable scenarios** based on procedure/operation-use sites in **13 original
+SAS library files**. The manifest records filenames, source lines, source and
+evidence-line SHA-256, synthetic input size, expected result and normalized
+executable fingerprint. Original libraries are read only. Families share
+procedure examples while testing different statistical properties; the programs
+are newly constructed synthetic evaluations rather than copies of private
+original analyses.
+
+There are **45 positive families and five intentional-error families**, each
+at ten input sizes, N=2 through 11. This means **450 numerical analyses and 50
+expected SAS errors**, not 500 successful SAS programs or separate logins.
+Numerical oracles are computed in Perl from closed-form formulas or explicit
+loops, independently of SAS output. Examples include sample/population variance,
+replicated-frequency variance, standard errors, weighted means, covariance,
+exact linear fits and online Welford variance. Expected-error cases require
+specific runtime diagnostics rather than an arbitrary failure.
+
+| IDs | New behavior |
+| --- | --- |
+| F1501–F1600 | Variance definitions, standard error/CV, weights/FREQ, grouped variance, range, missing counts |
+| F1601–F1700 | Median/quartiles/IQR, skewness/kurtosis, CSS/USS, Pearson/Spearman correlation |
+| F1701–F1800 | Covariance, listwise exclusion, regression parameters/predictions, GLM effects/residuals, frequency percentages |
+| F1801–F1900 | Frequency percentages/sparse/cumulative cells, ranks, standardization, summary types, SQL moments |
+| F1901–F1950 | Weighted missingness, double transpose, row expansion, online variance, array standardization |
+| F1951–F1960 | REG must reject a missing response variable |
+| F1961–F1970 | FREQ must reject a character WEIGHT variable |
+| F1971–F1980 | APPEND without FORCE must reject incompatible variable types |
+| F1981–F1990 | MEANS must reject a missing analysis variable |
+| F1991–F2000 | SQL must reject an ambiguous column reference |
+
+The successful cases must produce exactly one result row and one exact
+`ROUND4_PASS=Fnnnn` runtime line after comparison with the oracle. The negative
+cases deliberately emit no calculation-success marker. Every case creates and
+cleans only its own WORK table prefix. No original library files, user datasets,
+permanent libraries or user directories are cleanup targets.
+
+### Improvements to evaluation and error-reporting verification
+
+`SAS_Evaluation_Log.pm` now supports isolated expected-error evaluation. Such a
+test passes only when the worker exits nonzero normally, the actual runtime
+SAS log contains an ERROR matching the case's diagnostic, and no contradictory
+success marker appears. Source listings, report text, warnings, signal exits,
+missing logs and unrelated infrastructure errors cannot satisfy this rule.
+Each expected-error case runs alone so a neighboring failure cannot validate it.
+
+The harness also reads `output.run.status.json` and requires terminal metadata
+to agree with the observed behavior: complete/completed/successful for positive
+cases, complete/failed/unsuccessful for intentional errors. Missing, malformed,
+incomplete or contradictory status invalidates the test. This checks process
+status, executed SAS diagnostics and terminal job status together. Existing
+positive evaluation remains supported; the new status requirement is enabled
+by the live harness.
+
+The expected-error evaluator's **15 focused regression checks passed**. They
+include wrong diagnostic, zero exit, source echo, warning-only output, signal
+termination, missing process status, unexpected success markers, missing logs,
+non-isolated failures and contradictory terminal metadata. Per-case result JSON
+now records body SHA-256, expected-failure flag, diagnostic match and status
+validity, making an expected SAS error distinct from an unexpected test failure.
+
+No additional SAS execution-engine defect was established by this batch. The
+intentional errors were already reported correctly; the improvements make those
+behaviors explicit, independently checked regressions instead of assuming any
+nonzero return means the desired failure occurred.
+
+### New fixture failure investigated
+
+The first full run verified **450/500 expected outcomes**. The statistical
+procedures and all 50 intentional errors behaved as expected. One 50-case
+positive batch was invalidated because its ten double-transpose fixtures
+assumed the second transpose produced a `COL1` column. SAS reported that COL1
+was absent and the SUM argument was not numeric. This was a fixture mistake,
+not an MCP4SAS execution failure; the other 40 cases in the batch were left
+unverified under the strict batch policy.
+
+The corrected fixture drops the first transpose's `_NAME_` metadata before
+transposing back, supplies `PREFIX=back`, and sums the explicit `BACK1` column.
+The independent sum-of-squares oracle was retained. The full corrected run
+then verified all 500 outcomes. Initial evidence remains in
+`SAS_Output_library500_live_tropLM/`.
+
+### Persistent-session recovery and cleanup checks
+
+`tests/test_live_sas_error_recovery.pl` deliberately creates one owned WORK
+dataset, triggers a SQL missing-column error, then submits valid code using
+that same dataset in the same persistent session. It checks the original failed
+status, subsequent successful execution, computed value 42, completed status
+and matching session identity, then cleans only the owned WORK prefix.
+Using the prior WORK data verifies continuity beyond matching session labels.
+The live test passed **6/6**, in `SAS_Output_error_recovery_oKO8Xg/`.
+
+The helper-directory review found that the existing CLI already cleaned its
+scratch after the expected errors; the final workspace check found **zero
+`.mcp4sas_work_*` directories**. An attempted additional cleanup path was removed
+as unnecessary. Existing explicit intermediate-retention preferences are honored;
+SAS programs, logs and JSON evidence remain in the ignored run folders.
+
+### Final verified results
+
+- **500/500 expected outcomes verified**: **450 successful numerical analyses**
+  and **50 correctly reported SAS errors**. Negative job status remains failed;
+  only its evaluation outcome is a pass.
+- Final run: `SAS_Output_library500_live_lJJYpU/`. The 450 positive scenarios
+  used five batches and the 50 negatives used one job each: **55 submissions**.
+- All cases had consistent terminal status. Positive jobs exited zero with one
+  marker per case and no SAS ERROR lines. Each negative job exited nonzero with
+  its required runtime diagnostic and no success marker.
+- Portable evidence:
+  `tests/library500_round4/verified_results_2026-11-02.json`.
+- Complete offline suite: **32 files, 3,073 top-level checks passed**, including
+  500 new case subtests with seven checks each and 15 error-evaluation checks.
+- Persistent-session error recovery: **6/6 passed**.
+- A positive/negative smoke rerun, including the corrected transpose case,
+  verified **2/2 outcomes** in `SAS_Output_library500_live_xUpBoq/`.
+- Focused TAP and terminal transcripts remain in
+  `SAS_Output_library500_round4/`.
+
+These are bounded synthetic procedure checks, not validation of every original
+statistical model, inferential result, plot, external dataset or concurrency
+scenario. There are 50 families with ten scenarios each, not 500 unrelated
+algorithms. The preceding three 500-case batches remain intact.
+
+### Cygwin commands
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round4.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_round4.pl tests/test_expected_failure_evaluation.pl
+perl tests/run_live_library500.pl --live --round 4
+prove -v tests/test_live_sas_error_recovery.pl :: --live
+```
+
+Isolate a numerical, transpose or intentional-error case:
+
+```bash
+perl tests/run_live_library500.pl --live --round 4 \
+  --only F1521,F1731,F1911,F1991 --batch-size 1
+OPEN_RESULT=0 SAS_ODA_AUTOLOAD_MACROS=0 \
+  perl run_sas_codes_or_files_in_ODA.pl --file tests/library500_round4/F1991.sas \
+  --run-timeout-seconds 180 --output-prefix SAS_Output_round4_F1991
+```
+
+The standalone F1991 command must exit nonzero with an ambiguous-column ERROR.
+The evaluation harness must report that as a verified expected failure, while
+requiring exit zero and a numeric assertion from the other selected programs.
+Use section 17's Bash loop for the complete offline suite. No Python evaluation
+scripts were introduced.
+
+## 21. Fifth different 500-script round: dataset access and macro compatibility (2026-11-02)
+
+### New scenarios and source evidence
+
+Added **500 runnable SAS scenarios**, `tests/library500_round5/G2001.sas` through
+`G2500.sas`, with operation-use evidence from **30 original library files**.
+The source directories are the same read-only `Easy-For-Error-Codes-SAS`,
+`SAS_Code_Database` and `Macros` folders beneath the user's SAS library root.
+The preceding four 500-case corpora remain intact.
+
+The new manifest records source paths, source line numbers, original-file and
+line SHA-256, synthetic input N, independent Perl oracles and normalized body
+fingerprints. There are **50 behavior families with ten input sizes each**,
+N=2 through 11: **450 expected successes and 50 intentional SAS errors**. This
+does not mean 500 unrelated algorithms or independent account logins. Generated
+body fingerprints are checked for duplicates within the batch and against
+earlier manifests; this is not a proof of semantic uniqueness across every
+historical SAS concept.
+
+| IDs | New coverage |
+| --- | --- |
+| G2001–G2100 | FETCH/FETCHOBS, GETVAR functions, existence and labels, REWIND, CALL SET, OPEN WHERE, physical/logical observations, PDV truncation |
+| G2101–G2200 | MODIFY/REPLACE/REMOVE, UPDATE modes, interleaved SET, indexed KEY lookup, sorting variants, high tied ranks |
+| G2201–G2300 | Special missings, temporary arrays, implicit DO OVER, CMISS, numeric variable lists, structured delimiters, INPUT pointers/named input |
+| G2301–G2400 | Conditional input holding, record length/buffers, DATALINES4 apostrophes, MISSOVER, macro quoting and evaluation |
+| G2401–G2450 | Macro loops/defaults/lifecycle and abbreviated single/multiple-fileref includes |
+| G2451–G2460 | Expected duplicate-key rejection for a UNIQUE index |
+| G2461–G2470 | Expected character/numeric SET conflict |
+| G2471–G2480 | Expected aggregate-in-WHERE rejection |
+| G2481–G2490 | Expected INSERT arity mismatch |
+| G2491–G2500 | Expected overlapping-format-interior rejection |
+
+Every positive scenario must create exactly one result row, match its Perl
+oracle and emit one exact `ROUND5_PASS=Gnnnn` runtime marker. Each negative
+scenario runs separately and must return a normal nonzero exit, an actual SAS
+ERROR matching its diagnostic, no contradictory marker and complete failed
+terminal metadata. A negative evaluation pass remains a failed SAS job.
+
+The cases create only their own WORK tables, views, macros, format entries and
+owned TEMP filerefs. Those resources are cleaned by the cases; a failed SAS step
+can retain its own session state for diagnosis. Original source libraries,
+permanent user datasets and user directories are not modified or deleted.
+
+### Confirmed defect: abbreviated %INC did not discover local dependencies
+
+The library uses `%INC`, for example in
+`Macros/base4sas_developer/mp_abort.sas`, `mp_ds2squeeze.sas`,
+`mp_applyformats.sas` and `mp_include.sas`. MCP4SAS previously recognized only
+`%INCLUDE` in include extraction, submission detection and statement wrapping.
+The CLI/runner classifiers also treated INC as an external macro name.
+
+The initial focused alias regression failed **9/15** checks. A live reproduction
+created one uniquely named local SAS payload, checked that its prospective
+remote upload name did not already exist, and submitted `%inc 'LOCAL_PATH';`.
+The old runner did not discover/upload that dependency. SAS could not execute
+the local payload, the CLI returned nonzero and the payload assertion was
+absent. The expected-failure baseline passed its four checks, including cleanup
+or confirmation that the owned remote name was absent. Evidence:
+`SAS_Output_inc_alias_TLU8zB/` and
+`SAS_Output_library500_round5/inc_live_before.log`.
+
+Include extraction now accepts `%INC` and `%INCLUDE`, case-insensitively, with
+keyword boundaries. It preserves multiple quoted operands, doubled apostrophes,
+deferred DOSUBL/CALL EXECUTE includes and source ordering. Inert comments,
+single-quoted DATA strings and NRSTR examples remain excluded. Fileref operands
+remain runtime operands; they are not invented as external local file paths.
+Both CLI entry points recognize the abbreviation and handle its existing
+include-wrapper statement completion consistently.
+
+The final local-file live check passed **6/6**: the payload uploaded, executed
+and returned 42; dependency upload was reported; INC was not requested as an
+external macro; and cleanup deleted/verified the exact uniquely named upload.
+Evidence: `SAS_Output_inc_alias_sT_Zjk/` and
+`SAS_Output_library500_round5/inc_live_after.log`.
+
+The corpus's TEMP-fileref `%INC` scenarios alone would not detect a missing
+local-file upload, because they construct their files inside SAS. The separate
+real local-payload check closes that coverage gap.
+
+### Improvement: one builtin classifier for CLI and runner
+
+The new macro scenarios also exposed inconsistent builtin-name lists: quoting
+functions such as QSCAN, QSUBSTR, QUPCASE, QLOWCASE and NRQUOTE were missing,
+while SYMDEL/SYSMACDELETE were recognized by the runner but not both CLIs.
+INDEX and INC are now included as reserved operations too. With default
+autoload selection, missing classifications could route builtin-only programs
+through unnecessary external/global macro loading decisions.
+
+`SAS_Source_Analysis::is_builtin_macro_name()` is now the shared classifier.
+Both CLI wrappers and `SAS_ODA_Runner` delegate to it, reducing list drift while
+leaving user-defined macro names eligible for targeted discovery. The expanded
+alias/classification regression passed **43/43** checks.
+
+An additional live test clears the autoload override for its child process and
+runs QSUBSTR/STR/SYMDEL using default submission selection. It passed **4/4**:
+the value was correct, global importallmacros bootstrap was skipped, and no
+external macro source was requested. Evidence:
+`SAS_Output_builtin_macros_piEM1D/` and
+`SAS_Output_library500_round5/builtin_live.log`. This verifies the loading
+decision; it is not a timing benchmark.
+
+Targeted user-macro loading was rechecked through UNQUOTE/NRSTR and passed
+**6/6**, including the computed value, EXACT loader marker and verified fixture
+deletion. Evidence: `SAS_Output_unquote_live_uix2rm/` and
+`SAS_Output_library500_round5/unquote_compatibility.log`.
+
+### Fixture assumption corrected
+
+The initial complete corpus verified **490/500 outcomes**. All 450 expected
+successes and the first 40 intended failures behaved as expected. The last ten
+format fixtures expected a fatal overlap error from ranges that merely touched
+at an endpoint, but SAS accepted those definitions with exit zero. The harness
+correctly rejected them as unverified expected failures; their zero exit was
+not reclassified as a successful error test.
+
+The fixtures now have overlapping interiors, for example `1–4` and `2–4`,
+rather than just a shared endpoint. Those ten cases passed an isolated rerun
+before the complete final run. This was a fixture correction, not a confirmed
+SAS execution defect. Initial evidence: `SAS_Output_library500_live_j0pcF2/`;
+isolated correction: `SAS_Output_library500_live_JGq2yM/`.
+
+### Final results and maintained tools
+
+- **500/500 expected outcomes verified**: 450 successful operations and 50
+  correctly reported SAS errors; all terminal statuses agreed with their
+  intended outcomes.
+- Final corpus run: `SAS_Output_library500_live_9M8WmP/`, comprising five positive
+  batches plus 50 isolated error jobs: **55 submissions**.
+- Dated per-case evidence:
+  `tests/library500_round5/verified_results_2026-11-02.json`.
+- Complete offline suite: **34 test files, 3,621 top-level checks passed**,
+  including 500 new subtests with seven checks each and 43 include/classifier
+  assertions.
+- Supplemental live checks: **6/6** local %INC upload, **4/4** builtin default
+  loading, **6/6** targeted user-macro compatibility.
+- Standalone SAS macro-bootstrap sentinel diagnostic: **PASS**.
+- Workspace helper check: no `.mcp4sas_work_*` directories remained.
+
+`tools/lib/Library_Evaluation_Corpus.pm` factors the repeated provenance,
+fingerprinting and fixture-writing work for the new builder. Earlier corpus
+generators are preserved. The harness supports `--round 5`; expected-error
+isolation, strict runtime assertions, process status checks and terminal JSON
+validation continue to apply. Raw development evidence remains under the ignored
+`SAS_Output_library500_round5/` folder and its referenced run directories.
+
+These are bounded synthetic tests, not validation of every original macro,
+statistical model, plot, external dataset, platform option or concurrent session.
+
+### Cygwin commands
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round5.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_round5.pl tests/test_include_abbreviation.pl
+perl tests/run_live_library500.pl --live --round 5
+prove -v tests/test_live_include_abbreviation.pl :: --live
+prove -v tests/test_live_builtin_macro_bootstrap.pl :: --live
+prove -v tests/test_live_resolve_macro_loading.pl :: --live --mode unquote
+perl MCPDeps/test_sas_oda_debug_macro_guard.pl
+```
+
+Isolate a dataset, macro, include or expected-error case:
+
+```bash
+perl tests/run_live_library500.pl --live --round 5 \
+  --only G2001,G2361,G2441,G2491 --batch-size 1
+OPEN_RESULT=0 SAS_ODA_AUTOLOAD_MACROS=0 \
+  perl run_sas_codes_or_files_in_ODA.pl --file tests/library500_round5/G2441.sas \
+  --run-timeout-seconds 180 --output-prefix SAS_Output_round5_G2441
+```
+
+Use the offline Bash selection in section 17 for all non-live checks. For the
+old alias defect only, add `--expect-missing` to the live include test; that
+expected-failure mode should not pass against the fixed implementation. The
+evaluation programs, harnesses and generators use SAS, Perl and Bash; no Python
+evaluation script was introduced.
+
+## 22. Sixth different 500-script round: hash, temporal and deferred-code coverage (2026-11-02)
+
+### New scenarios and provenance
+
+Added `tests/library500_round6/H2501.sas` through `H3000.sas`: **500 runnable
+SAS scenarios**, comprising **450 expected successes and 50 intentional errors**.
+There are 50 behavior families at ten synthetic input sizes, N=2 through 11;
+these are not 500 unrelated algorithms or independent logins. All preceding
+corpora remain intact.
+
+The manifest references operation-use evidence in **19 original library files**
+from the same read-only `Easy-For-Error-Codes-SAS`, `SAS_Code_Database` and
+`Macros` folders. It records source filenames/lines, source/line SHA-256,
+independent Perl oracles and normalized executable fingerprints. The programs
+are newly constructed synthetic checks, not copies of private original analyses.
+Fingerprint comparison guards generated-body duplication, not semantic uniqueness
+of every SAS concept across historical tests.
+
+| IDs | Coverage |
+| --- | --- |
+| H2501–H2600 | Hash misses, MULTIDATA, iterators, replace/remove/clear, output, duplicate policy and explicit-key lookup |
+| H2601–H2700 | PRX captures, positions/spans/iteration, backreferences, lookahead, replacement limits and word counting |
+| H2701–H2800 | Empty-token scanning, COMPRESS modifiers, character classes, calendar alignment and continuous intervals |
+| H2801–H2900 | Julian/calendar/time conversion, rewind/file lifecycle/copy, CSV export/import and quoted delimiters |
+| H2901–H2950 | Double-quoted deferred includes, SYSCALL binding, macro scope queries and SYSFUNC DOSUBL |
+| H2951–H2960 | Expected duplicate-key hash error |
+| H2961–H2970 | Expected formatted-ID collision in TRANSPOSE |
+| H2971–H2980 | Expected character-variable rejection by CORR |
+| H2981–H2990 | Expected missing CALCULATED variable error |
+| H2991–H3000 | Expected unsorted-BY error |
+
+Positive cases require one result row, an independent numerical oracle and one
+exact `ROUND6_PASS=Hnnnn` runtime assertion. Negative cases run separately and
+require the expected actual SAS diagnostic and consistent failed terminal
+metadata. Cleanup targets only each case's WORK prefix, owned views/macros,
+catalog entries and TEMP files. Original libraries, user datasets and user
+directories are not modified or deleted. A failed step may retain its own test
+session state for inspection.
+
+### Confirmed defect: double-quoted deferred include dependencies were hidden
+
+The library uses double-quoted executable strings, including
+`rc=dosubl("&MacroFullCommand")` in `Macros/RunMacrosRepeatedly.sas`, and
+double-quoted CALL EXECUTE code in the stock macro collections. The source
+analyzer tracked only single-quoted strings for deferred include extraction.
+Consequently, literal local-file includes inside
+`dosubl("%include 'LOCAL_PATH';")` or CALL EXECUTE were not discovered/uploaded.
+
+The initial focused regression failed **7/11** checks. A live reproduction
+created one uniquely named local SAS payload, protected its remote filename
+with an existence check and submitted it through a double-quoted DOSUBL string.
+The old runner did not upload it; the program failed and no payload-success
+marker appeared. Its four expected-failure baseline checks passed, including
+cleanup or confirmation that the unique upload name was absent. Evidence:
+`SAS_Output_inc_alias_vhhhB8/` and
+`SAS_Output_library500_round6/deferred_live_before.log`.
+
+`SAS_Source_Analysis.pm` now records double-quoted spans as well as single-quoted
+ones. Include extraction recursively decodes the applicable doubled quote
+delimiter for strings inside DOSUBL/CALL EXECUTE contexts, preserving source
+ordering and quote escapes. Ordinary quoted DATA text, strings after a closed
+execution call, RESOLVE-only text and comments remain excluded. Runtime fileref
+operands are not invented as local paths. This remains bounded static literal
+discovery; it does not evaluate arbitrary macro-variable contents or all possible
+dynamic string constructions.
+
+Final focused regression: **11/11 passed**. Live local-payload checks each
+passed **6/6** for DOSUBL and CALL EXECUTE, including actual upload, computed
+value 42 and verified deletion of the exact unique upload. Their artifacts are
+`SAS_Output_inc_alias_EBYkLS/` and `SAS_Output_inc_alias_6H3nxL/`; transcripts
+are `deferred_dosubl_after.log` and `deferred_execute_after.log` under the new
+ignored round folder.
+
+### Builtin classification and corpus-generation improvements
+
+The library also uses `%SYSCALL SET(dsid)` and `%SYSCALL PRXFREE(...)`.
+The shared builtin classifier now includes SYSCALL, SYMLOCAL and SYMGLOBL,
+avoiding unnecessary external/global macro loading decisions for those reserved
+operations. The existing live builtin probe now exercises dataset binding with
+SYSCALL as well as quoting functions and SYMDEL, with the autoload override
+unset. It passed **4/4**, verifying the result and that global bootstrap and
+external macro lookup were skipped. Evidence:
+`SAS_Output_builtin_macros_0tvIDS/` and
+`SAS_Output_library500_round6/builtin_after.log`. The expanded shared-classifier
+regression passed **52/52** checks. This is loading-decision verification, not
+a timing benchmark.
+
+During generation, my month-end calendar oracle used an incorrect month offset
+and eventually passed an out-of-range month to Perl's Time::Local. It was
+corrected to calculate the first day of the following month minus one for the
+intended interval. The original shared writer could already have written some
+new fixtures before such a late oracle exception.
+
+The shared builder now computes and validates all 500 oracles and fingerprints
+before replacing program files or the manifest. A six-check regression proves
+that a late oracle failure preserves prior fixture/manifest contents, writes no
+partial new program, and that a valid generation writes the complete corpus.
+This protects against generation/validation failures; it does not make filesystem
+writes atomic if an I/O error occurs during writing. The first version of that
+unit check used glob on a literal path; it was corrected to test file existence
+directly. Final generator prevalidation regression: **6/6 passed**.
+
+### Fixture failure: fixed-length padding and an anchored PRX pattern
+
+The first full live corpus verified **400/500 outcomes** under strict batching.
+The capture fixture stored text in a `$60` variable, then matched a pattern
+ending in `$` against the padded value. The pattern did not match, capture
+conversion produced missing values and ten case assertions failed. The other
+90 members of that 100-case batch were left unverified because the batch had
+errors; the remaining 350 positive cases and all 50 intended errors verified.
+
+The fixture now uses `STRIP(text)` consistently for the anchored match and both
+capture extractions. Its independent sum-of-two-captures oracle was unchanged.
+Those ten cases passed in isolation in `SAS_Output_library500_live_FodXjC/`.
+The old fixture run is retained in `SAS_Output_library500_live_QmVYSO/`.
+This was a fixture mistake, not an established MCP4SAS execution defect.
+
+### Infrastructure termination preserved and isolated
+
+The corrected complete run verified **499/500**. H2984 ended with CLI exit
+**74**, `failure_class=sas_oda_remote_session_termination`, and no definitive
+runtime SAS diagnostic. The existing CLI marked it non-retryable and preserved
+its status, log and marker file. The evaluation correctly refused to count this
+as the expected missing-CALCULATED-variable error.
+
+The server-side cause is **unconfirmed**; the evidence does not establish memory
+or WORK/quota exhaustion. H2984 uses one tiny WORK input table. It was manually
+isolated in a fresh session, reducing the footprint to that one case, and then
+returned ordinary exit **1** with the expected CALCULATED-variable ERROR. That
+isolated check passed. No automatic retry loop or remote-cause assumption was
+introduced.
+
+Main run: `SAS_Output_library500_live_fmsvBl/`. Isolated H2984 run:
+`SAS_Output_library500_live_MeHTWQ/`. The original exit-74 attempt and its
+non-retryable marker remain available; it was not rewritten as a success.
+
+This event prompted stricter evaluation: an expected program error must use
+the CLI's ordinary SAS error exit **1**. Reserved infrastructure exits 73/74,
+timeouts/signals and classified space/session failures cannot pass even when
+a partial log contains a matching program-error string. Four new regression
+checks cover these cases; the expected-failure evaluator now passes **19/19**.
+The real exit-74 event already failed under the old rule because its SAS error
+was absent; the new checks additionally guard matching partial logs and
+overridden exit codes.
+
+### Auditable collection without double-counting reruns
+
+`tools/collect_library_evaluation_results.pl` combines preserved run evidence.
+It checks each attempted body's current manifest hash, re-evaluates the actual
+SAS report, process exit and terminal JSON using the current rules, selects only
+verified attempts, and retains unsuccessful attempts separately. A failed rerun
+cannot replace a verified result; multiple attempts do not increase the count of
+distinct cases.
+
+The dated audit record therefore contains **500/500 distinct verified outcomes
+across two runs**: 499 from the corrected main run plus the isolated H2984
+verification. It preserves one unsuccessful infrastructure attempt. This is not
+a claim that the main full run passed 500/500.
+
+The collector was also given the old PRX-fixture run deliberately. It rejected
+H2601's mismatched body hash and preserved the previous output sentinel, proving
+that outdated program evidence cannot silently be substituted. The transcript
+is `SAS_Output_library500_round6/collector_mismatch.log`.
+
+### Final evidence and limitations
+
+- **500/500 distinct outcomes verified across the main and isolated runs**:
+  450 successful operations and 50 correctly reported SAS errors.
+- Full corrected run: 499 verified out of 500, including one exit-74 termination
+  preserved as unsuccessful. Fresh isolated H2984: **1/1 verified**.
+- The main run made 55 submissions; the final isolation added one submission.
+- Per-case audit, run provenance and failed-attempt history:
+  `tests/library500_round6/verified_results_2026-11-02.json` (schema 2).
+- Complete offline suite: **37 test files, 4,156 top-level checks passed**,
+  including 500 new subtests with seven checks each, 11 deferred-quote checks,
+  six generator checks and the strengthened error-evaluation checks.
+- Supplemental live checks: **6/6** DOSUBL local include, **6/6** CALL EXECUTE
+  local include, **4/4** default builtin/SYSCALL loading.
+- Standalone SAS macro-bootstrap sentinel diagnostic: **PASS**.
+- Development TAP and transcripts remain in ignored
+  `SAS_Output_library500_round6/` and its referenced run directories.
+
+These bounded synthetic checks do not validate every original library macro,
+plot, statistical inference, external dataset, platform option or concurrent
+session. The remote termination's underlying cause remains unresolved.
+
+### Cygwin commands
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round6.pl \
+  /cygdrive/h/F_Queens/360yunpan/SASCodesLibrary
+prove -v tests/test_library500_round6.pl \
+  tests/test_double_quoted_deferred_includes.pl tests/test_corpus_prevalidation.pl \
+  tests/test_expected_failure_evaluation.pl
+perl tests/run_live_library500.pl --live --round 6
+prove -v tests/test_live_include_abbreviation.pl :: --live --style dosubl
+prove -v tests/test_live_include_abbreviation.pl :: --live --style execute
+prove -v tests/test_live_builtin_macro_bootstrap.pl :: --live
+```
+
+Isolate a case and collect current, matching evidence:
+
+```bash
+perl tests/run_live_library500.pl --live --round 6 --only H2984 --batch-size 1
+perl tools/collect_library_evaluation_results.pl --round 6 \
+  --run SAS_Output_library500_live_fmsvBl \
+  --run SAS_Output_library500_live_MeHTWQ \
+  --output tests/library500_round6/verified_results_2026-11-02.json
+```
+
+The named directories are the preserved runs from this session; substitute new
+run directories when intentionally advancing the evidence. The collector does
+not resubmit SAS code or modify source-run files. `--expect-missing` on the live
+include test is only for reproducing the old defect. Use section 17's Bash loop
+for the complete offline suite. No Python evaluation scripts were introduced.
+
+## 23. Seventh 500-case round from SAS book samples (2026-11-02)
+
+### Source, scope and novelty
+
+This round reads the requested folder:
+
+```text
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS PDF\sas online samples
+```
+
+It contains 121 TXT files and one ZIP. The builder uses actual matching SAS code
+lines in TXT files; it does not execute URL-only files, download linked books or
+extract the ZIP. The original library remains unchanged. All generated data are
+synthetic; the submitted programs do not copy original book datasets or private
+analyses.
+
+The new corpus is `tests/library500_round7/B3001.sas` through `B3500.sas`:
+**500 runnable scenarios, 50 behavior families with ten input sizes each**,
+N=2 through 11. There are **450 expected successes and 50 intentional program
+errors**. These are parameterized scenarios, not 500 unrelated algorithms or
+independent account logins.
+
+The manifest records actual book title, filename, matching line, complete-source
+and evidence-line SHA-256, generated-body hash, independent Perl numerical oracle
+and tolerance. Eight book titles supplied matching code:
+
+| Book sample | Scenarios |
+| --- | ---: |
+| A Handbook of Statistical Analyses Using SAS, Second Edition | 100 |
+| Applied Statistics and the SAS Programming Language, Fourth Edition | 170 |
+| Categorical Data Analysis Using the SAS System | 40 |
+| Cody's Data Cleaning Techniques Using SAS Software | 50 |
+| Combining and Modifying SAS Data Sets Examples, Version 6, First Edition | 70 |
+| Getting Started with the SQL Procedure, Version 6, First Edition | 40 |
+| SAS Macro Programming Made Easy, Second Edition | 10 |
+| SAS System for Mixed Models | 20 |
+
+The corpus README contains the ID-to-topic mapping. Coverage includes DATA step
+control flow, MERGE/UPDATE retention, SUMMARY/MEANS/FREQ, LOGISTIC, GENMOD, MIXED,
+TTEST ODS capture, correlations, ranks, TRANSPOSE metadata, DATASETS and SQL.
+The intentional failures exercise UNION type conflicts, missing UPDATE columns,
+character length limits, character-variable RANK and missing PRINT IDs.
+
+The offline novelty check compares these programs with all 3,000 earlier
+programs after normalizing generated case IDs and round-marker labels. All 500
+new normalized bodies differ. This prevents relabeling old programs from counting
+as new tests; it does not prove that differently written programs cannot be
+semantically equivalent. The six earlier corpora remain intact.
+
+### Failures investigated and corrections
+
+The initial live run in `SAS_Output_library500_live_WpwpUg` reported **290/500
+passed**. Its failures exposed three fixture problems:
+
+1. **B3211–B3220, binary LOGISTIC:** default convergence produced a probability
+   near 0.6666413814, while the analytically determined probability is 2/3.
+   The fixture now requests `GCONV=1e-12`; its 1e-6 numerical tolerance remains
+   unchanged. This corrects the estimation setup rather than fitting the oracle
+   to the observed approximation. See the official
+   [LOGISTIC MODEL options](https://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/statug_logistic_sect010.htm).
+2. **B3311–B3320, two-group TTEST:** filtering only on the difference label kept
+   both pooled and Satterthwaite rows, violating the one-row assertion. The fixture
+   now explicitly selects `upcase(method)='POOLED'`. The numerical difference
+   remains -10. SAS documents the two methods in
+   [Comparing Group Means](https://support.sas.com/documentation/cdl/en/statug/63962/HTML/default/statug_ttest_a0000000116.htm).
+3. **B3461–B3470, expected SQL UPDATE errors:** the initial diagnostic matcher
+   expected “not found”, “does not exist” or “not located”, while the actual SAS
+   ERROR says `Variable ... is not on file ...`. The final matcher specifically
+   recognizes that wording. The negative programs themselves are unchanged.
+
+The first two faulty families contaminated their respective 100-case positive
+batches: the evaluator requires a clean batch log and consistent successful
+terminal status, so it did not count neighboring markers as passes. Thus the
+initial 210 failed evaluations do not mean 210 independent SAS defects.
+The corrected B3211 and B3311 passed a focused two-case live probe in
+`SAS_Output_library500_live_zcwfmy` before the full positive rerun.
+
+These were test-fixture issues, and MCP4SAS correctly returned failed job status.
+No additional SAS execution defect was established by those three failures.
+
+### MCP4SAS evaluation improvements
+
+- Added the shared `MCPDeps/SAS_Evaluation_Corpus.pm` validator. Duplicate,
+  unknown or empty selected IDs, inconsistent manifest counts, invalid filenames,
+  missing oracles/diagnostics and stale generated-body hashes fail locally.
+- The live runner verifies every selected program before any submission and
+  uses that verified in-memory source snapshot. LF/CRLF inputs are accepted
+  without rewriting the bytes submitted to SAS.
+- The evidence collector checks current program hashes, the preserved submitted
+  batch source, actual SAS logs, process exits and terminal JSON. Changed source
+  cannot inherit an old pass solely from metadata containing the expected hash.
+- Novelty fingerprints ignore generated case and round labels across corpora.
+- Extended the Perl corpus builder to read book TXT sources, prefer relevant
+  book titles, record book provenance and support explicit numerical tolerances.
+  Existing SAS-source builders retain their defaults. All oracles and generated
+  fingerprints are prevalidated before replacing fixtures.
+
+Numerical modeling checks use relative tolerance 1e-6 for LOGISTIC/GENMOD/MIXED;
+other checks use 1e-9. Positive cases still require exactly one row and one
+expected runtime marker, no actual SAS ERROR, exit zero and completed successful
+metadata. Negatives require the matching actual SAS ERROR, ordinary exit 1,
+no success marker and completed failed metadata. Connection failures, timeout,
+session termination and disk-space classifications cannot stand in for expected
+program errors.
+
+Programs only use their own WORK prefixes and clean those tables. Expected SAS
+errors may leave their own WORK state for inspection. Existing helper cleanup
+and explicit retention options remain in force. No original datasets, book files
+or user directories are deleted.
+
+### Cygwin commands and evidence
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round7.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove -v tests/test_library500_round7.pl tests/test_evaluation_corpus_integrity.pl
+perl tests/run_live_library500.pl --live --round 7
+perl tests/run_live_library500.pl --live --round 7 --only B3211,B3311
+```
+
+The default runner uses five positive batches and 50 isolated negative jobs,
+with a 180-second timeout per submission. The complete offline suite passed
+**4,686 top-level checks across 39 files**, including 500 new corpus subtests
+with seven checks each and 25 integrity checks. Its ignored transcript is
+`SAS_Output_library500/regressions.log`. Use section 17's Bash loop to reproduce
+the complete offline suite. Development transcripts for this round are under
+`SAS_Output_library500_round7/`.
+
+The full rerun `SAS_Output_library500_live_bFfUyW` reported **490/500** with
+all 450 positive cases and 40 negative cases passing. That process had loaded
+the old UPDATE diagnostic matcher before it was corrected. A fresh run of all
+ten affected negative cases in `SAS_Output_library500_live_Qh8jnO` then passed
+**10/10** with the corrected matcher. These results supply all 500 distinct
+outcomes; this is evidence from two runs, not a clean 500/500 single invocation.
+
+Independent collection verified **500/500 distinct cases** against current
+source hashes and submitted batch sources: **450 successful programs and 50
+expected program failures**. The dated JSON contains 500 unique IDs; all ten
+UPDATE cases select the fresh rerun. No infrastructure failure was substituted
+for an expected program error.
+
+Collect and independently revalidate the preserved evidence:
+
+```bash
+perl tests/run_live_library500.pl --live --round 7 \
+  --only B3461,B3462,B3463,B3464,B3465,B3466,B3467,B3468,B3469,B3470
+perl tools/collect_library_evaluation_results.pl --round 7 \
+  --run SAS_Output_library500_live_bFfUyW \
+  --run SAS_Output_library500_live_Qh8jnO \
+  --output tests/library500_round7/verified_results_2026-11-02.json
+```
+
+The collector applies the current reviewed manifest diagnostics to the original
+logs. Its `recorded_passed` and `recorded_failures` fields preserve the original
+runner verdicts separately from revalidation; the ten UPDATE cases use the fresh
+run as their selected evidence. It does not overwrite either source run or count
+repeated attempts as additional distinct cases. Initial development runs with
+different executable-body hashes are not combined with final fixtures.
+
+Additional local failure probes confirmed that `--only B3001,B3001` is rejected
+before submission, and that a deliberately edited copy of a preserved batch is
+rejected with `Submitted source mismatch` before an evidence file is written.
+Their transcripts are `duplicate_selection.log` and `submission_integrity.log`
+in the ignored round-seven development folder. Normal default cleanup left no
+`.mcp4sas_work_*` directories after the live jobs finished.
+
+These bounded synthetic checks do not validate every original book analysis,
+macro library, statistical inference, external dataset or concurrent session.
+No Python evaluation scripts were introduced.
+
+## 24. Eighth 500-case round: further SAS book operations (2026-11-02)
+
+### Scope, sources and novelty
+
+This adds `tests/library500_round8/J3501.sas` through `J4000.sas`, generated by
+`tools/build_library500_round8.pl` from the same requested book sample directory:
+
+```text
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS PDF\sas online samples
+```
+
+There are **500 runnable scenarios across 50 new behavior families**, ten input
+sizes each (N=2 through 11): **450 positive cases and 50 intentional SAS program
+errors**. These are parameterized scenarios, not 500 unrelated algorithms or
+fresh logins. All data are synthetic. No original book datasets or private
+analyses are submitted; the TXT sources remain unchanged, and book download
+links and the ZIP are not required.
+
+The manifest records actual book title, filename/line, source and evidence-line
+SHA-256, generated-body SHA-256, independent Perl numerical oracle and tolerance.
+Its ten actual source titles and counts are listed in the corpus README. They
+include *Applied Multivariate Statistics with SAS Software*, *PROC TABULATE by
+Example*, *The Power of PROC FORMAT*, and programming/statistics/SQL books.
+
+The new coverage includes:
+
+- PRINCOMP covariance trace, eigenvalues, eigenvector normalization and score
+  energy; TABULATE output; STANDARD missing values and selected variables.
+- ANOVA model/error sums of squares; quadratic and no-intercept regression,
+  R-square, GLM interactions, and one-/two-way FREQ chi-square.
+- Nonunit multidimensional array bounds, temporary shift registers, VNAME and
+  WHICHN; empty/bottom-tested loops and dependent nested bounds.
+- Name literals with option restoration, NOTSORTED/descending BY behavior,
+  INDSNAME, dataset KEEP/RENAME/WHERE ordering and labels containing semicolons.
+- SQL INTO, three-way joins, UNION CORR, INTERSECT/EXCEPT ALL, scalar subqueries,
+  HAVING, preloaded formatted classes and multilabel membership.
+- BLOM/TUKEY/van der Waerden normal scores and COMPARE difference output.
+- Intentional multiple-row scalar subqueries, missing SORT keys, character
+  analysis variables in SUMMARY/PRINCOMP and reversed FORMAT ranges.
+
+The offline novelty check compares all 500 normalized executable bodies against
+all **3,500 earlier programs**, ignoring generated case IDs and round-marker
+labels. All new bodies differ. This prevents simple renaming from counting as
+novelty, without claiming to decide every possible semantic equivalence. Earlier
+corpora and their dated verified evidence remain unchanged.
+
+### Failures encountered and fixture corrections
+
+The initial pilot submitted one case per family: 45 positive cases in one batch
+and five isolated expected failures. In
+`SAS_Output_library500_live_bgFzgf`, the five negative checks passed, while two
+positive fixture issues invalidated the complete positive batch:
+
+1. **J3881–J3890, preloaded formatted groups:** the fixture deleted its owned
+   format catalog entry before the generated assertion opened its result table.
+   The result table still attached that format to `grp`, so SAS reported that
+   the format could not be loaded. The fixture now clears the inherited `grp`
+   format on its result table before removing the owned catalog entry. Its
+   expected empty-group frequency remains zero; cleanup stays enabled.
+2. **J3901–J3910, one-way chi-square:** the fixture filtered ODS `Name1='PCHI'`,
+   producing zero rows. The actual identifier is `_PCHI_`. The filter now uses
+   that identifier and retains the independently expected chi-square value zero.
+   SAS identifies the output table in its
+   [FREQ ODS documentation](https://support.sas.com/documentation/onlinedoc/stat/132/freq.pdf),
+   and the `_PCHI_` field is illustrated in this
+   [SAS proceedings example](https://support.sas.com/resources/papers/proceedings13/181-2013.pdf).
+
+The other 43 positive pilot programs emitted their expected markers, but the
+evaluator correctly declined to count a positive batch containing actual SAS
+errors and failed terminal status. Therefore **5/50** in that pilot does not
+mean 45 separate defects. Both corrected representative cases then passed a
+focused **2/2** run in `SAS_Output_library500_live_xtKCD2`.
+
+These were fixture errors; no SAS execution-engine defect was established by
+them. The final run uses corrected executable bodies, so the initial pilot is
+preserved for diagnosis rather than mixed into final passing evidence.
+
+The principal-component expectations follow covariance/eigenvalue identities
+and sign-independent squared scores. See the official
+[PRINCOMP output datasets](https://support.sas.com/documentation/cdl/en/statug/68162/HTML/default/statug_princomp_details02.htm).
+The three normal-score checks use symmetry of the documented
+[BLOM, TUKEY and VW transformations](https://support.sas.com/documentation/cdl/en/proc/65145/HTML/default/p16s2o8e4bnqrin1phywxdaxqba7.htm).
+These tests check numerical transport and bounded behavior rather than asserting
+the validity of statistical inference for the synthetic datasets.
+
+### MCP4SAS evaluation improvements
+
+The previous round exposed a provenance gap: a manifest diagnostic could change
+while the executable SAS body stayed unchanged. Revalidating an old log with the
+new matcher was disclosed in that round's report, but a body hash alone could
+not establish which evaluation rules the running process had loaded.
+
+This round adds an **evaluation-contract SHA-256** covering the numerical oracle,
+tolerance, expected-error diagnostic and positive/negative classification.
+The live runner records the fingerprint from its in-memory case metadata in
+each result. The collector requires it for round eight and later and rejects
+mismatches before accepting evidence. Changing an oracle, widening a matcher or
+changing the tolerance requires a fresh run even if the SAS body is identical.
+Round-one through round-seven evidence remains compatible and is explicitly
+marked as lacking contract verification when collected with the new code.
+
+The collector also groups cases once and caches validated terminal status and
+log evaluations for each batch/evaluation rule. This avoids rereading and
+reparsing the same positive batch for every individual case while preserving
+source, source-hash, contract, exit, marker and status checks.
+
+Regression coverage added:
+
+- `tests/test_evaluation_contract.pl`: **18 checks** for unchanged contracts,
+  modified oracles/tolerances/diagnostics/classifications, legacy evidence,
+  malformed hashes and widened negative matchers.
+- `tests/test_evaluation_collection.pl`: **12 checks** using explicitly synthetic
+  logs to test partial same-batch collection and rejection of changed/missing
+  contracts and edited submitted source. These synthetic logs are test fixtures,
+  not live SAS evidence and do not enter the dated verified-results file.
+- `tests/test_library500_round8.pl`: **500 subtests with seven checks each**,
+  plus corpus/family/source totals and normalized novelty against earlier rounds.
+- Corpus integrity compatibility now includes all eight generated round formats.
+
+Positive checks require exactly one result row, the independent numerical answer,
+one runtime marker, no actual SAS ERROR, exit zero and successful complete
+terminal JSON. Negative checks require ordinary program-error exit 1, the actual
+expected SAS ERROR, no success marker and consistent failed terminal JSON.
+Infrastructure errors, timeout and session termination cannot pass as intended
+program failures. Tolerances are recorded per case: 1e-6 for modeling and normal
+scores, 1e-9 otherwise.
+
+### Reproducible Cygwin commands
+
+From the MCP4SAS checkout:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round8.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove -v tests/test_library500_round8.pl tests/test_evaluation_contract.pl \
+  tests/test_evaluation_collection.pl tests/test_evaluation_corpus_integrity.pl
+perl tests/run_live_library500.pl --live --round 8
+```
+
+The pilot and focused reproductions can be repeated with:
+
+```bash
+probe_ids=$(perl -e 'print join q{,}, map {q{J}.(3501+10*$_)} 0..49')
+perl tests/run_live_library500.pl --live --round 8 --only "$probe_ids"
+perl tests/run_live_library500.pl --live --round 8 --only J3881,J3901
+```
+
+Those commands now use the corrected fixtures; the preserved initial pilot
+contains the original failure. A normal full run uses five positive batches and
+50 isolated negative submissions (55 jobs), with a 180-second CLI timeout per
+job. Runs use a persistent session and uniquely prefixed WORK resources rather
+than opening 500 account logins.
+
+### Final evidence
+
+The full corrected live run in `SAS_Output_library500_live_oymzPc` finished
+**500/500 passed in one invocation**: **450 successful SAS programs and 50
+correctly identified intentional SAS program failures**. Each negative SAS job
+still failed by design; a passing evaluation does not relabel it as SAS success.
+
+Collect the preserved run without resubmitting SAS code:
+
+```bash
+perl tools/collect_library_evaluation_results.pl --round 8 \
+  --run SAS_Output_library500_live_oymzPc \
+  --output tests/library500_round8/verified_results_2026-11-02.json
+```
+
+The collector independently checks source files, submitted batch source,
+evaluation contracts, SAS runtime logs, process exits and terminal JSON. Raw
+programs, logs and statuses remain in the ignored live directory; development
+transcripts are under `SAS_Output_library500_round8/`. Use section 17's Bash loop
+to reproduce the complete offline regression suite.
+
+Final independent collection verified **500 unique IDs and 500 evaluation
+contracts**, with zero failed or contradicted final-run attempts. A separate
+read-only audit verified all **500 source/line provenance records against the
+ten original book files**; its transcript is `provenance.log` in the development
+folder.
+
+The complete final offline suite passed **5,222 top-level checks across 42
+files**, including the new collector regression test. Its transcript is
+`SAS_Output_library500/regressions.log`. `git diff --check` found no whitespace
+errors; Git only reported the checkout's existing LF-to-CRLF normalization notice
+for this report. Changes and verified evidence are saved locally.
+
+Cases remove their own WORK tables, format entries and macro variables. Options
+changed by successful name-literal cases are restored. Existing explicit helper
+retention settings remain honored; default cleanup left no `.mcp4sas_work_*`
+directories after live jobs finished. Original book files and user datasets are
+unchanged. No Python evaluation scripts were introduced.
+
+## 25. Fifty distinct open-code macro evaluations (2026-11-02)
+
+### Sources and scope
+
+The requested focused round adds **50 distinct examples**, `M4001.sas` through
+`M4050.sas`, under `tests/macro_open_code50/`. They are individually designed
+macro-boundary tests, rather than repeated input sizes. Their normalized bodies
+differ from all **4,000 earlier programs**.
+
+The builder reads the requested source directory without modifying it:
+
+```text
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS PDF\sas online samples
+```
+
+Forty-nine source anchors are in *Carpenter's Complete Guide to the SAS Macro
+Language, Second Edition* and one in *SAS Macro Programming Made Easy, Second
+Edition*. Titles, paths, line numbers and source/evidence SHA-256 are recorded.
+Three `derived_extension` entries explicitly anchor modern boundary experiments
+to actual macro definitions instead of claiming the exact newer statement occurs
+in the older book. All submitted datasets and names are synthetic.
+
+The corpus README maps every ID range to its examples. The mix is:
+
+- 25 clean examples of supported conditional groups, correctly wrapped loops,
+  scope/RETURN/GOTO, quoting/comments, raw data, EVAL/SYSEVALF, delimiters,
+  indirect references and SYMPUTX timing.
+- 20 intentional SAS errors covering invalid open-code statements, recursion,
+  integer-expression errors, missing functions and parameter/argument problems.
+- Five actual macro-warning cases. Four complete successfully; unresolved macro
+  invocation intentionally fails the MCP wrapper under its existing strict policy.
+
+Thus final wrapper outcomes are **29 successes, 20 SAS-error failures and one
+policy failure**. A passed evaluation verifies the expected behavior; it does
+not relabel an intentionally failed job as a successful SAS program.
+
+### Detection gaps and MCP4SAS changes
+
+The preserved old preflight scanner flagged only **3/50 examples**: open-code
+GOTO, RETURN and orphan MEND. It did not flag the other structural cases.
+The new shared `SAS_Source_Analysis::open_code_macro_issues` now identifies
+**14/50 structural problems**, adding 11 protected cases:
+
+| Cases | New protection |
+| --- | --- |
+| M4026 | LOCAL outside a macro definition |
+| M4027–M4030 | Indexed, WHILE, UNTIL and standalone DO outside a macro |
+| M4031–M4033 | Orphan END, ELSE and THEN |
+| M4034 | Nested IF in open code |
+| M4035 | Open IF without the required DO action |
+| M4036 | Missing LET terminator before another macro statement, causing recursion |
+
+Both public helper aliases use the same analyzer. It preserves source line
+numbers and respects comments, quoted text, macro quoting, inline data and macro
+definition scope. All **30 positive/warning examples remain statically unblocked**.
+Six expression/parameter failures still require actual SAS evaluation; the
+analyzer is not a full macro interpreter.
+
+Supported top-level IF/THEN/ELSE DO groups are retained, rather than rejecting
+every open-code IF. They require SAS 9.4M5 or later; nested open-code IF and macro
+loops need macro definitions. These restrictions are described in the official
+[SAS macro reference](https://documentation.sas.com/api/docsets/mcrolref/9.4/content/mcrolref.pdf)
+and SAS's [open-code conditional explanation](https://blogs.sas.com/content/sasdummy/2018/07/05/if-then-else-sas-programs/).
+
+`SAS_Log_Diagnostics` now returns structured macro categories, original severity
+and practical hints, which the existing MCP job reporting path displays. It
+distinguishes open-code control/recursion, unresolved variables/invocations,
+recursive references, missing symbols and expression/argument problems. Runtime
+ERROR/WARNING lines are required; source echoes and submitted text cannot create
+diagnostics. Missing-semicolon recursion is documented in
+[Troubleshooting Your Macros](https://support.sas.com/documentation/cdl/en/mcrolref/62978/HTML/default/n1rvuiao0okk6cn1afs9ckt2unh9.htm).
+
+The new tests also exposed an evaluation gap: the real wrapper reports some
+timeouts with **exit 1** and a failed terminal message, rather than a distinct
+timeout exit. The evaluator now rejects terminal timeout states, classes or
+“timed out” messages even when a partial log contains a matching expected ERROR.
+It also requires actual WARNING lines for warning-specific oracles. Warning and
+policy requirements are included in the evaluation contract; earlier round-eight
+contract fingerprints remain compatible.
+
+### Actual failures and reviewed corrections
+
+The initial diagnostic run, `SAS_Output_library500_live_929bKH`, reported
+**46/50 passed**. The four unsuccessful evaluations were investigated:
+
+1. **M4017, literal macro-looking records:** the original fixture used DATALINES
+   for text containing semicolons. SAS ended the data context and reported the
+   embedded LOCAL/GOTO/RETURN statements as open code. Switching to DATALINES4
+   with a `;;;;` terminator preserved the intended literal record; the fresh
+   run `SAS_Output_library500_live_SLzFMj` passed **1/1**. The static raw-data
+   masking was retained; the fixture's delimiter choice was corrected.
+2. **M4035, IF without DO:** the original raw submit waited until its configured
+   **120-second timeout**, and the wrapper terminated that submit process tree.
+   This timeout did not count as an expected SAS-error pass. The new normal
+   preflight rejects the case before submission. For a bounded diagnostic fixture,
+   an explicit closing END was added; SAS then returned `Expected %DO not found`
+   and `Skipping to next %END statement`. After reviewing the exact diagnostic,
+   the fresh run `SAS_Output_library500_live_lENbeZ` passed **1/1**. An earlier
+   bounded reproduction with an overly narrow matcher remains preserved in
+   `SAS_Output_library500_live__jDg2j`.
+3. **M4043, duplicate parameters:** SAS says `Attempt to define more than one
+   parameter with same name`. The original expected-message regex did not match
+   that ordering. The reviewed matcher now uses that specific phrase; the SAS
+   program and expected failure remain unchanged.
+4. **M4047, unresolved invocation inside PUT:** SAS logged a WARNING, no ERROR,
+   and emitted the expected numeric assertion marker. MCP4SAS already treats
+   unresolved macro invocations as fatal to the job, even when embedded in PUT.
+   This existing protection was preserved. The evaluation now explicitly checks
+   a **policy failure**: actual warning, no SAS ERROR, the numeric marker, wrapper
+   exit 1 and complete failed metadata. It is not described as a SAS fatal error.
+
+The last two cases passed **2/2** in fresh isolated connections in
+`SAS_Output_library500_live_URkMwa`. Fresh evidence was required whenever source
+or evaluation rules changed.
+
+Each raw diagnostic case uses a **fresh one-shot connection**, a 120-second
+timeout and owned WORK resources. No invalid macro parser state is reused in a
+subsequent test or a user's persistent session. The test runner's explicit
+`--raw` option disables static preflight solely to measure SAS diagnostics;
+ordinary user commands keep preflight enabled.
+
+### Commands, acceptance checks and evidence
+
+From the MCP4SAS checkout in Cygwin:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_macro_open_code50.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove -v tests/test_macro_open_code50.pl tests/test_open_code_macro_diagnostics.pl
+perl tests/run_live_macro_open_code50.pl --live --raw
+perl tests/test_live_open_code_preflight.pl --live
+```
+
+Focused reproductions:
+
+```bash
+perl tests/run_live_macro_open_code50.pl --live --raw --only M4017
+perl tests/run_live_macro_open_code50.pl --live --raw --only M4035
+perl tests/run_live_macro_open_code50.pl --live --raw --only M4043,M4047
+```
+
+With normal preflight enabled, `test_live_open_code_preflight.pl` passed **30/30
+checks** across both helper aliases for LOCAL, indexed DO, nested IF, missing DO
+and missing-semicolon recursion. It verified exit 1, a message stating that SAS
+submission was skipped, and complete failed terminal JSON. These are preflight
+acceptance checks, separate from the 50 raw diagnostic evaluations.
+
+Independent collection verified **50/50 distinct final outcomes**, including
+all 50 evaluation contracts and all five required actual warnings, across four
+runs. This is not a clean 50/50 single invocation:
+
+```bash
+perl tools/collect_library_evaluation_results.pl --round 9 --skip-stale \
+  --run SAS_Output_library500_live_929bKH \
+  --run SAS_Output_library500_live_SLzFMj \
+  --run SAS_Output_library500_live_lENbeZ \
+  --run SAS_Output_library500_live_URkMwa \
+  --output tests/macro_open_code50/verified_results_2026-11-02.json
+```
+
+The collector's explicit `--skip-stale` option excludes the entire batch when
+source or contract changes. Four original attempts, including the timeout, are
+preserved in `stale_attempts` with their original verdicts, exit/status messages
+and old/current hashes. They contribute no passing evidence. Without this
+option, mismatches still fail collection. Regressions verify that excluding a
+stale batch cannot promote either case in that batch to a pass.
+
+Accepted evidence still requires matching current source and submitted source,
+contract, actual runtime log, exit and terminal status. Development transcripts,
+the old preflight snapshot and focused TAP logs are in ignored
+`SAS_Output_macro_open_code50/`; full SAS logs remain in the named run folders.
+Use section 17's Bash loop for the complete offline suite.
+
+The complete final offline suite passed **5,307 top-level checks across 44
+files**; its transcript is `SAS_Output_library500/regressions.log`. A separate
+read-only audit matched all **50 source/line provenance records** to the two
+original book files (`SAS_Output_macro_open_code50/provenance.log`).
+
+Default cleanup left no `.mcp4sas_work_*` directories after the live checks.
+Existing explicit retention preferences remain honored. Original books, user
+datasets and persistent SAS sessions were not changed. No Python evaluation
+scripts were introduced.

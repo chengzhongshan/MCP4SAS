@@ -1,0 +1,6 @@
+/* L108: log10 boundary 7; source: SAS-Useful-Codes/Easy-For-Error-Codes-SAS/calculate binomial P.sas:22 */
+data _null_;
+actual=log10(10000000);
+if not missing(actual) and abs(actual-(7)) <= 1e-11*max(1,abs(7)) then put 'LIB500_PASS=L108';
+else put 'ERROR: LIB500_FAIL=L108 actual=' actual;
+run;

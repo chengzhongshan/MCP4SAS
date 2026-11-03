@@ -1810,13 +1810,12 @@ sub run_runner_submit_with_timeout {
 sub sas_submission_contains_include {
     my ($text) = @_;
     return 0 unless defined $text && length $text;
-    return SAS_Source_Analysis::macro_dependency_view($text) =~ /%include\b/i ? 1 : 0;
+    return SAS_Source_Analysis::macro_dependency_view($text) =~ /%inc(?:lude)?\b/i ? 1 : 0;
 }
 
 sub is_builtin_macro_name {
     my ($name) = @_;
-    return 1 unless defined $name && length $name;
-    return $name =~ /^(?:let|put|do|to|by|while|until|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|sysget|symexist|sysmacexist|scan|substr|upcase|lowcase|length|eval|sysevalf|quote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include)$/i ? 1 : 0;
+    return SAS_Source_Analysis::is_builtin_macro_name($name);
 }
 
 sub sas_submission_uses_nonbuiltin_macro {
@@ -1946,47 +1945,8 @@ sub sanitize_sas_text_for_macro_lint {
 
 sub scan_sas_text_for_open_code_macro_control {
     my ($text) = @_;
-    my $masked = sanitize_sas_text_for_macro_lint($text);
-    my @lines = split /\n/, ($masked // ''), -1;
-    my @findings;
-    my $macro_depth = 0;
-    # SAS statements are separated by semicolons, not by physical lines.
-    # Track every control token in source order, including inline definitions.
-    while ($masked =~ /%(macro|mend|goto|return)\b/ig) {
-        my $stmt = lc($1);
-        my $token_start = $-[0];
-        my $token_end = $+[0];
-        next if substr($masked, $token_end) =~ /^\s*:/;
-        my $prefix = substr($masked, 0, $token_start);
-        my $line_no = 1 + ($prefix =~ tr/\n//);
-        if ($stmt eq 'macro') {
-            $macro_depth++;
-        } elsif ($stmt eq 'mend') {
-            if ($macro_depth > 0) {
-                $macro_depth--;
-            } else {
-                push @findings, {
-                    type => 'open_code_mend', line => $line_no,
-                    message => 'Macro end statement %mend appears outside a %macro/%mend block',
-                    context_ref => [($line_no - 2) .. ($line_no + 2)],
-                };
-            }
-        } elsif ($macro_depth == 0) {
-            push @findings, {
-                type => 'open_code_macro_control', line => $line_no,
-                message => "Macro control statement %$stmt appears in open SAS code outside a %macro/%mend block",
-                context_ref => [($line_no - 2) .. ($line_no + 2)],
-            };
-        }
-    }
-    if ($macro_depth > 0) {
-        push @findings, {
-            type => 'unclosed_macro_definition', line => scalar(@lines) || 1,
-            message => 'A %macro block appears to be missing its matching %mend',
-            context_ref => [((scalar(@lines) || 1) - 4) .. (scalar(@lines) || 1)],
-        };
-    }
-    return {lines => \@lines, findings => \@findings};
+    my @lines = split /\n/, SAS_Source_Analysis::mask_noncode($text), -1;
+    return {lines => \@lines, findings => SAS_Source_Analysis::open_code_macro_issues($text)};
 }
 
 sub _count_newlines {
@@ -2473,7 +2433,7 @@ sub build_include_debug_wrapper {
     my (%args) = @_;
     my $sas_code = $args{sas_code} // '';
     my $wrapped_body = $sas_code;
-    $wrapped_body =~ s{(%include\b\s+(?:"[^"]+"|'[^']+'))(\s*)(?=\n|$)}{$1;$2}ig;
+    $wrapped_body =~ s{(%inc(?:lude)?\b\s+(?:"[^"]+"|'[^']+'))(\s*)(?=\n|$)}{$1;$2}ig;
     my $remote_log_path = $args{remote_log_path} // '/home/include_debug.log';
     my $local_log_path = $args{local_log_path} // File::Spec->catfile(getcwd(), 'include_debug_remote.log');
     my $output_dir = $args{output_dir} // dirname($local_log_path);
@@ -3499,7 +3459,7 @@ if (!$no_html and (($execution_code && $execution_code!~/^\s*$/) || $execution_f
         print "\nSAS job is completed!\n\nif using AI agent gemini CLI, please press the keyboard 'ESCAPE' key to exit and type 'Check results' !\n";
     } else {
         print "SAS log for debug saved to: $html_file\n";
-        print "\nSAS job finished without a downloadable HTML artifact. Check the SAS log above for connection or rendering failures.\n";
+        print "\nSAS job completed without a downloadable HTML artifact. Programs that only calculate values or write to the SAS log may produce no HTML. See the SAS log above for results.\n";
     }
 
 }

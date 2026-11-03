@@ -1,0 +1,11 @@
+/* J3912 rank_normal_blom_symmetry, N=3; source: A Handbook of Statistical Analyses Using SAS, Second Edition.txt:1822 */
+
+data j3912a; do x=1 to 3+2; output; end; run;
+proc rank data=j3912a out=j3912b normal=blom; var x; ranks score; run;
+proc sql; create table j3912o as select sum(score) as actual from j3912b; quit;
+
+data _null_; if 0 then set j3912o nobs=rows;
+if rows ne 1 then put 'ERROR: ROUND8_ROWS=J3912 rows=' rows;
+else do; set j3912o; if not missing(actual) and abs(actual-(0))<=1e-6*max(1,abs(0)) then put 'ROUND8_PASS=J3912';
+else put 'ERROR: ROUND8_FAIL=J3912 actual=' actual; end; stop; run;
+proc datasets library=work nolist; delete j3912:; quit;
