@@ -55,9 +55,14 @@ run_case() {
 unset MCP4SAS_CPAN_MIRROR
 unset MCP4SAS_TEST_INSTALL_EXIT
 run_case CYGWIN_NT-10.0
+assert test "${args[7]}" = --no-lwp
+assert test "${args[8]}" = --no-wget
+assert test "${args[9]}" = --curl
+assert test "${args[10]}" = --verbose
 assert test "$CPANM" = "$MCP4SAS_ROOT/local/cpanm"
 assert grep -qx https://cpanmin.us "$MCP4SAS_TEST_CURL_LOG"
 run_case Linux
+assert test "${#args[@]}" = 7
 assert test "$CPANM" = "$fixture/bin/cpanm"
 export MCP4SAS_CPAN_MIRROR='https://cpan.example.invalid/custom/'
 run_case Linux

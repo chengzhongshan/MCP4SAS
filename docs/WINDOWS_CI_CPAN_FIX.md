@@ -17,7 +17,14 @@ index directly, avoiding default MetaDB lookup and HTTP fallback. See the
 `MCP4SAS_CPAN_MIRROR` can select another mirror explicitly. Cygwin still
 bootstraps a Cygwin-native cpanm; the local Perl installation remains isolated.
 
-`tests/test_installer_perl_deps.sh` verifies 25 assertions without network access:
+The [first HTTPS-mirror rerun](https://github.com/chengzhongshan/MCP4SAS/actions/runs/41577457344)
+still could not create the downloaded index on the fresh Windows image. Cygwin
+now explicitly selects cpanm's curl backend (`--no-lwp --no-wget --curl`) rather
+than its earlier-choice downloaders. Curl successfully downloads the bootstrap
+on the same image. Verbose output records the selected backend and download
+errors; the precise earlier backend/network failure remains unproven.
+
+`tests/test_installer_perl_deps.sh` verifies 30 assertions without network access:
 Cygwin bootstrap, existing-cpanm reuse, the explicit default/custom mirror,
 paths containing spaces and dependency-install failure propagation. All
 installation jobs execute it before their real installer.
