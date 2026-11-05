@@ -4265,3 +4265,62 @@ available, so Linux execution is explicitly unverified.
 Final local regression results for this change: MCP4SAS 43 files / 5,198 checks;
 the companion runner 26 files / 944 checks, all passed. Native Windows path,
 home setup, CLI help and Linux factory checks also passed in a fresh process.
+
+## 29. Homepage connection examples exposed COM threading (2026-11-04)
+
+The homepage now describes ODA, local Linux STDIO, and local Windows IOM/COM,
+with connection checks, runnable Perl commands, saved-data examples, file
+transfers and persistent IOM/STDIO examples. The repository About description
+was updated to identify these targets.
+
+Running the supplied Windows COM profile through the actual CLI first passed
+connection validation but failed submission: `The application called an
+interface that was marshalled for a different thread.` The heartbeat worker
+had moved SASPy COM submission off the workspace's owning thread. COM submits
+now run on that original thread; IOM retains the background heartbeat worker.
+The outer CLI timeout still applies to COM one-shot submissions. Persistent
+Windows examples select winlocal IOM.
+
+The repaired homepage command used the supplied
+`install/sascfg_windows_local_com.py`, the native Windows Python and
+`--dir4local_sas_home`. It saved five SASHELP.CLASS observations as a permanent
+SAS dataset and produced HTML with zero ERROR/WARNING lines. Raw before/after
+logs are `homepage_windows.txt` and `homepage_windows_fixed.txt` in the parent
+workspace's `SAS_Output_windows_iom_sspi_20261104` directory.
+`tests/test_sas_com_threading.pl` executes the actual submit implementation
+with thread-sensitive fixtures: COM stays on its owner thread, IOM keeps its
+worker, and disabling heartbeat keeps synchronous behavior. All passed. Six
+new homepage Bash examples also passed `bash -n`.
+
+## 30. macroparas: unavailable default share and a misspelled procedure
+
+The real failing log `SAS_Output_RandID302495/output.html.info.txt` contained two
+independent errors: Windows 67 accessing an unavailable UNC macro-library share,
+and `ERROR: Procedure PRIN not found.` The macro had loaded and successfully
+read GTEx SAS sources from the H: drive. Its default `dir=` list also contained
+an unavailable network share, which caused the filesystem error. The configured
+local `~` directory was not the failing path. MCP4SAS correctly retained the HTML
+and log while reporting a failed SAS program.
+
+Corrected Cygwin command, after selecting the working native Windows Python and
+winlocal SASPy configuration:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl \
+  --codes '%macroparas(macrorgx=GTEx,dir=H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros); proc print data=Macro_paras; run;' \
+  --output-prefix SAS_Output_RandID_macroparas_local_fixed_20261104 \
+  --run-timeout-seconds 120
+```
+
+This exact command passed with zero SAS ERROR/WARNING lines and generated
+`SAS_Output_RandID_macroparas_local_fixed_20261104/sas_res_ZSX_4.html`.
+Passing the known local directory avoids scanning unrelated unavailable default
+shares; the source macro library was not changed. The before/after distinction
+is a macro parameter/procedure correction rather than a SAS connection failure.
+The terminal transcript is in the parent workspace's
+`SAS_Output_windows_iom_sspi_20261104/macroparas_fixed.txt`.
+
+Final regression checks after the COM fix passed: MCP4SAS 44 files / 5,199 checks,
+and the companion runner 27 files / 945 checks. The complete six-platform
+installation matrix and preflight passed on the home-directory port at commit
+863e55b, run 41969667167. The later COM/doc follow-up receives its own CI run.

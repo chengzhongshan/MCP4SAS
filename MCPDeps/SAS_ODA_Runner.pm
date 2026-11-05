@@ -389,7 +389,10 @@ def _print_submit_heartbeat(label, elapsed_seconds):
     })
 
 def _submit_with_heartbeat(sess, sas_code, label="SAS ODA job"):
-    if SUBMIT_HEARTBEAT_SECONDS <= 0:
+    # SASPy COM objects belong to the thread that created the workspace.
+    # Keep COM submits there; the outer CLI process timeout still applies.
+    uses_com = type(getattr(sess, '_io', None)).__module__.endswith('.sasiocom')
+    if SUBMIT_HEARTBEAT_SECONDS <= 0 or uses_com:
         return sess.submit(sas_code)
 
     holder = {}
