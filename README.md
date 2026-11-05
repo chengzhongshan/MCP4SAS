@@ -1,5 +1,10 @@
 # MCP4SAS
 
+Run SAS with AI agents through MCP, or from Perl/Bash: connect to **SAS OnDemand
+for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
+
+[Quick start](#quick-start) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
+
 <p align="center">
   <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
     <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
@@ -7,10 +12,144 @@
 </p>
 <p align="center"><sub>Click the workflow figure to open the full-resolution version.</sub></p>
 
-MCP4SAS is a small Model Context Protocol (MCP) server for running SAS code
-through SASPy. It can use SAS OnDemand for Academics (SAS ODA), local SAS on
-Linux, or local Windows SAS when those targets are configured in SASPy. It
-includes:
+## Supported SAS connections
+
+| SAS target | SASPy profile | Connection and prerequisites |
+| --- | --- | --- |
+| SAS ODA | `oda` | Online SAS account, network access, and Java IOM dependencies supplied by the installer. |
+| Local Linux SAS | `linuxlocal` | Installed, licensed Linux SAS; local STDIO through Linux Python and SASPy. |
+| Local Windows SAS | `winlocal` | Installed SAS 9.4; local Java IOM through native Windows Python and SASPy. |
+| Local Windows SAS, COM alternative | `winlocal_com` | Installed SAS 9.4; native Windows Python, SASPy and pywin32. |
+
+The same `run_sas_codes_or_files_in_ODA.pl` runner works with all targets;
+its historical filename does not limit it to ODA. Installers prepare MCP4SAS
+and its dependencies; local SAS itself must already be installed and licensed.
+
+## Quick start
+
+Run the [platform installer](#manual-installation) first, then use these commands
+from the MCP4SAS directory. Choose one target below in a fresh shell. The
+connection check submits `proc setinit;run;` before you run an analysis.
+An explicitly selected profile never silently falls back to another target.
+
+### SAS ODA
+
+Use the installer's Python/SASPy environment and your privately configured ODA
+account. The connection check offers credential setup when needed.
+
+```bash
+export SASPY_CFGNAME=oda
+export SAS_ODA_AUTOLOAD_MACROS=0
+perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'proc print data=sashelp.class(obs=5); run;' \
+  --output-prefix SAS_Output_RandID_oda_demo --run-timeout-seconds 120
+```
+
+See [First SAS ODA Login](#first-sas-oda-login) for account setup. Macro autoload
+is disabled in these SASHELP examples; enable it when using an online collection.
+
+### Local Linux SAS
+
+Use Linux Python with SASPy installed and replace the SAS executable path.
+The supplied profile connects through local STDIO.
+
+```bash
+export PIPELINE_PYTHON_BIN="$PWD/.venv-pipeline/bin/python"
+export SASPY_CFGFILE="$PWD/install/sascfg_linux_local.py"
+export SASPY_CFGNAME=linuxlocal
+export SASPY_LOCAL_SAS_PATH='/path/to/your/SASFoundation/9.4/sas'
+export SAS_ODA_AUTOLOAD_MACROS=0
+perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'libname saved "~"; data saved.class; set sashelp.class(obs=5); run; proc print data=saved.class; run;' \
+  --dir4local_sas_home "$PWD/local_sas_home" \
+  --output-prefix SAS_Output_RandID_linux_demo --run-timeout-seconds 120
+```
+
+Set `PIPELINE_PYTHON_BIN` to another Linux Python if needed, and set
+`SASPY_LOCAL_SAS_ENCODING` to match your SAS installation.
+
+### Local Windows SAS from Cygwin
+
+This example uses the supplied local COM profile. Native Windows Python needs
+SASPy and pywin32 installed. Replace the Python path if your installation differs.
+
+```bash
+export PIPELINE_PYTHON_BIN="$(cygpath -m "$USERPROFILE/anaconda3/python.exe")"
+export SASPY_CFGFILE="$(cygpath -m "$PWD/install/sascfg_windows_local_com.py")"
+export SASPY_CFGNAME=winlocal_com
+export SAS_ODA_AUTOLOAD_MACROS=0
+# If needed, install dependencies into this native Windows Python first:
+# "$PIPELINE_PYTHON_BIN" -m pip install saspy pywin32
+perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'libname saved "~"; data saved.class; set sashelp.class(obs=5); run; proc print data=saved.class; run;' \
+  --dir4local_sas_home ./local_sas_home \
+  --output-prefix SAS_Output_RandID_windows_demo --run-timeout-seconds 120
+```
+
+For Java IOM and persistent Windows sessions, select `winlocal` with your
+working local-only SASPy configuration. The shipped
+`install/sascfg_personal.template.py` includes that profile. See
+[Windows IOM/SSPI setup](docs/WINDOWS_LOCAL_IOM_SSPI.md) and
+[target configuration](#configure-saspy-target).
+
+### Files, saved data and persistent sessions
+
+For local Linux/Windows SAS, `--dir4local_sas_home DIR` maps `~` to DIR for file
+actions and quoted SAS paths. Its default is the HTML output directory. The
+local examples above save `class.sas7bdat` under `local_sas_home` and print its
+first five observations to HTML. With your selected local profile:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home ./local_sas_home \
+  --dir4listing '~'
+perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home ./local_sas_home \
+  --upload-file example.csv
+perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home ./local_sas_home \
+  --download-file '~/example.csv' --download-local-path ./example.downloaded.csv
+```
+
+Supply your own `example.csv`. For ODA, Linux STDIO or Windows `winlocal` IOM,
+reuse WORK data by supplying the same session ID on both submissions:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'data a; set sashelp.class(obs=5); run;' \
+  --persistent --session-id demo --run-timeout-seconds 120
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'proc print data=work.a; run;' \
+  --persistent --session-id demo --run-timeout-seconds 120
+```
+
+Keep the same explicit `--dir4local_sas_home` across local runs when output
+prefixes differ and you need the same saved-file location. WORK stays in the
+SAS session independently of this setting. The runner prints the HTML and SAS
+log paths; a DATA-only program may produce a log without HTML. See
+[local SAS home examples](docs/LOCAL_SAS_HOME.md) for details and file deletion.
+
+Windows IOM execution, persistent WORK reuse and local file operations were
+tested with SAS 9.4. Windows COM one-shot execution was also tested. Linux STDIO
+profile selection and error handling passed offline tests; live Linux SAS
+execution remains unverified because no local Linux SAS was available.
+Installation CI checks dependencies and synthetic examples without a SAS
+license or ODA login.
+
+For MCP clients, keep the same Python and SASPy configuration environment and
+start the server:
+
+```bash
+perl server.pl daemon -m production -l http://127.0.0.1:8080
+```
+
+Connect your MCP client to `http://127.0.0.1:8080/mcp`. For local file operations
+through the server, set `SAS_LOCAL_HOME_DIR` to your chosen absolute local SAS
+directory in the server environment.
+On Linux use the absolute Linux path; with Cygwin and native Windows Python,
+use `cygpath -am ./local_sas_home` to obtain its Windows path.
+
+## Included tools
 
 - `server.pl`: an HTTP MCP server exposing SASPy-backed SAS tools.
 - `run_sas_codes_or_files_in_ODA.pl`: a command-line SASPy runner. The file
@@ -190,8 +329,8 @@ MCP4SAS_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
 ```
 
 `MCP4SAS_LOCAL_SAS_PATH` must point to the local `sas` or `sas_u8` executable.
-This Ubuntu computer does not have local SAS installed, so the `linuxlocal`
-config is available but cannot connect until SAS is installed.
+Linux STDIO configuration is provided and tested offline. A live Linux SAS
+connection has not been verified because no local Linux SAS was available.
 
 Local Windows SAS through SASPy IOM:
 

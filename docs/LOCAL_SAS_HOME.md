@@ -99,3 +99,12 @@ live Linux SAS connection has not been verified.
 
 Windows evidence is in the parent development workspace:
 `SAS_Output_windows_iom_sspi_20261104/home_live.txt` and `home_delete_one.txt`.
+### Windows COM submissions
+
+COM workspaces belong to the thread that created them. One-shot COM submits
+therefore stay on their owning thread instead of using the heartbeat worker.
+The outer CLI `--run-timeout-seconds` still applies. Java IOM keeps its heartbeat
+worker. Use the tested `winlocal` IOM configuration for persistent Windows
+examples. A fresh real CLI COM test saved five permanent SASHELP.CLASS rows and
+produced HTML with zero SAS errors or warnings. The regression is
+`tests/test_sas_com_threading.pl`.
