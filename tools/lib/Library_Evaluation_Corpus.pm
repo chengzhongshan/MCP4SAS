@@ -25,6 +25,7 @@ sub write_corpus {
                 if ($text =~ $family->{pattern}) {
                     my $relative=File::Spec->abs2rel($path,$library); $relative=~s{\\}{/}g;
                     $family->{evidence}={path=>$relative,line=>$line,source_sha256=>sha256_hex($source),evidence_sha256=>sha256_hex($text)};
+                    $family->{evidence}{derived_extension}=JSON::PP::true if $family->{derived_extension};
                     if (($args{source_kind}//'') eq 'book_sample') {
                         (my $title=$relative)=~s{.*/}{}; $title=~s/\.txt$//i;
                         $family->{evidence}{book_title}=$title; $family->{evidence}{source_kind}='book_sample';

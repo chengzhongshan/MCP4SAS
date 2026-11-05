@@ -744,9 +744,12 @@ import sys
 import saspy
 
 def iter_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    if preferred:
+        yield preferred
+        return
     seen = set()
-    for name in (preferred, 'oda', 'default'):
+    for name in ('oda', 'default'):
         if not name or name in seen:
             continue
         seen.add(name)
@@ -791,7 +794,8 @@ PY
     close $fh;
 
     local $ENV{PYTHONPATH} = resolve_pythonpath() unless defined $ENV{PYTHONPATH} && length $ENV{PYTHONPATH};
-    my $cmd = join(' ', sh_quote($python_bin), sh_quote($script_path), '2>&1');
+    my $script_path_for_python = SAS_ODA_Runner::_normalize_local_path_for_python($script_path, $python_bin);
+    my $cmd = join(' ', sh_quote($python_bin), sh_quote($script_path_for_python), '2>&1');
     my $raw = qx{$cmd};
     my $status = $? >> 8;
     my $parsed;
@@ -811,6 +815,8 @@ PY
 }
 
 sub bootstrap_sas_oda_credentials_if_needed {
+    my $target = $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
+    return if lc($target) ne 'oda';
     return if $sas_oda_auth_bootstrap_done;
     return if env_truthy($skip_sas_oda_auth_bootstrap) || env_truthy($ENV{PIPELINE_SKIP_SAS_ODA_AUTH_BOOTSTRAP});
 
@@ -1094,6 +1100,43 @@ Examples:
     'run;' |
   $0 --code - --persistent --session-id mysession
 USAGE
+    print <<'LOCAL_WINDOWS_EXAMPLE';
+
+Local Windows SAS 9.4 from Cygwin (when SAS and native Windows SASPy are installed):
+  # Run from the MCP4SAS directory. Use your existing local-only winlocal config.
+  # Native Windows Python is required here; /usr/bin/python selects Cygwin Python.
+  export PIPELINE_PYTHON_BIN="$(cygpath -m "$USERPROFILE/anaconda3/python.exe")"
+  export SASPY_CFGFILE="$(cygpath -m "$USERPROFILE/sascfg_winlocal_sasjava.py")"
+  export SASPY_CFGNAME=winlocal
+  export SAS_ODA_AUTOLOAD_MACROS=0
+
+  # Check local IOM authentication:
+  perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+
+  # Execute SAS code and save HTML plus the SAS log:
+  perl run_sas_codes_or_files_in_ODA.pl \
+    --code 'proc print data=sashelp.class(obs=5); run; %put MCP4SAS_WINDOWS_PASS;' \
+    --output-prefix "SAS_Output_RandID_winlocal_$(date +%Y%m%d_%H%M%S)" \
+    --run-timeout-seconds 120
+
+  # Reuse WORK data in a persistent local session (keep the same environment):
+  perl run_sas_codes_or_files_in_ODA.pl \
+    --code 'data a; set sashelp.class(obs=5); run; proc print data=a; run;' \
+    --output-prefix "SAS_Output_RandID_winlocal_create_$(date +%Y%m%d_%H%M%S)" \
+    --run-timeout-seconds 120 --persistent --session-id mc1
+  perl run_sas_codes_or_files_in_ODA.pl --code 'proc print data=work.a; run;' \
+    --output-prefix "SAS_Output_RandID_winlocal_reuse_$(date +%Y%m%d_%H%M%S)" \
+    --run-timeout-seconds 120 --persistent --session-id mc1
+
+  # Or execute a local SAS program:
+  perl run_sas_codes_or_files_in_ODA.pl --file example.sas \
+    --output-prefix "SAS_Output_RandID_winlocal_file_$(date +%Y%m%d_%H%M%S)"
+
+  # Adjust Python/config paths for other installations. The winlocal profile
+  # must omit iomhost and remote credentials. Macro autoload is disabled for
+  # this SASHELP smoke test; load your local macros explicitly when needed.
+  # Loopback/SSPI troubleshooting: docs/WINDOWS_LOCAL_IOM_SSPI.md
+LOCAL_WINDOWS_EXAMPLE
     exit 0;
 }
 
@@ -1136,13 +1179,14 @@ MCP4SAS_Temp::initialize(keep => $keep_intermediate_files) unless $dry_run;
 bootstrap_sas_oda_credentials_if_needed();
 
 if ($check_sas_oda_login_only) {
+    my $cfgname = $saspy_cfgname || $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
     my $probe = validate_sas_oda_login_once('proc setinit');
     if ($probe->{ok}) {
-        print "SAS ODA login validation succeeded with proc setinit;run;\n";
+        print "SASPy target '$cfgname' connection validation succeeded with proc setinit;run;\n";
         exit 0;
     }
-    my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
-    die "SAS ODA login validation failed: $detail\n";
+    my $detail = $probe->{error} || $probe->{raw_output} || "unknown SASPy target '$cfgname' validation failure";
+    die "SASPy target '$cfgname' connection validation failed: $detail\n";
 }
 
 die "Error: Cannot provide both --code and --file\n" if $code && $file;

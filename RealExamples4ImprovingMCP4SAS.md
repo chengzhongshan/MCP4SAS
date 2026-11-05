@@ -3995,3 +3995,246 @@ Default cleanup left no `.mcp4sas_work_*` directories after the live checks.
 Existing explicit retention preferences remain honored. Original books, user
 datasets and persistent SAS sessions were not changed. No Python evaluation
 scripts were introduced.
+
+## 26. Resumed Windows installation, GTEx recovery and 500 new book cases (2026-11-03)
+
+### Windows workflow: confirmed fix
+
+The original failure was not a SAS macro failure. The Windows installation job
+could not fetch CPAN's index to install `Mojolicious`. The first explicit HTTPS
+mirror change still failed on that image. Selecting cpanm's curl downloader
+explicitly on Cygwin resolved the Windows failure. The follow-up run exposed
+macOS Bash 3's nounset behavior for an empty options array; a nonempty argument
+array fixes that compatibility issue.
+
+The [verification workflow for 14e1adc](https://github.com/chengzhongshan/MCP4SAS/actions/runs/41607017139)
+passed **all five installation jobs**: Windows/Cygwin, Ubuntu, both macOS
+architectures and Conda. The fixes are published on `main`. Thirty installer
+regression assertions cover backend selection, defaults/overrides, quoting,
+platform behavior and failure propagation. Detailed history is in
+`docs/WINDOWS_CI_CPAN_FIX.md`.
+
+### Another 500 distinct book-derived scenarios
+
+`tools/build_library500_round10.pl` creates `K4051.sas` through `K4550.sas` under
+`tests/library500_round10/`, using the requested read-only directory:
+
+```text
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS PDF\sas online samples
+```
+
+There are **50 behavior families with ten input sizes each**, N=2 through 11:
+**450 positive cases and 50 intentional SAS program errors**. This is 500
+parameterized scenarios, not 500 unrelated algorithms. Their normalized bodies
+differ from all **4,050 earlier programs**, ignoring case IDs and round markers.
+The earlier corpora and their verified evidence remain unchanged.
+
+Eight actual book titles supply source/line evidence. The corpus README lists
+their names/counts; the manifest records filenames, line numbers, source/line
+SHA-256, executable hashes, independent Perl oracles and numerical tolerances.
+The 200 distribution checks are explicitly marked `derived_extension`: documented
+CDF/PDF/QUANTILE APIs extend the source books' PROBNORM/PROBIT examples. They are
+not represented as literal calls copied from those older source lines.
+
+| IDs | New coverage |
+| --- | --- |
+| K4051–K4250 | Normal, exponential, uniform, binomial, Poisson, geometric, gamma, chi-square, logistic, Weibull and t identities; log-gamma and beta |
+| K4251–K4350 | Filter-before-transpose matrices, selected-gene checksums, prefix arrays, log-expression, gene medians, missing/zero, identifiers, phenotype filters and cache gates |
+| K4351–K4450 | MIN IDGROUP, ASCII case order, CLASSDATA, transpose ID delimiters, SQL ALL/ANY, metadata and missing-value behavior |
+| K4451–K4500 | Macro PRX delimiters, stepped loops, formatted integers and quoted punctuation |
+| K4501–K4550 | Intended SQL type mismatch, incompatible CLASSDATA, unassigned libref, invalid SYSEVALF conversion and array-bound errors |
+
+The pilot in `SAS_Output_library500_live_HhO0wJ` passed **49/50**. The CLASSDATA
+fixture produced its intended ERROR, but the matcher omitted the actual word
+“incompatible.” Its reviewed matcher was corrected before the full run.
+`SAS_Output_library500_live_DAcgD4` then passed **500/500** under the initial
+tolerances, with 450 successful programs and 50 correctly reported program errors.
+
+Distribution tolerances were subsequently tightened from 1e-6 to
+`1e-10*max(1,abs(expected))`, so small nonzero beta/probability values cannot pass
+as zero. Other checks use `1e-9*max(1,abs(expected))`. The 200 tightened programs
+were resubmitted in `SAS_Output_library500_live_VB0uLD`; the final collector uses
+that fresh evidence and the 300 unchanged cases. Old distribution batches are
+retained as stale, never promoted to passes. Final evidence is from two runs,
+not a clean single invocation of the final stricter corpus.
+
+From the MCP4SAS checkout in Cygwin:
+
+```bash
+export PATH=/usr/bin:$PATH
+perl tools/build_library500_round10.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove tests/test_library500_round10.pl tests/test_evaluation_corpus_integrity.pl
+perl tests/run_live_library500.pl --live --round 10
+```
+
+The stricter-block rerun and collection used:
+
+```bash
+strict_ids=$(perl -e 'print join q{,}, map {q{K}.$_} 4051..4250')
+perl tests/run_live_library500.pl --live --round 10 --only "$strict_ids"
+perl tools/collect_library_evaluation_results.pl --round 10 --skip-stale \
+  --run SAS_Output_library500_live_DAcgD4 \
+  --run SAS_Output_library500_live_VB0uLD \
+  --output tests/library500_round10/verified_results_2026-11-03.json
+```
+
+The collector rechecks current programs, submitted batches, evaluation contracts,
+actual runtime logs, process exits and complete terminal metadata. A normal full
+run has five positive batches plus 50 isolated negative jobs, with a 180-second
+timeout per job. All input data are synthetic, and only owned WORK resources
+are cleaned. No full GTEx matrix is downloaded by these tests.
+
+### Previously unfinished GTEx failure
+
+`SAS_Output_RandID979354` contains the exact MAP3K19/R3HDM1 request. Bootstrap
+completed, followed by abrupt remote-session termination with no definitive SAS
+runtime log and exit **74**. That proves termination; it does not prove a specific
+quota/memory cause. The original heavy request was not retried.
+
+Inspection of the original user macro shows that `UseGeneratedDsd=0` selects the
+build/import path. If `GTEx.exp_all` does not exist, it downloads and imports the
+whole UCSC expression matrix before filtering the requested genes. Specifying
+`PreviousDsd=tgt` does not override that flag. A GTEx LIBNAME from an unrelated
+SAS Studio session also need not exist in the CLI's new SASPy connection.
+
+Two local, reviewable repairs were added without overwriting the user's macro
+library or online macro:
+
+- `examples/sas_macros/Boxplots4GenesInGTExV8_Cached.sas`: a cache-only alternative
+  requiring `UseGeneratedDsd=1`, validated long input and explicit output handling.
+  It filters the genes into a separate dataset, preserves expression scale,
+  verifies every requested gene and draws the panels. It has no HTTP/full-matrix
+  path and leaves the source cache unchanged.
+- `tools/subset_gtex_expression.pl`: streams a local TSV/gzip matrix into a small
+  requested-gene subset, preserving header and values. It refuses existing output
+  and fails atomically for missing genes, ragged selected rows or corrupt gzip.
+  It does not invent phenotype annotations or create a complete long GTEx cache.
+
+Twelve offline subset assertions passed. Three isolated SAS ODA tests passed:
+a 24-row synthetic cache produced the correct 16-row two-gene result while
+retaining the source's 24 rows; missing-cache and rebuild requests failed promptly
+without downloading a matrix. The passing artifact directory is
+`SAS_Output_gtex_cache_ZWKdPR`.
+
+Development uncovered a FINDW delimiter trap: its `T` modifier trims the chars
+argument too, turning a space-only delimiter into an empty list. The final macro
+strips just the gene token and uses `I` for case-insensitivity. Earlier failed
+prototypes are preserved separately. See the official
+[FINDW reference](https://support.sas.com/documentation/cdl/en/lefunctionsref/63354/HTML/default/p16rdsa30vmm43n1ej4936nwa01t.htm).
+
+```bash
+prove tests/test_gtex_expression_subset.pl
+prove -v tests/test_live_gtex_cache_only.pl :: --live
+perl tools/subset_gtex_expression.pl --input /path/to/exprMatrix.tsv.gz \
+  --genes 'MAP3K19 R3HDM1' --output gtex_two_genes.tsv
+```
+
+`docs/GTEX_LARGE_DOWNLOAD_RECOVERY.md` contains the corrected cache-only invocation,
+the need for an explicit LIBNAME assignment, source-schema requirements and
+minimal changes to the original macro. It also explains why a longer timeout
+alone does not solve a full-matrix resource failure.
+
+Development logs are preserved in ignored `SAS_Output_resume_20261103/` and the
+named raw run directories. No Python evaluation scripts were introduced.
+
+Final independent collection verified **500/500 distinct cases and all 500
+evaluation contracts** across two runs: 450 successful programs and 50 expected
+program failures. The 200 old probability attempts are explicitly excluded as
+stale. A read-only audit verified all 500 source/line provenance records against
+the eight original book files. The complete final offline suite passed **5,826
+top-level checks across 46 files**; the installer regression passed 30 checks,
+and the cache-only GTEx live suite passed 3/3. Default cleanup left no
+`.mcp4sas_work_*` directories. The CI fixes are published; this new corpus and
+the GTEx repair are saved locally for review and use.
+
+## 27. Local Windows SAS through the Cygwin Perl runner (2026-11-04)
+
+The original native Windows SASPy `winlocal` connection passed after correcting
+the reverse-loopback SPN issue described in
+[the Windows IOM investigation](docs/WINDOWS_LOCAL_IOM_SSPI.md). The next test
+used `run_sas_codes_or_files_in_ODA.pl` from Cygwin, with native Windows Python.
+
+The initial submission failed before reaching SAS because Windows Python was
+given a Cygwin `/mnt/e/.../sas_inline_runner_*.py` path. The interpreter tried
+to open it below `E:/mnt/e/...`, which does not exist. The runner now identifies
+the selected Python's `os.name`, caches that result and converts Cygwin paths
+with `cygpath -am` when that interpreter requires Windows paths. Conversion
+covers inline helper/source/result paths, file-action paths and the temporary
+connection-check script. Existing POSIX Python path behavior is retained.
+
+The eight-assertion `tests/test_python_path_boundary.pl` regression passed with
+native Windows Python, including real file reads/writes with spaces, action
+path conversion, preservation of remote paths, and a real Cygwin Python control.
+
+From the MCP4SAS directory in Cygwin, the verified environment and commands are:
+
+```bash
+export PIPELINE_PYTHON_BIN="$(cygpath -m "$USERPROFILE/anaconda3/python.exe")"
+export SASPY_CFGFILE="$(cygpath -m "$USERPROFILE/sascfg_winlocal_sasjava.py")"
+export SASPY_CFGNAME=winlocal
+export SAS_ODA_AUTOLOAD_MACROS=0
+
+perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'proc print data=sashelp.class(obs=5); run; %put MCP4SAS_WINDOWS_PASS;' \
+  --output-prefix "SAS_Output_RandID_winlocal_$(date +%Y%m%d_%H%M%S)" \
+  --run-timeout-seconds 120
+```
+
+The live submission passed with zero SAS ERROR/WARNING lines, five SASHELP.CLASS
+observations, the runtime marker `MCP4SAS_WINDOWS_PASS`, completed successful
+terminal metadata and a downloaded HTML file. The fixed-run artifacts are in
+`SAS_Output_RandID_winlocal_smoke_20261104/sas_res_IYqy2.html` and its adjacent
+SAS log/status files. The connection-only command also passed with the exact
+environment above. These examples are included directly in the canonical
+runner's `--help`; no new filename alias was introduced.
+
+Raw development transcripts are in the parent workspace's
+`SAS_Output_windows_iom_sspi_20261104/mcp_cygwin.txt` (initial failure),
+`mcp_cygwin_fixed.txt` (successful submission), and `mcp_help_and_probe.txt`
+(eight path checks, rendered CLI help and successful local connection probe).
+
+The broad offline run passed 5,189 of 5,190 top-level checks across 42 files.
+Its single failure was the helper-entrypoint parity check: the new help block
+had initially been added only to the canonical runner, while a pre-existing
+four-line configuration-name deduplication differed in the compatibility copy.
+The deduplication and help were preserved in both entrypoints. The repaired
+parity check passed on rerun; the final native-Windows path/parity rerun is
+recorded in `mcp_final_paths.txt`. The raw initial suite transcript is preserved
+as `mcp_offline_paths.txt`, including that original failure.
+
+### Persistent Windows sessions: Cygwin helper path (2026-11-04)
+
+The reported persistent command failed before SAS started: native Windows Python
+received `/mnt/e/.../sas_oda_session_server.py` and interpreted it relative to
+`E:` as `E:\mnt\e\...`. The persistent launcher had missed the path conversion
+already used by one-shot submission. The launcher now converts its helper path
+and explicitly configured session temporary directory for the selected Python.
+Persistent upload/download request paths use the same conversion; remote SAS
+paths remain unchanged. Persistent submit fallback remains disabled.
+
+Using the Cygwin environment shown above, the following live test succeeded:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'data persistent_path_test; set sashelp.class(obs=5); run; %put PERSIST_CREATE_PID=&sysjobid;' \
+  --output-prefix SAS_Output_RandID_persistent_path_create_20261104 \
+  --persistent --session-id pathfix_20261104 --run-timeout-seconds 120
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'proc print data=persistent_path_test; run; data _null_; if 0 then set persistent_path_test nobs=n; if n ne 5 then abort cancel; put "PERSIST_REUSE_PASS rows=" n; stop; run; %put PERSIST_REUSE_PID=&sysjobid;' \
+  --output-prefix SAS_Output_RandID_persistent_path_reuse_20261104 \
+  --persistent --session-id pathfix_20261104 --run-timeout-seconds 120
+```
+
+The first command reported SAS PID 37624; the second reported the same PID and
+`PERSIST_REUSE_PASS rows=5`. Its HTML is
+`SAS_Output_RandID_persistent_path_reuse_20261104/sas_res_zsX66.html`.
+No one-shot fallback was enabled. The create-only command correctly produced no
+HTML because it contained no output procedure. CLI help also includes a shorter
+`mc1` example that prints the dataset on both submissions.
+
+The complete offline publication checks subsequently passed all 5,190 checks
+across 42 files. The earlier single parity failure described above is retained
+as historical debugging evidence.

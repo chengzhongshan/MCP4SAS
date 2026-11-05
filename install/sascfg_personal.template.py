@@ -100,6 +100,17 @@ _DEFAULT_CLASSPATH = _default_classpath()
 _CONFIGURED_JAVA = os.environ.get(
     "SASPY_JAVA_WIN", os.environ.get("SASPY_JAVA", os.environ.get("MCP4SAS_JAVA", _DEFAULT_JAVA))
 )
+_SAS_WINDOWS_JAVA = r"C:\Program Files\SASHome\SASPrivateJavaRuntimeEnvironment\9.4\jre\bin\java.exe"
+_SAS_WINDOWS_NATIVE_LIBS = os.environ.get(
+    "SASPY_SSPI_PATH",
+    r"C:\Program Files\SASHome\SASFoundation\9.4\core\sasext",
+)
+if os.name == "nt" and os.path.isdir(_SAS_WINDOWS_NATIVE_LIBS):
+    _windows_path = os.environ.get("PATH", "").split(os.pathsep)
+    if os.path.normcase(_SAS_WINDOWS_NATIVE_LIBS) not in {
+        os.path.normcase(path) for path in _windows_path if path
+    }:
+        os.environ["PATH"] = os.pathsep.join([_SAS_WINDOWS_NATIVE_LIBS, *_windows_path])
 
 
 SAS_config_names = [
@@ -161,7 +172,13 @@ default = linuxlocal
 
 # Local Windows SAS via SASPy IOM. Do not set iomhost for local Windows SAS.
 winlocal = {
-    "java": _CONFIGURED_JAVA,
+    "java": os.environ.get(
+        "SASPY_JAVA_WIN",
+        _SAS_WINDOWS_JAVA if os.path.isfile(_SAS_WINDOWS_JAVA) else _CONFIGURED_JAVA,
+    ),
+    "javaparms": [
+        "-Djava.library.path=" + _SAS_WINDOWS_NATIVE_LIBS
+    ] if os.path.isdir(_SAS_WINDOWS_NATIVE_LIBS) else [],
     "encoding": os.environ.get("SASPY_LOCAL_SAS_ENCODING", "windows-1252"),
     "classpath": os.environ.get("SASPY_ODA_CLASSPATH", _DEFAULT_CLASSPATH),
 }

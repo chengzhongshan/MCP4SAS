@@ -55,12 +55,11 @@ options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_p
 SUBMIT_HEARTBEAT_SECONDS = max(0, int(os.environ.get('SAS_ODA_SUBMIT_HEARTBEAT_SECONDS', '20') or '20'))
 MACRO_BOOTSTRAP_TIMEOUT_SECONDS = max(0, int(os.environ.get('SAS_ODA_MACRO_BOOTSTRAP_TIMEOUT_SECONDS', '420') or '420'))
 def iter_saspy_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
-    seen = set()
-    for name in (preferred, 'oda', 'default'):
-        if not name or name in seen:
-            continue
-        seen.add(name)
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    if preferred:
+        yield preferred
+        return
+    for name in ('oda', 'default'):
         yield name
 def open_sas_session():
     last_exc = None
@@ -70,6 +69,8 @@ def open_sas_session():
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
+        if os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME'):
+            raise last_exc
         try:
             return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
