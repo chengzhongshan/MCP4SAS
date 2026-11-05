@@ -4238,3 +4238,30 @@ HTML because it contained no output procedure. CLI help also includes a shorter
 The complete offline publication checks subsequently passed all 5,190 checks
 across 42 files. The earlier single parity failure described above is retained
 as historical debugging evidence.
+
+## 28. Local SAS home directories and Linux STDIO (2026-11-04)
+
+Added `--dir4local_sas_home` with the HTML output directory as the default for
+recognized local profiles. `docs/LOCAL_SAS_HOME.md` records the Cygwin commands,
+Linux commands, root-selection rules and limitations. SAS HOME, _USERHOME and
+PIPELINE_SAS_HOME are configured; file actions and quoted SAS paths resolve `~`.
+Existing online ODA behavior is preserved. Persistent requests carry their own
+root instead of inheriting the server launcher's environment.
+
+Real Windows SAS tests saved a text file and two-row permanent dataset in the
+default home. An explicit home containing spaces passed listing, upload,
+file-info, byte-identical download and exact test-file deletion; both other
+marker files remained. A three-row WORK dataset survived reuse with SAS PID
+18716 unchanged. Tests used isolated server port 18865, leaving the default
+server untouched. Raw logs: parent workspace `home_live.txt` and
+`home_delete_one.txt` under `SAS_Output_windows_iom_sspi_20261104`.
+
+`tests/test_local_sas_home.pl` exercises lexical boundaries and the actual
+one-shot/persistent SASPy factories with a stub Linux connection. Both receive
+linuxlocal plus the explicit cfgfile; an invalid executable error never retries
+ODA. A standalone Linux STDIO profile is supplied. No live Linux SAS was
+available, so Linux execution is explicitly unverified.
+
+Final local regression results for this change: MCP4SAS 43 files / 5,198 checks;
+the companion runner 26 files / 944 checks, all passed. Native Windows path,
+home setup, CLI help and Linux factory checks also passed in a fresh process.

@@ -1023,3 +1023,12 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl --code "proc print data=sashelp
 
 If Python packages fail on older systems, make sure Python is at least 3.8.
 Current `Pillow` and `saspy` releases require modern Python.
+
+### Local SAS home and Linux STDIO
+
+`--dir4local_sas_home DIR` supplies `~` for local Windows/Linux SAS; recognized
+local profiles default to the HTML output directory. See
+[local SAS home examples](docs/LOCAL_SAS_HOME.md) for file operations, persistent
+sessions and the Linux `install/sascfg_linux_local.py` STDIO profile.
+Windows saving/transfers were tested live; Linux selection and failure handling
+were tested offline because no local Linux SAS was available.
