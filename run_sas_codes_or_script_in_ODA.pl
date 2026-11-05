@@ -143,7 +143,7 @@ my (@upload_files, @download_files, @download_local_paths, @delete_files, @delet
 my (@delete_directory_rgxs, $delete_directory_dry_run);
 my ($sas_oda_account, $sas_oda_password, $force_sas_oda_auth_prompt,
     $skip_sas_oda_auth_bootstrap, $check_sas_oda_login_only);
-my ($saspy_cfgname, $saspy_cfgfile);
+my ($saspy_cfgname, $saspy_cfgfile, $dir4local_sas_home);
 my $classify_sas_log;
 my ($cli_sas_run_timeout_seconds, $cli_sas_run_timeout_grace_seconds, $disable_run_timeout);
 our $python_bin;
@@ -470,6 +470,7 @@ GetOptions(
     'check-sas-oda-login-only|check-saspy-connection-only!' => \$check_sas_oda_login_only,
     'saspy-cfgname=s' => \$saspy_cfgname,
     'saspy-cfgfile=s' => \$saspy_cfgfile,
+    'dir4local_sas_home=s' => \$dir4local_sas_home,
     'classify-sas-log=s' => \$classify_sas_log,
     'monitor-status-file=s' => \$monitor_status_file,
     'monitor-interval-seconds=i' => \$monitor_interval_seconds,
@@ -1038,6 +1039,9 @@ Options:
   --check-sas-oda-login-only Validate SAS ODA login with PROC SETINIT and exit.
   --saspy-cfgname <name>     Select the SASPy configuration (default: oda).
   --saspy-cfgfile <file>     Use a specific SASPy configuration file.
+  --dir4local_sas_home <dir> Set ~ for local SAS file actions and quoted SAS paths.
+                             Local profiles default to the HTML output directory.
+                             Use the same explicit directory across persistent runs.
   --check-saspy-connection-only Alias for the selected-target login probe.
   --classify-sas-log <file>  Inspect an existing SAS log without connecting to ODA.
                              Space exhaustion returns JSON with retryable=false
@@ -1136,6 +1140,25 @@ Local Windows SAS 9.4 from Cygwin (when SAS and native Windows SASPy are install
   # must omit iomhost and remote credentials. Macro autoload is disabled for
   # this SASHELP smoke test; load your local macros explicitly when needed.
   # Loopback/SSPI troubleshooting: docs/WINDOWS_LOCAL_IOM_SSPI.md
+Local SAS home on Windows or Linux:
+  # Omit the option to default ~ to this run's HTML output directory.
+  # Set it explicitly to keep saved files available across output prefixes.
+  perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home ./local_sas_home \
+    --dir4listing '~'
+
+Local Linux SAS using STDIO (requires installed Linux SAS and Linux SASPy):
+  export PIPELINE_PYTHON_BIN="$(command -v python3)"
+  export SASPY_CFGFILE="$PWD/install/sascfg_linux_local.py"
+  export SASPY_CFGNAME=linuxlocal
+  export SASPY_LOCAL_SAS_PATH='/path/to/your/SASFoundation/9.4/sas'
+  export SAS_ODA_AUTOLOAD_MACROS=0
+  perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+  perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home "$PWD/local_sas_home" \
+    --code 'libname saved "~"; data saved.class; set sashelp.class(obs=5); run; proc print data=saved.class; run;' \
+    --output-prefix SAS_Output_RandID_linuxlocal --persistent --session-id linux_demo \
+    --run-timeout-seconds 120
+  # Linux profile selection is tested offline; no live Linux SAS was available.
+  # File operations, persistent home behavior and examples: docs/LOCAL_SAS_HOME.md
 LOCAL_WINDOWS_EXAMPLE
     exit 0;
 }
@@ -1535,6 +1558,19 @@ sub run_array_action_with_timeout {
 # Create output directory name with random ID
 my $rand_id = int(rand(999999)) + 1000;
 my $output_dir = ($output_prefix || "SAS_Output" . "_RandID" . $rand_id);
+my $local_profile = $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
+if (defined($dir4local_sas_home) || length($ENV{SAS_LOCAL_HOME_DIR} // '') ||
+    $local_profile =~ /^(?:winlocal(?:_com)?|linuxlocal|local|stdio)$/i) {
+    die "--dir4local_sas_home is for local SAS, not the oda profile\n" if lc($local_profile) eq 'oda';
+    my $home = defined($dir4local_sas_home) ? $dir4local_sas_home : ($ENV{SAS_LOCAL_HOME_DIR} || $output_dir);
+    die "Local SAS home must be nonempty and contain no control characters\n" if !length($home) || $home =~ /[\x00-\x1f]/;
+    $home = File::Spec->rel2abs($home);
+    make_path($home) unless -d $home;
+    die "Cannot create local SAS home: $home\n" unless -d $home;
+    my ($home_python) = SAS_ODA_Runner::_repo_python_env_for_session_server();
+    $ENV{SAS_LOCAL_HOME_DIR} = SAS_ODA_Runner::_normalize_local_path_for_python($home, $home_python);
+    print "Local SAS home (~): $ENV{SAS_LOCAL_HOME_DIR}\n";
+}
 my $output_prefix_path = "$output_dir/output";
 my $status_file = "$output_prefix_path.run.status.json";
 

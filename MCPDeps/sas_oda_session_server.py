@@ -6,8 +6,8 @@ import shutil
 import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
-PORT = 8765
-SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard'
+PORT = int(os.environ.get('SAS_ODA_SESSION_PORT', '8765'))
+SERVER_API_VERSION = '2026-11-04-local-home'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -408,6 +408,8 @@ def ensure_session(session_id):
     return sessions[session_id]
 
 def session_home(sess):
+    if getattr(sess, '_pipeline_local_home', ''):
+        return sess._pipeline_local_home
     cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
     userid = str(getattr(cfg, 'omruser', '') or '').strip()
     authkey = str(getattr(cfg, 'authkey', '') or '').strip()
@@ -439,6 +441,8 @@ def session_home(sess):
     return str(sess.symget('_mg_homepath') or '').strip()
 
 def resolve_remote_path(remote_path, sess):
+    if remote_path == '~':
+        return session_home(sess)
     if remote_path.startswith('~/'):
         remote_path = f"{session_home(sess)}/{remote_path[2:]}"
     return remote_path
@@ -635,6 +639,27 @@ def with_retry(session_id, fn, retry_session_loss=True):
                 sessions[session_id] = sess
             return fn(sess)
         raise
+
+def configure_local_home(sess, home):
+    import re
+    home = str(home or '').replace('\\', '/')
+    if not home or getattr(sess, '_pipeline_local_home', '') == home:
+        return
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    if getattr(cfg, 'iomhost', None) or getattr(cfg, 'ssh', None):
+        raise ValueError('--dir4local_sas_home requires a local SAS connection')
+    if not os.path.isabs(home) or not os.path.isdir(home):
+        raise ValueError('Local SAS home must be an existing absolute directory: ' + home)
+    literal = "'" + home.replace("'", "''") + "'"
+    setup = ('filename HOME ' + literal + '; options set=HOME ' + literal + ';\n'
+             'data _null_; call symputx("_USERHOME",' + literal + ',"G"); '
+             'call symputx("PIPELINE_SAS_HOME",' + literal + ',"G"); run;')
+    result = sess.submit(setup)
+    log = str((result or {}).get('LOG', '') or '')
+    if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
+        raise RuntimeError('Cannot configure local SAS home:\n' + log)
+    sess._pipeline_local_home = home
+
 def handle_client(conn, addr):
     try:
         hdr = conn.recv(8)
@@ -650,6 +675,13 @@ def handle_client(conn, addr):
         req = json.loads(data.decode('utf-8'))
         cmd = req.get('cmd')
         session_id = req.get('session_id')
+        if session_id and req.get('local_home'):
+            # The root belongs to this request/session, not the server process
+            # environment inherited from whichever CLI launched it first.
+            with lock:
+                if session_id not in sessions:
+                    sessions[session_id] = create_session(session_id)
+                configure_local_home(sessions[session_id], req['local_home'])
         log_event(f"request cmd={cmd} session_id={session_id} from={addr[0]}:{addr[1]}")
         if cmd == 'ping':
             resp = {'status':'ok', 'server_api_version': SERVER_API_VERSION, 'pid': os.getpid()}
@@ -887,7 +919,7 @@ def handle_client(conn, addr):
             remote_path = req.get('remote_path', '')
             try:
                 log_event(f"dirlist start session_id={session_id} remote_path={remote_path}")
-                files = with_retry(session_id, lambda sess: sess.dirlist(remote_path))
+                files = with_retry(session_id, lambda sess: sess.dirlist(resolve_remote_path(remote_path, sess)))
                 resp = {'status':'ok','files':files}
             except Exception as e:
                 resp = {'status':'error','error':str(e)}

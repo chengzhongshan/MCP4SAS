@@ -131,6 +131,7 @@ use JSON::PP qw(encode_json decode_json);
 use IO::Socket::INET;
 use IO::Select;
 use SAS_Source_Analysis;
+use SAS_Local_Home;
 
 sub _runner_temp_dir {
     my $worker_temp_dir = $ENV{MCP4SAS_WORKER_TEMP_DIR} // '';
@@ -430,6 +431,7 @@ def get_session(session_obj):
     if session_obj is None or not hasattr(session_obj, '_session'):
         session_obj = type('SessionWrapper', (), {})()
         session_obj._session = _open_sas_session()
+        configure_local_home(session_obj._session, os.environ.get('SAS_LOCAL_HOME_DIR', ''))
         session_obj._macros_loaded = False
         _LAST_SASPY_SUBPROCESS_ID = _saspy_subprocess_id(session_obj)
 
@@ -551,6 +553,8 @@ def ensure_macros_loaded(session_obj):
     return session, session_obj
 
 def _session_home_value(sess):
+    if getattr(sess, '_pipeline_local_home', ''):
+        return sess._pipeline_local_home
     cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
     userid = str(getattr(cfg, 'omruser', '') or '').strip()
     authkey = str(getattr(cfg, 'authkey', '') or '').strip()
@@ -852,6 +856,8 @@ def delete_files_bulk(items, session_obj):
     return results, session_obj
 
 def resolve_remote_path(remote_filepath, session_obj):
+    if remote_filepath == '~':
+        return get_sas_home(session_obj)[0]
     if remote_filepath.startswith('~/'):
         home = get_sas_home(session_obj)[0]
         remote_filepath = f"{home}/{remote_filepath[2:]}"
@@ -1376,7 +1382,7 @@ def dirlist(remote_path, session_obj):
         session, session_obj = get_session(session_obj)
 
         # listdir returns a list of filenames in the remote_path
-        files = session.dirlist(remote_path)
+        files = session.dirlist(resolve_remote_path(remote_path, session_obj))
 
         return files, session_obj
 
@@ -1390,6 +1396,7 @@ def get_sas_home(session_obj):
 
 END_PYTHON
 ;
+$INLINE_PYTHON_SOURCE .= SAS_Local_Home::python_setup();
 
 our @EXPORT_OK = qw(new run_code run_file upload_file download_file);
 
@@ -1406,8 +1413,8 @@ sub _autoload_macros_enabled {
 }
 
 my $SERVER_HOST = '127.0.0.1';
-my $SERVER_PORT = 8765;
-my $SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard';
+my $SERVER_PORT = int($ENV{SAS_ODA_SESSION_PORT} // 8765);
+my $SERVER_API_VERSION = '2026-11-04-local-home';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -1613,8 +1620,8 @@ import shutil
 import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
-PORT = 8765
-SERVER_API_VERSION = '2026-09-01-sas32-debug-macro-guard'
+PORT = int(os.environ.get('SAS_ODA_SESSION_PORT', '8765'))
+SERVER_API_VERSION = '2026-11-04-local-home'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -2015,6 +2022,8 @@ def ensure_session(session_id):
     return sessions[session_id]
 
 def session_home(sess):
+    if getattr(sess, '_pipeline_local_home', ''):
+        return sess._pipeline_local_home
     cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
     userid = str(getattr(cfg, 'omruser', '') or '').strip()
     authkey = str(getattr(cfg, 'authkey', '') or '').strip()
@@ -2046,6 +2055,8 @@ def session_home(sess):
     return str(sess.symget('_mg_homepath') or '').strip()
 
 def resolve_remote_path(remote_path, sess):
+    if remote_path == '~':
+        return session_home(sess)
     if remote_path.startswith('~/'):
         remote_path = f"{session_home(sess)}/{remote_path[2:]}"
     return remote_path
@@ -2257,6 +2268,13 @@ def handle_client(conn, addr):
         req = json.loads(data.decode('utf-8'))
         cmd = req.get('cmd')
         session_id = req.get('session_id')
+        if session_id and req.get('local_home'):
+            # The root belongs to this request/session, not the server process
+            # environment inherited from whichever CLI launched it first.
+            with lock:
+                if session_id not in sessions:
+                    sessions[session_id] = create_session(session_id)
+                configure_local_home(sessions[session_id], req['local_home'])
         log_event(f"request cmd={cmd} session_id={session_id} from={addr[0]}:{addr[1]}")
         if cmd == 'ping':
             resp = {'status':'ok', 'server_api_version': SERVER_API_VERSION, 'pid': os.getpid()}
@@ -2494,7 +2512,7 @@ def handle_client(conn, addr):
             remote_path = req.get('remote_path', '')
             try:
                 log_event(f"dirlist start session_id={session_id} remote_path={remote_path}")
-                files = with_retry(session_id, lambda sess: sess.dirlist(remote_path))
+                files = with_retry(session_id, lambda sess: sess.dirlist(resolve_remote_path(remote_path, sess)))
                 resp = {'status':'ok','files':files}
             except Exception as e:
                 resp = {'status':'error','error':str(e)}
@@ -2545,6 +2563,9 @@ def server_loop():
 if __name__ == '__main__':
     server_loop()
 END_SERVER_PY
+$SERVER_PY =~ s/^def handle_client/SAS_Local_Home::python_setup() . 'def handle_client'/me;
+
+sub _session_server_source { return $SERVER_PY; }
 
 sub _server_reachable {
     my ($host, $port) = @_;
@@ -2878,6 +2899,8 @@ sub _read_session_server_frame {
 
 sub _call_session_server {
     my ($payload, $timeout_seconds) = @_;
+    $payload = { %{$payload}, local_home => $ENV{SAS_LOCAL_HOME_DIR} // '' }
+      if $payload->{session_id};
     # File transfers cross the same Perl/Python path boundary as startup.
     if (exists $payload->{local_path}) {
         my ($python_bin) = _repo_python_env_for_session_server();
@@ -3910,6 +3933,7 @@ SAS_STATUS
 sub run_code {
     my ($self, $sas_code) = @_;
     my ($processed_code, $dep_logs) = $self->_process_dependencies($sas_code);
+    $processed_code = SAS_Local_Home::expand_code_paths($processed_code, $ENV{SAS_LOCAL_HOME_DIR});
     $processed_code = _guard_redirected_sas_log($processed_code);
     my $has_local_macro_upload = ($dep_logs // '') =~ /Uploaded overlay to/ ? 1 : 0;
     my $has_targeted_remote_loader = ($dep_logs // '') =~ /Injected targeted remote macro loader/ ? 1 : 0;
