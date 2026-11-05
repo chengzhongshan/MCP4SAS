@@ -172,6 +172,8 @@ different file, pass it explicitly:
 ```
 
 Select a target with `SASPY_CFGNAME` or `--saspy-cfgname`.
+When a target is explicitly selected, MCP4SAS does not silently fall back to
+another SASPy profile if that connection fails.
 
 SAS ODA:
 
@@ -194,17 +196,33 @@ config is available but cannot connect until SAS is installed.
 Local Windows SAS through SASPy IOM:
 
 ```bash
-SASPY_CFGNAME=winlocal ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+export PIPELINE_PYTHON_BIN="$(cygpath -m "$USERPROFILE/anaconda3/python.exe")"
+export SASPY_CFGFILE="$(cygpath -m "$USERPROFILE/sascfg_winlocal_sasjava.py")"
+export SASPY_CFGNAME=winlocal
+export SAS_ODA_AUTOLOAD_MACROS=0
+perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+
+perl run_sas_codes_or_files_in_ODA.pl \
+  --code 'proc print data=sashelp.class(obs=5); run;' \
+  --output-prefix "SAS_Output_RandID_winlocal_$(date +%Y%m%d_%H%M%S)"
 ```
 
-On Cygwin or other Windows shells, set `SASPY_JAVA` if Java is not on `PATH`.
-For example:
+The Windows profile uses SAS's bundled 64-bit Java when it is present and adds
+the SAS `core/sasext` directory to the Python process `PATH` for SSPI. Override
+the DLL directory with `SASPY_SSPI_PATH` if SAS is installed elsewhere. On
+Cygwin, explicitly select native Windows Python as above and adjust the Python
+and configuration paths for your installation. The runner converts helper paths
+for that interpreter. To override the template's local Java runtime, use a
+Windows path, for example:
 
 ```bash
-SASPY_CFGNAME=winlocal \
-SASPY_JAVA='/cygdrive/c/Program Files/Java/jdk-11/bin/java.exe' \
-./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
+SASPY_JAVA_WIN='C:/Program Files/Java/jdk-11/bin/java.exe' \
+perl run_sas_codes_or_files_in_ODA.pl --saspy-cfgfile sascfg_personal.py \
+  --check-saspy-connection-only
 ```
+
+See [local IOM/SSPI troubleshooting](docs/WINDOWS_LOCAL_IOM_SSPI.md) for the
+verified reverse-loopback SPN repair and the optional local COM profile.
 
 Remote licensed IOM servers can use `iomlinux` or `iomwin` with
 `SASPY_IOMHOST`, `SASPY_IOMPORT`, and `SASPY_IOM_AUTHKEY`.

@@ -11,9 +11,9 @@ use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time);
 my ($live,$only,$batch,$round)=(0,'',100,1);
 GetOptions('live'=>\$live,'only=s'=>\$only,'batch-size=i'=>\$batch,'round=i'=>\$round) or die 'Invalid options';
-die "Usage: $0 --live [--round 1|2|3|4|5|6|7|8] [--only L441,L442] [--batch-size 100]\n" unless $live;
+die "Usage: $0 --live [--round 1|2|3|4|5|6|7|8|10] [--only L441,L442] [--batch-size 100]\n" unless $live;
 die 'Batch size must be 1..100' unless $batch>=1 && $batch<=100;
-die 'Round must be 1 through 8' unless $round>=1 && $round<=8;
+die 'Round must be 1 through 8 or 10; round 9 uses run_live_macro_open_code50.pl' unless ($round>=1 && $round<=8) || $round==10;
 my $root=abs_path("$Bin/.."); chdir $root or die $!;
 sub read_text {open my $f,'<:raw',$_[0] or return ''; local $/; return <$f>;}
 sub required_text {my $text=read_text($_[0]); die "Missing or empty required input $_[0]\n" unless length $text; return $text;}

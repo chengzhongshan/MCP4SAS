@@ -29,6 +29,10 @@ passed Windows, Ubuntu and Conda. It exposed a macOS Bash 3 nounset error when
 expanding the empty platform-specific options array. The installer now constructs
 one nonempty argument array and appends curl options only on Cygwin.
 
+The [cross-platform verification run for 14e1adc](https://github.com/chengzhongshan/MCP4SAS/actions/runs/41607017139)
+passed all five installation jobs, including Windows/Cygwin and both macOS
+architectures. The fix is published on `main`.
+
 `tests/test_installer_perl_deps.sh` verifies 30 assertions without network access:
 Cygwin bootstrap, existing-cpanm reuse, the explicit default/custom mirror,
 paths containing spaces and dependency-install failure propagation. All

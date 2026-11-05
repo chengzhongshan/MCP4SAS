@@ -207,6 +207,22 @@ errors, successful warning cases, and the existing strict unresolved-invocation
 policy separately. See `tests/macro_open_code50/README.md` and section 25 of the
 real-example report for the full audit and bounded reproductions.
 
+The tenth round adds 500 further scenarios from eight book samples, including
+analytic probability identities and bounded gene-expression matrix operations:
+
+```bash
+perl tools/build_library500_round10.pl \
+  '/cygdrive/h/F_Queens/360yunpan/SASCodesLibrary/SAS PDF/sas online samples'
+prove tests/test_library500_round10.pl tests/test_evaluation_corpus_integrity.pl \
+  tests/test_gtex_expression_subset.pl
+perl tests/run_live_library500.pl --live --round 10
+prove -v tests/test_live_gtex_cache_only.pl :: --live
+```
+
+See `tests/library500_round10/README.md`, section 26 of the real-example report
+and `docs/GTEX_LARGE_DOWNLOAD_RECOVERY.md`. The GTEx live tests use only tiny
+synthetic cached data and do not retry the failed full-matrix download.
+
 Use a bounded login probe before expensive live tests:
 
 ```bash

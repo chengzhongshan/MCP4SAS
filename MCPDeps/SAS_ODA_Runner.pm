@@ -343,12 +343,11 @@ def _write_status(update):
     os.replace(tmp_path, STATUS_FILE)
 
 def _iter_saspy_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
-    seen = set()
-    for name in (preferred, 'oda', 'default'):
-        if not name or name in seen:
-            continue
-        seen.add(name)
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    if preferred:
+        yield preferred
+        return
+    for name in ('oda', 'default'):
         yield name
 
 def _open_sas_session():
@@ -359,6 +358,8 @@ def _open_sas_session():
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
+        if os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME'):
+            raise last_exc
         try:
             return saspy.SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
@@ -1661,12 +1662,11 @@ options &_pipeline_opt_mprint &_pipeline_opt_mlogic &_pipeline_opt_symbolgen &_p
 SUBMIT_HEARTBEAT_SECONDS = max(0, int(os.environ.get('SAS_ODA_SUBMIT_HEARTBEAT_SECONDS', '20') or '20'))
 MACRO_BOOTSTRAP_TIMEOUT_SECONDS = max(0, int(os.environ.get('SAS_ODA_MACRO_BOOTSTRAP_TIMEOUT_SECONDS', '420') or '420'))
 def iter_saspy_cfg_names():
-    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME') or 'oda'
-    seen = set()
-    for name in (preferred, 'oda', 'default'):
-        if not name or name in seen:
-            continue
-        seen.add(name)
+    preferred = os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME')
+    if preferred:
+        yield preferred
+        return
+    for name in ('oda', 'default'):
         yield name
 def open_sas_session():
     last_exc = None
@@ -1676,6 +1676,8 @@ def open_sas_session():
         except Exception as exc:
             last_exc = exc
     if last_exc is not None:
+        if os.environ.get('SASPY_CFGNAME') or os.environ.get('SASPY_CONFIG_NAME'):
+            raise last_exc
         try:
             return SASsession(results='html', cfgfile=os.environ.get('SASPY_CFGFILE') or None)
         except Exception:
@@ -2743,6 +2745,7 @@ sub _start_server_if_needed {
     }
     # start server in background
     my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    my $server_path_for_python = _normalize_local_path_for_python($server_path, $python_bin);
     my $server_stdio_mode = $ENV{SAS_ODA_SERVER_STDIO} // '';
     my $inherit_server_stdio =
       $server_stdio_mode =~ /^(?:1|true|yes|on|inherit|show)$/i ? 1 :
@@ -2756,7 +2759,7 @@ sub _start_server_if_needed {
     if ($pid == 0) {
         # A persistent service outlives the CLI's owned scratch directory.
         if (length($ENV{MCP4SAS_SESSION_TEMP_DIR} // '')) {
-            $ENV{TMPDIR} = $ENV{MCP4SAS_SESSION_TEMP_DIR};
+            $ENV{TMPDIR} = _normalize_local_path_for_python($ENV{MCP4SAS_SESSION_TEMP_DIR}, $python_bin);
         } else {
             delete $ENV{TMPDIR} if length($ENV{MCP4SAS_WORKER_TEMP_DIR} // '');
         }
@@ -2772,7 +2775,7 @@ sub _start_server_if_needed {
             open STDOUT, '>', File::Spec->devnull();
             open STDERR, '>', File::Spec->devnull();
         }
-        exec { $python_bin } $python_bin, $server_path;
+        exec { $python_bin } $python_bin, $server_path_for_python;
         exit 127;
     }
     # wait a short time for server to start
@@ -2875,6 +2878,11 @@ sub _read_session_server_frame {
 
 sub _call_session_server {
     my ($payload, $timeout_seconds) = @_;
+    # File transfers cross the same Perl/Python path boundary as startup.
+    if (exists $payload->{local_path}) {
+        my ($python_bin) = _repo_python_env_for_session_server();
+        $payload = _normalize_python_action_args($payload, $python_bin);
+    }
     my $json = encode_json($payload);
     my $sock = IO::Socket::INET->new(
         PeerAddr => $SERVER_HOST,
@@ -2923,9 +2931,41 @@ sub _call_session_server {
     return $resp;
 }
 
+my %_python_windows_path_cache;
+sub _python_uses_windows_paths {
+    my ($python_bin) = @_;
+    $python_bin ||= $ENV{PIPELINE_PYTHON_BIN} || '';
+    return $^O eq 'MSWin32' unless length $python_bin;
+    return $_python_windows_path_cache{$python_bin}
+      if exists $_python_windows_path_cache{$python_bin};
+    open my $probe, '-|', $python_bin, '-c', 'import os; print(os.name)'
+      or die "Cannot inspect Python path convention for $python_bin: $!\n";
+    my $name = <$probe> // '';
+    close $probe or die "Python path-convention probe failed for $python_bin\n";
+    $name =~ s/\s+\z//;
+    die "Unknown Python path convention '$name' for $python_bin\n" unless $name eq 'nt' || $name eq 'posix';
+    return $_python_windows_path_cache{$python_bin} = ($name eq 'nt' ? 1 : 0);
+}
+
 sub _normalize_local_path_for_python {
-    my ($path) = @_;
+    my ($path, $python_bin) = @_;
     return $path unless defined $path && length $path;
+    if (_python_uses_windows_paths($python_bin)) {
+        return $path if $path =~ m{^[A-Za-z]:[\\/]} || $path =~ m{^\\\\};
+        if ($^O eq 'cygwin' && $path =~ m{^/}) {
+            open my $convert, '-|', 'cygpath', '-am', $path
+              or die "Cannot convert path for Windows Python: $!\n";
+            my $converted = <$convert> // '';
+            close $convert or die "cygpath failed for $path\n";
+            $converted =~ s/[\r\n]+\z//;
+            die "Empty Windows path for $path\n" unless length $converted;
+            return $converted;
+        }
+        if ($path =~ m{^/(?:mnt|cygdrive)/([A-Za-z])(?:/(.*))?$}) {
+            return uc($1) . ':/' . ($2 // '');
+        }
+        return $path;
+    }
     # Cygwin getcwd() may yield E:/... even though the helper Python is the
     # POSIX /usr/bin/python. Linux Python treats E:/... as relative and
     # prepends cwd, so convert it to the project's /mnt/<drive>/ convention.
@@ -2948,18 +2988,18 @@ sub _normalize_local_path_for_python {
 }
 
 sub _normalize_python_action_args {
-    my ($args_ref) = @_;
+    my ($args_ref, $python_bin) = @_;
     $args_ref = {} unless ref($args_ref) eq 'HASH';
     my %normalized = %{$args_ref};
     for my $key (qw(local_path download_local_path code_path result_path args_path json_path py_path)) {
         next unless exists $normalized{$key};
-        $normalized{$key} = _normalize_local_path_for_python($normalized{$key});
+        $normalized{$key} = _normalize_local_path_for_python($normalized{$key}, $python_bin);
     }
     for my $list_key (qw(uploads downloads)) {
         next unless ref($normalized{$list_key}) eq 'ARRAY';
         $normalized{$list_key} = [ map {
             my %item = ref($_) eq 'HASH' ? %{$_} : ();
-            $item{local_path} = _normalize_local_path_for_python($item{local_path})
+            $item{local_path} = _normalize_local_path_for_python($item{local_path}, $python_bin)
               if exists $item{local_path};
             \%item;
         } @{ $normalized{$list_key} } ];
@@ -3092,9 +3132,9 @@ END_NONPERSISTENT_PY
     close $pyfh;
 
     my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
-    my $py_path_for_python   = _normalize_local_path_for_python($py_path);
-    my $code_path_for_python = _normalize_local_path_for_python($code_path);
-    my $json_path_for_python = _normalize_local_path_for_python($json_path);
+    my $py_path_for_python   = _normalize_local_path_for_python($py_path, $python_bin);
+    my $code_path_for_python = _normalize_local_path_for_python($code_path, $python_bin);
+    my $json_path_for_python = _normalize_local_path_for_python($json_path, $python_bin);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
@@ -3148,7 +3188,8 @@ END_NONPERSISTENT_PY
 
 sub _run_nonpersistent_python_action {
     my ($action, $args_ref) = @_;
-    $args_ref = _normalize_python_action_args($args_ref);
+    my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
+    $args_ref = _normalize_python_action_args($args_ref, $python_bin);
 
     my ($argsfh, $args_path) = tempfile('sas_action_args_XXXX', SUFFIX => '.json', UNLINK => 0, DIR => _runner_temp_dir());
     print {$argsfh} encode_json($args_ref);
@@ -3295,10 +3336,9 @@ if __name__ == '__main__':
 END_NONPERSISTENT_ACTION_PY
     close $pyfh;
 
-    my ($python_bin, $site_packages) = _repo_python_env_for_session_server();
-    my $py_path_for_python   = _normalize_local_path_for_python($py_path);
-    my $args_path_for_python = _normalize_local_path_for_python($args_path);
-    my $json_path_for_python = _normalize_local_path_for_python($json_path);
+    my $py_path_for_python   = _normalize_local_path_for_python($py_path, $python_bin);
+    my $args_path_for_python = _normalize_local_path_for_python($args_path, $python_bin);
+    my $json_path_for_python = _normalize_local_path_for_python($json_path, $python_bin);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')

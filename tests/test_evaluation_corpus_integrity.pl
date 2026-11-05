@@ -29,7 +29,7 @@ is(SAS_Evaluation_Corpus::behavior_fingerprint($a,$source),SAS_Evaluation_Corpus
 my $different_body=$changed; $different_body=~s{\A/\*[^\n]*\*/\n}{}; $different_body=~s/b\d{4}/bCASE/ig;
 isnt(SAS_Evaluation_Corpus::behavior_fingerprint($a,$source),SAS_Evaluation_Corpus::behavior_fingerprint({%$a,body_sha256=>sha256_hex($different_body)},$changed),'changed numerical input has a distinct fingerprint');
 ok(!eval {SAS_Evaluation_Corpus::behavior_fingerprint($a,$changed);1},'novelty check also rejects stale source hashes');
-for my $dir ('library500',map {"library500_round$_"} 2..8) {
+for my $dir ('library500',(map {"library500_round$_"} 2..8),'macro_open_code50','library500_round10') {
     my $corpus=decode_json(read_text("$Bin/$dir/manifest.json")); my $case=$corpus->{cases}[0];
     ok(eval {SAS_Evaluation_Corpus::checked_source($case,read_text("$Bin/$dir/$case->{file}"));1},"existing $dir fingerprint convention supported");
 }
