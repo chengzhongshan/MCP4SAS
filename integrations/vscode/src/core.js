@@ -19,6 +19,20 @@ function platformInstaller(platform) {
   if (platform === 'linux') return 'install_ubuntu.sh';
   throw new Error('Supported desktop hosts: Windows/Cygwin, macOS, Ubuntu/Debian Linux.');
 }
+function installedPerl(detected, selected) {
+  if (detected || selected) return detected || selected;
+  throw new Error('Perl was not found after installation. Choose the Perl executable used by MCP4SAS and retry.');
+}
+function discoveryReply(message) {
+  if (message.id !== 1 && message.id !== 2) return null;
+  if (message.error) throw new Error(message.error.message || 'MCP discovery failed. Inspect the MCP4SAS output.');
+  if (message.id === 1) {
+    if (!message.result || typeof message.result !== 'object') throw new Error('Backend returned an invalid MCP initialize response.');
+    return { initialize: true };
+  }
+  if (!Array.isArray(message.result?.tools)) throw new Error('Backend returned an invalid MCP tool list.');
+  return { tools: message.result.tools };
+}
 function assertRepo(repo) {
   for (const file of ['server.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
     if (!fs.existsSync(path.join(repo, file))) throw new Error(`Not an MCP4SAS installation: missing ${file}`);
@@ -86,4 +100,4 @@ async function runtimeEnvironment(config) {
   }
   return env;
 }
-module.exports = { run, platformInstaller, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

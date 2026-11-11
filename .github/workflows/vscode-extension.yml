@@ -2,9 +2,9 @@ name: VS Code integration
 on:
   push:
     branches: [main, feature/vscode-guided-setup]
-    paths: ['integrations/vscode/**', '.github/workflows/vscode-extension.yml']
+    paths: ['integrations/vscode/**', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
   pull_request:
-    paths: ['integrations/vscode/**', '.github/workflows/vscode-extension.yml']
+    paths: ['integrations/vscode/**', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,6 +27,10 @@ jobs:
           cache-dependency-path: integrations/vscode/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm test
+      - run: xvfb-run -a npm run test:host
+        if: runner.os == 'Linux'
+      - run: npm run test:host
+        if: runner.os != 'Linux'
       - run: npm run package
       - uses: actions/upload-artifact@v7
         with:

@@ -6,6 +6,20 @@ const os = require('node:os');
 const path = require('node:path');
 const c = require('../src/core');
 const launch = c.launcher('C:\\A folder\\runtime.json', 'C:\\A folder\\relay.js', 'C:\\Code\\Code.exe');
+test('installation retains manually selected portable Perl when discovery cannot find it', () => {
+  assert.equal(c.installedPerl(null, '/portable/bin/perl.exe'), '/portable/bin/perl.exe');
+  assert.equal(c.installedPerl('/new/brew/perl', '/usr/bin/perl'), '/new/brew/perl');
+  assert.throws(() => c.installedPerl(null, null), /Perl was not found/);
+});
+test('discovery handles initialization errors immediately and rejects malformed tool lists', () => {
+  assert.throws(() => c.discoveryReply({ id: 1, error: { message: 'Perl dependency missing' } }), /Perl dependency missing/);
+  assert.throws(() => c.discoveryReply({ id: 2, error: { message: 'Server unavailable' } }), /Server unavailable/);
+  assert.throws(() => c.discoveryReply({ id: 1 }), /invalid MCP initialize/);
+  assert.throws(() => c.discoveryReply({ id: 2, result: {} }), /invalid MCP tool list/);
+  assert.deepEqual(c.discoveryReply({ id: 1, result: {} }), { initialize: true });
+  assert.deepEqual(c.discoveryReply({ id: 2, result: { tools: [] } }), { tools: [] });
+  assert.equal(c.discoveryReply({ method: 'notifications/message' }), null);
+});
 test('platform installers select the actual repository entry points', () => {
   for (const p of ['win32', 'linux', 'darwin']) assert.ok(fs.existsSync(path.join(__dirname, '../../..', 'install', c.platformInstaller(p))));
   assert.throws(() => c.platformInstaller('freebsd'));
