@@ -4362,3 +4362,18 @@ then passed 47 checks, including all 34 Java-help assertions. Three CLI failure
 paths use a stub SASPy module and never connect to SAS or read real credentials.
 Raw results are in the parent workspace's
 `SAS_Output_java_removal_validation_20261111` directory.
+
+Follow-up startup diagnostics: inspection of the installed SASPy IOM code showed
+that Java details can be logged separately before a generic session-loss error.
+The bridge now preserves error-level SASPy startup logging when session creation
+fails. The regression stub logs an encryption-class error and then raises only
+`No SAS process attached`, matching that behavior. Connection probe, submission
+and file-listing tests all retain the official recovery instructions. Known Java
+causes are no longer overwritten by the CLI's generic WORK/quota termination
+classification. Bare session loss still follows its existing handling.
+
+The focused startup regression run passed 45 checks (36 Java help, one helper
+parity and eight local-home checks). The initial published Java-help commit
+cdde9fc passed all five clean installation jobs in GitHub run 43100149420. No
+Java archives were restored; the follow-up only changes error reporting and
+preserves startup diagnostics.

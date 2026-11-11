@@ -3163,6 +3163,7 @@ if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
 if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
     && ref($result) eq 'HASH'
     && !$sas_execution_failure_class
+    && index($result->{error} // '', '[MCP4SAS Java setup help]') < 0
     && sas_log_contains_remote_termination(join("\n", $result->{error} // '', $result->{log} // '', $result->{dep_logs} // ''))) {
     $sas_execution_failed = 1;
     $sas_execution_failure_class = 'sas_oda_remote_session_termination';

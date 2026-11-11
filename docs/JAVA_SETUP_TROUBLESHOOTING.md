@@ -55,6 +55,10 @@ Python or custom configuration, its IOM classpath must include these files too.
 The shipped configuration template reads `MCP4SAS_SASPY_IOM_DIR`; an older custom
 profile with a hardcoded classpath needs to be updated. Start a fresh session
 after changing Java or its classpath, and recreate any required WORK data.
+For persistent runs, the Python session server must also reload the new
+environment/configuration. You can select an unused port, for example
+`export SAS_ODA_SESSION_PORT=8766`, and use a new session ID to start an isolated
+server without interrupting an existing session.
 
 ## Java executable missing or unable to start
 
@@ -93,6 +97,13 @@ Java network exceptions get host/port, DNS and firewall guidance. TLS handshake
 or certificate-chain failures get truststore/proxy guidance; certificate checks
 must remain enabled. Java out-of-memory errors get workload/heap guidance.
 These failures do not by themselves establish that encryption JARs are missing.
+SASPy sometimes logs the Java exception separately before raising a generic
+session-loss exception. MCP4SAS preserves error-level startup diagnostics in its
+failure response so the guide can use the reported cause. A bare session-loss
+message still does not establish a Java dependency failure.
+When startup diagnostics identify a Java setup failure, the CLI keeps that
+cause and its recovery steps instead of replacing them with a generic
+WORK/quota or remote-session-termination explanation.
 
 Official references:
 
