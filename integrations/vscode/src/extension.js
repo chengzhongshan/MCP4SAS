@@ -129,7 +129,29 @@ async function saveRuntime(runtime) {
   // Stable copies survive extension versioned directory changes.
   refreshLauncher();
   core.writePrivate(configFile(), JSON.stringify({ repo: runtime.repo, perl: runtime.perl, cwd, ...(runtime.java ? { java: runtime.java } : {}) }, null, 2) + '\n');
+  await configureCygwinTerminal(runtime.perl);
   emitter.fire(); return true;
+}
+async function configureCygwinTerminal(perl, explicit = false) {
+  if (process.platform !== 'win32' || vscode.env.remoteName) return;
+  if (!explicit && !vscode.workspace.getConfiguration('mcp4sas').get('configureCygwinTerminal', true)) return;
+  const bash = path.join(path.dirname(perl), 'bash.exe');
+  if (!fs.existsSync(bash) || !fs.existsSync(path.join(path.dirname(perl), 'cygpath.exe'))) throw new Error('Cygwin bash.exe and cygpath.exe must be installed alongside Perl before configuring the terminal.');
+  const terminal = vscode.workspace.getConfiguration('terminal.integrated');
+  const name = 'MCP4SAS Cygwin';
+  const profiles = terminal.inspect('profiles.windows')?.globalValue || {};
+  await terminal.update('profiles.windows', { ...profiles, [name]: { path: bash, args: ['--login', '-i'], env: { CHERE_INVOKING: '1' }, icon: 'terminal-bash' } }, vscode.ConfigurationTarget.Global);
+  if (explicit || !context.globalState.get('cygwinTerminalConfigured')) {
+    await terminal.update('defaultProfile.windows', name, vscode.ConfigurationTarget.Global);
+    await context.globalState.update('cygwinTerminalConfigured', true);
+    output.appendLine('Cygwin is now the default for new VS Code terminals. Use Terminal: Select Default Profile to change it later. Existing terminals keep their current shell.');
+  }
+}
+async function useCygwinTerminal() {
+  trusted();
+  if (process.platform !== 'win32') throw new Error('The Cygwin terminal profile is available on local Windows only.');
+  const perl = readConfig()?.perl || await choosePerl();
+  if (perl) await configureCygwinTerminal(perl, true);
 }
 function refreshLauncher() {
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
@@ -201,11 +223,11 @@ async function check() {
   } finally { clearTimeout(timer); rl.close(); p.stdin.end(); }
 }
 async function help() { await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
-function activate(ctx) {
+async function activate(ctx) {
   context = ctx; output = vscode.window.createOutputChannel('MCP4SAS'); emitter = new vscode.EventEmitter();
   if (vscode.workspace.isTrusted && !vscode.env.remoteName && fs.existsSync(configFile())) refreshLauncher();
   context.subscriptions.push(output, emitter);
-  for (const [id, fn] of Object.entries({ setup, connect, check, help })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
+  for (const [id, fn] of Object.entries({ setup, connect, check, help, cygwinTerminal: useCygwinTerminal })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
   const provider = {
     onDidChangeMcpServerDefinitions: emitter.event,
     provideMcpServerDefinitions() {
@@ -218,6 +240,12 @@ function activate(ctx) {
     resolveMcpServerDefinition(server) { trusted(); return server; }
   };
   context.subscriptions.push(vscode.lm.registerMcpServerDefinitionProvider('mcp4sas.local', provider));
-  return { provider, configFile, launchSettings }; // Small API also exercised by extension-host smoke test.
+  if (process.platform === 'win32' && vscode.workspace.isTrusted && !vscode.env.remoteName) {
+    try {
+      const perl = readConfig()?.perl || await findPerl();
+      if (perl) await configureCygwinTerminal(perl);
+    } catch (e) { output.appendLine(`Cygwin terminal setup: ${e.message}`); }
+  }
+  return { provider, configFile, launchSettings, configureCygwinTerminal }; // Also exercised by extension-host tests.
 }
 module.exports = { activate };

@@ -1,5 +1,11 @@
 # VS Code integration validation
 
+## 0.1.2 — Cygwin default terminal
+
+Windows setup now registers an interactive login Bash profile using the selected Cygwin installation and chooses it as the user default once. `CHERE_INVOKING=1` preserves the terminal working directory. Automatic activation can also configure an already detected Cygwin installation. Later manual default-profile choices are retained; an explicit command can restore Cygwin. Other profile entries, macOS/Linux and remote windows remain unaffected. Automatic configuration can be disabled with `mcp4sas.configureCygwinTerminal=false`.
+
+The 14 Node tests include profile preservation, portable Bash paths, one-time default selection, explicit reselection, opt-out and remote-window exclusion. The Windows extension-host test verifies real VS Code settings updates. Supplying `MCP4SAS_TEST_CYGWIN_PERL` to `npm run test:host` additionally opens a new default terminal, executes a Bash marker command and verifies its project working directory. This optional check passed locally on VS Code 1.145.3 with real portable Cygwin. The harness waits for the asynchronous profile cache to refresh before creating a terminal. Fake executable fixtures used on CI do not claim shell execution.
+
 ## 0.1.1 — 11 November 2026
 
 Local checks used Node 24.14.0 and the real Windows VS Code 1.145.3 extension host in a temporary profile. All **14 Node tests passed**, including the complete Quick Setup command with a simulated portable Cygwin installation, saved project/runtime configuration and Copilot selection. The real host activated all four commands, registered both empty and configured MCP providers, verified their launcher arguments, environment and working directory, and launched VS Code's bundled Electron as Node. Personal editor and assistant settings were not changed.

@@ -4,13 +4,19 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.1.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.1). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.1.vsix`.
+1. Download `mcp4sas-0.1.2.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.2). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.2.vsix`.
 2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
 An interactive **Connect SAS to your AI assistant** walkthrough is also available on VS Code's Getting Started page. **MCP4SAS: Open Setup Guide** reopens this guide.
 
 ## What setup does
+
+### Default Cygwin terminal on Windows
+
+On a trusted local Windows workspace, the extension registers **MCP4SAS Cygwin** and selects it as the default terminal when a supported Cygwin installation is first detected or selected in Quick Setup. Portable installations use the same Cygwin directory you select for MCP4SAS. Open a **new terminal** to use it; existing terminals retain their shell. Bash starts interactively as a login shell, and `CHERE_INVOKING=1` keeps the terminal's project working directory.
+
+Other terminal profiles are preserved. If you later select a different default using **Terminal: Select Default Profile**, the extension keeps your choice on subsequent launches. Run **MCP4SAS: Use Cygwin as Default Terminal** to switch back. To disable automatic configuration, set `mcp4sas.configureCygwinTerminal` to `false`. A workspace-specific default terminal setting can override the user default. macOS, Linux and remote windows retain their existing terminal settings.
 
 | Host | Guided installation |
 |---|---|
@@ -66,6 +72,6 @@ npm test
 npm run package
 ```
 
-The output is `dist/mcp4sas-0.1.1.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
+The output is `dist/mcp4sas-0.1.2.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
 
 This integration is independently maintained by the MCP4SAS author; it is not an official Microsoft, GitHub, OpenAI or SAS extension. New integration code has its own scoped MIT license; original repository code retains its existing rights.
