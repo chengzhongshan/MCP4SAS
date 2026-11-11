@@ -132,6 +132,7 @@ use IO::Socket::INET;
 use IO::Select;
 use SAS_Source_Analysis;
 use SAS_Local_Home;
+use SAS_Java_Help;
 
 sub _runner_temp_dir {
     my $worker_temp_dir = $ENV{MCP4SAS_WORKER_TEMP_DIR} // '';
@@ -2954,7 +2955,7 @@ sub _call_session_server {
     }
     close $sock;
     $resp->{last_progress} = $last_progress if ref($resp) eq 'HASH' && $last_progress && !exists $resp->{last_progress};
-    return $resp;
+    return SAS_Java_Help::decorate_result($resp);
 }
 
 my %_python_windows_path_cache;
@@ -3196,6 +3197,7 @@ END_NONPERSISTENT_PY
     unlink $json_path if defined $json_path && -e $json_path;
     unlink $py_path   if defined $py_path   && -e $py_path;
 
+    $result = SAS_Java_Help::decorate_result($result);
     _report_one_shot_connection_lifecycle($result, 'SAS code submission');
 
     if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {
@@ -3400,6 +3402,7 @@ END_NONPERSISTENT_ACTION_PY
     unlink $json_path if defined $json_path && -e $json_path;
     unlink $py_path   if defined $py_path   && -e $py_path;
 
+    $result = SAS_Java_Help::decorate_result($result);
     _report_one_shot_connection_lifecycle($result, $action);
 
     if (($exit_code != 0 || $signal != 0) && (!ref($result) || ($result->{status} // '') ne 'ok')) {

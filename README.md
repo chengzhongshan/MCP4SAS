@@ -444,7 +444,8 @@ https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption
 
 MCP4SAS does not distribute SAS or SASPy JAR files. The installer gets
 SASPy's Java bridge and its other package assets from the `saspy` Python package.
-Obtain the three SAS IOM encryption JARs from SAS using your SAS Profile and
+Obtain the three SAS IOM encryption JARs from the
+[official SAS download page](https://support.sas.com/downloads/package.htm?pid=2494) using your SAS Profile and
 extract them into a local directory. That directory must directly contain all
 three files. The installer never accesses your SAS account or handles your SAS
 credentials.
@@ -1138,14 +1139,20 @@ If SASPy hangs or a persistent session becomes stale:
 If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
 SAS ODA Java/IOM bridge but SAS ODA did not create a usable SAS session. The
-most common cause is that the three SAS IOM encryption jars are missing from
-SASPy's `java/iomclient` directory or that SASPy is using an incomplete
-classpath. Restore the bundled, tested Java assets and generated profile:
+most common cause is that the three SAS IOM encryption JARs are unavailable
+or SASPy is using an incomplete classpath. Obtain the files from SAS and point
+the configuration helper at your local directory; MCP4SAS does not bundle or
+restore these files:
 
 ```bash
-bash install/install_saspy_iom_jars.sh
+MCP4SAS_SASPY_IOM_DIR="$HOME/sas-iom-encryption-jars" \
+  bash install/install_saspy_iom_jars.sh
 bash install/check_mcp4sas_install.sh
 ```
+
+See [Java setup troubleshooting](docs/JAVA_SETUP_TROUBLESHOOTING.md) for the
+official download link, extraction steps, Cygwin/Windows paths, custom SASPy
+profiles, and separate guidance for Java runtime or Windows SSPI failures.
 
 Then refresh or validate the saved SAS ODA credentials:
 

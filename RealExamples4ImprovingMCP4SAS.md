@@ -4324,3 +4324,41 @@ Final regression checks after the COM fix passed: MCP4SAS 44 files / 5,199 check
 and the companion runner 27 files / 945 checks. The complete six-platform
 installation matrix and preflight passed on the home-directory port at commit
 863e55b, run 41969667167. The later COM/doc follow-up receives its own CI run.
+
+## 31. Installation after removing bundled Java archives (2026-11-11)
+
+The Java-removal commit 725b73c had already passed Installation run 42936005162
+on Ubuntu, macOS ARM, macOS Intel, Windows/Cygwin and Conda. The checkout has no
+tracked JAR archives. Installation provisions SASPy package assets; an actual
+ODA connection still requires the separately obtained SAS encryption files.
+
+Added `SAS_Java_Help.pm` so missing encryption classes/key-exchange failures
+show the official SAS download URL, SAS Profile sign-in, all three filenames,
+extraction/directory instructions, configuration commands and connection recheck.
+Connection probes, code submissions, file actions and persistent server errors
+retain their failed status and include the relevant help. Java setup failures
+during credential validation restore the prior auth file and stop instead of
+asking the user to retry passwords for a classpath problem.
+
+SSPI, missing Java, generic classpath/version, TLS, network and Java memory
+errors get separate guidance. Ordinary SAS programming errors and generic
+session loss do not imply missing JARs. No protected downloads or SAS sign-ins
+are automated. `docs/JAVA_SETUP_TROUBLESHOOTING.md` contains the user guide.
+
+Reproducible offline checks from Cygwin:
+
+```bash
+bash tests/test_installer_perl_deps.sh
+bash tests/test_saspy_iom_classpath.sh
+prove -v tests/test_java_setup_help.pl tests/test_helper_entrypoint_parity.pl tests/test_sas_log_diagnostics.pl
+```
+
+The installer test verifies absence of optional encryption files, valid external
+files, incomplete/missing external directories and a missing Java bridge. Its
+files are generated plain-text fixtures, not redistributed Java archives.
+The new Java-help tests are also required by every GitHub installation job.
+The complete Perl suite passed 45 files / 5,227 checks; the expanded focused run
+then passed 47 checks, including all 34 Java-help assertions. Three CLI failure
+paths use a stub SASPy module and never connect to SAS or read real credentials.
+Raw results are in the parent workspace's
+`SAS_Output_java_removal_validation_20261111` directory.
