@@ -73,6 +73,22 @@ def _default_classpath():
     if spec is None or not spec.origin:
         return ""
     saspy_dir = os.path.dirname(spec.origin)
+    iom_client_dir = os.environ.get("MCP4SAS_SASPY_IOM_DIR")
+    encryption_jars = {
+        "sas.rutil.jar",
+        "sas.rutil.nls.jar",
+        "sastpj.rutil.jar",
+    }
+    if iom_client_dir:
+        missing = [
+            name for name in encryption_jars
+            if not os.path.isfile(os.path.join(iom_client_dir, name))
+        ]
+        if missing:
+            raise RuntimeError(
+                "MCP4SAS_SASPY_IOM_DIR is missing required SAS IOM encryption JARs: "
+                + ", ".join(sorted(missing))
+            )
     relative_jars = [
         "java/saspyiom.jar",
         "java/iomclient/log4j-1.2-api-2.12.4.jar",
@@ -90,7 +106,13 @@ def _default_classpath():
         "java/thirdparty/pfl-basic.jar",
         "java/thirdparty/pfl-tf.jar",
     ]
-    jars = [os.path.join(saspy_dir, rel) for rel in relative_jars]
+    jars = []
+    for rel in relative_jars:
+        if iom_client_dir and os.path.basename(rel) in encryption_jars:
+            path = os.path.join(iom_client_dir, os.path.basename(rel))
+        else:
+            path = os.path.join(saspy_dir, rel)
+        jars.append(path)
     jars = [_to_windows_path(path) for path in jars if os.path.isfile(path)]
     return (";" if sys.platform in ("cygwin", "win32") else os.pathsep).join(jars)
 

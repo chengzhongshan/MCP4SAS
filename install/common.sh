@@ -7,7 +7,6 @@ MCP4SAS_VENV="${MCP4SAS_ROOT}/.venv-pipeline"
 MCP4SAS_LOCAL_PERL="${MCP4SAS_ROOT}/local/perl5"
 MCP4SAS_SASPY_IOM_JARS=(sas.rutil.jar sas.rutil.nls.jar sastpj.rutil.jar)
 MCP4SAS_SASPY_CONFIG_TEMPLATE="${MCP4SAS_INSTALL_DIR}/sascfg_personal.template.py"
-MCP4SAS_SASPY_JAVA_SUPPLEMENT="${MCP4SAS_INSTALL_DIR}/saspy-java-supplement"
 MCP4SAS_BASE_PYTHON=""
 
 log() {
@@ -60,7 +59,7 @@ create_python_venv() {
   "${MCP4SAS_VENV}/bin/python" -m pip install --upgrade pip setuptools wheel
   "${MCP4SAS_VENV}/bin/python" -m pip install -r "${MCP4SAS_INSTALL_DIR}/requirements.txt"
   printf '%s\n' "${MCP4SAS_VENV}/bin/python" > "${MCP4SAS_VENV}/.python-bin"
-  install_saspy_java_assets
+  validate_saspy_java_assets
   install_saspy_config_template
   configure_installed_saspy_profile
 }
@@ -162,6 +161,7 @@ resolve_unix_java_for_saspy() {
 
 build_saspy_classpath() {
   local saspy_dir="$1" jar rel separator=':' is_cygwin=0
+  local iom_dir="${MCP4SAS_SASPY_IOM_DIR:-}"
   local -a jars=() classpath_parts=()
   local preferred_rel=(
     java/saspyiom.jar
@@ -187,6 +187,13 @@ build_saspy_classpath() {
   fi
   for rel in "${preferred_rel[@]}"; do
     jar="${saspy_dir}/${rel}"
+    case "$rel" in
+      java/iomclient/sas.rutil.jar|java/iomclient/sas.rutil.nls.jar|java/iomclient/sastpj.rutil.jar)
+        if [ -n "$iom_dir" ]; then
+          jar="${iom_dir}/${rel##*/}"
+        fi
+        ;;
+    esac
     [ -f "$jar" ] && jars+=("$jar")
   done
   for jar in "${jars[@]}"; do
@@ -200,16 +207,21 @@ build_saspy_classpath() {
   printf '%s\n' "${classpath_parts[*]}"
 }
 
-install_saspy_java_assets() {
-  local saspy_dir source_dir
+validate_saspy_java_assets() {
+  local saspy_dir
   saspy_dir="$(saspy_package_dir)" || die "Installed SASPy package directory was not found"
-  source_dir="${MCP4SAS_SASPY_JAVA_SUPPLEMENT}/java"
-  [ -d "$source_dir" ] || die "Bundled SASPy Java supplement is missing: ${source_dir}"
-  mkdir -p "${saspy_dir}/java"
-  cp -Rf "${source_dir}/." "${saspy_dir}/java/"
   [ -s "${saspy_dir}/java/saspyiom.jar" ] || die "SASPy Java bridge was not installed"
-  dir_has_iom_encryption_jars "${saspy_dir}/java/iomclient" || die "SAS ODA encryption jars were not installed"
-  log "Installed the bundled SASPy Java runtime into ${saspy_dir}/java"
+  if [ -n "${MCP4SAS_SASPY_IOM_DIR:-}" ]; then
+    [ -d "${MCP4SAS_SASPY_IOM_DIR}" ] || die "MCP4SAS_SASPY_IOM_DIR is not a directory: ${MCP4SAS_SASPY_IOM_DIR}"
+    MCP4SAS_SASPY_IOM_DIR="$(cd "${MCP4SAS_SASPY_IOM_DIR}" && pwd)"
+    export MCP4SAS_SASPY_IOM_DIR
+    dir_has_iom_encryption_jars "${MCP4SAS_SASPY_IOM_DIR}" || die "MCP4SAS_SASPY_IOM_DIR must contain sas.rutil.jar, sas.rutil.nls.jar, and sastpj.rutil.jar"
+    log "Using SAS IOM encryption JARs from ${MCP4SAS_SASPY_IOM_DIR}"
+  elif ! dir_has_iom_encryption_jars "${saspy_dir}/java/iomclient"; then
+    log "SAS IOM encryption JARs are not available in the installed SASPy package."
+    log "Download them using your SAS Profile, then set MCP4SAS_SASPY_IOM_DIR to their directory and rerun install/install_saspy_iom_jars.sh."
+  fi
+  log "Using the Java assets supplied by the installed saspy package"
 }
 
 configure_installed_saspy_profile() {
@@ -252,8 +264,8 @@ dir_has_iom_encryption_jars() {
   return 0
 }
 
-install_saspy_iom_encryption_jars() {
-  install_saspy_java_assets
+configure_saspy_iom_encryption_jars() {
+  validate_saspy_java_assets
   configure_installed_saspy_profile
 }
 
