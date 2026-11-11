@@ -120,6 +120,7 @@ use Getopt::Long;
 use SAS_ODA_Runner;
 use SAS_ODA_Directory_Cleanup;
 use SAS_Source_Analysis;
+use SAS_Java_Help;
 use MCP4SAS_Temp;
 use JSON::PP qw(encode_json decode_json);
 use Cwd qw(abs_path getcwd);
@@ -811,6 +812,13 @@ PY
     $parsed->{status} = $status;
     $parsed->{raw_output} = $raw;
     $parsed->{ok} = $parsed->{ok} ? 1 : 0;
+    if (!$parsed->{ok}) {
+        my $help = SAS_Java_Help::instructions(join("\n", $parsed->{error} // '', $parsed->{log} // '', $raw));
+        if (length $help) {
+            $parsed->{java_setup_help} = $help;
+            $parsed->{error} = ($parsed->{error} || 'SASPy connection setup failed') . $help;
+        }
+    }
     $parsed->{label} = $label if defined $label && length $label;
     return $parsed;
 }
@@ -895,6 +903,8 @@ sub bootstrap_sas_oda_credentials_if_needed {
 
         my $detail = $probe->{error} || $probe->{raw_output} || 'unknown SAS ODA validation failure';
         chomp $detail;
+        die "SASPy Java/IOM setup failed. Credentials were not saved.\n$detail\n"
+          if length($probe->{java_setup_help} // '');
         warn "WARNING: SAS ODA login validation failed. The supplied account or password may be wrong.\n";
         warn "Validation detail: $detail\n" if length $detail;
 

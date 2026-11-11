@@ -210,18 +210,33 @@ build_saspy_classpath() {
 validate_saspy_java_assets() {
   local saspy_dir
   saspy_dir="$(saspy_package_dir)" || die "Installed SASPy package directory was not found"
-  [ -s "${saspy_dir}/java/saspyiom.jar" ] || die "SASPy Java bridge was not installed"
+  if [ ! -s "${saspy_dir}/java/saspyiom.jar" ]; then
+    perl -I "${MCP4SAS_ROOT}/MCPDeps" -MSAS_Java_Help \
+      -e 'print SAS_Java_Help::instructions("ClassNotFoundException: pyiom.saspy2j")'
+    die "SASPy Java bridge was not installed"
+  fi
   if [ -n "${MCP4SAS_SASPY_IOM_DIR:-}" ]; then
-    [ -d "${MCP4SAS_SASPY_IOM_DIR}" ] || die "MCP4SAS_SASPY_IOM_DIR is not a directory: ${MCP4SAS_SASPY_IOM_DIR}"
+    if [ ! -d "${MCP4SAS_SASPY_IOM_DIR}" ]; then
+      print_sas_iom_jar_help
+      die "MCP4SAS_SASPY_IOM_DIR is not a directory: ${MCP4SAS_SASPY_IOM_DIR}"
+    fi
     MCP4SAS_SASPY_IOM_DIR="$(cd "${MCP4SAS_SASPY_IOM_DIR}" && pwd)"
     export MCP4SAS_SASPY_IOM_DIR
-    dir_has_iom_encryption_jars "${MCP4SAS_SASPY_IOM_DIR}" || die "MCP4SAS_SASPY_IOM_DIR must contain sas.rutil.jar, sas.rutil.nls.jar, and sastpj.rutil.jar"
+    if ! dir_has_iom_encryption_jars "${MCP4SAS_SASPY_IOM_DIR}"; then
+      print_sas_iom_jar_help
+      die "MCP4SAS_SASPY_IOM_DIR must contain sas.rutil.jar, sas.rutil.nls.jar, and sastpj.rutil.jar"
+    fi
     log "Using SAS IOM encryption JARs from ${MCP4SAS_SASPY_IOM_DIR}"
   elif ! dir_has_iom_encryption_jars "${saspy_dir}/java/iomclient"; then
     log "SAS IOM encryption JARs are not available in the installed SASPy package."
-    log "Download them using your SAS Profile, then set MCP4SAS_SASPY_IOM_DIR to their directory and rerun install/install_saspy_iom_jars.sh."
+    print_sas_iom_jar_help
   fi
   log "Using the Java assets supplied by the installed saspy package"
+}
+
+print_sas_iom_jar_help() {
+  perl -I "${MCP4SAS_ROOT}/MCPDeps" -MSAS_Java_Help \
+    -e 'print SAS_Java_Help::encryption_instructions()'
 }
 
 configure_installed_saspy_profile() {
