@@ -16,7 +16,7 @@ for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
 | SAS target | SASPy profile | Connection and prerequisites |
 | --- | --- | --- |
-| SAS ODA | `oda` | Online SAS account, network access, and Java IOM dependencies supplied by the installer. |
+| SAS ODA | `oda` | SAS account, network access, Java, and SAS IOM encryption JARs obtained through SAS. |
 | Local Linux SAS | `linuxlocal` | Installed, licensed Linux SAS; local STDIO through Linux Python and SASPy. |
 | Local Windows SAS | `winlocal` | Installed SAS 9.4; local Java IOM through native Windows Python and SASPy. |
 | Local Windows SAS, COM alternative | `winlocal_com` | Installed SAS 9.4; native Windows Python, SASPy and pywin32. |
@@ -431,7 +431,7 @@ host system.
 
 ## First SAS ODA Login
 
-SAS ODA requires the SAS IOM encryption jars used by SASPy:
+SAS ODA requires the SAS IOM encryption JARs used by SASPy:
 
 ```text
 sas.rutil.jar
@@ -442,14 +442,30 @@ sastpj.rutil.jar
 SASPy documents this requirement for SAS ODA/SAS 9.4M7 here:
 https://sassoftware.github.io/saspy/configuration.html#sas-iom-client-encryption-jars
 
-The MCP4SAS installers include the tested SASPy Java bridge, IOM client,
-encryption, CORBA, and logging JARs. They copy these files into the isolated
-Python environment and build the ODA classpath automatically. To repair or
-refresh those files without reinstalling everything, run:
+MCP4SAS does not distribute SAS or SASPy JAR files. The installer gets
+SASPy's Java bridge and its other package assets from the `saspy` Python package.
+Obtain the three SAS IOM encryption JARs from SAS using your SAS Profile and
+extract them into a local directory. That directory must directly contain all
+three files. The installer never accesses your SAS account or handles your SAS
+credentials.
+
+Provide the directory when installing or updating the SASPy IOM configuration:
 
 ```bash
+export MCP4SAS_SASPY_IOM_DIR="$HOME/sas-iom-encryption-jars"
+bash install/install_ubuntu.sh
+```
+
+For an existing installation, run:
+
+```bash
+MCP4SAS_SASPY_IOM_DIR="$HOME/sas-iom-encryption-jars" \
 bash install/install_saspy_iom_jars.sh
 ```
+
+If the JARs are already available from the installed SASPy package, the path is
+optional. Without them, the installer completes but SAS ODA connections may
+fail until the SAS-provided JARs are configured.
 
 Interactive credential setup:
 

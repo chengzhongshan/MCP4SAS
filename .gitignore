@@ -9,6 +9,7 @@
 /.mcp4sas_work_*/
 /.DS_Store
 *.pyc
+*.jar
 __pycache__/
 /integrations/vscode/node_modules/
 /integrations/vscode/.vscode-test/
