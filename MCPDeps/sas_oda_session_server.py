@@ -203,7 +203,7 @@ def write_text_artifact(path, text):
         fh.write(text or '')
 def create_session(session_id):
     log_event(f"create_session start session_id={session_id}")
-    sess = open_sas_session()
+    sess = open_session_with_diagnostics(open_sas_session)
     session_macros_loaded[session_id] = False
     session_macro_bootstrap_warning[session_id] = False
     session_macro_bootstrap_meta[session_id] = {}
@@ -659,6 +659,26 @@ def configure_local_home(sess, home):
     if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
         raise RuntimeError('Cannot configure local SAS home:\n' + log)
     sess._pipeline_local_home = home
+
+
+def open_session_with_diagnostics(factory):
+    import io
+    import logging
+    capture = io.StringIO()
+    handler = logging.StreamHandler(capture)
+    handler.setLevel(logging.ERROR)
+    logger = logging.getLogger('saspy')
+    logger.addHandler(handler)
+    try:
+        return factory()
+    except Exception as exc:
+        detail = capture.getvalue()[-16000:].strip()
+        if detail and detail not in str(exc):
+            raise RuntimeError(str(exc) + '\nSASPy startup diagnostics:\n' + detail) from exc
+        raise
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
 
 def handle_client(conn, addr):
     try:

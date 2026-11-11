@@ -24,7 +24,9 @@ SAS IOM encryption JAR setup:
   4. Apply the classpath to the Python/configuration used by the failing run.
      If SASPY_CFGFILE selects a custom config, update its IOM profile classpath
      too; rerunning the helper configures the installer's SASPy environment.
-     Start a fresh session after changing the Java/classpath configuration.
+     Start a fresh Python/SAS session after changing Java or its classpath.
+     For --persistent, use a fresh session server, for example by selecting an
+     unused SAS_ODA_SESSION_PORT=8766 and a new session ID. Recreate needed WORK data.
   5. Check your selected target before resubmitting SAS code:
        perl run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
      Keep the same --saspy-cfgname/--saspy-cfgfile flags if you used them before.
@@ -82,6 +84,31 @@ sub decorate_result {
     my $help = instructions($result->{error});
     return $result unless length $help;
     return { %{$result}, error => $result->{error} . $help, java_setup_help => $help };
+}
+
+sub python_startup_diagnostics {
+    return <<'PY';
+
+def open_session_with_diagnostics(factory):
+    import io
+    import logging
+    capture = io.StringIO()
+    handler = logging.StreamHandler(capture)
+    handler.setLevel(logging.ERROR)
+    logger = logging.getLogger('saspy')
+    logger.addHandler(handler)
+    try:
+        return factory()
+    except Exception as exc:
+        detail = capture.getvalue()[-16000:].strip()
+        if detail and detail not in str(exc):
+            raise RuntimeError(str(exc) + '\nSASPy startup diagnostics:\n' + detail) from exc
+        raise
+    finally:
+        logger.removeHandler(handler)
+        handler.close()
+
+PY
 }
 
 1;

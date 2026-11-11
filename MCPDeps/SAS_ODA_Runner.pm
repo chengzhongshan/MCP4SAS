@@ -434,7 +434,7 @@ def get_session(session_obj):
     global _LAST_SASPY_SUBPROCESS_ID
     if session_obj is None or not hasattr(session_obj, '_session'):
         session_obj = type('SessionWrapper', (), {})()
-        session_obj._session = _open_sas_session()
+        session_obj._session = open_session_with_diagnostics(_open_sas_session)
         configure_local_home(session_obj._session, os.environ.get('SAS_LOCAL_HOME_DIR', ''))
         session_obj._macros_loaded = False
         _LAST_SASPY_SUBPROCESS_ID = _saspy_subprocess_id(session_obj)
@@ -1401,6 +1401,7 @@ def get_sas_home(session_obj):
 END_PYTHON
 ;
 $INLINE_PYTHON_SOURCE .= SAS_Local_Home::python_setup();
+$INLINE_PYTHON_SOURCE .= SAS_Java_Help::python_startup_diagnostics();
 
 our @EXPORT_OK = qw(new run_code run_file upload_file download_file);
 
@@ -1821,7 +1822,7 @@ def write_text_artifact(path, text):
         fh.write(text or '')
 def create_session(session_id):
     log_event(f"create_session start session_id={session_id}")
-    sess = open_sas_session()
+    sess = open_session_with_diagnostics(open_sas_session)
     session_macros_loaded[session_id] = False
     session_macro_bootstrap_warning[session_id] = False
     session_macro_bootstrap_meta[session_id] = {}
@@ -2567,7 +2568,7 @@ def server_loop():
 if __name__ == '__main__':
     server_loop()
 END_SERVER_PY
-$SERVER_PY =~ s/^def handle_client/SAS_Local_Home::python_setup() . 'def handle_client'/me;
+$SERVER_PY =~ s/^def handle_client/SAS_Local_Home::python_setup() . SAS_Java_Help::python_startup_diagnostics() . 'def handle_client'/me;
 
 sub _session_server_source { return $SERVER_PY; }
 

@@ -52,7 +52,9 @@ open my $stub,'>',File::Spec->catfile($fixture,'saspy.py') or die $!;
 print {$stub} <<'PY';
 class SASsession:
     def __init__(self, **kwargs):
-        raise RuntimeError('java.lang.NoClassDefFoundError: com/sas/services/security/encryption/Cipher')
+        import logging
+        logging.getLogger('saspy.sasioiom').critical('Java Error: java.lang.NoClassDefFoundError: com/sas/services/security/encryption/Cipher')
+        raise RuntimeError('No SAS process attached. SAS process has terminated unexpectedly.')
 PY
 close $stub;
 local $ENV{PIPELINE_PYTHON_BIN}=$ENV{PIPELINE_PYTHON_BIN} || 'python3';
@@ -85,5 +87,6 @@ for my $case (
     waitpid($child,0);
     isnt($? >> 8,0,"actual $label keeps its failure exit status");
     like($captured,qr/pid=2494/,"actual $label also includes Java recovery instructions");
+    unlike($captured,qr/WORK\/quota or memory exhaustion is possible/,"known Java failure is not overwritten by a quota/session-loss guess");
 }
 done_testing();
