@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const core = require('./core');
+const VERSION = require('../package.json').version;
 const { spawn } = require('node:child_process');
 let context, output, emitter;
 const configFile = () => path.join(context.globalStorageUri.fsPath, 'runtime.json');
@@ -116,7 +117,7 @@ async function installNew() {
   const script = process.platform === 'win32' ? await core.toPosix(path.join(repo, 'install', install), perl) : path.join(repo, 'install', install);
   await task(bash, ['--noprofile', '--norc', script], repo, java ? { SASPY_JAVA_WIN: java } : {});
   // macOS installer may install Homebrew Perl for the first time.
-  perl = await findPerl();
+  perl = core.installedPerl(await findPerl(), perl);
   return { repo, perl, java };
 }
 async function saveRuntime(runtime) {
@@ -126,9 +127,13 @@ async function saveRuntime(runtime) {
   if (!cwd) return false;
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   // Stable copies survive extension versioned directory changes.
-  for (const name of ['relay.js', 'core.js']) fs.copyFileSync(path.join(context.extensionPath, 'src', name), path.join(context.globalStorageUri.fsPath, name));
+  refreshLauncher();
   core.writePrivate(configFile(), JSON.stringify({ repo: runtime.repo, perl: runtime.perl, cwd, ...(runtime.java ? { java: runtime.java } : {}) }, null, 2) + '\n');
   emitter.fire(); return true;
+}
+function refreshLauncher() {
+  fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
+  for (const name of ['relay.js', 'core.js']) core.writePrivate(path.join(context.globalStorageUri.fsPath, name), fs.readFileSync(path.join(context.extensionPath, 'src', name)));
 }
 async function setup() {
   trusted();
@@ -178,17 +183,18 @@ async function check() {
       rl.on('line', line => {
         try {
           const message = JSON.parse(line);
-          if (message.id === 1 && message.result) {
+          const reply = core.discoveryReply(message);
+          if (reply?.initialize) {
             p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');
             p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) + '\n');
           }
-          if (message.id === 2) message.error ? reject(new Error(message.error.message)) : resolve(message.result.tools);
+          if (reply?.tools) resolve(reply.tools);
         } catch (e) { reject(e); }
       });
-      p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'mcp4sas-vscode-check', version: '0.1.0' } } }) + '\n');
+      p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'mcp4sas-vscode-check', version: VERSION } } }) + '\n');
     });
     output.appendLine(`Discovery PASS: ${discovered.length} tools. SAS authentication/execution has not been tested by discovery.`);
-    const prompt = 'Use MCP4SAS to run proc means data=sashelp.class n nmiss min max; var Age; run; on the oda target in a fresh session. Wait for the final result and inspect the actual SAS log. Check known ages=19, missing=0, minimum=11, maximum=16. Show the tool call and observed values; do not infer successful execution from code alone.';
+    const prompt = 'Use MCP4SAS to run proc means data=sashelp.class n nmiss min max; var Age; run; on my configured SASPy target in a fresh session. Wait for the final result and inspect the actual SAS log. Check known ages=19, missing=0, minimum=11, maximum=16. Show the tool call and observed values; do not infer successful execution from code alone.';
     const action = await vscode.window.showInformationMessage('MCP4SAS tools discovered. Next, test your SAS login from the selected assistant.', 'Copy SAS test prompt', 'Open setup guide');
     if (action === 'Copy SAS test prompt') await vscode.env.clipboard.writeText(prompt);
     if (action === 'Open setup guide') await help();
@@ -197,6 +203,7 @@ async function check() {
 async function help() { await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
 function activate(ctx) {
   context = ctx; output = vscode.window.createOutputChannel('MCP4SAS'); emitter = new vscode.EventEmitter();
+  if (vscode.workspace.isTrusted && !vscode.env.remoteName && fs.existsSync(configFile())) refreshLauncher();
   context.subscriptions.push(output, emitter);
   for (const [id, fn] of Object.entries({ setup, connect, check, help })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
   const provider = {
@@ -204,7 +211,7 @@ function activate(ctx) {
     provideMcpServerDefinitions() {
       if (!vscode.workspace.isTrusted || vscode.env.remoteName || !context.globalState.get('copilotEnabled') || !readConfig()) return [];
       const launch = launchSettings();
-      const server = new vscode.McpStdioServerDefinition('MCP4SAS', launch.command, launch.args, launch.env, '0.1.0');
+      const server = new vscode.McpStdioServerDefinition('MCP4SAS', launch.command, launch.args, launch.env, VERSION);
       server.cwd = vscode.Uri.file(readConfig().cwd);
       return [server];
     },

@@ -1,4 +1,26 @@
-# VS Code integration 0.1.0 validation
+# VS Code integration validation
+
+## 0.1.1 — 11 November 2026
+
+Local checks used Node 24.14.0 and the real Windows VS Code 1.145.3 extension host in a temporary profile. All **13 Node tests passed**, including the complete Quick Setup command with a simulated portable Cygwin installation, saved project/runtime configuration and Copilot selection. The real host activated all four commands, registered both empty and configured MCP providers, verified their launcher arguments, environment and working directory, and launched VS Code's bundled Electron as Node. Personal editor and assistant settings were not changed.
+
+The actual stdio relay and original Perl backend also passed initialization, notification suppression, tool discovery and clean shutdown. Two programs ran against the existing local Windows SAS `winlocal` profile: `SASHELP.CLASS` returned known=19, absent=0, youngest=11, oldest=16 with COMPLETE status; an intentionally missing dataset returned FAILED with the expected SAS error. Raw records and logs remain in the local `SAS_Output_vscode_validation_20261111` directory outside the repository. These checks used an already configured SAS/Java/Cygwin installation; they do not claim a fresh installation or an interactive AI conversation.
+
+Fixed portable Perl selection being discarded after installation and initialization errors waiting for the discovery timeout. Client/provider versions now follow the extension package version. The VSIX builds successfully. CI now runs real extension-host checks on Windows, macOS and Linux (under Xvfb), in addition to unit tests and packaging, and reruns when shared backend/install files change. CI results must be checked separately from the local results above.
+
+Reproduce from `integrations/vscode`:
+
+```bash
+npm ci --ignore-scripts
+npm test
+npm run test:host  # Linux without a desktop: xvfb-run -a npm run test:host
+npm run package
+# Optional: private runtime.json contains repo, perl and cwd paths.
+# SASPY_CFGFILE and SASPY_CFGNAME select your privately configured SAS target.
+node test/live-smoke.cjs /private/runtime.json /private/capture.json --sas
+```
+
+## 0.1.0 — historical validation
 
 Date: 19 October 2026. Server/runner baseline: `af05aed11a74a2146823023f3bf4b6132aaa4a1c`. The original SAS execution engine, macro definitions and existing installers were not edited.
 

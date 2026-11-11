@@ -30,7 +30,7 @@ function request(method, params) {
 }
 const text = r => (r.content || []).map(c => c.text || '').join('\n');
 async function sas(code, finalPattern, expectedState) {
-  let result = await request('tools/call', { name: 'run_sas_codes_or_files_in_ODA', arguments: { sas_codes_or_file: code, saspy_cfgname: 'oda', persistent: 'false' } });
+  let result = await request('tools/call', { name: 'run_sas_codes_or_files_in_ODA', arguments: { sas_codes_or_file: code, saspy_cfgname: process.env.SASPY_CFGNAME || 'oda', persistent: 'false' } });
   const pid = text(result).match(/^PID:\s*(\d+)/m);
   const until = Date.now() + 240000;
   while (!/^STATUS: (?:COMPLETE|FAILED)/m.test(text(result)) && Date.now() < until) {

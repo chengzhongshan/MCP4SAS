@@ -4,7 +4,7 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.0.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.0). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.0.vsix`.
+1. Download `mcp4sas-0.1.1.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.1). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.1.vsix`.
 2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
@@ -42,17 +42,18 @@ The selected project folder becomes the MCP4SAS working directory. Recognized ex
 
 Each client launch owns a separate loopback-only HTTP backend on an allocated port. A small stdio relay hides that detail from the client, discards the pinned server's notification response bodies, and relays SAS requests/results unchanged. You do not have to keep a server terminal open. Ending the client transport closes its owned HTTP backend. Finish or cancel SAS jobs using the original server tools before closing; the relay does not delete ODA files or promise to erase remote sessions.
 
-The launcher uses VS Code's bundled Node/Electron runtime, so a separate Node installation is not required for installed users. New extension versions refresh stable launcher files the next time Quick Setup runs. Keep the extension installed while using its Codex entry. Never configure both the provider and a second manual Copilot entry for the same backend unless that is intentional.
+The launcher uses VS Code's bundled Node/Electron runtime, so a separate Node installation is not required for installed users. New extension versions refresh stable launcher files when they activate in a trusted local workspace with a saved runtime. Keep the extension installed while using its Codex entry. Never configure both the provider and a second manual Copilot entry for the same backend unless that is intentional.
 
 ## Troubleshooting and scope
 
 - **No tools:** trust your own local folder, refresh the chosen assistant, check enabled MCP tools, and inspect **Output → MCP4SAS** / the client's MCP output. Update VS Code if its MCP provider API is missing.
 - **Portable Cygwin not detected:** use the existing-installation route and select its `bin/perl.exe`. Do not select Windows Strawberry Perl.
 - **Tools discovered, SAS fails:** repair SASPy target, Java/IOM configuration and authentication. Discovery does not validate those.
+- **Missing SAS Java classes or IOM JARs:** the extension does not bundle SAS proprietary JARs. Download the SAS-provided archive from the [official SAS download page](https://support.sas.com/downloads/package.htm?pid=2494), signing in with your own SAS Profile if requested. Extract it outside the repository. Locate `sas.rutil.jar`, `sas.rutil.nls.jar` and `sastpj.rutil.jar`, then set `MCP4SAS_SASPY_IOM_DIR` to their containing directory before running the MCP4SAS installer/configuration helper. Follow the [Java setup and troubleshooting guide](https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/JAVA_SETUP_TROUBLESHOOTING.md) for the exact commands and configuration checks. Restart VS Code from the configured environment so its MCP subprocesses inherit your settings. Installing Java alone does not supply these SAS libraries.
 - **Wrong relative path:** rerun Quick Setup and choose the actual project folder. The active editor file does not change the saved server folder automatically.
 - **Restricted network:** installers need access to official Cygwin, GitHub, CPAN and Python/package mirrors. Follow institutional proxy rules; no TLS bypass is added.
 - **Remote VS Code:** SSH, WSL, containers and browser-based VS Code are not supported by this first guided desktop release. Configure their own MCP environment explicitly. Native Windows/Cygwin is a distinct route from WSL.
-- **Platform evidence:** see [validation report](https://github.com/chengzhongshan/MCP4SAS/blob/feature/vscode-guided-setup/integrations/vscode/VALIDATION.md). Shared code tests are not proof of fresh installations or interactive Copilot model execution on every OS.
+- **Platform evidence:** see [validation report](https://github.com/chengzhongshan/MCP4SAS/blob/main/integrations/vscode/VALIDATION.md). Shared code tests are not proof of fresh installations or interactive Copilot model execution on every OS.
 
 ## Build from source
 
@@ -65,6 +66,6 @@ npm test
 npm run package
 ```
 
-The output is `dist/mcp4sas-0.1.0.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
+The output is `dist/mcp4sas-0.1.1.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
 
 This integration is independently maintained by the MCP4SAS author; it is not an official Microsoft, GitHub, OpenAI or SAS extension. New integration code has its own scoped MIT license; original repository code retains its existing rights.
