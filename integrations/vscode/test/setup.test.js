@@ -15,17 +15,22 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   const java = path.join(root, 'Java', 'bin', 'java.exe');
   const project = path.join(root, 'SAS project');
   const storage = path.join(root, 'storage');
-  for (const file of [portable, java, path.join(path.dirname(portable), 'cygpath.exe')]) {
+  for (const file of [portable, java, path.join(path.dirname(portable), 'cygpath.exe'), path.join(path.dirname(portable), 'bash.exe')]) {
     fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
   }
   fs.mkdirSync(project);
   const commands = new Map(), states = new Map(), errors = [], tasks = [];
+  const settings = new Map([['profiles.windows', { 'My existing shell': { path: 'original.exe' } }]]);
+  let configureTerminal = true;
   const choices = ['Install MCP4SAS for this computer', 'Choose an existing Cygwin Perl', [{ label: 'GitHub Copilot' }]];
   const dialogs = [portable, project];
   let onTaskEnd;
   const disposable = () => ({ dispose() {} });
   const vscode = {
-    workspace: { isTrusted: true }, env: {},
+    workspace: { isTrusted: true, getConfiguration(section) {
+      if (section === 'mcp4sas') return { get: () => configureTerminal };
+      return { inspect: key => ({ globalValue: settings.get(key) }), async update(key, value) { settings.set(key, value); } };
+    } }, env: {}, ConfigurationTarget: { Global: 1 },
     Uri: { file: fsPath => ({ fsPath }) },
     ProgressLocation: { Notification: 1 }, TaskScope: { Global: 1 }, TaskRevealKind: {}, TaskPanelKind: {},
     EventEmitter: class { event() {} fire() {} dispose() {} },
@@ -70,7 +75,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
         return realRequire(name);
       }
     });
-    module.exports.activate({ extensionPath, globalStorageUri: { fsPath: storage }, subscriptions: [], globalState: { get: key => states.get(key), async update(key, value) { states.set(key, value); } } });
+    const api = await module.exports.activate({ extensionPath, globalStorageUri: { fsPath: storage }, subscriptions: [], globalState: { get: key => states.get(key), async update(key, value) { states.set(key, value); } } });
     await commands.get('mcp4sas.setup')();
     assert.deepEqual(errors, []);
     const saved = JSON.parse(fs.readFileSync(path.join(storage, 'runtime.json'), 'utf8'));
@@ -80,5 +85,24 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(tasks[0].execution.command, path.join(path.dirname(portable), 'bash.exe'));
     assert.equal(states.get('copilotEnabled'), true);
     assert.ok(fs.existsSync(path.join(storage, 'relay.js')));
+    assert.equal(settings.get('defaultProfile.windows'), 'MCP4SAS Cygwin');
+    const profile = settings.get('profiles.windows')['MCP4SAS Cygwin'];
+    assert.equal(profile.path, path.join(path.dirname(portable), 'bash.exe'));
+    assert.equal(Array.from(profile.args).join(' '), '--login -i');
+    assert.equal(profile.env.CHERE_INVOKING, '1');
+    assert.equal(settings.get('profiles.windows')['My existing shell'].path, 'original.exe');
+    settings.set('defaultProfile.windows', 'My existing shell');
+    await api.configureCygwinTerminal(portable);
+    assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'later user preference is retained');
+    await commands.get('mcp4sas.cygwinTerminal')();
+    assert.equal(settings.get('defaultProfile.windows'), 'MCP4SAS Cygwin');
+    configureTerminal = false;
+    settings.set('defaultProfile.windows', 'My existing shell');
+    states.delete('cygwinTerminalConfigured');
+    await api.configureCygwinTerminal(portable);
+    assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'opt out is respected');
+    vscode.env.remoteName = 'ssh-remote';
+    await api.configureCygwinTerminal(portable, true);
+    assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'remote settings are untouched');
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
