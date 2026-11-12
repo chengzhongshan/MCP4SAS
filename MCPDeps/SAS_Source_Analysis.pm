@@ -320,9 +320,9 @@ sub open_code_macro_issues {
 }
 sub mask_comments { return analyze_source($_[0])->{comments_masked}; }
 sub mask_macro_literals {
-    my ($text)=@_;
+    my ($text,$analysis)=@_;
     $text //= '';
-    my $analysis=analyze_source($text);
+    $analysis ||= analyze_source($text);
     my $masked=$analysis->{comments_masked};
     for my $span (@{$analysis->{macro_quotes}}) {
         # NRSTR masks percent/ampersand at compilation. Other quote functions
@@ -345,24 +345,48 @@ sub mask_macro_literals {
 }
 sub _literal_is_executable {
     my ($analysis,$span,$include_macro_evaluation)=@_;
-    my $prefix=substr($analysis->{masked},0,$span->{start});
     # RESOLVE evaluates macro expressions, but does not submit arbitrary SAS
     # statements. Only dependency discovery opts into that narrower context;
     # include_targets must continue to recognize full code execution only.
-    my $calls=$include_macro_evaluation ? qr/call\s+execute|dosubl|resolve/i : qr/call\s+execute|dosubl/i;
-    my @stack;
-    while ($prefix =~ /\b($calls)\s*\(|([()])/ig) {
-        if (defined $1) {push @stack,1;}
-        elsif ($2 eq '(') {push @stack,0;}
-        else {pop @stack;}
+    my $mode = $include_macro_evaluation ? 1 : 0;
+    if (!exists $analysis->{literal_execution_contexts}{$mode}) {
+        # Process parentheses once for every quoted span in this analysis.
+        # Scanning the entire preceding source separately for each literal
+        # makes large macro libraries grow quadratically in processing time.
+        my @spans = sort { $a->{start} <=> $b->{start} }
+            (@{$analysis->{single_quotes}}, @{$analysis->{double_quotes}});
+        my $source = $analysis->{masked};
+        my $calls = $mode ? qr/call\s+execute|dosubl|resolve/i : qr/call\s+execute|dosubl/i;
+        my (@stack, %contexts);
+        my ($index, $active) = (0, 0);
+        while ($source =~ /\b($calls)\s*\(|([()])/ig) {
+            my ($call, $paren, $token_end) = ($1, $2, $+[0]);
+            # A prefix ending inside a token cannot contain that complete
+            # token. Preserve the original prefix scanner's boundary rule.
+            while ($index < @spans && $spans[$index]{start} < $token_end) {
+                $contexts{$spans[$index++]{start}} = $active;
+            }
+            if (defined $call) {
+                push @stack, 1;
+                ++$active;
+            } elsif ($paren eq '(') {
+                push @stack, 0;
+            } else {
+                $active -= pop(@stack) || 0;
+            }
+        }
+        while ($index < @spans) {
+            $contexts{$spans[$index++]{start}} = $active;
+        }
+        $analysis->{literal_execution_contexts}{$mode} = \%contexts;
     }
-    return scalar grep {$_} @stack;
+    return $analysis->{literal_execution_contexts}{$mode}{$span->{start}} || 0;
 }
 sub macro_dependency_view {
     my ($text)=@_;
     $text //= '';
     my $analysis=analyze_source($text);
-    my $masked=mask_macro_literals($text);
+    my $masked=mask_macro_literals($text,$analysis);
     for my $span (@{$analysis->{single_quotes}}) {
         # Code execution APIs and RESOLVE can evaluate macro calls in otherwise
         # single-quoted strings. Ordinary quoted DATA text stays inert.
@@ -399,7 +423,7 @@ sub include_targets {
     # macro references may resolve in double quotes. Deferred executable
     # quoted code in execution APIs is handled recursively below.
     my $active=$analysis->{masked};
-    my $paths=mask_comments($text);
+    my $paths=$analysis->{comments_masked};
     my @located;
     my $sequence=0;
     my @deferred;
