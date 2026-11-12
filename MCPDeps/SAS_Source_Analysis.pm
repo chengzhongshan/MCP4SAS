@@ -20,7 +20,7 @@ sub include_target_needs_runtime_resolution {
 sub is_builtin_macro_name {
     my ($name)=@_;
     return 1 unless defined($name) && length($name);
-    return $name=~/^(?:let|put|do|to|by|while|until|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|syscall|sysget|symexist|symdel|symglobl|symlocal|sysmacexist|sysmacdelete|scan|qscan|substr|qsubstr|upcase|qupcase|lowcase|qlowcase|length|index|eval|sysevalf|quote|nrquote|unquote|cmpres|sysprod|sysmacroname|global|local|mend|macro|goto|return|include|inc)$/i ? 1:0;
+    return $name=~/^(?:let|put|do|to|by|while|until|else|end|if|then|abort|window|display|str|nrstr|bquote|nrbquote|superq|sysfunc|qsysfunc|syscall|sysget|symexist|symdel|symglobl|symlocal|sysmacexist|sysmacdelete|scan|qscan|substr|qsubstr|upcase|qupcase|lowcase|qlowcase|length|index|eval|sysevalf|quote|nrquote|unquote|cmpres|left|trim|sysprod|sysmacroname|global|local|mend|macro|goto|return|include|inc)$/i ? 1:0;
 }
 
 # Macro quoting is a separate lexical context: apostrophes may be unmatched,

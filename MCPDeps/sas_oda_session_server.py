@@ -7,7 +7,7 @@ import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = int(os.environ.get('SAS_ODA_SESSION_PORT', '8765'))
-SERVER_API_VERSION = '2026-11-04-local-home'
+SERVER_API_VERSION = '2026-11-12-persistent-archive'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -640,6 +640,10 @@ def with_retry(session_id, fn, retry_session_loss=True):
             return fn(sess)
         raise
 
+
+
+
+
 def configure_local_home(sess, home):
     import re
     home = str(home or '').replace('\\', '/')
@@ -787,6 +791,14 @@ def handle_client(conn, addr):
                     tail = ''
                 resp = {'status':'error','error':str(e), 'server_log_tail': tail}
                 log_event(f"submit error session_id={session_id} err={e}")
+        elif cmd == 'bulk_transfer':
+            try:
+                from sas_archive_transfer import transfer_many
+                sess=ensure_session(session_id)
+                value=transfer_many(sess,req.get('payload',{}),session_home(sess),lambda p:run_fileinfo(sess,p))
+                resp={'status':'ok','value':value}
+            except Exception as e:
+                resp={'status':'error','error':str(e)}
         elif cmd == 'upload':
             local_path = req.get('local_path', '')
             progress_label = req.get('progress_label') or ''

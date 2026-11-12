@@ -30,6 +30,10 @@ is($converted->{download_local_path},$result_arg,'download destination uses the 
 is($converted->{remote_path},'~/keep_this','remote SAS path is preserved');
 is($args->{uploads}[0]{local_path},$source,'normalization does not mutate caller input');
 
+my $nested=SAS_ODA_Runner::_normalize_python_action_args({cmd=>'bulk_transfer',payload=>{uploads=>[{local_path=>$source}],downloads=>[{local_path=>$result,remote_path=>'~/remote'}]}},$python);
+is($nested->{payload}{uploads}[0]{local_path},$source_arg,'nested bulk upload path normalized');
+is($nested->{payload}{downloads}[0]{local_path},$result_arg,'nested bulk download path normalized');
+is($nested->{payload}{downloads}[0]{remote_path},'~/remote','nested remote path preserved');
 SKIP: {
     skip 'Cygwin POSIX Python control requires Cygwin',2 unless $^O eq 'cygwin' && -x '/usr/bin/python3';
     my $posix_arg=SAS_ODA_Runner::_normalize_local_path_for_python($source,'/usr/bin/python3');
