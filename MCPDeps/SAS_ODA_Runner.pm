@@ -1419,7 +1419,7 @@ sub _autoload_macros_enabled {
 
 my $SERVER_HOST = '127.0.0.1';
 my $SERVER_PORT = int($ENV{SAS_ODA_SESSION_PORT} // 8765);
-my $SERVER_API_VERSION = '2026-11-04-local-home';
+my $SERVER_API_VERSION = '2026-11-12-persistent-archive';
 my $SERVER_CONNECT_TIMEOUT_SECONDS = int($ENV{SAS_ODA_SESSION_CONNECT_TIMEOUT_SECONDS} // 5);
 my $SERVER_CREATE_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_CREATE_TIMEOUT_SECONDS} // 60);
 my $SERVER_FILEOP_TIMEOUT_SECONDS  = int($ENV{SAS_ODA_SESSION_FILEOP_TIMEOUT_SECONDS} // 20);
@@ -1626,7 +1626,7 @@ import tempfile
 from datetime import datetime
 HOST = '127.0.0.1'
 PORT = int(os.environ.get('SAS_ODA_SESSION_PORT', '8765'))
-SERVER_API_VERSION = '2026-11-04-local-home'
+SERVER_API_VERSION = '2026-11-12-persistent-archive'
 sessions = {}
 session_macros_loaded = {}
 session_macro_bootstrap_warning = {}
@@ -2258,6 +2258,14 @@ def with_retry(session_id, fn, retry_session_loss=True):
                 sessions[session_id] = sess
             return fn(sess)
         raise
+
+
+
+
+
+
+
+
 def handle_client(conn, addr):
     try:
         hdr = conn.recv(8)
@@ -2365,6 +2373,14 @@ def handle_client(conn, addr):
                     tail = ''
                 resp = {'status':'error','error':str(e), 'server_log_tail': tail}
                 log_event(f"submit error session_id={session_id} err={e}")
+        elif cmd == 'bulk_transfer':
+            try:
+                from sas_archive_transfer import transfer_many
+                sess=ensure_session(session_id)
+                value=transfer_many(sess,req.get('payload',{}),session_home(sess),lambda p:run_fileinfo(sess,p))
+                resp={'status':'ok','value':value}
+            except Exception as e:
+                resp={'status':'error','error':str(e)}
         elif cmd == 'upload':
             local_path = req.get('local_path', '')
             progress_label = req.get('progress_label') or ''
@@ -2907,7 +2923,7 @@ sub _call_session_server {
     $payload = { %{$payload}, local_home => $ENV{SAS_LOCAL_HOME_DIR} // '' }
       if $payload->{session_id};
     # File transfers cross the same Perl/Python path boundary as startup.
-    if (exists $payload->{local_path}) {
+    if (exists($payload->{local_path}) || ref($payload->{payload}) eq 'HASH' || ref($payload->{uploads}) eq 'ARRAY' || ref($payload->{downloads}) eq 'ARRAY') {
         my ($python_bin) = _repo_python_env_for_session_server();
         $payload = _normalize_python_action_args($payload, $python_bin);
     }
@@ -3031,6 +3047,9 @@ sub _normalize_python_action_args {
               if exists $item{local_path};
             \%item;
         } @{ $normalized{$list_key} } ];
+    }
+    if (ref($normalized{payload}) eq 'HASH') {
+        $normalized{payload} = _normalize_python_action_args($normalized{payload}, $python_bin);
     }
     return \%normalized;
 }
@@ -4266,22 +4285,12 @@ sub transfer_many {
     my ($self, $payload) = @_;
     $payload = {} unless ref($payload) eq 'HASH';
     if ($self->{persistent} && $self->{session_id}) {
-        my @uploads;
-        for my $item (@{ $payload->{uploads} || [] }) {
-            my $value = $self->upload($item->{local_path}, {
-                progress_label => $item->{progress_label},
-                skip_if_same   => exists($item->{skip_if_same}) ? $item->{skip_if_same} : 1,
-            });
-            return $value if !defined($value) || $value =~ /^PYTHON ERROR:/;
-            push @uploads, { %{$item}, remote_path => $value };
-        }
-        my @downloads;
-        for my $item (@{ $payload->{downloads} || [] }) {
-            my $value = $self->download($item->{remote_path}, $item->{local_path});
-            return $value if !defined($value) || $value =~ /^PYTHON ERROR:/;
-            push @downloads, { %{$item}, local_path => $value };
-        }
-        return { uploads => \@uploads, downloads => \@downloads };
+        my $resp = $self->_call_persistent_session_server(
+            {cmd => 'bulk_transfer', session_id => $self->{session_id}, payload => $payload},
+            $SERVER_UPLOAD_TIMEOUT_SECONDS + $SERVER_DOWNLOAD_TIMEOUT_SECONDS,
+            'persistent bulk transfer');
+        return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
+        return "PYTHON ERROR: " . ($resp->{error} // 'persistent bulk transfer error');
     }
     my $resp = _run_nonpersistent_python_action('bulk_transfer', $payload);
     return $resp->{value} if $resp && ($resp->{status} // '') eq 'ok';
