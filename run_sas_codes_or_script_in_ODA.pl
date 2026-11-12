@@ -2403,6 +2403,11 @@ sub run_include_preflight {
         next if $seen_target{$target}++;
         my $step_num = $idx + 1;
         print "Include preflight [$step_num/$target_count]: evaluating target $target\n";
+        if (SAS_Source_Analysis::include_target_needs_runtime_resolution($target)) {
+            push @sections, "Deferred runtime-resolved include target: $target";
+            print "Include preflight: deferring runtime-resolved target $target to SAS.\n";
+            next;
+        }
         my $remote_target = normalize_remote_include_path($target, $remote_home_path);
         my $local_source = resolve_local_include_path($target);
         $local_source ||= resolve_local_include_path(basename($target)) if is_remote_include_path($target);

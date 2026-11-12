@@ -61,6 +61,7 @@ use File::Copy qw(copy);
 use Mojo::Util qw(md5_sum);
 use POSIX qw(WNOHANG);
 use SAS_Log_Diagnostics;
+use SAS_Source_Analysis;
 use Mojolicious::Lite -signatures;
 
 $ENV{MOJO_LOG_LEVEL} //= 'error';
@@ -484,7 +485,7 @@ sub run_sas_oda_tool {
 
     my $sas_input = $args->{sas_codes_or_file};
     if (defined($sas_input) && length($sas_input)) {
-        if (-f $sas_input) {
+        if (SAS_Source_Analysis::is_local_file_candidate($sas_input) && -f $sas_input) {
             push @runner_args, '--file', $sas_input;
         } else {
             my $code_file = File::Spec->catfile($tmpdir, 'input.sas');
