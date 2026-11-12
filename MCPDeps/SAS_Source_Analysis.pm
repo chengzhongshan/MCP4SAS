@@ -2,6 +2,19 @@ package SAS_Source_Analysis;
 use strict;
 use warnings;
 
+# Avoid filesystem probes on submitted source text. Preserve ordinary filenames.
+sub is_local_file_candidate {
+    my ($value) = @_;
+    return defined($value) && length($value) && length($value) <= 4096
+        && $value !~ /[\r\n\x00]/;
+}
+
+# Macro-variable paths must be resolved during SAS execution, not by local search.
+sub include_target_needs_runtime_resolution {
+    my ($target) = @_;
+    return defined($target) && $target =~ /[&%]/;
+}
+
 # Reserved macro functions/statements share one classifier across the CLI and
 # dependency runner. They never require a user macro source upload/bootstrap.
 sub is_builtin_macro_name {

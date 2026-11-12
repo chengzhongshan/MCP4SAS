@@ -1,0 +1,11 @@
+﻿use strict;use warnings;use FindBin;use lib "$FindBin::Bin/../MCPDeps";use Test::More;use SAS_Source_Analysis;
+ok(SAS_Source_Analysis::is_local_file_candidate('analysis.sas'),'ordinary local SAS filename');
+ok(SAS_Source_Analysis::is_local_file_candidate('a folder/test.sas'),'filename with spaces');
+ok(!SAS_Source_Analysis::is_local_file_candidate("data a;\nrun;"),'multiline code is not stat candidate');
+ok(!SAS_Source_Analysis::is_local_file_candidate("bad\0file"),'NUL excluded');
+ok(!SAS_Source_Analysis::is_local_file_candidate('x'x4097),'oversized code excluded');
+ok(SAS_Source_Analysis::include_target_needs_runtime_resolution('&BOOK_OUT/template.sas'),'runtime output path deferred');
+ok(SAS_Source_Analysis::include_target_needs_runtime_resolution('%sysget(HOME)/x.sas'),'macro expression deferred');
+ok(!SAS_Source_Analysis::include_target_needs_runtime_resolution('~/Macros/x.sas'),'literal remote macro remains eligible');
+ok(!SAS_Source_Analysis::include_target_needs_runtime_resolution('Macros/x.sas'),'literal local macro remains eligible');
+done_testing;
