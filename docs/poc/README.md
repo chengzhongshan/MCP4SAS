@@ -1,7 +1,7 @@
 # Scientific proof of concept and runnable showcases
 
-These demonstrations show an AI assistant reusing established SAS programs,
-staging their inputs, submitting jobs and collecting checked results through
+These examples let an AI assistant reuse established SAS programs,
+stage their inputs, submit jobs and collect checked results through
 MCP4SAS. SAS and the supplied macros perform the calculations. The same programs
 can also run through a direct SASPy client.
 
