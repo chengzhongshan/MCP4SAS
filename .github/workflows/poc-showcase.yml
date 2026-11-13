@@ -1,0 +1,26 @@
+name: PoC showcase
+
+on:
+  push:
+    branches: [main]
+    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
+  pull_request:
+    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-package:
+    name: Package on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Verify immutable sources, local links, CLI plans and invalid outputs
+        run: perl tests/test_poc_showcase.pl
