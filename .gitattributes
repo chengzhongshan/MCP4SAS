@@ -8,3 +8,7 @@
 integrations/vscode/** text eol=lf
 integrations/vscode/validation/*.log whitespace=-blank-at-eol,-blank-at-eof
 *.cmd text eol=crlf
+
+# Frozen PoC programs and fixtures retain the bytes used in the comparison.
+examples/poc/programs/** -text -whitespace
+examples/poc/inputs/** -text -whitespace

@@ -3,7 +3,7 @@
 Run SAS with AI agents through MCP, or from Perl/Bash: connect to **SAS OnDemand
 for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
-[Quick start](#quick-start) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
+[Quick start](#quick-start) · [Scientific showcases](#scientific-proof-of-concept-and-runnable-examples) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
 
 For slow submissions or file transfers, see the
 [performance debugging guide](docs/PERFORMANCE_DEBUGGING.md). It records the
@@ -16,6 +16,33 @@ delays.
   </a>
 </p>
 <p align="center"><sub>Click the workflow figure to open the full-resolution version.</sub></p>
+
+## Scientific proof of concept and runnable examples
+
+Explore the [scientifically edited PoC and five illustrated use cases](docs/poc/README.md):
+expression clustergrams, transcript tracks, mutation oncoprints, forest plots
+and three-panel regional GWAS figures. The original Word documents, readable
+Markdown, supplied SAS programs and small inputs are included.
+
+- **Proof of concept:** [Read](docs/poc/proof-of-concept.md) · [Word](docs/poc/MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx?raw=1).
+- **Scientific appendix:** [Read](docs/poc/use-case-appendix.md) · [Word](docs/poc/MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx?raw=1).
+- **Try it:** [Runnable examples and agent prompts](examples/poc/README.md).
+
+<p align="center">
+  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="GTEx expression clustergram" src="docs/poc/figures/appendix-1.png" /></a>
+  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="Synthetic mutation oncoprint" src="docs/poc/figures/appendix-3.png" /></a>
+  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="Three regional GWAS panels and gene annotations" src="docs/poc/figures/appendix-5.png" /></a>
+</p>
+
+After setup, run a first SAS example without an AI agent:
+
+```bash
+perl examples/poc/run_example.pl --case hello
+```
+
+MCP4SAS automates execution and file handling around reusable SAS expertise.
+The PoC compares saved-program outputs; it does not establish general speed,
+token-cost savings or biological validity. The oncoprint is explicitly synthetic.
 
 ## Supported SAS connections
 

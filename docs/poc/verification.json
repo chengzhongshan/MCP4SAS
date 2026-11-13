@@ -1,0 +1,102 @@
+{
+    "scope":  "New saved-program smoke tests of published Perl helper; not a new paired benchmark or autonomous-agent trial.",
+    "environment":  {
+                        "saspy":  "5.104.0",
+                        "python":  "3.13.11",
+                        "preflight_enabled":  true,
+                        "perl":  "Cygwin",
+                        "global_macro_autoload":  false,
+                        "sas_target":  "SAS OnDemand for Academics"
+                    },
+    "source_runtime_commit":  "351e7905908dc026f65ddc2da712467d6ccc7812",
+    "retained_output_check_counts":  {
+                                         "gene_gtf":  59,
+                                         "multi_gwas_gtf":  11295,
+                                         "clustergram":  509,
+                                         "forest":  30,
+                                         "oncoprint":  33
+                                     },
+    "date":  "2026-11-13",
+    "runs":  [
+                 {
+                     "submitted_program_sha256":  "309cc1917e5851706bd575ee03b9cff6241f3a1d5a3c87bdcff4b0015cc98438",
+                     "sas_error_lines":  0,
+                     "files":  [
+                                   {
+                                       "sha256":  "c0e438f6d8b010b1cbe632f93b2e07e291e75580b7223d60747f2aa8cae9249f",
+                                       "file":  "hello.csv",
+                                       "bytes":  411
+                                   }
+                               ],
+                     "checks":  3,
+                     "sas_log_sha256":  "c3803a3e0c406175e905671b193f653fa500a3faec056145bab2d9fd81221fb4",
+                     "case":  "hello",
+                     "warnings":  [
+
+                                  ]
+                 },
+                 {
+                     "submitted_program_sha256":  "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+                     "sas_error_lines":  0,
+                     "files":  [
+                                   {
+                                       "sha256":  "16ad8b01a84767af5009cfb285838874ada5b488cd63ab2ff6c112ff1d1cf18a",
+                                       "file":  "mgx_oncoprint.png",
+                                       "bytes":  165289
+                                   },
+                                   {
+                                       "sha256":  "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594",
+                                       "file":  "mgx_oncoprint.svg",
+                                       "bytes":  102689
+                                   },
+                                   {
+                                       "sha256":  "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d",
+                                       "file":  "oncoprint_0.csv",
+                                       "bytes":  2954
+                                   },
+                                   {
+                                       "sha256":  "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6",
+                                       "file":  "oncoprint_1.csv",
+                                       "bytes":  309
+                                   },
+                                   {
+                                       "sha256":  "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a",
+                                       "file":  "oncoprint_2.csv",
+                                       "bytes":  215
+                                   },
+                                   {
+                                       "sha256":  "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9",
+                                       "file":  "oncoprint_3.csv",
+                                       "bytes":  3949
+                                   },
+                                   {
+                                       "sha256":  "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846",
+                                       "file":  "oncoprint_4.csv",
+                                       "bytes":  13891
+                                   },
+                                   {
+                                       "sha256":  "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931",
+                                       "file":  "oncoprint_5.csv",
+                                       "bytes":  9
+                                   },
+                                   {
+                                       "sha256":  "d87082186ce88f64df1fa479061f88afaf4970e8bf4320bdc640dd27ba4f014a",
+                                       "file":  "onco_frequency.png",
+                                       "bytes":  81554
+                                   },
+                                   {
+                                       "sha256":  "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74",
+                                       "file":  "onco_frequency.svg",
+                                       "bytes":  35788
+                                   }
+                               ],
+                     "checks":  33,
+                     "sas_log_sha256":  "cc5b97948e6ac9c1e78a3ded57e8e12779533a9ec95d70516089f64b3ca692c8",
+                     "case":  "oncoprint",
+                     "warnings":  [
+                                      "WARNING: No output destinations active.",
+                                      "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+                                  ]
+                 }
+             ]
+}

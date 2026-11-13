@@ -1,0 +1,198 @@
+{
+    "source_documents":  [
+                             {
+                                 "policy":  "Unmodified author-supplied scientifically edited Word document",
+                                 "sha256":  "92232755bc192353274bf4f0a1421b2c2e3633c37dea14a3c517173846338951",
+                                 "file":  "MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx"
+                             },
+                             {
+                                 "policy":  "Unmodified author-supplied scientifically edited Word document",
+                                 "sha256":  "2c5ac8faf0310fe3ec6c94dfb3c5c48d48c225cb80650d83da43532ed5ab75ba",
+                                 "file":  "MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx"
+                             }
+                         ],
+    "source_runtime_commit":  "fdc6d0f1fcd840d6a87174a5ec6ce36c89e5fa82",
+    "scope":  "Five frozen saved-program demonstrations with retained execution evidence, plus a beginner SASHELP.CLASS example. Synthetic oncoprint; prepared GTEx/PGC summaries in other scientific cases. Not an AI authoring/token benchmark or full research pipeline.",
+    "cases":  [
+                  {
+                      "program":  "programs/clustergram.sas",
+                      "files":  [
+                                    "cluster40.png",
+                                    "cluster40.svg",
+                                    "gene_branch_review.png",
+                                    "gene_branch_review.svg",
+                                    "clustergram_0.csv",
+                                    "clustergram_1.csv",
+                                    "clustergram_2.csv",
+                                    "clustergram_3.csv",
+                                    "clustergram_4.csv",
+                                    "clustergram_5.csv",
+                                    "clustergram_6.csv",
+                                    "clustergram_7.csv",
+                                    "clustergram_8.csv"
+                                ],
+                      "sha256":  "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+                      "completion_marker":  "POC_COMPLETE=clustergram",
+                      "inputs":  [
+                                     {
+                                         "sha256":  "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511",
+                                         "file":  "inputs/poc261112_expression40.tsv",
+                                         "remote":  "~/poc261112_expression40.tsv"
+                                     }
+                                 ],
+                      "id":  "clustergram",
+                      "evidence_id":  "results/mcp_11/clustergram",
+                      "expected_csv_rows":  {
+                                                "clustergram_7.csv":  79,
+                                                "clustergram_2.csv":  40,
+                                                "clustergram_1.csv":  40,
+                                                "clustergram_0.csv":  40,
+                                                "clustergram_8.csv":  39,
+                                                "clustergram_5.csv":  19,
+                                                "clustergram_4.csv":  79,
+                                                "clustergram_6.csv":  79,
+                                                "clustergram_3.csv":  400
+                                            }
+                  },
+                  {
+                      "program":  "programs/gene_gtf.sas",
+                      "files":  [
+                                    "isoforms.png",
+                                    "isoforms.svg",
+                                    "gene_gtf_0.csv",
+                                    "gene_gtf_1.csv",
+                                    "gene_gtf_2.csv",
+                                    "gene_gtf_3.csv",
+                                    "gene_gtf_4.csv"
+                                ],
+                      "sha256":  "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+                      "completion_marker":  "POC_COMPLETE=gene_gtf",
+                      "inputs":  [
+                                     {
+                                         "sha256":  "9e7bda6ad0ddb9d64ab1e437ca4f5f522741d2ac2f60b4840d2bb0e0d3d25b70",
+                                         "file":  "inputs/poc261112_track_annotation.tsv",
+                                         "remote":  "~/poc261112_track_annotation.tsv"
+                                     },
+                                     {
+                                         "sha256":  "17fd7b241c6ad3d1418eb458adc476aa496d19cf75b2cc004d8c2c30c0d70ac0",
+                                         "file":  "inputs/poc261112_isoform_associations.tsv",
+                                         "remote":  "~/poc261112_isoform_associations.tsv"
+                                     }
+                                 ],
+                      "id":  "gene_gtf",
+                      "evidence_id":  "results/mcp_11/gene_gtf",
+                      "expected_csv_rows":  {
+                                                "gene_gtf_3.csv":  88,
+                                                "gene_gtf_4.csv":  1,
+                                                "gene_gtf_2.csv":  88,
+                                                "gene_gtf_1.csv":  43,
+                                                "gene_gtf_0.csv":  18
+                                            }
+                  },
+                  {
+                      "program":  "programs/oncoprint.sas",
+                      "files":  [
+                                    "mgx_oncoprint.png",
+                                    "mgx_oncoprint.svg",
+                                    "onco_frequency.png",
+                                    "onco_frequency.svg",
+                                    "oncoprint_0.csv",
+                                    "oncoprint_1.csv",
+                                    "oncoprint_2.csv",
+                                    "oncoprint_3.csv",
+                                    "oncoprint_4.csv",
+                                    "oncoprint_5.csv"
+                                ],
+                      "sha256":  "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+                      "completion_marker":  "POC_COMPLETE=oncoprint",
+                      "inputs":  [
+                                     {
+                                         "sha256":  "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149",
+                                         "file":  "inputs/poc261112_oncoprint_template.sas",
+                                         "remote":  "~/poc261112_oncoprint_template.sas"
+                                     }
+                                 ],
+                      "id":  "oncoprint",
+                      "evidence_id":  "results/mcp_11/oncoprint",
+                      "expected_csv_rows":  {
+                                                "oncoprint_1.csv":  8,
+                                                "oncoprint_5.csv":  1,
+                                                "oncoprint_2.csv":  12,
+                                                "oncoprint_3.csv":  64,
+                                                "oncoprint_4.csv":  192,
+                                                "oncoprint_0.csv":  96
+                                            }
+                  },
+                  {
+                      "program":  "programs/forest.sas",
+                      "files":  [
+                                    "forest_FEMALE.png",
+                                    "forest_MALE.png",
+                                    "native/forest_FEMALE.svg",
+                                    "native/forest_MALE.svg",
+                                    "forest_FEMALE.svg",
+                                    "forest_MALE.svg",
+                                    "forest_0.csv",
+                                    "forest_1.csv",
+                                    "forest_2.csv",
+                                    "forest_3.csv",
+                                    "forest_4.csv"
+                                ],
+                      "sha256":  "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+                      "completion_marker":  "POC_COMPLETE=forest",
+                      "inputs":  [
+
+                                 ],
+                      "id":  "forest",
+                      "evidence_id":  "results/mcp_11/forest",
+                      "expected_csv_rows":  {
+                                                "forest_2.csv":  3,
+                                                "forest_0.csv":  6,
+                                                "forest_4.csv":  3,
+                                                "forest_3.csv":  3,
+                                                "forest_1.csv":  3
+                                            }
+                  },
+                  {
+                      "program":  "programs/multi_gwas_gtf.sas",
+                      "files":  [
+                                    "multi_gwas_gtf.png",
+                                    "multi_gwas_gtf.svg",
+                                    "multi_gwas_template.sas",
+                                    "panel_values.csv",
+                                    "regional_input.csv",
+                                    "regional_annotation.csv",
+                                    "regional_render.csv"
+                                ],
+                      "sha256":  "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+                      "completion_marker":  "POC_COMPLETE=multi_gwas_gtf",
+                      "inputs":  [
+
+                                 ],
+                      "id":  "multi_gwas_gtf",
+                      "evidence_id":  "results/mcp_15/multi_gwas_gtf",
+                      "expected_csv_rows":  {
+                                                "regional_render.csv":  11282,
+                                                "regional_input.csv":  1880,
+                                                "panel_values.csv":  5640,
+                                                "regional_annotation.csv":  996
+                                            }
+                  },
+                  {
+                      "program":  "programs/hello.sas",
+                      "files":  [
+                                    "hello.csv"
+                                ],
+                      "sha256":  "309cc1917e5851706bd575ee03b9cff6241f3a1d5a3c87bdcff4b0015cc98438",
+                      "completion_marker":  "POC_COMPLETE=hello",
+                      "inputs":  [
+
+                                 ],
+                      "id":  "hello",
+                      "evidence_id":  "new_showcase_example",
+                      "expected_csv_rows":  {
+                                                "hello.csv":  19
+                                            }
+                  }
+              ]
+}
