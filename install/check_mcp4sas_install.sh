@@ -53,7 +53,7 @@ for jar in classpath.split(separator):
         raise SystemExit("MCP4SAS install check: configured classpath JAR is missing: " + jar)
 print("saspy ODA Java/classpath: PASS")
 PY
-"${python_bin}" -m py_compile MCPDeps/sas_oda_session_server.py install/sascfg_personal.template.py
+"${python_bin}" -m py_compile MCPDeps/sas_oda_session_server.py MCPDeps/sas_archive_transfer.py install/sascfg_personal.template.py
 
 perl -I MCPDeps -c MCPDeps/SAS_ODA_Runner.pm >/dev/null
 perl -I MCPDeps -c run_sas_codes_or_script_in_ODA.pl >/dev/null
@@ -70,5 +70,12 @@ cmp -s run_sas_codes_or_script_in_ODA.pl run_sas_codes_or_files_in_ODA.pl || {
 
 perl MCPDeps/test_sas_oda_debug_macro_guard.pl
 perl MCPDeps/test_sas_oda_connection_lifecycle.pl
+
+perl tests/test_poc_input_boundaries.pl
+perl tests/test_runner_preflight_parity.pl
+perl tests/test_sas_supplied_autocall.pl
+perl tests/test_literal_execution_contexts.pl
+PIPELINE_PYTHON_BIN="${python_bin}" perl tests/test_python_path_boundary.pl
+"${python_bin}" tests/test_persistent_archive.py
 
 printf 'MCP4SAS installation smoke check: PASS\n'

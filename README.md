@@ -5,6 +5,11 @@ for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
 [Quick start](#quick-start) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
 
+For slow submissions or file transfers, see the
+[performance debugging guide](docs/PERFORMANCE_DEBUGGING.md). It records the
+measured fixes and provides a local source profiler for investigating similar
+delays.
+
 <p align="center">
   <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
     <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
@@ -178,6 +183,8 @@ use `cygpath -am ./local_sas_home` to obtain its Windows path.
   `tests/covid19_gwas_validation_corpus.json`.
 - `tools/build_covid19_validation_corpus.pl`: reproducibly rebuilds that
   pinned validation manifest from a local COVID19_GWAS_Analyzer checkout.
+- `tools/profile_sas_source.pl`: measures local source inspection and hashes
+  its results without opening a SAS connection.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
