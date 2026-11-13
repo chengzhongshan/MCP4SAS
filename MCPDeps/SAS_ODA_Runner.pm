@@ -3183,6 +3183,8 @@ END_NONPERSISTENT_PY
     my $code_path_for_python = _normalize_local_path_for_python($code_path, $python_bin);
     my $json_path_for_python = _normalize_local_path_for_python($json_path, $python_bin);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
+    local $ENV{SAS_ODA_STATUS_FILE} = _normalize_local_path_for_python($ENV{SAS_ODA_STATUS_FILE}, $python_bin)
+      if length($ENV{SAS_ODA_STATUS_FILE} // '');
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
           ? "$site_packages:$ENV{PYTHONPATH}"
@@ -3388,6 +3390,8 @@ END_NONPERSISTENT_ACTION_PY
     my $args_path_for_python = _normalize_local_path_for_python($args_path, $python_bin);
     my $json_path_for_python = _normalize_local_path_for_python($json_path, $python_bin);
     local $ENV{PIPELINE_PYTHON_BIN} = $python_bin if defined($python_bin) && length($python_bin);
+    local $ENV{SAS_ODA_STATUS_FILE} = _normalize_local_path_for_python($ENV{SAS_ODA_STATUS_FILE}, $python_bin)
+      if length($ENV{SAS_ODA_STATUS_FILE} // '');
     if (defined($site_packages) && length($site_packages) && -d $site_packages) {
         local $ENV{PYTHONPATH} = length($ENV{PYTHONPATH} // '')
           ? "$site_packages:$ENV{PYTHONPATH}"

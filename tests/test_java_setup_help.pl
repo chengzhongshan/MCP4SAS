@@ -87,6 +87,8 @@ for my $case (
     waitpid($child,0);
     isnt($? >> 8,0,"actual $label keeps its failure exit status");
     like($captured,qr/pid=2494/,"actual $label also includes Java recovery instructions");
+    unlike($captured,qr/FileNotFoundError.*output\.run\.status/,
+        "actual $label status path does not mask the underlying Java failure");
     unlike($captured,qr/WORK\/quota or memory exhaustion is possible/,"known Java failure is not overwritten by a quota/session-loss guess");
 }
 done_testing();
