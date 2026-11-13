@@ -118,6 +118,21 @@ cmp -s run_sas_codes_or_files_in_ODA.pl \
 bash install/check_mcp4sas_install.sh
 ```
 
+## Submission and transfer performance
+
+For a slow request, read [Performance debugging](../docs/PERFORMANCE_DEBUGGING.md).
+Use session-server request timestamps to locate the delay before changing the
+scientific program. The November 2026 investigation found three distinct costs
+in this path: unresolved runtime includes being searched locally, persistent
+transfers ignoring the archive flag, and repeated prefix scans for every quoted
+literal. SAS-supplied LEFT/TRIM also triggered unnecessary custom-macro lookup.
+
+Profile the actual submitted source with `tools/profile_sas_source.pl`. Confirm
+the active runner, the real bulk-transfer RPC and result hashes. Keep the two
+compatibility wrappers synchronized. Record whether syntax preflight, global
+macro loading, session reuse and archive transfers were enabled. These settings
+affect the workload being measured.
+
 ## Scientific Validation
 
 Once execution is clean, validate the scientific contract independently:

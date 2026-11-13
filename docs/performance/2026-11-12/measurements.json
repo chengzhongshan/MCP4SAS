@@ -1,0 +1,766 @@
+{
+   "accepted_comparison" : {
+      "checks" : [
+         {
+            "detail" : "",
+            "name" : "direct completed four cases",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "mcp completed four cases",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram submitted SAS identity",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/cluster40.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/gene_branch_review.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_0.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "40 rows; 0 differences",
+            "name" : "clustergram/clustergram_0.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_1.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "40 rows; 0 differences",
+            "name" : "clustergram/clustergram_1.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_2.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "40 rows; 0 differences",
+            "name" : "clustergram/clustergram_2.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_3.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "400 rows; 0 differences",
+            "name" : "clustergram/clustergram_3.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_4.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "79 rows; 0 differences",
+            "name" : "clustergram/clustergram_4.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_5.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "19 rows; 0 differences",
+            "name" : "clustergram/clustergram_5.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_6.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "79 rows; 0 differences",
+            "name" : "clustergram/clustergram_6.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_7.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "79 rows; 0 differences",
+            "name" : "clustergram/clustergram_7.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "clustergram/clustergram_8.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "39 rows; 0 differences",
+            "name" : "clustergram/clustergram_8.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf submitted SAS identity",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/isoforms.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/gene_gtf_0.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "18 rows; 0 differences",
+            "name" : "gene_gtf/gene_gtf_0.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/gene_gtf_1.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "43 rows; 0 differences",
+            "name" : "gene_gtf/gene_gtf_1.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/gene_gtf_2.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "88 rows; 0 differences",
+            "name" : "gene_gtf/gene_gtf_2.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/gene_gtf_3.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "88 rows; 0 differences",
+            "name" : "gene_gtf/gene_gtf_3.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "gene_gtf/gene_gtf_4.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "1 rows; 0 differences",
+            "name" : "gene_gtf/gene_gtf_4.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint submitted SAS identity",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/mgx_oncoprint.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/onco_frequency.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_0.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "96 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_0.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_1.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "8 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_1.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_2.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "12 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_2.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_3.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "64 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_3.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_4.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "192 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_4.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "oncoprint/oncoprint_5.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "1 rows; 0 differences",
+            "name" : "oncoprint/oncoprint_5.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest submitted SAS identity",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_FEMALE.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_MALE.png exact rendered pixels",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_0.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "6 rows; 0 differences",
+            "name" : "forest/forest_0.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_1.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "3 rows; 0 differences",
+            "name" : "forest/forest_1.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_2.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "3 rows; 0 differences",
+            "name" : "forest/forest_2.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_3.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "3 rows; 0 differences",
+            "name" : "forest/forest_3.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "forest/forest_4.csv schema and row count",
+            "passed" : true
+         },
+         {
+            "detail" : "3 rows; 0 differences",
+            "name" : "forest/forest_4.csv ordered cells at tolerance 1e-10",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Forty genes and ten tissue values",
+            "passed" : true
+         },
+         {
+            "detail" : "0 differing tissue values",
+            "name" : "Independent log2 and within-gene sample SD transformation",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Regional input has 43 associations",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Regional input has three transcript identifiers",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Regional chromosome and interval",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Oncoprint has 96 pairs and 94 callable pairs",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Oncoprint preserves 64 invented events",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Gene prevalence counts unique mutated callable pairs",
+            "passed" : true
+         },
+         {
+            "detail" : "",
+            "name" : "Six forest effects and independently reconstructed SE",
+            "passed" : true
+         }
+      ],
+      "direct_evidence_id" : "direct_2",
+      "failed" : 0,
+      "mcp_evidence_id" : "mcp_11",
+      "numeric_tolerance" : 1e-10,
+      "oncoprint_evidence_label" : "invented teaching events, not patient observations",
+      "passed" : 72,
+      "png_pixel_arrays_identical" : 7
+   },
+   "configuration" : {
+      "direct_transfers" : "individual files",
+      "global_macro_autoload" : false,
+      "mcp_dependency_include_inspection" : true,
+      "optimized_mcp_transfers" : "archive batching",
+      "perl_platform" : "Cygwin",
+      "persistent_archive_protocol" : "2026-11-12-persistent-archive",
+      "required_plotting_macros" : "inlined identically on both routes",
+      "saspy_version" : "5.104.0",
+      "sessions" : "persistent; fresh named session at start of each complete run",
+      "submission_syntax_preflight" : false
+   },
+   "privacy" : "Sanitized summary only. Credentials, private configuration, raw protocol captures, SAS logs, research inputs and book text are not included.",
+   "record_date" : "2026-11-12",
+   "scope" : "Single observations at different times, not a controlled repeated latency benchmark. Frozen complete SAS payloads and inputs were identical across accepted routes. Plotting and documented transformations only; no full research pipeline, agent-token, cost or human-effort benchmark.",
+   "source_profile_after" : [
+      {
+         "family" : "clustergram",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "fa8f226326afa769f8ee706d14d07147795294c88c1edf3793b9640e49760da2",
+         "seconds" : 0.154561996459961,
+         "source_bytes" : 57624,
+         "source_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18"
+      },
+      {
+         "family" : "clustergram",
+         "operation" : "include_targets",
+         "output_sha256" : "a850094015bea1c7702a678c3bf262730231c8cd7c32eac049568be526db4633",
+         "seconds" : 0.161812782287598,
+         "source_bytes" : 57624,
+         "source_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18"
+      },
+      {
+         "family" : "gene_gtf",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "e6871e7470ef67b4861750b3706de1084db27360e543217eef22ffab5f6a4d56",
+         "seconds" : 1.21922707557678,
+         "source_bytes" : 380785,
+         "source_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783"
+      },
+      {
+         "family" : "gene_gtf",
+         "operation" : "include_targets",
+         "output_sha256" : "56fd96829e3815f7d98ede51307b77871926d190b81cd2c999da1a2e1b95dfd2",
+         "seconds" : 1.21431994438171,
+         "source_bytes" : 380785,
+         "source_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783"
+      },
+      {
+         "family" : "forest",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "a89546951998c271666957e65e36c8454aacb05314f98e3ee16db5110898e63e",
+         "seconds" : 1.16546297073364,
+         "source_bytes" : 375348,
+         "source_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2"
+      },
+      {
+         "family" : "forest",
+         "operation" : "include_targets",
+         "output_sha256" : "4680d3b0f8934af12ae3010d25993730245a78ccff8318319b9ca4c6e7cf67a2",
+         "seconds" : 1.17216086387634,
+         "source_bytes" : 375348,
+         "source_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2"
+      }
+   ],
+   "source_profile_before" : [
+      {
+         "family" : "clustergram",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "fa8f226326afa769f8ee706d14d07147795294c88c1edf3793b9640e49760da2",
+         "seconds" : 0.467289924621582,
+         "source_bytes" : 57624,
+         "source_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18"
+      },
+      {
+         "family" : "clustergram",
+         "operation" : "include_targets",
+         "output_sha256" : "a850094015bea1c7702a678c3bf262730231c8cd7c32eac049568be526db4633",
+         "seconds" : 0.814058065414429,
+         "source_bytes" : 57624,
+         "source_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18"
+      },
+      {
+         "family" : "gene_gtf",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "e6871e7470ef67b4861750b3706de1084db27360e543217eef22ffab5f6a4d56",
+         "seconds" : 9.35286116600037,
+         "source_bytes" : 380785,
+         "source_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783"
+      },
+      {
+         "family" : "gene_gtf",
+         "operation" : "include_targets",
+         "output_sha256" : "56fd96829e3815f7d98ede51307b77871926d190b81cd2c999da1a2e1b95dfd2",
+         "seconds" : 16.8300681114197,
+         "source_bytes" : 380785,
+         "source_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783"
+      },
+      {
+         "family" : "forest",
+         "operation" : "macro_dependency_view",
+         "output_sha256" : "a89546951998c271666957e65e36c8454aacb05314f98e3ee16db5110898e63e",
+         "seconds" : 8.32914209365845,
+         "source_bytes" : 375348,
+         "source_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2"
+      },
+      {
+         "family" : "forest",
+         "operation" : "include_targets",
+         "output_sha256" : "4680d3b0f8934af12ae3010d25993730245a78ccff8318319b9ca4c6e7cf67a2",
+         "seconds" : 14.788211107254,
+         "source_bytes" : 375348,
+         "source_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2"
+      }
+   ],
+   "source_records" : [
+      "manifest.json",
+      "results/direct_2/run.json",
+      "results/mcp_2/run.json",
+      "results/mcp_3/run.json",
+      "results/mcp_7/run.json",
+      "results/mcp_11/run.json",
+      "reports/comparison_source_optimized.json",
+      "reports/source_analysis_before.json",
+      "reports/source_analysis_after.json"
+   ],
+   "sources" : [
+      {
+         "id" : "clustergram",
+         "inputs" : [
+            {
+               "file" : "inputs/poc261112_expression40.tsv",
+               "sha256" : "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511"
+            }
+         ],
+         "program_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18"
+      },
+      {
+         "id" : "gene_gtf",
+         "inputs" : [
+            {
+               "file" : "inputs/poc261112_track_annotation.tsv",
+               "sha256" : "9e7bda6ad0ddb9d64ab1e437ca4f5f522741d2ac2f60b4840d2bb0e0d3d25b70"
+            },
+            {
+               "file" : "inputs/poc261112_isoform_associations.tsv",
+               "sha256" : "17fd7b241c6ad3d1418eb458adc476aa496d19cf75b2cc004d8c2c30c0d70ac0"
+            }
+         ],
+         "program_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783"
+      },
+      {
+         "id" : "oncoprint",
+         "inputs" : [
+            {
+               "file" : "inputs/poc261112_oncoprint_template.sas",
+               "sha256" : "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149"
+            }
+         ],
+         "program_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c"
+      },
+      {
+         "id" : "forest",
+         "inputs" : [],
+         "program_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2"
+      }
+   ],
+   "workflow_observations" : [
+      {
+         "cases" : [
+            {
+               "case" : "clustergram",
+               "download_seconds" : 104.985619068146,
+               "error_count" : 0,
+               "submit_seconds" : 292.267290830612,
+               "submitted_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+               "warning_count" : 8
+            },
+            {
+               "case" : "gene_gtf",
+               "download_seconds" : 57.2153930664062,
+               "error_count" : 0,
+               "submit_seconds" : 69.5216021537781,
+               "submitted_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+               "warning_count" : 8
+            },
+            {
+               "case" : "oncoprint",
+               "download_seconds" : 80.2937061786652,
+               "error_count" : 0,
+               "submit_seconds" : 5.58412098884583,
+               "submitted_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+               "warning_count" : 2
+            },
+            {
+               "case" : "forest",
+               "download_seconds" : 89.6955189704895,
+               "error_count" : 0,
+               "submit_seconds" : 61.3852608203888,
+               "submitted_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+               "warning_count" : 0
+            }
+         ],
+         "evidence_id" : "mcp_2",
+         "mcp4sas_revision" : "0d4374c6818c5c47b555d1390275d86d7fe213a4",
+         "route" : "mcp",
+         "sas_version" : "9.04.01M8P022223",
+         "stage" : "original",
+         "startup_seconds" : 18.9626150131226,
+         "total_before_cleanup_seconds" : 816.520169973373,
+         "trial" : 2,
+         "upload_seconds" : 35.9913990497589
+      },
+      {
+         "cases" : [
+            {
+               "case" : "clustergram",
+               "download_seconds" : 106.286908864975,
+               "error_count" : 0,
+               "submit_seconds" : 15.4511339664459,
+               "submitted_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+               "warning_count" : 8
+            },
+            {
+               "case" : "gene_gtf",
+               "download_seconds" : 57.9475610256195,
+               "error_count" : 0,
+               "submit_seconds" : 70.1741530895233,
+               "submitted_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+               "warning_count" : 8
+            },
+            {
+               "case" : "oncoprint",
+               "download_seconds" : 82.3217961788177,
+               "error_count" : 0,
+               "submit_seconds" : 6.61477398872375,
+               "submitted_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+               "warning_count" : 2
+            },
+            {
+               "case" : "forest",
+               "download_seconds" : 90.2940847873688,
+               "error_count" : 0,
+               "submit_seconds" : 56.6806750297546,
+               "submitted_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+               "warning_count" : 0
+            }
+         ],
+         "evidence_id" : "mcp_3",
+         "mcp4sas_revision" : "067c3653fcd21fb5445a3b1167cc2cf04e44a92f",
+         "route" : "mcp",
+         "sas_version" : "9.04.01M8P022223",
+         "stage" : "active_include_guard",
+         "startup_seconds" : 9.66427111625671,
+         "total_before_cleanup_seconds" : 534.069586992264,
+         "trial" : 3,
+         "upload_seconds" : 36.5688769817352
+      },
+      {
+         "cases" : [
+            {
+               "case" : "clustergram",
+               "download_seconds" : 15.6504609584808,
+               "error_count" : 0,
+               "submit_seconds" : 16.1635990142822,
+               "submitted_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+               "warning_count" : 8
+            },
+            {
+               "case" : "gene_gtf",
+               "download_seconds" : 15.0148730278015,
+               "error_count" : 0,
+               "submit_seconds" : 68.3740229606628,
+               "submitted_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+               "warning_count" : 8
+            },
+            {
+               "case" : "oncoprint",
+               "download_seconds" : 14.5839250087738,
+               "error_count" : 0,
+               "submit_seconds" : 5.62757110595703,
+               "submitted_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+               "warning_count" : 2
+            },
+            {
+               "case" : "forest",
+               "download_seconds" : 16.1800091266632,
+               "error_count" : 0,
+               "submit_seconds" : 60.0312261581421,
+               "submitted_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+               "warning_count" : 0
+            }
+         ],
+         "evidence_id" : "mcp_7",
+         "mcp4sas_revision" : "24741c2996bdd57b5cdf4aa7f383d8cb5a55ca5a",
+         "route" : "mcp",
+         "sas_version" : "9.04.01M8P022223",
+         "stage" : "persistent_batching",
+         "startup_seconds" : 15.9100520610809,
+         "total_before_cleanup_seconds" : 244.637925863266,
+         "trial" : 7,
+         "upload_seconds" : 14.5877749919891
+      },
+      {
+         "cases" : [
+            {
+               "case" : "clustergram",
+               "download_seconds" : 15.65784907341,
+               "error_count" : 0,
+               "submit_seconds" : 13.6830840110779,
+               "submitted_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+               "warning_count" : 8
+            },
+            {
+               "case" : "gene_gtf",
+               "download_seconds" : 14.6371970176697,
+               "error_count" : 0,
+               "submit_seconds" : 21.1702017784119,
+               "submitted_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+               "warning_count" : 8
+            },
+            {
+               "case" : "oncoprint",
+               "download_seconds" : 15.1275269985199,
+               "error_count" : 0,
+               "submit_seconds" : 5.12948298454285,
+               "submitted_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+               "warning_count" : 2
+            },
+            {
+               "case" : "forest",
+               "download_seconds" : 15.2392530441284,
+               "error_count" : 0,
+               "submit_seconds" : 18.107969045639,
+               "submitted_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+               "warning_count" : 0
+            }
+         ],
+         "evidence_id" : "mcp_11",
+         "mcp4sas_revision" : "fdc6d0f1fcd840d6a87174a5ec6ce36c89e5fa82",
+         "route" : "mcp",
+         "sas_version" : "9.04.01M8P022223",
+         "stage" : "source_analysis_optimized",
+         "startup_seconds" : 15.6858258247375,
+         "total_before_cleanup_seconds" : 149.49436879158,
+         "trial" : 11,
+         "upload_seconds" : 14.6252779960632
+      },
+      {
+         "cases" : [
+            {
+               "case" : "clustergram",
+               "download_seconds" : 38.7580519000185,
+               "error_count" : 0,
+               "submit_seconds" : 9.37102900000173,
+               "submitted_sha256" : "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+               "warning_count" : 8
+            },
+            {
+               "case" : "gene_gtf",
+               "download_seconds" : 20.5105172999902,
+               "error_count" : 0,
+               "submit_seconds" : 6.26920740000787,
+               "submitted_sha256" : "021235ad50dc42b7c5ec8e53cf9e7e76d8a551604e8bc067bc3ae7877ad33783",
+               "warning_count" : 8
+            },
+            {
+               "case" : "oncoprint",
+               "download_seconds" : 29.351531399996,
+               "error_count" : 0,
+               "submit_seconds" : 2.41878529998939,
+               "submitted_sha256" : "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+               "warning_count" : 2
+            },
+            {
+               "case" : "forest",
+               "download_seconds" : 32.2970996999939,
+               "error_count" : 0,
+               "submit_seconds" : 4.94469669999671,
+               "submitted_sha256" : "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+               "warning_count" : 0
+            }
+         ],
+         "evidence_id" : "direct_2",
+         "route" : "direct",
+         "sas_version" : "9.04.01M8P02222023",
+         "stage" : "retained_direct_saspy",
+         "startup_seconds" : 6.6890740999952,
+         "total_before_cleanup_seconds" : 164.2667258,
+         "trial" : 2,
+         "upload_seconds" : 13.5216041000094
+      }
+   ]
+}
