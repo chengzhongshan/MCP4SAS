@@ -5,6 +5,15 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const c = require('../src/core');
+test('Cygwin setup selects its own DLL directory and retains certificate settings', () => {
+  const base = { Path: 'C:/other-cygwin/bin;C:/Windows', HTTPS_PROXY: 'proxy', GIT_SSL_CAINFO: 'custom.pem' };
+  const env = c.cygwinEnvironment('/selected/bin/perl.exe', base);
+  assert.equal(env.PATH, '/selected/bin;'+base.Path);
+  assert.equal(env.Path, undefined);
+  assert.equal(env.GIT_SSL_CAINFO, 'custom.pem');
+  assert.equal(env.HTTPS_PROXY, 'proxy');
+  assert.equal(base.Path, 'C:/other-cygwin/bin;C:/Windows');
+});
 const launch = c.launcher('C:\\A folder\\runtime.json', 'C:\\A folder\\relay.js', 'C:\\Code\\Code.exe');
 test('installation retains manually selected portable Perl when discovery cannot find it', () => {
   assert.equal(c.installedPerl(null, '/portable/bin/perl.exe'), '/portable/bin/perl.exe');

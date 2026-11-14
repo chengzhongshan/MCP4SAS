@@ -4,7 +4,7 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.2.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.2). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.2.vsix`.
+1. Download `mcp4sas-0.1.3.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.3). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.3.vsix`.
 2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
@@ -72,6 +72,6 @@ npm test
 npm run package
 ```
 
-The output is `dist/mcp4sas-0.1.2.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
+The output is `dist/mcp4sas-0.1.3.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
 
 This integration is independently maintained by the MCP4SAS author; it is not an official Microsoft, GitHub, OpenAI or SAS extension. New integration code has its own scoped MIT license; original repository code retains its existing rights.

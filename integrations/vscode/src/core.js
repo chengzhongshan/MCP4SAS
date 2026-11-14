@@ -19,6 +19,14 @@ function platformInstaller(platform) {
   if (platform === 'linux') return 'install_ubuntu.sh';
   throw new Error('Supported desktop hosts: Windows/Cygwin, macOS, Ubuntu/Debian Linux.');
 }
+function cygwinEnvironment(perl, base = process.env) {
+  const env = { ...base };
+  const key = Object.keys(env).find(k => k.toLowerCase() === 'path') || 'PATH';
+  const inherited = env[key] || '';
+  for (const k of Object.keys(env)) if (k.toLowerCase() === 'path') delete env[k];
+  env.PATH = path.dirname(perl) + (inherited ? ';' + inherited : '');
+  return env;
+}
 function installedPerl(detected, selected) {
   if (detected || selected) return detected || selected;
   throw new Error('Perl was not found after installation. Choose the Perl executable used by MCP4SAS and retry.');
@@ -86,18 +94,18 @@ function writeCodex(file, launch) {
 }
 async function toPosix(native, perl) {
   if (process.platform !== 'win32') return native;
-  return run(path.join(path.dirname(perl), 'cygpath.exe'), ['-u', native]);
+  return run(path.join(path.dirname(perl), 'cygpath.exe'), ['-u', native], { env: cygwinEnvironment(perl) });
 }
 async function runtimeEnvironment(config) {
   const env = { ...process.env, OPEN_RESULT: '0', SAS_ODA_AUTOLOAD_MACROS: '0' };
   if (config.java) env.SASPY_JAVA_WIN = config.java;
   if (process.platform === 'win32') {
     const bash = path.join(path.dirname(config.perl), 'bash.exe');
-    const values = await run(bash, ['--noprofile', '--norc', '-c', 'printf "%s\\n" "$HOME"; printf "%s\\n" "$PATH"']);
+    const values = await run(bash, ['--noprofile', '--norc', '-c', 'printf "%s\\n" "$HOME"; printf "%s\\n" "$PATH"'], { env: cygwinEnvironment(config.perl) });
     const [home, ...rest] = values.split(/\r?\n/);
     if (home) env.HOME = home;
     env.PATH = path.dirname(config.perl).replace(/\\/g, '/') + ':' + rest.join('\n');
   }
   return env;
 }
-module.exports = { run, platformInstaller, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

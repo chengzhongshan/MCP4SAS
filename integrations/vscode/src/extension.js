@@ -61,7 +61,7 @@ async function bootstrapCygwin() {
   output.appendLine('Installing a per-user Cygwin environment. Package downloads may take several minutes.'); output.show(true);
   // setup runs hidden; progress is reported here. No shell-built command or elevation.
   await new Promise((resolve, reject) => {
-    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', 'bash,git,curl,perl,ca-certificates'], { windowsHide: true });
+    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', 'bash,git,curl,perl,ca-certificates'], { windowsHide: true, env: core.cygwinEnvironment(path.join(root, 'bin', 'perl.exe')) });
     p.on('error', reject); p.stdout?.on('data', b => output.append(b.toString())); p.stderr?.on('data', b => output.append(b.toString()));
     p.on('close', code => code === 0 ? resolve() : reject(new Error(`Cygwin setup returned ${code}. Inspect ${root}/var/log/setup.log, then retry.`)));
   });
@@ -111,11 +111,11 @@ async function installNew() {
       try { await core.run(git, ['--version']); }
       catch { await task('/bin/bash', ['-c', 'sudo apt-get update\nsudo apt-get install -y git'], os.homedir()); }
     }
-    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Downloading MCP4SAS from its official repository' }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', repo], { timeout: 300000 }));
+    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Downloading MCP4SAS from its official repository' }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', repo], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
   }
   const bash = process.platform === 'win32' ? path.join(path.dirname(perl), 'bash.exe') : '/bin/bash';
   const script = process.platform === 'win32' ? await core.toPosix(path.join(repo, 'install', install), perl) : path.join(repo, 'install', install);
-  await task(bash, ['--noprofile', '--norc', script], repo, java ? { SASPY_JAVA_WIN: java } : {});
+  await task(bash, ['--noprofile', '--norc', script], repo, { ...(process.platform === 'win32' ? core.cygwinEnvironment(perl) : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) });
   // macOS installer may install Homebrew Perl for the first time.
   perl = core.installedPerl(await findPerl(), perl);
   return { repo, perl, java };
