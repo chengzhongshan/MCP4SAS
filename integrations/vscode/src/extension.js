@@ -123,8 +123,9 @@ async function installNew() {
       const source = path.join(staging, 'source');
       await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Downloading MCP4SAS scripts into ${repo}` }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
       core.installSourceFiles(source, repo);
+      output.appendLine(`MCP4SAS source copy completed: ${repo}`);
     } finally {
-      if (path.dirname(path.resolve(staging)) === path.resolve(os.tmpdir()) && path.basename(staging).startsWith('mcp4sas-source-')) fs.rmSync(staging, { recursive: true, force: true });
+      await core.cleanupStaging(staging, message => output.appendLine(message));
     }
   }
   core.assertRepo(repo);

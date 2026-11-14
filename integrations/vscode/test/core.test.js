@@ -81,6 +81,23 @@ test('invalid installations fail before configuration', () => {
     assert.throws(() => c.assertRepo(partial), /missing run_sas_codes_or_files_in_ODA\.pl/);
   } finally { fs.rmSync(partial, { recursive: true, force: true }); }
 });
+test('Windows EPERM cleanup neither fails installation nor masks its original error', async () => {
+  const stage = path.join(os.tmpdir(), 'mcp4sas-source-test-locked');
+  const warnings = [];
+  const locked = async (p, options) => {
+    assert.equal(p, path.resolve(stage));
+    assert.equal(options.maxRetries, 5);
+    assert.equal(options.retryDelay, 200);
+    throw Object.assign(new Error('access denied'), { code: 'EPERM' });
+  };
+  assert.equal(await c.cleanupStaging(stage, x => warnings.push(x), locked), false);
+  assert.match(warnings[0], /EPERM/);
+  const original = new Error('Source-file conflict');
+  await assert.rejects(async () => { try { throw original; } finally { await c.cleanupStaging(stage, () => {}, locked); } }, error => error === original);
+  let removed = false;
+  assert.equal(await c.cleanupStaging(path.join(os.tmpdir(), 'unrelated'), () => {}, async () => { removed = true; }), false);
+  assert.equal(removed, false, 'unrelated paths are never removed');
+});
 test('workspace install preserves user files and Git metadata and checks conflicts before writing', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-workspace-'));
   try {

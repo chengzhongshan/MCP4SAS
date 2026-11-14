@@ -2,8 +2,23 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const cp = require('node:child_process');
+const os = require('node:os');
 const BEGIN = '# BEGIN MCP4SAS VS CODE (managed)';
 const END = '# END MCP4SAS VS CODE (managed)';
+async function cleanupStaging(staging, warn = () => {}, remove = fs.promises.rm.bind(fs.promises)) {
+  const resolved = path.resolve(staging);
+  if (path.dirname(resolved) !== path.resolve(os.tmpdir()) || !path.basename(resolved).startsWith('mcp4sas-source-')) {
+    warn(`Temporary cleanup refused outside the installer-owned location: ${resolved}`);
+    return false;
+  }
+  try {
+    await remove(resolved, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    return true;
+  } catch (error) {
+    warn(`Temporary cleanup warning (${error.code || 'error'}): ${resolved}. Windows denied removal; this does not change the source-copy or installer result. The temporary download was retained. Close programs using it and remove it later if needed.`);
+    return false;
+  }
+}
 function installSourceFiles(source, target) {
   assertRepo(source);
   const files = [];
@@ -136,4 +151,4 @@ async function runtimeEnvironment(config) {
   }
   return env;
 }
-module.exports = { run, platformInstaller, installSourceFiles, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

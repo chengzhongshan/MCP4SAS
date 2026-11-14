@@ -71,3 +71,7 @@ Actual manual-route check: the managed runtime's own Perl executable and runner 
 ## Updated 0.1.5 build — open-workspace installation
 
 At the author's request, the displayed version remains 0.1.5. New installations download source into the folder open in VS Code, retain existing features, validate essential scripts, preserve unrelated files and Git history, and refuse conflicting files before copying. Source is staged in a unique temporary folder and validated before copying; temporary clone metadata is excluded. Existing-runtime setup remains supported. The updated release checksum and commit distinguish this build from the earlier 0.1.5 release asset.
+
+## Updated 0.1.5 build — Windows temporary cleanup
+
+Temporary source cleanup uses asynchronous removal with five retries and reports denied cleanup as a warning. It cannot abort an otherwise successful source copy or replace the original installation exception. Removal is restricted to the installer-owned temporary prefix under the resolved temporary directory. All 17 Node tests passed, including simulated EPERM, original-error preservation and refusal of unrelated paths. The actual retained public source download copied successfully to an isolated test workspace with the runner present. No assertion is made that this repaired all possible pre-existing project conflicts.
