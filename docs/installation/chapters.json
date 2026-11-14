@@ -1,0 +1,67 @@
+[
+  {
+    "seconds": 21,
+    "label": "0:21",
+    "title": "Open your working folder"
+  },
+  {
+    "seconds": 35,
+    "label": "0:35",
+    "title": "Install the VS Code extension"
+  },
+  {
+    "seconds": 52,
+    "label": "0:52",
+    "title": "Run Quick Setup"
+  },
+  {
+    "seconds": 136,
+    "label": "2:16",
+    "title": "Download the SAS encryption files"
+  },
+  {
+    "seconds": 193,
+    "label": "3:13",
+    "title": "Configure your private SAS ODA login"
+  },
+  {
+    "seconds": 256,
+    "label": "4:16",
+    "title": "Check company-network access (TCP 8591)"
+  },
+  {
+    "seconds": 316,
+    "label": "5:16",
+    "title": "Save and submit a SAS program"
+  },
+  {
+    "seconds": 378,
+    "label": "6:18",
+    "title": "GitHub Copilot: run SAS"
+  },
+  {
+    "seconds": 451,
+    "label": "7:31",
+    "title": "Codex: run SAS"
+  },
+  {
+    "seconds": 488,
+    "label": "8:08",
+    "title": "Automatic Python and SAS detection"
+  },
+  {
+    "seconds": 528,
+    "label": "8:48",
+    "title": "Windows command-line installation"
+  },
+  {
+    "seconds": 544,
+    "label": "9:04",
+    "title": "macOS installation"
+  },
+  {
+    "seconds": 559,
+    "label": "9:19",
+    "title": "Ubuntu installation"
+  }
+]

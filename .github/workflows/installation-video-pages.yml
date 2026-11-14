@@ -1,0 +1,38 @@
+name: Installation video website
+on:
+  push:
+    branches: [main]
+    paths: ['docs/installation/**', 'scripts/build_installation_site.cjs', '.github/workflows/installation-video-pages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: read
+concurrency:
+  group: installation-video-pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - name: Assemble player and verify the release video
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/build_installation_site.cjs
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish installation player
+        id: deployment
+        uses: actions/deploy-pages@v5

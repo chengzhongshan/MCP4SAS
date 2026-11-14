@@ -2,6 +2,8 @@
 
 Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configuration by hand.
 
+[Watch the installation video](https://chengzhongshan.github.io/MCP4SAS/) for Windows setup, separate Copilot and Codex demonstrations, and macOS/Ubuntu instructions.
+
 ## Three steps
 
 1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix`.
