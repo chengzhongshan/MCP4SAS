@@ -219,17 +219,43 @@ async function check() {
     });
     output.appendLine(`Discovery PASS: ${discovered.length} tools. SAS authentication/execution has not been tested by discovery.`);
     const prompt = 'Use MCP4SAS to run proc means data=sashelp.class n nmiss min max; var Age; run; on my configured SASPy target in a fresh session. Wait for the final result and inspect the actual SAS log. Check known ages=19, missing=0, minimum=11, maximum=16. Show the tool call and observed values; do not infer successful execution from code alone.';
-    const action = await vscode.window.showInformationMessage('MCP4SAS tools discovered. Next, test your SAS login from the selected assistant.', 'Copy SAS test prompt', 'Open setup guide');
+    const action = await vscode.window.showInformationMessage('Tools discovered; SAS login and encryption JARs still need verification. Configure missing prerequisites before running the SAS test.', 'Copy SAS test prompt', 'Configure ODA login', 'Configure SAS JARs', 'Open setup guide');
     if (action === 'Copy SAS test prompt') await vscode.env.clipboard.writeText(prompt);
+    if (action === 'Configure ODA login') await configureLogin();
+    if (action === 'Configure SAS JARs') await configureJars();
     if (action === 'Open setup guide') await help();
   } finally { clearTimeout(timer); rl.close(); p.stdin.end(); }
 }
 async function help() { await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
+async function configureLogin() {
+  trusted(); const config = readConfig(); if (!config) return setup();
+  core.assertRepo(config.repo);
+  const env = await core.runtimeEnvironment(config);
+  const runner = await core.toPosix(path.join(config.repo, 'run_sas_codes_or_files_in_ODA.pl'), config.perl);
+  output.appendLine('Opening private terminal login using the selected runtime and HOME. Do not enter passwords in AI chat.');
+  await task(config.perl, [runner, '--prompt-sas-oda-auth', '--check-sas-oda-login-only'], config.repo, { ...env, SASPY_CFGNAME: 'oda', SAS_ODA_AUTOLOAD_MACROS: '0' });
+  vscode.window.showInformationMessage('ODA login validation completed. Retry your SAS request from the assistant.');
+}
+async function configureJars() {
+  trusted(); const config = readConfig(); if (!config) return setup();
+  const directory = await folder('Select folder containing sas.rutil.jar, sas.rutil.nls.jar and sastpj.rutil.jar (download from SAS first)');
+  if (!directory) return;
+  const missing = ['sas.rutil.jar', 'sas.rutil.nls.jar', 'sastpj.rutil.jar'].filter(name => {
+    try { const st = fs.statSync(path.join(directory, name)); return !st.isFile() || !st.size; } catch { return true; }
+  });
+  if (missing.length) throw new Error(`Missing SAS encryption files: ${missing.join(', ')}. Download from https://support.sas.com/downloads/package.htm?pid=2494 using your SAS Profile, extract the archive, and select the directory directly containing all three files. Then rerun MCP4SAS: Configure SAS Encryption JARs.`);
+  const env = await core.runtimeEnvironment(config);
+  const script = await core.toPosix(path.join(config.repo, 'install', 'install_saspy_iom_jars.sh'), config.perl);
+  const bash = process.platform === 'win32' ? path.join(path.dirname(config.perl), 'bash.exe') : '/bin/bash';
+  const jarDirectory = await core.toPosix(directory, config.perl);
+  await task(bash, ['--noprofile', '--norc', script], config.repo, { ...env, MCP4SAS_SASPY_IOM_DIR: jarDirectory });
+  vscode.window.showInformationMessage('SAS JAR helper completed for the installer environment. Custom SASPy configurations must reference these files too. Restart the assistant connection and use a fresh SAS session before retrying.');
+}
 async function activate(ctx) {
   context = ctx; output = vscode.window.createOutputChannel('MCP4SAS'); emitter = new vscode.EventEmitter();
   if (vscode.workspace.isTrusted && !vscode.env.remoteName && fs.existsSync(configFile())) refreshLauncher();
   context.subscriptions.push(output, emitter);
-  for (const [id, fn] of Object.entries({ setup, connect, check, help, cygwinTerminal: useCygwinTerminal })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
+  for (const [id, fn] of Object.entries({ setup, connect, check, help, configureLogin, configureJars, cygwinTerminal: useCygwinTerminal })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
   const provider = {
     onDidChangeMcpServerDefinitions: emitter.event,
     provideMcpServerDefinitions() {

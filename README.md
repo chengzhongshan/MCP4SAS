@@ -215,7 +215,7 @@ use `cygpath -am ./local_sas_home` to obtain its Windows path.
 
 ## Easiest setup: VS Code extension for Copilot and Codex
 
-Download [mcp4sas-0.1.4.vsix](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.4/mcp4sas-0.1.4.vsix), then choose **Extensions → … → Install from VSIX…** in VS Code. Open your local SAS project and run **MCP4SAS: Quick Setup**. Select an existing MCP4SAS installation or let the extension install it, choose your project folder, then select **GitHub Copilot**, **OpenAI Codex**, or both.
+Download [mcp4sas-0.1.5.vsix](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/mcp4sas-0.1.5.vsix), then choose **Extensions → … → Install from VSIX…** in VS Code. Open your local SAS project and run **MCP4SAS: Quick Setup**. Select an existing MCP4SAS installation or let the extension install it, choose your project folder, then select **GitHub Copilot**, **OpenAI Codex**, or both.
 
 On Windows, setup offers Cygwin **before** the MCP4SAS installer and helps locate/install Windows Java. macOS and Ubuntu/Debian use the existing platform installers. The extension registers Copilot through VS Code's MCP provider API and adds a backed-up, marked Codex configuration entry. It starts an owned loopback backend automatically; a separate server terminal is unnecessary.
 

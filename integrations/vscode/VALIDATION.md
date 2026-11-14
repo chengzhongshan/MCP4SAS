@@ -58,3 +58,7 @@ Reproduced Git exit 128 with the user's newly installed Cygwin and inherited PAT
 ## 0.1.4 — installer task launch
 
 Installer tasks now use VS Code ProcessExecution with separate executable/argument values. Previously ShellExecution launched the native Windows Bash path inside the default Cygwin shell, which removed backslashes and caused exit 127. The setup regression mock rejects ShellExecution and verifies ProcessExecution. This also applies to Java and platform installer tasks. The prior Cygwin PATH fix is retained.
+
+## 0.1.5 — missing SAS prerequisites
+
+Added private-terminal ODA login and SAS JAR folder configuration commands. Discovery now offers these setup actions explicitly. Missing-credential CLI errors name the checked credential file and private terminal recovery command; Java encryption diagnostics point to the editor JAR action and official SAS download. Tests exercise missing and complete JAR folders, selected login HOME/profile, absence of password arguments and actual CLI failure without credentials. No passwords or SAS libraries are packaged.
