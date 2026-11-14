@@ -5,19 +5,6 @@ for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
 [Quick start](#quick-start) · [Scientific showcases](#scientific-proof-of-concept-and-runnable-examples) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
 
-## Watch the installation video
-
-[**Watch in your browser - Windows, macOS and Ubuntu**](https://chengzhongshan.github.io/MCP4SAS/)
-
-[![Watch the MCP4SAS installation walkthrough](docs/installation/preview.png)](https://chengzhongshan.github.io/MCP4SAS/)
-
-Follow the Windows setup, then watch **GitHub Copilot and Codex each run SAS**.
-The 9-minute 54-second tutorial also covers SAS encryption files, automatic
-Python/SASPy detection, company-network access on TCP 8591, and the Mac/Linux
-installation commands. The homepage cover appears before playback, and the
-smaller captions are included in the video.
-
-[Download MP4](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Clean_Captions_20261114.mp4) | [Watch offline](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Offline_20261114.zip) | [Written setup guide](integrations/vscode/README.md)
 
 For slow submissions or file transfers, see the
 [performance debugging guide](docs/PERFORMANCE_DEBUGGING.md). It records the
