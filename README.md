@@ -1,5 +1,16 @@
 # MCP4SAS
 
+## ▶ Watch the installation video
+
+[**CLICK HERE TO WATCH — install MCP4SAS in VS Code**](https://chengzhongshan.github.io/MCP4SAS/)
+
+[![Play the MCP4SAS installation video](docs/installation/preview.png)](https://chengzhongshan.github.io/MCP4SAS/)
+
+Follow Windows installation, then watch **GitHub Copilot and Codex each run SAS**.
+The 9-minute 54-second video also includes macOS and Ubuntu instructions.
+
+[Open video directly](https://chengzhongshan.github.io/MCP4SAS/installation.mp4) · [Download MP4](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Clean_Captions_20261114.mp4) · [Watch offline](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Offline_20261114.zip) · [Written setup guide](integrations/vscode/README.md)
+
 Run SAS with AI agents through MCP, or from Perl/Bash: connect to **SAS OnDemand
 for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
