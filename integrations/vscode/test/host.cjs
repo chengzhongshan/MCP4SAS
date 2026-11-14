@@ -9,7 +9,7 @@ exports.run = async () => {
   assert.ok(extension);
   const api = await extension.activate();
   const commands = await vscode.commands.getCommands(true);
-  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'selectConnection']) assert.ok(commands.includes(`mcp4sas.${name}`));
+  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'detectSetup']) assert.ok(commands.includes(`mcp4sas.${name}`));
   assert.deepEqual(api.provider.provideMcpServerDefinitions(), []);
   if (process.platform === 'win32') {
     const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-terminal-'));

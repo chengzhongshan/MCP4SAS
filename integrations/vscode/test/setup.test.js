@@ -49,7 +49,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     },
     tasks: {
       onDidEndTaskProcess(fn) { onTaskEnd = fn; return disposable(); },
-      async executeTask(task) { tasks.push(task); queueMicrotask(() => onTaskEnd({ execution: { task }, exitCode: 0 })); }
+      async executeTask(task) { tasks.push(task); if(task.execution.args[1]==='venv'){const exe=path.join(task.execution.args[2],'Scripts','python.exe');fs.mkdirSync(path.dirname(exe),{recursive:true});fs.writeFileSync(exe,'fixture');} queueMicrotask(() => onTaskEnd({ execution: { task }, exitCode: 0 })); }
     }
   };
   const mockedCore = {
@@ -66,6 +66,8 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     },
     async toPosix(value, perl) { assert.equal(perl, portable); return value; }
   };
+  let detected = {platform:'win32',python:[],oda:{candidate:'selected-python',platform:'cygwin',python:'/selected/python',saspy:true,missing_jars:[]}};
+  const mockDiscovery = {...require('../src/detect'), async detect(config) { if(config.python?.includes('native-saspy'))return {...detected,local:{candidate:config.python,platform:'win32',saspy:true,com:true}};return detected; }};
   const realRequire = createRequire(path.join(extensionPath, 'src', 'extension.js'));
   const module = { exports: {} };
   try {
@@ -74,6 +76,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       require(name) {
         if (name === 'vscode') return vscode;
         if (name === './core') return mockedCore;
+        if (name === './detect') return mockDiscovery;
         if (name === 'node:fs') return { ...fs, existsSync(file) { return String(file).startsWith(root) && fs.existsSync(file); } };
         return realRequire(name);
       }
@@ -131,19 +134,35 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(tasks.length, beforeTasks + 1);
     assert.equal(tasks.at(-1).execution.options.env.MCP4SAS_SASPY_IOM_DIR, jars);
     assert.match(tasks.at(-1).execution.args.at(-1), /install_saspy_iom_jars\.sh$/);
-    choices.push({ label: 'Local Windows SAS (IOM)', name: 'winlocal' }, 'Use installed SASPy configuration');
-    const python = path.join(root, 'native-python.exe'); fs.writeFileSync(python, 'fixture'); dialogs.push(python);
-    await commands.get('mcp4sas.selectConnection')();
-    const local = JSON.parse(fs.readFileSync(path.join(storage, 'runtime.json'), 'utf8'));
-    assert.equal(local.saspyCfgname, 'winlocal'); assert.equal(local.python, python);
-    const selectedEnv = core.connectionEnvironment(local, {});
-    assert.equal(selectedEnv.SASPY_CFGNAME, 'winlocal'); assert.equal(selectedEnv.PIPELINE_PYTHON_BIN, python);
-    assert.ok(Number(selectedEnv.SAS_ODA_SESSION_PORT) > 0, 'selected interpreter gets a separate session-server port');
-    await commands.get('mcp4sas.configureLogin')(); assert.match(errors.at(-1), /ODA login applies only/);
-    choices.push({ label: 'SAS OnDemand for Academics', name: 'oda' }, 'Use installed SASPy configuration');
-    await commands.get('mcp4sas.selectConnection')();
-    const oda = JSON.parse(fs.readFileSync(path.join(storage, 'runtime.json'), 'utf8'));
-    assert.equal(oda.saspyCfgname, 'oda'); assert.equal(oda.python, undefined, 'ODA returns to installer Python');
+    assert.equal(commands.has('mcp4sas.selectConnection'), false, 'complex manual selector is removed');
+    const python = path.join(root,'native-python.exe'); fs.writeFileSync(python,'fixture');
+    detected={...detected,sas:path.join(root,'sas.exe'),local:{candidate:python,saspy:true,com:true,platform:'win32'}};
+    choices.push({label:'SAS installed on this computer',kind:'local'});
+    const dialogsBefore=dialogs.length;
+    await commands.get('mcp4sas.detectSetup')();
+    const local=JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8'));
+    assert.equal(local.saspyCfgname,'winlocal_com');assert.equal(local.python,python);
+    assert.equal(dialogs.length,dialogsBefore,'no Python or config file picker is needed');
+    assert.match(fs.readFileSync(local.saspyCfgfile,'utf8'),/sas.iomprovider/);
+    assert.ok(Number(local.sessionPort)>0);
+    await commands.get('mcp4sas.configureLogin')();assert.match(errors.at(-1),/ODA login applies only/);
+    choices.push({label:'SAS installed on this computer',kind:'local'});
+    await commands.get('mcp4sas.detectSetup')();
+    assert.equal(JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8')).sessionPort,local.sessionPort,'unchanged detection keeps the session port');
+    choices.push({label:'SAS OnDemand for Academics',kind:'oda'});
+    await commands.get('mcp4sas.detectSetup')();
+    const oda=JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8'));
+    assert.equal(oda.saspyCfgname,'oda');assert.equal(oda.python,'/selected/python','ODA returns to detected Cygwin Python');
+    detected={...detected,local:undefined,native:{candidate:python,saspy:false}};
+    choices.push({label:'SAS installed on this computer',kind:'local'});
+    const beforeInstall=tasks.length;
+    await commands.get('mcp4sas.detectSetup')();
+    assert.equal(tasks.length,beforeInstall+2,'missing support creates a private venv and installs its dependencies');
+    assert.equal(tasks.at(-2).execution.command,python);
+    assert.deepEqual(Array.from(tasks.at(-2).execution.args).slice(0,2),['-m','venv']);
+    assert.match(tasks.at(-1).execution.command,/native-saspy/);
+    assert.ok(tasks.at(-1).execution.args.includes('saspy'));assert.ok(tasks.at(-1).execution.args.includes('pywin32'));
+    assert.notEqual(tasks.at(-1).execution.command,python,'base Python packages are not modified');
     vscode.env.remoteName = 'ssh-remote';
     await api.configureCygwinTerminal(portable, true);
     assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'remote settings are untouched');

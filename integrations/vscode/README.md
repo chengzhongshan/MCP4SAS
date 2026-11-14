@@ -46,29 +46,44 @@ Other terminal profiles are preserved. If you later select a different default u
 | macOS | Runs `install/install_macos.sh` in a visible task terminal. Xcode Command Line Tools, Homebrew and its permissions remain platform prerequisites; follow a reported prerequisite and retry. |
 | Ubuntu/Debian Linux | Installs Git through apt when missing, then runs `install/install_ubuntu.sh` in a visible task terminal; `sudo` may prompt there. Other Linux distributions should use an existing compatible installation. |
 
-A new MCP4SAS checkout is stored under VS Code's extension global storage. Existing installations are reused without Git reset, pull, or source edits. A failed installation is not reported as complete. Dependency downloads and compilation can take several minutes. The official MCP4SAS installers still install SASPy/Python dependencies; the extension adds no new Python programs.
+New MCP4SAS scripts are installed in the open workspace; launcher settings and optional private Python support are stored under VS Code's extension global storage. Existing installations are reused without Git reset, pull, or source edits. A failed installation is not reported as complete. Dependency downloads and compilation can take several minutes. The official MCP4SAS installers still install SASPy/Python dependencies; the extension adds no new Python programs.
 
 For Copilot the extension uses VS Code's MCP definition-provider API. It does not rewrite `.vscode/mcp.json` or other Copilot servers. For Codex it adds only `[mcp_servers.mcp4sas_vscode]` in `$CODEX_HOME/config.toml` (normally `~/.codex/config.toml`), with a timestamped backup before any change. Conflicting entries or invalid TOML are refused, not replaced. Re-running Connect is idempotent. To stop advertising to Copilot, run Connect and choose Codex alone. To remove the Codex entry, remove the complete `BEGIN/END MCP4SAS VS CODE` block from that file.
 
 ## SAS access is still yours
 
-### Select ODA, local SAS or a custom SASPy target
+### Automatic SAS setup
 
-Run **MCP4SAS: Select SAS Connection**. On Windows choose **Local Windows SAS
-(IOM)** (`winlocal`) or **Local Windows SAS (COM)** (`winlocal_com`); on Linux
-choose **Local Linux SAS (STDIO)** (`linuxlocal`). ODA and custom SASPy profiles
-are available as well. Select an optional configuration file. Windows local
-SAS requires selecting native Windows Python with SASPy installed; COM also
-requires pywin32. Local SAS must already be installed and licensed, and the
-selected profile must point to it. This does not install SAS itself. Native
-local SAS is not offered on macOS; use ODA or a supported remote SASPy profile.
+Quick Setup finds the required Python environment, SASPy, installed SAS and
+standard SAS encryption-file folders. You do not need to locate Python,
+choose IOM versus COM, or select a SASPy configuration file.
 
-The saved target, optional profile file and interpreter are used by the MCP
-backend and Runtime Terminal. A separate session-server port isolates a newly
-selected interpreter from earlier SASPy sessions. Restart the assistant MCP
-connection after changing the selection; request a new session with the selected
-`saspy_cfgname` and inspect the actual result/log. Selecting a target does not
-prove it can connect. ODA credential setup does not apply to local SAS.
+If SAS is installed locally, setup asks one simple question: **SAS OnDemand
+for Academics** or **SAS installed on this computer**. Without local SAS,
+setup uses ODA. Run **MCP4SAS: Detect SAS Setup** to repeat detection or switch
+between these choices later. Your other extension commands remain available.
+
+For Windows local SAS, setup detects native Windows Python with SASPy and
+pywin32. If support is missing, visible installer tasks create a private
+Python environment; Windows Python can be installed through winget when
+needed. The generated local COM profile does not require an ODA account or
+Java encryption files. Existing configured local IOM profiles are retained.
+Linux local SAS uses its detected executable through STDIO. A licensed SAS
+installation is still required; finding its executable does not verify the
+license. macOS uses ODA or an existing supported remote configuration.
+
+Detection checks the project environment, standard Python/Conda locations,
+the Python launcher and PATH. It skips Windows Store launcher stubs and does
+not scan entire drives. Broken interpreters are ignored. Cygwin Python links
+are checked through the selected Cygwin Bash. Detection neither reads account
+credentials nor starts SAS, and it runs during setup or an explicit rescan,
+rather than before every submitted SAS program.
+
+Existing custom SASPy configurations are retained. Advanced users can still
+supply their established environment variables or use the original Perl CLI.
+After changing the execution target, restart the assistant MCP connection and
+request a fresh-session SAS test. Actual results and the SAS log verify the
+connection; software detection alone does not.
 
 ### Missing credentials or SAS encryption files
 
@@ -83,7 +98,7 @@ Open Ctrl+Shift+P (Cmd+Shift+P on macOS):
   containing `sas.rutil.jar`, `sas.rutil.nls.jar`, and `sastpj.rutil.jar`.
   Obtain and extract them from the
   [official SAS download](https://support.sas.com/downloads/package.htm?pid=2494)
-  using your own SAS Profile. The action refuses missing/empty files and runs
+  using your own SAS Profile. Detection can find a complete extracted folder in Downloads/SAS-ODA-JarFiles or Downloads/SAS-ODA-Jars and run the helper automatically. The manual action remains available; it refuses missing/empty files and runs
   the existing JAR helper for the installer environment. Custom Python/profile
   classpaths must be updated separately. Restart the assistant connection and
   old SAS sessions after changing the classpath, then retry a real SAS test.
