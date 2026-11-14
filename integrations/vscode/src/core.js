@@ -70,6 +70,32 @@ function cygwinEnvironment(perl, base = process.env) {
   env.PATH = path.dirname(perl) + (inherited ? ';' + inherited : '');
   return env;
 }
+async function assertWritableProject(directory, perl, { platform = process.platform, runCommand = run, filesystem = fs } = {}) {
+  const probe = path.join(directory, `.mcp4sas-write-${require('node:crypto').randomUUID()}`);
+  const token = require('node:crypto').randomUUID();
+  let created = false;
+  let failed = false;
+  try {
+    if (!filesystem.statSync(directory).isDirectory()) throw new Error('not a directory');
+    filesystem.writeFileSync(probe, token, { flag: 'wx' }); created = true;
+    if (platform === 'win32' && perl) {
+      // Use the process cwd and literal argv: no Windows path is interpolated into Bash.
+      await runCommand(path.join(path.dirname(perl), 'bash.exe'), ['--noprofile', '--norc', '-c',
+        'test "$(cat -- "$1")" = "$2" && printf "%s" "MCP4SAS Cygwin write OK" > "$1"',
+        'mcp4sas-write-check', path.basename(probe), token], { cwd: directory, timeout: 10000, env: cygwinEnvironment(perl) });
+      if (filesystem.readFileSync(probe, 'utf8') !== 'MCP4SAS Cygwin write OK') throw new Error('Cygwin did not update the same file');
+    }
+  } catch (error) {
+    failed = true;
+    throw new Error(`Cannot read and write the project folder from VS Code${platform === 'win32' && perl ? ' and Cygwin' : ''}: ${directory}. Use File > Open Folder to choose a writable local folder, or ask IT to grant your account access. ${error.message}`);
+  } finally {
+    if (created) {
+      try { filesystem.unlinkSync(probe); }
+      catch (error) { if (!failed) throw new Error(`Cannot remove the temporary write-check file ${probe}. Check this folder's permissions before continuing. ${error.message}`); }
+    }
+  }
+  return directory;
+}
 function installedPerl(detected, selected) {
   if (detected || selected) return detected || selected;
   throw new Error('Perl was not found after installation. Choose the Perl executable used by MCP4SAS and retry.');
@@ -165,4 +191,4 @@ function allocateSessionPort() {
     server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); });
   });
 }
-module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, connectionEnvironment, allocateSessionPort, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, connectionEnvironment, allocateSessionPort, cygwinEnvironment, assertWritableProject, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

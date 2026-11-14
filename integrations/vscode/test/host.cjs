@@ -27,14 +27,21 @@ exports.run = async () => {
       if (process.env.MCP4SAS_TEST_CYGWIN_PERL) {
         // The workbench refreshes its detected profile cache asynchronously.
         await new Promise(resolve => setTimeout(resolve, 3000));
+        const project = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        fs.mkdirSync(path.dirname(api.configFile()), { recursive: true });
+        fs.writeFileSync(api.configFile(), JSON.stringify({ repo: path.resolve(__dirname, '../../..'), perl, cwd: scratch }));
+        const savedFile = path.join(project, 'editor-saved.sas');
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(savedFile), Buffer.from('/* saved by VS Code */\n'));
+        terminal = await api.openRuntimeTerminal();
+        assert.equal(vscode.workspace.getConfiguration('terminal.integrated', vscode.workspace.workspaceFolders[0].uri).get('cwd'), '${workspaceFolder}');
         const marker = path.join(scratch, 'terminal-result.txt');
-        terminal = vscode.window.createTerminal({ name: 'MCP4SAS Cygwin smoke', cwd: scratch });
-        terminal.sendText(`{ printf 'MCP4SAS_CYGWIN_OK\\n'; pwd; } > ${require('../src/core').shellQuote(marker.replace(/\\/g, '/'))}`);
+        terminal.sendText(`{ printf 'MCP4SAS_CYGWIN_OK\\n'; pwd; cat editor-saved.sas; printf '/* updated by Cygwin */\\n' >> editor-saved.sas; } > ${require('../src/core').shellQuote(marker.replace(/\\/g, '/'))}`);
         const until = Date.now() + 20000;
-        while ((!fs.existsSync(marker) || !fs.readFileSync(marker, 'utf8').includes(path.basename(scratch))) && Date.now() < until) await new Promise(resolve => setTimeout(resolve, 100));
+        while ((!fs.existsSync(marker) || !fs.readFileSync(marker, 'utf8').includes('saved by VS Code') || !fs.readFileSync(savedFile, 'utf8').includes('updated by Cygwin')) && Date.now() < until) await new Promise(resolve => setTimeout(resolve, 100));
         assert.match(fs.readFileSync(marker, 'utf8'), /MCP4SAS_CYGWIN_OK/);
-        assert.ok(fs.readFileSync(marker, 'utf8').includes(path.basename(scratch)), 'Bash retains the project cwd');
-        console.log('PASS: actual default Cygwin terminal ran Bash and retained its project directory');
+        assert.ok(fs.readFileSync(marker, 'utf8').includes(path.basename(project)), 'Bash starts in the open folder, not the saved runtime cwd');
+        assert.match(fs.readFileSync(savedFile, 'utf8'), /updated by Cygwin/);
+        console.log('PASS: real runtime terminal uses the open VS Code folder; VS Code and Cygwin read/write the same SAS file');
       }
     } finally {
       if (terminal) {

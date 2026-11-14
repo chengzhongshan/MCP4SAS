@@ -30,7 +30,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: project } }], getConfiguration(section) {
       if (section === 'mcp4sas') return { get: () => configureTerminal };
       return { inspect: key => ({ globalValue: settings.get(key) }), async update(key, value) { settings.set(key, value); } };
-    } }, env: {}, ConfigurationTarget: { Global: 1 },
+    } }, env: {}, ConfigurationTarget: { Global: 1, WorkspaceFolder: 3 },
     Uri: { file: fsPath => ({ fsPath }) },
     ProgressLocation: { Notification: 1 }, TaskScope: { Global: 1 }, TaskRevealKind: {}, TaskPanelKind: {},
     EventEmitter: class { event() {} fire() {} dispose() {} },
@@ -45,7 +45,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       showQuickPick: async () => choices.shift(),
       showOpenDialog: async () => [{ fsPath: dialogs.shift() }],
       withProgress: async (options, fn) => fn(),
-      showInformationMessage() {}, showErrorMessage: message => errors.push(message)
+      showInformationMessage(message) { return message.startsWith('MCP4SAS scripts are installed') ? new Promise(() => {}) : undefined; }, showErrorMessage: message => errors.push(message)
     },
     tasks: {
       onDidEndTaskProcess(fn) { onTaskEnd = fn; return disposable(); },
@@ -54,6 +54,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   };
   const mockedCore = {
     ...core,
+    async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment() { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python' }; },
     async run(command, args) {
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
@@ -90,10 +91,18 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(saved.repo, project, 'scripts are installed directly in the open workspace');
     assert.equal(saved.java, java);
     assert.ok(fs.existsSync(path.join(saved.repo, 'run_sas_codes_or_files_in_ODA.pl')));
+    assert.equal(terminals.length, 1, 'Windows setup automatically opens the project terminal');
+    assert.equal(settings.get('cwd'), '${workspaceFolder}', 'workspace terminal cwd follows the open folder');
     await commands.get('mcp4sas.openRuntimeTerminal')();
-    assert.equal(terminals.at(-1).cwd, saved.repo, 'manual terminal opens at the scripts, not the project');
+    assert.equal(terminals.at(-1).cwd, project, 'manual terminal opens in the current VS Code project');
     assert.equal(terminals.at(-1).shellPath, path.join(path.dirname(portable), 'bash.exe'));
     assert.equal(terminals.at(-1).env.HOME, '/selected/private-home');
+    assert.equal(terminals.at(-1).env.CHERE_INVOKING, '1');
+    const otherProject = path.join(root, "Another reader's project"); fs.mkdirSync(otherProject);
+    vscode.workspace.workspaceFolders = [{ uri: { fsPath: otherProject } }];
+    await commands.get('mcp4sas.openRuntimeTerminal')();
+    assert.equal(terminals.at(-1).cwd, otherProject, 'changing the open folder does not reopen the old runtime directory');
+    vscode.workspace.workspaceFolders = [{ uri: { fsPath: project } }];
     assert.equal(tasks[0].execution.command, path.join(path.dirname(portable), 'bash.exe'));
     assert.ok(tasks[0].execution instanceof vscode.ProcessExecution);
     assert.deepEqual(Array.from(tasks[0].execution.args).slice(0, 2), ['--noprofile', '--norc']);

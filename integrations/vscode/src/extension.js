@@ -100,6 +100,7 @@ async function installNew() {
   const workspace = workspaces.length === 1 ? workspaces[0] : await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Choose the open folder for MCP4SAS scripts' });
   if (!workspace) return;
   const repo = workspace.uri.fsPath;
+  await core.assertWritableProject(repo, undefined, { platform: 'native' });
   let perl = await findPerl();
   if (process.platform === 'win32' && !perl) {
     const choice = await vscode.window.showQuickPick(['Install Cygwin for me', 'Choose an existing Cygwin Perl'], { title: 'Windows requires Cygwin before MCP4SAS' });
@@ -107,6 +108,7 @@ async function installNew() {
     perl = choice.startsWith('Install') ? await bootstrapCygwin() : await choosePerl();
     if (!perl) return;
   }
+  await core.assertWritableProject(repo, perl);
   const java = process.platform === 'win32' ? await ensureWindowsJava() : undefined;
   const install = core.platformInstaller(process.platform);
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
@@ -143,32 +145,55 @@ async function saveRuntime(runtime) {
   core.assertRepo(runtime.repo);
   const cwd = runtime.cwd || await folder('Choose your local SAS project folder (used for relative file and macro discovery)', vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
   if (!cwd) return false;
+  await core.assertWritableProject(cwd, runtime.perl);
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   // Stable copies survive extension versioned directory changes.
   refreshLauncher();
   const old = readConfig() || {};
   core.writePrivate(configFile(), JSON.stringify({ repo: runtime.repo, perl: runtime.perl, cwd, ...(runtime.java ? { java: runtime.java } : {}), ...Object.fromEntries(['saspyCfgname', 'saspyCfgfile', 'python', 'sessionPort'].filter(k => old[k]).map(k => [k, old[k]])) }, null, 2) + '\n');
   await configureCygwinTerminal(runtime.perl);
+  await configureProjectTerminal(cwd);
   output.appendLine(`MCP4SAS source/runtime folder: ${runtime.repo}`);
   output.appendLine(`SAS project folder (data and macros): ${cwd}`);
   output.appendLine('For manual SAS submissions, run MCP4SAS: Open MCP4SAS Runtime Terminal.');
-  const action = await vscode.window.showInformationMessage(`MCP4SAS scripts are installed in ${runtime.repo}. Your SAS project is ${cwd}.`, 'Open Runtime Terminal');
-  if (action === 'Open Runtime Terminal') await openRuntimeTerminal();
+  const message = `MCP4SAS scripts are installed in ${runtime.repo}. Your SAS project is ${cwd}.`;
+  if (process.platform === 'win32') {
+    await openRuntimeTerminal();
+    vscode.window.showInformationMessage(message);
+  } else if (await vscode.window.showInformationMessage(message, 'Open Runtime Terminal') === 'Open Runtime Terminal') await openRuntimeTerminal();
   if (!await detectSetup(true)) return false;
   emitter.fire(); return true;
 }
 async function openRuntimeTerminal() {
   trusted(); const config = readConfig(); if (!config) return setup();
   core.assertRepo(config.repo);
+  const folders = vscode.workspace.workspaceFolders || [];
+  const active = vscode.window.activeTextEditor && vscode.workspace.getWorkspaceFolder?.(vscode.window.activeTextEditor.document.uri);
+  const selected = active || (folders.length === 1 ? folders[0] : folders.length > 1 ? await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Choose the open folder for your Cygwin terminal' }) : undefined);
+  if (folders.length && !selected) return;
+  const cwd = selected?.uri.fsPath || config.cwd;
+  await core.assertWritableProject(cwd, config.perl);
+  await configureProjectTerminal(cwd);
   const env = await core.runtimeEnvironment(config);
+  if (process.platform === 'win32') env.CHERE_INVOKING = '1';
   if (process.platform !== 'win32') env.PATH = path.dirname(config.perl) + path.delimiter + (env.PATH || '');
   const terminal = vscode.window.createTerminal({
-    name: 'MCP4SAS Runtime', cwd: config.repo, env,
+    name: 'MCP4SAS Runtime', cwd, env,
     shellPath: process.platform === 'win32' ? path.join(path.dirname(config.perl), 'bash.exe') : '/bin/bash',
     shellArgs: ['--login', '-i']
   });
   terminal.show();
-  output.appendLine(`Manual command from this terminal: perl run_sas_codes_or_files_in_ODA.pl --code 'proc print data=sashelp.class; run;'`);
+  const runner = cwd === config.repo ? 'run_sas_codes_or_files_in_ODA.pl' : core.shellQuote(await core.toPosix(path.join(config.repo, 'run_sas_codes_or_files_in_ODA.pl'), config.perl));
+  output.appendLine(`Terminal folder (VS Code and Cygwin write check passed): ${cwd}`);
+  output.appendLine(`Manual command from this terminal: perl ${runner} --code 'proc print data=sashelp.class; run;'`);
+  return terminal;
+}
+async function configureProjectTerminal(cwd) {
+  if (process.platform !== 'win32' || vscode.env.remoteName) return;
+  const workspace = (vscode.workspace.workspaceFolders || []).find(f => f.uri.fsPath.toLowerCase() === cwd.toLowerCase());
+  if (!workspace) return;
+  // Override a stale terminal cwd only in this folder, never for other projects.
+  await vscode.workspace.getConfiguration('terminal.integrated', workspace.uri).update('cwd', '${workspaceFolder}', vscode.ConfigurationTarget.WorkspaceFolder);
 }
 async function configureCygwinTerminal(perl, explicit = false) {
   if (process.platform !== 'win32' || vscode.env.remoteName) return;
@@ -364,6 +389,6 @@ async function activate(ctx) {
       if (perl) await configureCygwinTerminal(perl);
     } catch (e) { output.appendLine(`Cygwin terminal setup: ${e.message}`); }
   }
-  return { provider, configFile, launchSettings, configureCygwinTerminal }; // Also exercised by extension-host tests.
+  return { provider, configFile, launchSettings, configureCygwinTerminal, openRuntimeTerminal }; // Also exercised by extension-host tests.
 }
 module.exports = { activate };

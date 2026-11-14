@@ -38,6 +38,21 @@ MCP4SAS for this computer**. Your account setup and SAS requirements still apply
 
 ### Default Cygwin terminal on Windows
 
+After setup saves your runtime, a Cygwin terminal opens automatically in the
+folder currently open in VS Code. Setup checks that VS Code can create a small
+temporary file there and that Cygwin can read and update that same file, then
+removes it. If either check fails, select a writable local folder with
+**File → Open Folder**, or ask IT to grant your account access. The extension
+does not change your folder permissions or require an administrator terminal.
+
+New terminals use the open workspace folder, including when an older terminal
+working-directory setting pointed elsewhere. This setting is saved only for
+that workspace folder. **Open MCP4SAS Runtime Terminal** also follows the
+current folder rather than reopening an older installation directory. With
+multiple folders, it uses the active editor's folder or asks which folder to
+open. Save your SAS file with **Ctrl+S** before submitting it; unsaved edits are
+not yet on disk.
+
 On a trusted local Windows workspace, the extension registers **MCP4SAS Cygwin** and selects it as the default terminal when a supported Cygwin installation is first detected or selected in Quick Setup. Portable installations use the same Cygwin directory you select for MCP4SAS. Open a **new terminal** to use it; existing terminals retain their shell. Bash starts interactively as a login shell, and `CHERE_INVOKING=1` keeps the terminal's project working directory.
 
 Other terminal profiles are preserved. If you later select a different default using **Terminal: Select Default Profile**, the extension keeps your choice on subsequent launches. Run **MCP4SAS: Use Cygwin as Default Terminal** to switch back. To disable automatic configuration, set `mcp4sas.configureCygwinTerminal` to `false`. A workspace-specific default terminal setting can override the user default. macOS, Linux and remote windows retain their existing terminal settings.
