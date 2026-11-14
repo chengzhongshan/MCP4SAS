@@ -36,7 +36,9 @@ async function choosePerl() {
 }
 async function task(command, args, cwd, env = {}) {
   const definition = { type: 'mcp4sas-setup', nonce: String(Date.now()) };
-  const execution = new vscode.ShellExecution(command, args, { cwd, env });
+  // Pass native executable paths directly to VS Code, independent of the
+  // user's default terminal shell (Cygwin interprets Windows backslashes).
+  const execution = new vscode.ProcessExecution(command, args, { cwd, env });
   const t = new vscode.Task(definition, vscode.TaskScope.Global, 'MCP4SAS installer', 'MCP4SAS', execution);
   t.presentationOptions = { reveal: vscode.TaskRevealKind.Always, panel: vscode.TaskPanelKind.Dedicated, focus: true };
   return new Promise((resolve, reject) => {
