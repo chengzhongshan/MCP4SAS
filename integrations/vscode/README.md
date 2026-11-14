@@ -85,6 +85,18 @@ After changing the execution target, restart the assistant MCP connection and
 request a fresh-session SAS test. Actual results and the SAS log verify the
 connection; software detection alone does not.
 
+### Company networks and SAS ODA
+
+The standard SASPy ODA configuration uses **outbound TCP port 8591**, not
+8951. If your company network blocks that connection, contact IT/IS and ask
+them to allow connections from your computer to the SAS ODA hostnames for
+your account's home region. This is outbound access to SAS, rather than an
+inbound listening port on your computer. Opening SAS Studio in a browser does
+not test the SASPy connection. A timeout can have other causes; share the
+actual connection error with IT/IS. See the
+[official SAS ODA configuration](https://support.sas.com/ondemand/saspy.html)
+for the region-specific hostnames and port.
+
 ### Missing credentials or SAS encryption files
 
 Open Ctrl+Shift+P (Cmd+Shift+P on macOS):
