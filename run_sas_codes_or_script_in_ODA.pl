@@ -866,13 +866,23 @@ sub bootstrap_sas_oda_credentials_if_needed {
         my $password = $provided_password;
 
         if (!length($account)) {
-            die "SAS ODA credentials are not configured yet. Re-run interactively, or supply them with --sas-oda-account/--sas-oda-password (or PIPELINE_SAS_ODA_ACCOUNT / PIPELINE_SAS_ODA_PASSWORD).\n"
+            die "SAS ODA credentials are not configured for authkey '$authkey'.\n"
+              . "Credential file checked: $authinfo_path\n"
+              . "In VS Code run: MCP4SAS: Configure SAS ODA Login.\n"
+              . "Or open a private local terminal in the MCP4SAS runtime folder and run:\n"
+              . "  perl run_sas_codes_or_files_in_ODA.pl --prompt-sas-oda-auth --check-sas-oda-login-only\n"
+              . "Use the same Python, HOME, SASPY_CFGFILE and SASPY_CFGNAME=oda as the failing tool.\n"
+              . "A new Cygwin home may not contain credentials from your Windows home.\n"
+              . "Do not put passwords in AI chat, command arguments, screenshots or Git.\n"
+              . "Setup: https://github.com/chengzhongshan/MCP4SAS/blob/main/integrations/vscode/README.md\n"
                 unless $interactive;
             print STDERR "SAS ODA credentials were not found for authkey '$authkey'.\n";
             $account = prompt_line_stderr('Enter your SAS ODA account/email', $existing_user);
         }
         if (!length($password)) {
-            die "The SAS ODA password was not provided. Re-run interactively, or supply it with --sas-oda-password (or PIPELINE_SAS_ODA_PASSWORD).\n"
+            die "The SAS ODA password was not provided. In VS Code run MCP4SAS: Configure SAS ODA Login,\n"
+              . "or use a private local terminal: perl run_sas_codes_or_files_in_ODA.pl --prompt-sas-oda-auth --check-sas-oda-login-only\n"
+              . "Do not send the password to the AI assistant.\n"
                 unless $interactive;
             $password = prompt_password_stderr('Enter your SAS ODA password');
         }
