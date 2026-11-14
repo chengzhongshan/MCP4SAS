@@ -87,8 +87,7 @@ connection; software detection alone does not.
 
 ### Company networks and SAS ODA
 
-The standard SASPy ODA configuration uses **outbound TCP port 8591**, not
-8951. If your company network blocks that connection, contact IT/IS and ask
+The standard SASPy ODA configuration uses **outbound TCP port 8591**. If your company network blocks that connection, contact IT/IS and ask
 them to allow connections from your computer to the SAS ODA hostnames for
 your account's home region. This is outbound access to SAS, rather than an
 inbound listening port on your computer. Opening SAS Studio in a browser does

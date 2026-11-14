@@ -69,6 +69,11 @@ An explicitly selected profile never silently falls back to another target.
 Use the installer's Python/SASPy environment and your privately configured ODA
 account. The connection check offers credential setup when needed.
 
+**Company network:** SASPy needs outbound TCP **8591** to the SAS ODA
+hostnames for your home region. If this connection is blocked, contact IT/IS
+to allow access from your computer. See the
+[official SAS configuration](https://support.sas.com/ondemand/saspy.html).
+
 ```bash
 export SASPY_CFGNAME=oda
 export SAS_ODA_AUTOLOAD_MACROS=0
