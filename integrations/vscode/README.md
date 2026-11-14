@@ -4,7 +4,7 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.4.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.4). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.4.vsix`.
+1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix`.
 2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
@@ -29,6 +29,29 @@ A new MCP4SAS checkout is stored under VS Code's extension global storage. Exist
 For Copilot the extension uses VS Code's MCP definition-provider API. It does not rewrite `.vscode/mcp.json` or other Copilot servers. For Codex it adds only `[mcp_servers.mcp4sas_vscode]` in `$CODEX_HOME/config.toml` (normally `~/.codex/config.toml`), with a timestamped backup before any change. Conflicting entries or invalid TOML are refused, not replaced. Re-running Connect is idempotent. To stop advertising to Copilot, run Connect and choose Codex alone. To remove the Codex entry, remove the complete `BEGIN/END MCP4SAS VS CODE` block from that file.
 
 ## SAS access is still yours
+
+### Missing credentials or SAS encryption files
+
+Open Ctrl+Shift+P (Cmd+Shift+P on macOS):
+
+- **MCP4SAS: Configure SAS ODA Login** opens a private installer task terminal
+  using the selected runtime, Python environment and HOME. Enter credentials
+  there, never in AI chat. The runner validates the login before saving it.
+  A fresh Cygwin installation has its own home and may not find credentials
+  from your Windows home. Missing-credential errors identify the file checked.
+- **MCP4SAS: Configure SAS Encryption JARs** asks for the folder directly
+  containing `sas.rutil.jar`, `sas.rutil.nls.jar`, and `sastpj.rutil.jar`.
+  Obtain and extract them from the
+  [official SAS download](https://support.sas.com/downloads/package.htm?pid=2494)
+  using your own SAS Profile. The action refuses missing/empty files and runs
+  the existing JAR helper for the installer environment. Custom Python/profile
+  classpaths must be updated separately. Restart the assistant connection and
+  old SAS sessions after changing the classpath, then retry a real SAS test.
+
+**Check Connection** offers both setup actions after tool discovery. Discovery
+alone does not prove the JARs or credentials are configured. The extension
+does not request a password through the chat interface or download licensed
+SAS libraries on your behalf.
 
 Register for [SAS OnDemand for Academics](https://support.sas.com/en/software/ondemand-for-academics-support.html), or configure a supported licensed local SAS target. Complete the existing [MCP4SAS SASPy/authentication instructions](https://github.com/chengzhongshan/MCP4SAS#readme) privately. The extension never asks for, reads, sends to chat, or writes your SAS password. Installing this extension does not create an ODA account or complete SASPy authentication. Your Copilot/Codex account and organization's MCP policies also apply.
 
@@ -72,6 +95,6 @@ npm test
 npm run package
 ```
 
-The output is `dist/mcp4sas-0.1.4.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
+The output is `dist/mcp4sas-0.1.5.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
 
 This integration is independently maintained by the MCP4SAS author; it is not an official Microsoft, GitHub, OpenAI or SAS extension. New integration code has its own scoped MIT license; original repository code retains its existing rights.

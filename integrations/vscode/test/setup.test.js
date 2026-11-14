@@ -53,6 +53,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   };
   const mockedCore = {
     ...core,
+    async runtimeEnvironment() { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python' }; },
     async run(command, args) {
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
       assert.equal(args[0], 'clone');
@@ -104,6 +105,25 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     states.delete('cygwinTerminalConfigured');
     await api.configureCygwinTerminal(portable);
     assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'opt out is respected');
+    await commands.get('mcp4sas.configureLogin')();
+    assert.equal(tasks.at(-1).execution.command, portable);
+    assert.equal(tasks.at(-1).execution.options.env.HOME, '/selected/private-home');
+    assert.equal(tasks.at(-1).execution.options.env.SASPY_CFGNAME, 'oda');
+    assert.ok(tasks.at(-1).execution.args.includes('--prompt-sas-oda-auth'));
+    assert.ok(!tasks.at(-1).execution.args.includes('--sas-oda-password'));
+    const jars = path.join(root, 'SAS JAR files'); fs.mkdirSync(jars);
+    dialogs.push(jars);
+    const beforeTasks = tasks.length;
+    await commands.get('mcp4sas.configureJars')();
+    assert.equal(tasks.length, beforeTasks, 'missing JARs do not run the installer');
+    assert.match(errors.at(-1), /sas\.rutil\.jar/);
+    assert.match(errors.at(-1), /pid=2494/);
+    for (const name of ['sas.rutil.jar', 'sas.rutil.nls.jar', 'sastpj.rutil.jar']) fs.writeFileSync(path.join(jars, name), 'fixture');
+    dialogs.push(jars);
+    await commands.get('mcp4sas.configureJars')();
+    assert.equal(tasks.length, beforeTasks + 1);
+    assert.equal(tasks.at(-1).execution.options.env.MCP4SAS_SASPY_IOM_DIR, jars);
+    assert.match(tasks.at(-1).execution.args.at(-1), /install_saspy_iom_jars\.sh$/);
     vscode.env.remoteName = 'ssh-remote';
     await api.configureCygwinTerminal(portable, true);
     assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'remote settings are untouched');
