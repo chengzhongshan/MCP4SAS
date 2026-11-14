@@ -22,6 +22,12 @@ For slow submissions or file transfers, see the
 measured fixes and provides a local source profiler for investigating similar
 delays.
 
+An independent [Python runtime and utilities edition](MCP4SAS_Use_Python/README.md)
+is available alongside the Perl implementation. Its `.py` runners sit beside
+their Perl counterparts; the implementation is kept in `MCP4SAS_Use_Python`.
+Native Windows Python does not require Cygwin. Existing Perl and VS Code setups
+remain available; see the Python edition's validation notes and compatibility details.
+
 <p align="center">
   <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
     <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />

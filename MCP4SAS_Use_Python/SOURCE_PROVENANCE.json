@@ -1,0 +1,16 @@
+{
+  "baseline": "796c37b39e5c3017493de227b244413f8e684141",
+  "sources": {
+    "MCPDeps/sas_oda_session_server.py": "70c87bb31f3e90762b10e67c8d932bd21f39c0a251bf18a019c55b77fc0d3da2",
+    "MCPDeps/sas_archive_transfer.py": "59429641581f084f54b0230507d72e662cfa6318bce3e8c489d6c132e53c6e20",
+    "MCPDeps/SAS_ODA_Runner.pm": "5cbb9a470d69b2ce18e5e4dc1d6909158bcb9e9158c792306b5bb9d021c555db",
+    "MCPDeps/SAS_ODA_Directory_Cleanup.pm": "692bedaa1df1f5ce144ca252e030f8e5883ae366b1c2d14bab59152df76a9c70"
+  },
+  "backend_changes": [
+    "Authenticated loopback RPC",
+    "Read complete frame header",
+    "Limit RPC frame size",
+    "Close a named SAS session explicitly",
+    "Serial RPC execution and same-thread COM submit"
+  ]
+}

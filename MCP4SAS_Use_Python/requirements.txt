@@ -1,0 +1,5 @@
+# Keep the official MCP SDK on its documented maintenance API.
+mcp>=1.30,<2
+saspy>=5,<6
+Pillow>=10
+pywin32>=306; sys_platform == 'win32'

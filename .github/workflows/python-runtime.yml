@@ -1,0 +1,43 @@
+name: Python runtime
+on:
+  push:
+    branches: [main, feature/python-port]
+    paths: ['MCP4SAS_Use_Python/**', '*.py', 'tools/*.py', 'examples/poc/*.py', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+  pull_request:
+    paths: ['MCP4SAS_Use_Python/**', '*.py', 'tools/*.py', 'examples/poc/*.py', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: MCP4SAS_Use_Python/requirements.txt
+      - name: Install the Python runtime dependencies
+        run: python -m pip install -r MCP4SAS_Use_Python/requirements.txt
+      - name: Verify SDK and SASPy imports
+        run: python -c "import mcp, saspy; print('Python MCP SDK and SASPy imports passed')"
+      - name: Run offline regression, original-Perl reference and actual MCP transport tests
+        run: python -m unittest discover -s MCP4SAS_Use_Python/tests -v
+      - name: Report prerequisites without SAS login
+        run: python MCP4SAS_Use_Python/install.py --check
+      - name: Check the CLI aliases and scientific example plans
+        run: |
+          python run_sas_codes_or_files_in_ODA.py --code "proc print data=sashelp.class;run;" --dry-run
+          python run_sas_codes_or_script_in_ODA.py --code "proc print data=sashelp.class;run;" --dry-run
+          python examples/poc/run_example.py --case clustergram --dry-run
+          python examples/poc/run_example.py --case multi_gwas_gtf --dry-run
+      - name: Record installed dependency versions
+        run: python -m pip freeze

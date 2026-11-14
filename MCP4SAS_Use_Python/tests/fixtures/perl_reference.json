@@ -1,0 +1,1432 @@
+{
+  "baseline": "796c37b39e5c3017493de227b244413f8e684141",
+  "cases": [
+    "",
+    "proc print data=sashelp.class;run;",
+    "data x; a='/*';b=\"*/\";run;",
+    "/* %fake */ %real;",
+    "* %fake; %real;",
+    "%* %fake; %real;",
+    "x='It''s good';y=\"double \"\"quotes\"\"\";",
+    "data x;input a $;datalines;\n%fake ' /* */\n;\nrun;%real;",
+    "data x;input a $;cards4;\n';\n;;;;\nrun;%real;",
+    "data x;datalines;\n1\n2\n",
+    "x='never closed;",
+    "/* never closed",
+    "%let x=%str(unmatched%'); %real;",
+    "%let x=%nrstr(%fake(a%))); %real;",
+    "%unquote(%nrstr(%real()));",
+    "%unquote(%nrstr(%nrstr(%fake())));",
+    "%let x=%str(%real());",
+    "%let x=%nrstr(missing;",
+    "%let x=%sysfunc(prxmatch(/abc.*/,abc));",
+    "%let x=%sysfunc(prxchange(s/a.*/b/,1,x));",
+    "x=\"%str(%\") %real\";",
+    "%include 'a.sas';",
+    "%inc 'a.sas' 'b.sas' / source2;",
+    "%include 'Bob''s.sas';",
+    "%include '&root./remote.sas';",
+    "%let x=%nrstr(%include 'fake.sas';);",
+    "x='%include fake;';",
+    "x=\"%include 'fake.sas';\";",
+    "data _null_;call execute('%include ''a.sas'';');run;%include 'b.sas';",
+    "x=dosubl('%include ''a.sas'' ''b.sas'';');",
+    "x=resolve('%real() %include ''inert.sas'';');",
+    "call execute('data _null_;call execute(''%include ''''nested.sas'''';'');run;');",
+    "%do i=1 %to 2;%end;",
+    "%if 1 %then %do; %put yes; %end;",
+    "%if 1 %then %do; %if 2 %then %do; %end; %end;",
+    "%local x; %return; %goto done;",
+    "%macro x; %local a; %do i=1 %to 2; %end;%mend;",
+    "%macro x; %put missing end;",
+    "%end; %mend; %then %put orphan;",
+    "%let x=1 %put missing semicolon;",
+    "%label: %goto label;",
+    "proc format;value age2 1=2;invalue $status3 \"a\"=1;picture proper 1=\"x\";run;",
+    "filename too_long_name \"file.tsv\"; filename short \"x\";",
+    "/* Ελληνικά */ %include \"中文.sas\"; %demo;"
+  ],
+  "logs": [
+    "",
+    "WARNING: real\nWARNING: real\nNOTE: Division by zero detected.\nid=1 _ERROR_=1",
+    "=== Submission Preflight ===\nWARNING: fake\n=== SAS Log ===\n22 put 'WARNING: fake';\nWARNING: real\nNOTE: Invalid data for x.\n=== Output ===\nWARNING: fake",
+    "ERROR: Open code statement recursion detected.\nWARNING: Apparent symbolic reference X not resolved.\nWARNING: Apparent invocation of macro FOO not resolved.",
+    "NOTE: Variable x is uninitialized.\nNOTE: Numeric values have been converted to character values.\nNOTE: No observations in data set WORK.X."
+  ],
+  "functions": [
+    "analyze_source",
+    "analyze_inline_data",
+    "macro_dependency_view",
+    "include_targets",
+    "open_code_macro_issues",
+    "format_name_issues",
+    "fileref_name_issues"
+  ],
+  "cleanup": [
+    {
+      "parent": "~",
+      "names": [
+        "owned"
+      ],
+      "dry_run": 1
+    },
+    {
+      "parent": "~/tmp",
+      "patterns": [
+        "^case_[0-9]+$"
+      ],
+      "dry_run": 0
+    }
+  ],
+  "expected": {
+    "cleanup": [
+      "/* MCP4SAS owned directory cleanup operation. Patterns match child basenames. */\n%global _mcp4sas_delete_lock_owned;\n%let _mcp4sas_delete_lock_owned=0;\n%macro _mcp4sas_cleanup_dirs;\n%local _mcp_parent _mcp_macro _mcp_count _mcp_name _mcp_i _mcp_ok _mcp_deleted;\n%let _mcp_ok=1;\n%let _mcp_count=0;\n%let _mcp_deleted=0;\ndata work._mcp4sas_dirs;\n length parent path macro_path home $4096 name $256;\n parent='~';\n home=pathname('HOME');\n if missing(home) then home=sysget('HOME');\n if parent='~' then parent=trim(home);\n else if substr(parent,1,2)='~/' then parent=cats(trim(home),substr(parent,2));\n if missing(parent) or parent='/' then do;\n   put 'ERROR: Cannot resolve directory cleanup parent'; call symputx('_mcp_ok',0,'L'); stop;\n end;\n macro_path=cats(trim(home),'/Macros/Del_Dir_Recursive.sas');\n call symputx('_mcp_parent',parent,'L');\n call symputx('_mcp_macro',macro_path,'L');\n array re[1] _temporary_;\n re[0+1]=prxparse('/(?:^owned$)/'); if missing(re[0+1]) then do; put 'ERROR: Invalid directory PRX expression'; call symputx('_mcp_ok',0,'L'); stop; end;\n rc=filename('mcpclpar',trim(parent));\n handle=dopen('mcpclpar');\n if handle=0 then do;\n   put 'ERROR: Cannot open directory cleanup parent ' parent;\n   call symputx('_mcp_ok',0,'L'); rc=filename('mcpclpar'); stop;\n end;\n count=0;\n do entry=1 to dnum(handle);\n   name=dread(handle,entry);\n   if prxmatch(re[0+1],trim(name)) then do;\n     path=cats(trim(parent),'/',trim(name));\n     rc=filename('mcpcldir',trim(path));\n     child=dopen('mcpcldir');\n     if child>0 then do;\n       rc=dclose(child);\n       if name in ('.','..','_DELETE_','Macros','._mcp4sas_directory_cleanup_lock') or\n          prxmatch('/[\\x00-\\x1f]/',trim(name)) or\n          indexc(trim(name),'%&,''\"();/\\')>0 then do;\n         put 'ERROR: Refusing protected or macro-unsafe directory name ' path;\n         call symputx('_mcp_ok',0,'L');\n       end;\n       else do;\n         count+1; output;\n         put 'MCP4SAS_DIRECTORY_MATCH: ' path;\n       end;\n     end;\n     rc=filename('mcpcldir');\n   end;\n end;\n rc=dclose(handle); rc=filename('mcpclpar');\n call symputx('_mcp_count',count,'L');\n do idx=1 to dim(re); call prxfree(re[idx]); end;\nrun;\n%if &_mcp_ok ne 1 %then %return;\n%if 1 %then %do;\n %put MCP4SAS_DIRECTORY_SUMMARY: matched=&_mcp_count deleted=0 dry_run=1;\n %return;\n%end;\n%if &_mcp_count=0 %then %do;\n %put MCP4SAS_DIRECTORY_SUMMARY: matched=0 deleted=0 dry_run=0;\n %return;\n%end;\n%mend;\n%_mcp4sas_cleanup_dirs;\n/* Also release our lock after an early return from a failed operation. */\ndata _null_;\n length lockpath $4096;\n lockpath=symget('_mcp4sas_delete_lock_owned');\n if lockpath ne '0' and not missing(lockpath) then do;\n   rc=filename('mcpclock',trim(lockpath)); deleted=fdelete('mcpclock'); rc=filename('mcpclock');\n   if deleted ne 0 then put 'ERROR: Could not release owned directory cleanup lock ' lockpath;\n end;\nrun;\n%symdel _mcp4sas_delete_lock_owned;\n%sysmacdelete _mcp4sas_cleanup_dirs;\n",
+      "/* MCP4SAS owned directory cleanup operation. Patterns match child basenames. */\n%global _mcp4sas_delete_lock_owned;\n%let _mcp4sas_delete_lock_owned=0;\n%macro _mcp4sas_cleanup_dirs;\n%local _mcp_parent _mcp_macro _mcp_count _mcp_name _mcp_i _mcp_ok _mcp_deleted;\n%let _mcp_ok=1;\n%let _mcp_count=0;\n%let _mcp_deleted=0;\ndata work._mcp4sas_dirs;\n length parent path macro_path home $4096 name $256;\n parent='~/tmp';\n home=pathname('HOME');\n if missing(home) then home=sysget('HOME');\n if parent='~' then parent=trim(home);\n else if substr(parent,1,2)='~/' then parent=cats(trim(home),substr(parent,2));\n if missing(parent) or parent='/' then do;\n   put 'ERROR: Cannot resolve directory cleanup parent'; call symputx('_mcp_ok',0,'L'); stop;\n end;\n macro_path=cats(trim(home),'/Macros/Del_Dir_Recursive.sas');\n call symputx('_mcp_parent',parent,'L');\n call symputx('_mcp_macro',macro_path,'L');\n array re[1] _temporary_;\n re[0+1]=prxparse('/(?:^case_[0-9]+$)/'); if missing(re[0+1]) then do; put 'ERROR: Invalid directory PRX expression'; call symputx('_mcp_ok',0,'L'); stop; end;\n rc=filename('mcpclpar',trim(parent));\n handle=dopen('mcpclpar');\n if handle=0 then do;\n   put 'ERROR: Cannot open directory cleanup parent ' parent;\n   call symputx('_mcp_ok',0,'L'); rc=filename('mcpclpar'); stop;\n end;\n count=0;\n do entry=1 to dnum(handle);\n   name=dread(handle,entry);\n   if prxmatch(re[0+1],trim(name)) then do;\n     path=cats(trim(parent),'/',trim(name));\n     rc=filename('mcpcldir',trim(path));\n     child=dopen('mcpcldir');\n     if child>0 then do;\n       rc=dclose(child);\n       if name in ('.','..','_DELETE_','Macros','._mcp4sas_directory_cleanup_lock') or\n          prxmatch('/[\\x00-\\x1f]/',trim(name)) or\n          indexc(trim(name),'%&,''\"();/\\')>0 then do;\n         put 'ERROR: Refusing protected or macro-unsafe directory name ' path;\n         call symputx('_mcp_ok',0,'L');\n       end;\n       else do;\n         count+1; output;\n         put 'MCP4SAS_DIRECTORY_MATCH: ' path;\n       end;\n     end;\n     rc=filename('mcpcldir');\n   end;\n end;\n rc=dclose(handle); rc=filename('mcpclpar');\n call symputx('_mcp_count',count,'L');\n do idx=1 to dim(re); call prxfree(re[idx]); end;\nrun;\n%if &_mcp_ok ne 1 %then %return;\n%if 0 %then %do;\n %put MCP4SAS_DIRECTORY_SUMMARY: matched=&_mcp_count deleted=0 dry_run=1;\n %return;\n%end;\n%if &_mcp_count=0 %then %do;\n %put MCP4SAS_DIRECTORY_SUMMARY: matched=0 deleted=0 dry_run=0;\n %return;\n%end;\n/* The user's macro uses a fixed _DELETE_ staging name. Never reuse it. */\ndata _null_;\n length lockpath created $4096;\n lockpath=cats(symget('_mcp_parent'),'/._mcp4sas_directory_cleanup_lock');\n if fileexist(trim(lockpath)) then do;\n   put 'ERROR: Directory cleanup lock already exists: ' lockpath;\n   call symputx('_mcp_ok',0,'L');\n end;\n else do;\n   created=dcreate('._mcp4sas_directory_cleanup_lock',symget('_mcp_parent'));\n   if missing(created) then do;\n     put 'ERROR: Cannot acquire directory cleanup lock'; call symputx('_mcp_ok',0,'L');\n   end;\n   else call symputx('_mcp4sas_delete_lock_owned',trim(created),'G');\n end;\nrun;\n%if &_mcp_ok ne 1 %then %return;\n%if %sysfunc(fileexist(%superq(_mcp_parent)/_DELETE_)) %then %do;\n %put ERROR: Refusing recursive deletion because &_mcp_parent/_DELETE_ already exists;\n %return;\n%end;\n%if not %sysfunc(fileexist(%superq(_mcp_macro))) %then %do;\n %put ERROR: Required remote macro file is missing: %superq(_mcp_macro);\n %return;\n%end;\n%include \"&_mcp_macro\";\n%if not %sysmacexist(Del_Dir_Recursive) %then %do;\n %put ERROR: Del_Dir_Recursive was not defined by the remote include;\n %return;\n%end;\n%do _mcp_i=1 %to &_mcp_count;\n data _null_;\n   set work._mcp4sas_dirs(firstobs=&_mcp_i obs=&_mcp_i);\n   call symputx('_mcp_name',name,'L');\n run;\n %if %sysfunc(fileexist(%superq(_mcp_parent)/_DELETE_)) %then %do;\n   %put ERROR: _DELETE_ staging directory appeared - stopping recursive deletion;\n   %return;\n %end;\n %Del_Dir_Recursive(%superq(_mcp_parent),%superq(_mcp_name));\n data _null_;\n   length path staging $4096;\n   path=cats(symget('_mcp_parent'),'/',symget('_mcp_name'));\n   staging=cats(symget('_mcp_parent'),'/_DELETE_');\n   if fileexist(trim(path)) or fileexist(trim(staging)) then do;\n     put 'ERROR: Recursive directory deletion could not be verified: ' path;\n     call symputx('_mcp_ok',0,'L');\n   end;\n   else put 'MCP4SAS_DIRECTORY_DELETED: ' path;\n run;\n %if &_mcp_ok ne 1 %then %return;\n %let _mcp_deleted=%eval(&_mcp_deleted+1);\n%end;\n%put MCP4SAS_DIRECTORY_SUMMARY: matched=&_mcp_count deleted=&_mcp_deleted dry_run=0;\n%mend;\n%_mcp4sas_cleanup_dirs;\n/* Also release our lock after an early return from a failed operation. */\ndata _null_;\n length lockpath $4096;\n lockpath=symget('_mcp4sas_delete_lock_owned');\n if lockpath ne '0' and not missing(lockpath) then do;\n   rc=filename('mcpclock',trim(lockpath)); deleted=fdelete('mcpclock'); rc=filename('mcpclock');\n   if deleted ne 0 then put 'ERROR: Could not release owned directory cleanup lock ' lockpath;\n end;\nrun;\n%symdel _mcp4sas_delete_lock_owned;\n%sysmacdelete _mcp4sas_cleanup_dirs;\n"
+    ],
+    "logs": [
+      {
+        "data_quality": [],
+        "data_quality_count": 0,
+        "macro_count": 0,
+        "macro_diagnostics": [],
+        "warning_count": 0,
+        "warnings": []
+      },
+      {
+        "data_quality": [
+          "NOTE: Division by zero detected.",
+          "id=1 _ERROR_=1"
+        ],
+        "data_quality_count": 2,
+        "macro_count": 0,
+        "macro_diagnostics": [],
+        "warning_count": 1,
+        "warnings": [
+          "WARNING: real"
+        ]
+      },
+      {
+        "data_quality": [
+          "NOTE: Invalid data for x."
+        ],
+        "data_quality_count": 1,
+        "macro_count": 0,
+        "macro_diagnostics": [],
+        "warning_count": 1,
+        "warnings": [
+          "WARNING: real"
+        ]
+      },
+      {
+        "data_quality": [],
+        "data_quality_count": 0,
+        "macro_count": 3,
+        "macro_diagnostics": [
+          {
+            "hint": "Check for a missing semicolon before the next %LET/%PUT or other macro statement.",
+            "kind": "open_code_recursion",
+            "message": "ERROR: Open code statement recursion detected.",
+            "severity": "error"
+          },
+          {
+            "hint": "Check spelling, scope, creation timing and the dot delimiter before appended text.",
+            "kind": "unresolved_macro_variable",
+            "message": "WARNING: Apparent symbolic reference X not resolved.",
+            "severity": "warning"
+          },
+          {
+            "hint": "Define or load the macro before invoking it; verify its source filename and macro name.",
+            "kind": "unresolved_macro_invocation",
+            "message": "WARNING: Apparent invocation of macro FOO not resolved.",
+            "severity": "warning"
+          }
+        ],
+        "warning_count": 2,
+        "warnings": [
+          "WARNING: Apparent symbolic reference X not resolved.",
+          "WARNING: Apparent invocation of macro FOO not resolved."
+        ]
+      },
+      {
+        "data_quality": [
+          "NOTE: Variable x is uninitialized.",
+          "NOTE: Numeric values have been converted to character values.",
+          "NOTE: No observations in data set WORK.X."
+        ],
+        "data_quality_count": 3,
+        "macro_count": 0,
+        "macro_diagnostics": [],
+        "warning_count": 0,
+        "warnings": []
+      }
+    ],
+    "source": [
+      {
+        "analyze_inline_data": {
+          "masked": "",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "proc print data=sashelp.class;run;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "proc print data=sashelp.class;run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "proc print data=sashelp.class;run;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "proc print data=sashelp.class;run;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "data x; a='/*';b=\"*/\";run;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "data x; a='/*';b=\"*/\";run;",
+          "double_quotes": [
+            {
+              "end": 21,
+              "start": 17
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; a=    ;b=    ;run;",
+          "single_quotes": [
+            {
+              "end": 14,
+              "start": 10
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "data x; a=    ;b=\"*/\";run;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "/* %fake */ %real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "            %real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "            %real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "            %real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "* %fake; %real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "         %real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "         %real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "         %real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%* %fake; %real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "          %real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "          %real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "          %real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x='It''s good';y=\"double \"\"quotes\"\"\";",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x='It''s good';y=\"double \"\"quotes\"\"\";",
+          "double_quotes": [
+            {
+              "end": 36,
+              "start": 17
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "x=            ;y=                   ;",
+          "single_quotes": [
+            {
+              "end": 14,
+              "start": 2
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x=            ;y=\"double \"\"quotes\"\"\";",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "data x;input a $;datalines;\n             \n;\nrun;%real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "data x;input a $;datalines;\n             \n;\nrun;%real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x;input a $;datalines;\n             \n;\nrun;%real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "data x;input a $;datalines;\n             \n;\nrun;%real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "data x;input a $;cards4;\n  \n;;;;\nrun;%real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "data x;input a $;cards4;\n  \n;;;;\nrun;%real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x;input a $;cards4;\n  \n;;;;\nrun;%real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "data x;input a $;cards4;\n  \n;;;;\nrun;%real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "data x;datalines;\n \n \n",
+          "unclosed": [
+            {
+              "keyword": "DATALINES",
+              "line": 1
+            }
+          ]
+        },
+        "analyze_source": {
+          "comments_masked": "data x;datalines;\n \n \n",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "line": 1,
+              "message": "Inline data declaration DATALINES is missing its terminating line",
+              "type": "unclosed_inline_data"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x;datalines;\n \n \n",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "data x;datalines;\n \n \n",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x='never closed;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x='never closed;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Unclosed single-quoted string starting on line 1",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "x=              ",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x='never closed;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "/* never closed",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "               ",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Unclosed block comment starting on line 1",
+              "type": "unclosed_block_comment"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "               ",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "               ",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%str(unmatched%'); %real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%str(unmatched%'); %real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 24,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                 ; %real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%str(unmatched%'); %real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%nrstr(%fake(a%))); %real;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%nrstr(%fake(a%))); %real;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [],
+              "closed": 1,
+              "end": 25,
+              "name": "nrstr",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                  ; %real;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%nrstr(          ); %real;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%unquote(%nrstr(%real()));",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%unquote(%nrstr(%real()));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 16,
+              "children": [],
+              "closed": 1,
+              "end": 24,
+              "name": "nrstr",
+              "start": 9
+            }
+          ],
+          "masked": "%unquote(               );",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%unquote(%nrstr(%real()));",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%unquote(%nrstr(%nrstr(%fake())));",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%unquote(%nrstr(%nrstr(%fake())));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 16,
+              "children": [
+                {
+                  "body": 23,
+                  "children": [],
+                  "closed": 1,
+                  "end": 31,
+                  "name": "nrstr",
+                  "start": 16
+                }
+              ],
+              "closed": 1,
+              "end": 32,
+              "name": "nrstr",
+              "start": 9
+            },
+            {
+              "body": 23,
+              "children": [],
+              "closed": 1,
+              "end": 31,
+              "name": "nrstr",
+              "start": 16
+            }
+          ],
+          "masked": "%unquote(                       );",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%unquote(%nrstr(%nrstr(       )));",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%str(%real());",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%str(%real());",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 20,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=             ;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%str(%real());",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%nrstr(missing;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%nrstr(missing;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Macro quoting function %nrstr( is missing its closing ')'",
+              "type": "unclosed_macro_invocation"
+            }
+          ],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [],
+              "closed": 0,
+              "end": 22,
+              "name": "nrstr",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=               ",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%nrstr(        ",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%sysfunc(prxmatch(/abc.*/,abc));",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%sysfunc(prxmatch(/abc.*/,abc));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%let x=%sysfunc(prxmatch(/abc.*/,abc));",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%sysfunc(prxmatch(/abc.*/,abc));",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%sysfunc(prxchange(s/a.*/b/,1,x));",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%sysfunc(prxchange(s/a.*/b/,1,x));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%let x=%sysfunc(prxchange(s/a.*/b/,1,x));",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%sysfunc(prxchange(s/a.*/b/,1,x));",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x=\"%str(%\") %real\";",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x=\"%str(%\") %real\";",
+          "double_quotes": [
+            {
+              "end": 18,
+              "start": 2
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 8,
+              "children": [],
+              "closed": 1,
+              "end": 11,
+              "name": "str",
+              "start": 3
+            }
+          ],
+          "masked": "x=                ;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x=\"%str(%\") %real\";",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%include 'a.sas';",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%include 'a.sas';",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%include        ;",
+          "single_quotes": [
+            {
+              "end": 16,
+              "start": 9
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "a.sas"
+        ],
+        "macro_dependency_view": "%include        ;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%inc 'a.sas' 'b.sas' / source2;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%inc 'a.sas' 'b.sas' / source2;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%inc                 / source2;",
+          "single_quotes": [
+            {
+              "end": 12,
+              "start": 5
+            },
+            {
+              "end": 20,
+              "start": 13
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "a.sas",
+          "b.sas"
+        ],
+        "macro_dependency_view": "%inc                 / source2;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%include 'Bob''s.sas';",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%include 'Bob''s.sas';",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%include             ;",
+          "single_quotes": [
+            {
+              "end": 21,
+              "start": 9
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "Bob's.sas"
+        ],
+        "macro_dependency_view": "%include             ;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%include '&root./remote.sas';",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%include '&root./remote.sas';",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%include                    ;",
+          "single_quotes": [
+            {
+              "end": 28,
+              "start": 9
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "&root./remote.sas"
+        ],
+        "macro_dependency_view": "%include                    ;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=%nrstr(%include 'fake.sas';);",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=%nrstr(%include 'fake.sas';);",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [],
+              "closed": 1,
+              "end": 35,
+              "name": "nrstr",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                            ;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=%nrstr(                    );",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x='%include fake;';",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x='%include fake;';",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "x=                ;",
+          "single_quotes": [
+            {
+              "end": 18,
+              "start": 2
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x=                ;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x=\"%include 'fake.sas';\";",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x=\"%include 'fake.sas';\";",
+          "double_quotes": [
+            {
+              "end": 24,
+              "start": 2
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "x=                      ;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x=\"%include 'fake.sas';\";",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "data _null_;call execute('%include ''a.sas'';');run;%include 'b.sas';",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "data _null_;call execute('%include ''a.sas'';');run;%include 'b.sas';",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data _null_;call execute(                     );run;%include        ;",
+          "single_quotes": [
+            {
+              "end": 46,
+              "start": 25
+            },
+            {
+              "end": 68,
+              "start": 61
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "a.sas",
+          "b.sas"
+        ],
+        "macro_dependency_view": "data _null_;call execute('%include          ;');run;%include        ;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x=dosubl('%include ''a.sas'' ''b.sas'';');",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x=dosubl('%include ''a.sas'' ''b.sas'';');",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "x=dosubl(                               );",
+          "single_quotes": [
+            {
+              "end": 40,
+              "start": 9
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "a.sas",
+          "b.sas"
+        ],
+        "macro_dependency_view": "x=dosubl('%include                    ;');",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "x=resolve('%real() %include ''inert.sas'';');",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "x=resolve('%real() %include ''inert.sas'';');",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "x=resolve(                                 );",
+          "single_quotes": [
+            {
+              "end": 43,
+              "start": 10
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "x=resolve('%real() %include              ;');",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "call execute('data _null_;call execute(''%include ''''nested.sas'''';'');run;');",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "call execute('data _null_;call execute(''%include ''''nested.sas'''';'');run;');",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "call execute(                                                                 );",
+          "single_quotes": [
+            {
+              "end": 78,
+              "start": 13
+            }
+          ]
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "nested.sas"
+        ],
+        "macro_dependency_view": "call execute('data _null_;call execute(''%include                   ;'');run;');",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%do i=1 %to 2;%end;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%do i=1 %to 2;%end;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%do i=1 %to 2;%end;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%do i=1 %to 2;%end;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Indexed, %WHILE, %UNTIL and standalone %DO loops require a macro definition; open code permits conditional %THEN/%ELSE %DO groups",
+            "type": "open_code_do"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%if 1 %then %do; %put yes; %end;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%if 1 %then %do; %put yes; %end;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%if 1 %then %do; %put yes; %end;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%if 1 %then %do; %put yes; %end;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%if 1 %then %do; %if 2 %then %do; %end; %end;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%if 1 %then %do; %if 2 %then %do; %end; %end;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%if 1 %then %do; %if 2 %then %do; %end; %end;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%if 1 %then %do; %if 2 %then %do; %end; %end;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Nested %IF in open code is unsupported; put nested conditional logic inside a macro definition",
+            "type": "nested_open_code_if"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%local x; %return; %goto done;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%local x; %return; %goto done;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%local x; %return; %goto done;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%local x; %return; %goto done;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Macro control statement %local appears in open SAS code; place it inside a %macro/%mend definition",
+            "type": "open_code_macro_control"
+          },
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Macro control statement %return appears in open SAS code; place it inside a %macro/%mend definition",
+            "type": "open_code_macro_control"
+          },
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Macro control statement %goto appears in open SAS code; place it inside a %macro/%mend definition",
+            "type": "open_code_macro_control"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%macro x; %local a; %do i=1 %to 2; %end;%mend;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%macro x; %local a; %do i=1 %to 2; %end;%mend;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%macro x; %local a; %do i=1 %to 2; %end;%mend;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%macro x; %local a; %do i=1 %to 2; %end;%mend;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%macro x; %put missing end;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%macro x; %put missing end;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%macro x; %put missing end;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%macro x; %put missing end;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "A %macro block appears to be missing its matching %mend",
+            "type": "unclosed_macro_definition"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%end; %mend; %then %put orphan;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%end; %mend; %then %put orphan;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%end; %mend; %then %put orphan;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%end; %mend; %then %put orphan;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Orphan %END in open code has no matching %DO group",
+            "type": "open_code_end"
+          },
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Macro end statement %mend appears outside a %macro/%mend block",
+            "type": "open_code_mend"
+          },
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Orphan %THEN in open code has no preceding %IF",
+            "type": "open_code_then"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%let x=1 %put missing semicolon;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%let x=1 %put missing semicolon;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%let x=1 %put missing semicolon;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%let x=1 %put missing semicolon;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Possible missing semicolon after %let before another macro statement; this can cause open-code statement recursion",
+            "type": "macro_statement_recursion"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "%label: %goto label;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "%label: %goto label;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%label: %goto label;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "%label: %goto label;",
+        "open_code_macro_issues": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Macro control statement %goto appears in open SAS code; place it inside a %macro/%mend definition",
+            "type": "open_code_macro_control"
+          }
+        ]
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "proc format;value age2 1=2;invalue $status3 \"a\"=1;picture proper 1=\"x\";run;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "proc format;value age2 1=2;invalue $status3 \"a\"=1;picture proper 1=\"x\";run;",
+          "double_quotes": [
+            {
+              "end": 47,
+              "start": 44
+            },
+            {
+              "end": 70,
+              "start": 67
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "proc format;value age2 1=2;invalue $status3    =1;picture proper 1=   ;run;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [
+          {
+            "context_ref": [
+              1
+            ],
+            "line": 1,
+            "message": "Literal value name 'age2' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",
+            "type": "invalid_literal_format_name"
+          },
+          {
+            "context_ref": [
+              1
+            ],
+            "line": 1,
+            "message": "Literal invalue name 'status3' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",
+            "type": "invalid_literal_format_name"
+          }
+        ],
+        "include_targets": [],
+        "macro_dependency_view": "proc format;value age2 1=2;invalue $status3 \"a\"=1;picture proper 1=\"x\";run;",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "filename too_long_name \"file.tsv\"; filename short \"x\";",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "filename too_long_name \"file.tsv\"; filename short \"x\";",
+          "double_quotes": [
+            {
+              "end": 33,
+              "start": 23
+            },
+            {
+              "end": 53,
+              "start": 50
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "filename too_long_name           ; filename short    ;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [
+          {
+            "context_ref": [
+              1
+            ],
+            "line": 1,
+            "message": "Literal fileref 'too_long_name' exceeds the SAS limit of 8 characters; choose a shorter fileref.",
+            "type": "invalid_literal_fileref_name"
+          }
+        ],
+        "format_name_issues": [],
+        "include_targets": [],
+        "macro_dependency_view": "filename too_long_name \"file.tsv\"; filename short \"x\";",
+        "open_code_macro_issues": []
+      },
+      {
+        "analyze_inline_data": {
+          "masked": "/* Ελληνικά */ %include \"中文.sas\"; %demo;",
+          "unclosed": []
+        },
+        "analyze_source": {
+          "comments_masked": "               %include \"中文.sas\"; %demo;",
+          "double_quotes": [
+            {
+              "end": 32,
+              "start": 24
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "               %include         ; %demo;",
+          "single_quotes": []
+        },
+        "fileref_name_issues": [],
+        "format_name_issues": [],
+        "include_targets": [
+          "中文.sas"
+        ],
+        "macro_dependency_view": "               %include \"中文.sas\"; %demo;",
+        "open_code_macro_issues": []
+      }
+    ]
+  }
+}

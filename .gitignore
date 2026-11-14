@@ -16,3 +16,6 @@ __pycache__/
 /dist/
 
 /_site/
+/MCP4SAS_Use_Python/.venv/
+/MCP4SAS_Use_Python/.saspy-config/
+/MCP4SAS_Use_Python/test-results/
