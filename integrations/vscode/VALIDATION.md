@@ -62,3 +62,8 @@ Installer tasks now use VS Code ProcessExecution with separate executable/argume
 ## 0.1.5 — missing SAS prerequisites
 
 Added private-terminal ODA login and SAS JAR folder configuration commands. Discovery now offers these setup actions explicitly. Missing-credential CLI errors name the checked credential file and private terminal recovery command; Java encryption diagnostics point to the editor JAR action and official SAS download. Tests exercise missing and complete JAR folders, selected login HOME/profile, absence of password arguments and actual CLI failure without credentials. No passwords or SAS libraries are packaged.
+
+## 0.1.6 — expose managed source and manual execution
+
+Setup reports the managed GitHub source/runtime path separately from the selected SAS project. Added Open MCP4SAS Runtime Terminal, preserving the selected environment and opening at the scripts. Source validation now rejects checkouts missing the Perl submission runner, including immediately after clone. Regression coverage checks a checkout missing that runner, the source-vs-project terminal location and the selected Bash/HOME. Existing managed source was inspected and contains server.pl, the runner and installer scripts; no claim was made that the project folder itself is the source checkout.
+Actual manual-route check: the managed runtime's own Perl executable and runner submitted proc print data=sashelp.class; run; to the configured ODA target with exit 0, no SAS ERROR lines and an HTML result. Local records are retained outside the repository at MCP4SAS_POC_20261112/reports/manual_runner_20261114. All 15 Node tests passed.

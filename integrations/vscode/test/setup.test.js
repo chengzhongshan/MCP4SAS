@@ -19,7 +19,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
   }
   fs.mkdirSync(project);
-  const commands = new Map(), states = new Map(), errors = [], tasks = [];
+  const commands = new Map(), states = new Map(), errors = [], tasks = [], terminals = [];
   const settings = new Map([['profiles.windows', { 'My existing shell': { path: 'original.exe' } }]]);
   let configureTerminal = true;
   const choices = ['Install MCP4SAS for this computer', 'Choose an existing Cygwin Perl', [{ label: 'GitHub Copilot' }]];
@@ -40,6 +40,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     commands: { registerCommand(id, fn) { commands.set(id, fn); return disposable(); } },
     lm: { registerMcpServerDefinitionProvider: disposable },
     window: {
+      createTerminal(options) { terminals.push(options); return { show() {} }; },
       createOutputChannel: () => ({ appendLine() {}, show() {}, dispose() {} }),
       showQuickPick: async () => choices.shift(),
       showOpenDialog: async () => [{ fsPath: dialogs.shift() }],
@@ -58,7 +59,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
       assert.equal(args[0], 'clone');
       const repo = args.at(-1);
-      for (const file of ['server.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
+      for (const file of ['server.pl', 'run_sas_codes_or_files_in_ODA.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
         const target = path.join(repo, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, 'fixture');
       }
       return '';
@@ -84,6 +85,11 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(saved.perl, portable);
     assert.equal(saved.cwd, project);
     assert.equal(saved.java, java);
+    assert.ok(fs.existsSync(path.join(saved.repo, 'run_sas_codes_or_files_in_ODA.pl')));
+    await commands.get('mcp4sas.openRuntimeTerminal')();
+    assert.equal(terminals.at(-1).cwd, saved.repo, 'manual terminal opens at the scripts, not the project');
+    assert.equal(terminals.at(-1).shellPath, path.join(path.dirname(portable), 'bash.exe'));
+    assert.equal(terminals.at(-1).env.HOME, '/selected/private-home');
     assert.equal(tasks[0].execution.command, path.join(path.dirname(portable), 'bash.exe'));
     assert.ok(tasks[0].execution instanceof vscode.ProcessExecution);
     assert.deepEqual(Array.from(tasks[0].execution.args).slice(0, 2), ['--noprofile', '--norc']);

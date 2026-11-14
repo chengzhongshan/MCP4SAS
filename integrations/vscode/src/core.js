@@ -42,7 +42,7 @@ function discoveryReply(message) {
   return { tools: message.result.tools };
 }
 function assertRepo(repo) {
-  for (const file of ['server.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
+  for (const file of ['server.pl', 'run_sas_codes_or_files_in_ODA.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
     if (!fs.existsSync(path.join(repo, file))) throw new Error(`Not an MCP4SAS installation: missing ${file}`);
   }
 }

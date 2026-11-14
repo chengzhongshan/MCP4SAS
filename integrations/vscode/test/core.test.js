@@ -72,6 +72,14 @@ test('atomic Codex write backs up changed originals, leaves idempotent files alo
 test('invalid installations fail before configuration', () => {
   assert.throws(() => c.assertRepo(os.tmpdir()));
   c.assertRepo(path.join(__dirname, '../../..'));
+  const partial = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-incomplete-'));
+  try {
+    for (const file of ['server.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
+      fs.mkdirSync(path.dirname(path.join(partial, file)), { recursive: true });
+      fs.writeFileSync(path.join(partial, file), 'fixture');
+    }
+    assert.throws(() => c.assertRepo(partial), /missing run_sas_codes_or_files_in_ODA\.pl/);
+  } finally { fs.rmSync(partial, { recursive: true, force: true }); }
 });
 test('shell quoting treats spaces, apostrophes and shell expansions literally', () => {
   assert.equal(c.shellQuote("a'b $(test)"), "'a'\\''b $(test)'");

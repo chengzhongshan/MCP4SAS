@@ -107,6 +107,7 @@ async function installNew() {
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   if (fs.existsSync(repo)) {
     core.assertRepo(repo); // Never reset/pull an existing checkout silently.
+    output.appendLine(`Using existing MCP4SAS source: ${repo}`);
   } else {
     const git = process.platform === 'win32' ? path.join(path.dirname(perl), 'git.exe') : 'git';
     if (process.platform === 'linux') {
@@ -115,6 +116,8 @@ async function installNew() {
     }
     await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Downloading MCP4SAS from its official repository' }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', repo], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
   }
+  core.assertRepo(repo);
+  output.appendLine(`MCP4SAS source and Perl runner available at: ${repo}`);
   const bash = process.platform === 'win32' ? path.join(path.dirname(perl), 'bash.exe') : '/bin/bash';
   const script = process.platform === 'win32' ? await core.toPosix(path.join(repo, 'install', install), perl) : path.join(repo, 'install', install);
   await task(bash, ['--noprofile', '--norc', script], repo, { ...(process.platform === 'win32' ? core.cygwinEnvironment(perl) : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) });
@@ -132,7 +135,25 @@ async function saveRuntime(runtime) {
   refreshLauncher();
   core.writePrivate(configFile(), JSON.stringify({ repo: runtime.repo, perl: runtime.perl, cwd, ...(runtime.java ? { java: runtime.java } : {}) }, null, 2) + '\n');
   await configureCygwinTerminal(runtime.perl);
+  output.appendLine(`MCP4SAS source/runtime folder: ${runtime.repo}`);
+  output.appendLine(`SAS project folder (data and macros): ${cwd}`);
+  output.appendLine('For manual SAS submissions, run MCP4SAS: Open MCP4SAS Runtime Terminal.');
+  const action = await vscode.window.showInformationMessage(`MCP4SAS scripts are installed in ${runtime.repo}. Your SAS project is ${cwd}.`, 'Open Runtime Terminal');
+  if (action === 'Open Runtime Terminal') await openRuntimeTerminal();
   emitter.fire(); return true;
+}
+async function openRuntimeTerminal() {
+  trusted(); const config = readConfig(); if (!config) return setup();
+  core.assertRepo(config.repo);
+  const env = await core.runtimeEnvironment(config);
+  if (process.platform !== 'win32') env.PATH = path.dirname(config.perl) + path.delimiter + (env.PATH || '');
+  const terminal = vscode.window.createTerminal({
+    name: 'MCP4SAS Runtime', cwd: config.repo, env,
+    shellPath: process.platform === 'win32' ? path.join(path.dirname(config.perl), 'bash.exe') : '/bin/bash',
+    shellArgs: ['--login', '-i']
+  });
+  terminal.show();
+  output.appendLine(`Manual command from this terminal: perl run_sas_codes_or_files_in_ODA.pl --code 'proc print data=sashelp.class; run;'`);
 }
 async function configureCygwinTerminal(perl, explicit = false) {
   if (process.platform !== 'win32' || vscode.env.remoteName) return;
@@ -255,7 +276,7 @@ async function activate(ctx) {
   context = ctx; output = vscode.window.createOutputChannel('MCP4SAS'); emitter = new vscode.EventEmitter();
   if (vscode.workspace.isTrusted && !vscode.env.remoteName && fs.existsSync(configFile())) refreshLauncher();
   context.subscriptions.push(output, emitter);
-  for (const [id, fn] of Object.entries({ setup, connect, check, help, configureLogin, configureJars, cygwinTerminal: useCygwinTerminal })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
+  for (const [id, fn] of Object.entries({ setup, connect, check, help, configureLogin, configureJars, openRuntimeTerminal, cygwinTerminal: useCygwinTerminal })) context.subscriptions.push(vscode.commands.registerCommand(`mcp4sas.${id}`, async () => { try { await fn(); } catch (e) { output.appendLine(e.message); output.show(true); vscode.window.showErrorMessage(`MCP4SAS: ${e.message}`); } }));
   const provider = {
     onDidChangeMcpServerDefinitions: emitter.event,
     provideMcpServerDefinitions() {
