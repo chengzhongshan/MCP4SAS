@@ -140,7 +140,7 @@ async function toPosix(native, perl) {
   return run(path.join(path.dirname(perl), 'cygpath.exe'), ['-u', native], { env: cygwinEnvironment(perl) });
 }
 async function runtimeEnvironment(config) {
-  const env = { ...process.env, OPEN_RESULT: '0', SAS_ODA_AUTOLOAD_MACROS: '0' };
+  const env = connectionEnvironment(config, { ...process.env, OPEN_RESULT: '0', SAS_ODA_AUTOLOAD_MACROS: '0' });
   if (config.java) env.SASPY_JAVA_WIN = config.java;
   if (process.platform === 'win32') {
     const bash = path.join(path.dirname(config.perl), 'bash.exe');
@@ -151,4 +151,18 @@ async function runtimeEnvironment(config) {
   }
   return env;
 }
-module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+function connectionEnvironment(config, base = process.env) {
+  const env = { ...base };
+  env.SASPY_CFGNAME = config.saspyCfgname || env.SASPY_CFGNAME || 'oda';
+  if (config.saspyCfgfile) env.SASPY_CFGFILE = config.saspyCfgfile;
+  if (config.python) env.PIPELINE_PYTHON_BIN = config.python;
+  if (config.sessionPort) env.SAS_ODA_SESSION_PORT = String(config.sessionPort);
+  return env;
+}
+function allocateSessionPort() {
+  return new Promise((resolve, reject) => {
+    const server = require('node:net').createServer(); server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); });
+  });
+}
+module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, connectionEnvironment, allocateSessionPort, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

@@ -52,6 +52,24 @@ For Copilot the extension uses VS Code's MCP definition-provider API. It does no
 
 ## SAS access is still yours
 
+### Select ODA, local SAS or a custom SASPy target
+
+Run **MCP4SAS: Select SAS Connection**. On Windows choose **Local Windows SAS
+(IOM)** (`winlocal`) or **Local Windows SAS (COM)** (`winlocal_com`); on Linux
+choose **Local Linux SAS (STDIO)** (`linuxlocal`). ODA and custom SASPy profiles
+are available as well. Select an optional configuration file. Windows local
+SAS requires selecting native Windows Python with SASPy installed; COM also
+requires pywin32. Local SAS must already be installed and licensed, and the
+selected profile must point to it. This does not install SAS itself. Native
+local SAS is not offered on macOS; use ODA or a supported remote SASPy profile.
+
+The saved target, optional profile file and interpreter are used by the MCP
+backend and Runtime Terminal. A separate session-server port isolates a newly
+selected interpreter from earlier SASPy sessions. Restart the assistant MCP
+connection after changing the selection; request a new session with the selected
+`saspy_cfgname` and inspect the actual result/log. Selecting a target does not
+prove it can connect. ODA credential setup does not apply to local SAS.
+
 ### Missing credentials or SAS encryption files
 
 Open Ctrl+Shift+P (Cmd+Shift+P on macOS):

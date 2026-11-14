@@ -9,7 +9,7 @@ exports.run = async () => {
   assert.ok(extension);
   const api = await extension.activate();
   const commands = await vscode.commands.getCommands(true);
-  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal']) assert.ok(commands.includes(`mcp4sas.${name}`));
+  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'selectConnection']) assert.ok(commands.includes(`mcp4sas.${name}`));
   assert.deepEqual(api.provider.provideMcpServerDefinitions(), []);
   if (process.platform === 'win32') {
     const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-terminal-'));
@@ -70,5 +70,5 @@ exports.run = async () => {
   }
   const result = cp.spawnSync(process.execPath, ['-e', 'process.stdout.write("electron-node-ok")'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true, encoding: 'utf8' });
   assert.equal(result.status, 0); assert.equal(result.stdout, 'electron-node-ok');
-  console.log('PASS: real VS Code activation, five commands, empty/configured MCP provider, Copilot connection, Electron Node launcher');
+  console.log('PASS: real VS Code activation, nine commands, empty/configured MCP provider, Copilot connection, Electron Node launcher');
 };

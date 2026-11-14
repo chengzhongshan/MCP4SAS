@@ -123,3 +123,17 @@ test('workspace install preserves user files and Git metadata and checks conflic
 test('shell quoting treats spaces, apostrophes and shell expansions literally', () => {
   assert.equal(c.shellQuote("a'b $(test)"), "'a'\\''b $(test)'");
 });
+
+test('saved SAS targets reach the runner without mutating the inherited environment', () => {
+  const inherited = { PATH: '/original', SASPY_CFGNAME: 'oda', HTTPS_PROXY: 'existing-proxy' };
+  for (const saspyCfgname of ['oda', 'winlocal', 'winlocal_com', 'linuxlocal', 'remote_custom']) {
+    const env = c.connectionEnvironment({ saspyCfgname, saspyCfgfile: '/private/config.py', python: '/chosen/python', sessionPort: 43210 }, inherited);
+    assert.equal(env.SASPY_CFGNAME, saspyCfgname);
+    assert.equal(env.SASPY_CFGFILE, '/private/config.py');
+    assert.equal(env.PIPELINE_PYTHON_BIN, '/chosen/python');
+    assert.equal(env.SAS_ODA_SESSION_PORT, '43210');
+    assert.equal(env.HTTPS_PROXY, inherited.HTTPS_PROXY);
+  }
+  assert.equal(inherited.SASPY_CFGNAME, 'oda');
+  assert.equal(inherited.SASPY_CFGFILE, undefined);
+});
