@@ -55,7 +55,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   const mockedCore = {
     ...core,
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
-    async runtimeEnvironment() { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python' }; },
+    async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
     async run(command, args) {
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
       assert.equal(args[0], 'clone');
@@ -92,6 +92,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(saved.java, java);
     assert.ok(fs.existsSync(path.join(saved.repo, 'run_sas_codes_or_files_in_ODA.pl')));
     assert.equal(terminals.length, 1, 'Windows setup automatically opens the project terminal');
+    assert.equal(terminals[0].env.SASPY_CFGNAME, 'oda', 'automatic terminal uses the newly detected SAS target');
     assert.equal(settings.get('cwd'), '${workspaceFolder}', 'workspace terminal cwd follows the open folder');
     await commands.get('mcp4sas.openRuntimeTerminal')();
     assert.equal(terminals.at(-1).cwd, project, 'manual terminal opens in the current VS Code project');

@@ -156,12 +156,13 @@ async function saveRuntime(runtime) {
   output.appendLine(`MCP4SAS source/runtime folder: ${runtime.repo}`);
   output.appendLine(`SAS project folder (data and macros): ${cwd}`);
   output.appendLine('For manual SAS submissions, run MCP4SAS: Open MCP4SAS Runtime Terminal.');
+  // Detect first so the new terminal inherits the chosen ODA/local environment.
+  if (!await detectSetup(true)) return false;
   const message = `MCP4SAS scripts are installed in ${runtime.repo}. Your SAS project is ${cwd}.`;
   if (process.platform === 'win32') {
     await openRuntimeTerminal();
     vscode.window.showInformationMessage(message);
   } else if (await vscode.window.showInformationMessage(message, 'Open Runtime Terminal') === 'Open Runtime Terminal') await openRuntimeTerminal();
-  if (!await detectSetup(true)) return false;
   emitter.fire(); return true;
 }
 async function openRuntimeTerminal() {
