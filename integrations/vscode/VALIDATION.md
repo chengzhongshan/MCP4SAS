@@ -54,3 +54,7 @@ Official API references checked: [VS Code MCP extension API](https://code.visual
 ## 0.1.3 — Cygwin HTTPS helper recovery
 
 Reproduced Git exit 128 with the user's newly installed Cygwin and inherited PATH. The identical public GitHub ls-remote request passed when that Cygwin bin directory was prepended. Setup now applies this environment to Cygwin bootstrap, clone, path conversion, installer tasks and runtime startup. Certificate and proxy settings remain unchanged. All 15 Node tests pass. One universal desktop VSIX supports Windows, macOS and Ubuntu; no platform-specific binary is required. New macOS/Ubuntu fresh installations were not performed locally.
+
+## 0.1.4 — installer task launch
+
+Installer tasks now use VS Code ProcessExecution with separate executable/argument values. Previously ShellExecution launched the native Windows Bash path inside the default Cygwin shell, which removed backslashes and caused exit 127. The setup regression mock rejects ShellExecution and verifies ProcessExecution. This also applies to Java and platform installer tasks. The prior Cygwin PATH fix is retained.

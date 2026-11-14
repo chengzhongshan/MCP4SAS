@@ -34,7 +34,8 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     Uri: { file: fsPath => ({ fsPath }) },
     ProgressLocation: { Notification: 1 }, TaskScope: { Global: 1 }, TaskRevealKind: {}, TaskPanelKind: {},
     EventEmitter: class { event() {} fire() {} dispose() {} },
-    ShellExecution: class { constructor(command, args, options) { Object.assign(this, { command, args, options }); } },
+    ShellExecution: class { constructor() { throw new Error('Installer must not use the default terminal shell'); } },
+    ProcessExecution: class { constructor(command, args, options) { Object.assign(this, { command, args, options }); } },
     Task: class { constructor(definition, scope, name, source, execution) { Object.assign(this, { definition, execution }); } },
     commands: { registerCommand(id, fn) { commands.set(id, fn); return disposable(); } },
     lm: { registerMcpServerDefinitionProvider: disposable },
@@ -83,6 +84,8 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(saved.cwd, project);
     assert.equal(saved.java, java);
     assert.equal(tasks[0].execution.command, path.join(path.dirname(portable), 'bash.exe'));
+    assert.ok(tasks[0].execution instanceof vscode.ProcessExecution);
+    assert.deepEqual(Array.from(tasks[0].execution.args).slice(0, 2), ['--noprofile', '--norc']);
     assert.equal(states.get('copilotEnabled'), true);
     assert.ok(fs.existsSync(path.join(storage, 'relay.js')));
     assert.equal(settings.get('defaultProfile.windows'), 'MCP4SAS Cygwin');
