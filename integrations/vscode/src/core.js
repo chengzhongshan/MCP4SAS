@@ -4,6 +4,34 @@ const path = require('node:path');
 const cp = require('node:child_process');
 const BEGIN = '# BEGIN MCP4SAS VS CODE (managed)';
 const END = '# END MCP4SAS VS CODE (managed)';
+function installSourceFiles(source, target) {
+  assertRepo(source);
+  const files = [];
+  function walk(dir, relative = '') {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!relative && entry.name === '.git') continue;
+      const rel = path.join(relative, entry.name);
+      if (entry.isDirectory()) walk(path.join(source, rel), rel);
+      else if (entry.isFile()) files.push(rel);
+      else throw new Error(`Unsupported source entry: ${rel}`);
+    }
+  }
+  walk(source);
+  for (const rel of files) {
+    const dest = path.join(target, rel);
+    let parent = path.dirname(dest);
+    while (parent !== target && parent.startsWith(target + path.sep)) {
+      if (fs.existsSync(parent) && (!fs.lstatSync(parent).isDirectory() || fs.lstatSync(parent).isSymbolicLink())) throw new Error(`Installation conflicts with existing path: ${parent}`);
+      parent = path.dirname(parent);
+    }
+    if (fs.existsSync(dest) && (!fs.lstatSync(dest).isFile() || fs.lstatSync(dest).isSymbolicLink() || !fs.readFileSync(dest).equals(fs.readFileSync(path.join(source, rel))))) throw new Error(`Installation would overwrite ${dest}. Keep your file and use another open folder, or choose an existing MCP4SAS installation.`);
+  }
+  for (const rel of files) {
+    const dest = path.join(target, rel);
+    if (!fs.existsSync(dest)) { fs.mkdirSync(path.dirname(dest), { recursive: true }); fs.copyFileSync(path.join(source, rel), dest, fs.constants.COPYFILE_EXCL); }
+  }
+  assertRepo(target);
+}
 
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -108,4 +136,4 @@ async function runtimeEnvironment(config) {
   }
   return env;
 }
-module.exports = { run, platformInstaller, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, installSourceFiles, cygwinEnvironment, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

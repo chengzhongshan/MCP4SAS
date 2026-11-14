@@ -23,11 +23,11 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   const settings = new Map([['profiles.windows', { 'My existing shell': { path: 'original.exe' } }]]);
   let configureTerminal = true;
   const choices = ['Install MCP4SAS for this computer', 'Choose an existing Cygwin Perl', [{ label: 'GitHub Copilot' }]];
-  const dialogs = [portable, project];
+  const dialogs = [portable];
   let onTaskEnd;
   const disposable = () => ({ dispose() {} });
   const vscode = {
-    workspace: { isTrusted: true, getConfiguration(section) {
+    workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: project } }], getConfiguration(section) {
       if (section === 'mcp4sas') return { get: () => configureTerminal };
       return { inspect: key => ({ globalValue: settings.get(key) }), async update(key, value) { settings.set(key, value); } };
     } }, env: {}, ConfigurationTarget: { Global: 1 },
@@ -84,6 +84,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     const saved = JSON.parse(fs.readFileSync(path.join(storage, 'runtime.json'), 'utf8'));
     assert.equal(saved.perl, portable);
     assert.equal(saved.cwd, project);
+    assert.equal(saved.repo, project, 'scripts are installed directly in the open workspace');
     assert.equal(saved.java, java);
     assert.ok(fs.existsSync(path.join(saved.repo, 'run_sas_codes_or_files_in_ODA.pl')));
     await commands.get('mcp4sas.openRuntimeTerminal')();

@@ -94,6 +94,11 @@ async function ensureWindowsJava() {
   return java;
 }
 async function installNew() {
+  const workspaces = vscode.workspace.workspaceFolders || [];
+  if (!workspaces.length) throw new Error('Open the folder where you want MCP4SAS scripts installed, then rerun Quick Setup.');
+  const workspace = workspaces.length === 1 ? workspaces[0] : await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Choose the open folder for MCP4SAS scripts' });
+  if (!workspace) return;
+  const repo = workspace.uri.fsPath;
   let perl = await findPerl();
   if (process.platform === 'win32' && !perl) {
     const choice = await vscode.window.showQuickPick(['Install Cygwin for me', 'Choose an existing Cygwin Perl'], { title: 'Windows requires Cygwin before MCP4SAS' });
@@ -101,11 +106,10 @@ async function installNew() {
     perl = choice.startsWith('Install') ? await bootstrapCygwin() : await choosePerl();
     if (!perl) return;
   }
-  const repo = path.join(context.globalStorageUri.fsPath, 'runtime');
   const java = process.platform === 'win32' ? await ensureWindowsJava() : undefined;
   const install = core.platformInstaller(process.platform);
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
-  if (fs.existsSync(repo)) {
+  if (fs.existsSync(path.join(repo, 'server.pl'))) {
     core.assertRepo(repo); // Never reset/pull an existing checkout silently.
     output.appendLine(`Using existing MCP4SAS source: ${repo}`);
   } else {
@@ -114,7 +118,14 @@ async function installNew() {
       try { await core.run(git, ['--version']); }
       catch { await task('/bin/bash', ['-c', 'sudo apt-get update\nsudo apt-get install -y git'], os.homedir()); }
     }
-    await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Downloading MCP4SAS from its official repository' }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', repo], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
+    const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-source-'));
+    try {
+      const source = path.join(staging, 'source');
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Downloading MCP4SAS scripts into ${repo}` }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
+      core.installSourceFiles(source, repo);
+    } finally {
+      if (path.dirname(path.resolve(staging)) === path.resolve(os.tmpdir()) && path.basename(staging).startsWith('mcp4sas-source-')) fs.rmSync(staging, { recursive: true, force: true });
+    }
   }
   core.assertRepo(repo);
   output.appendLine(`MCP4SAS source and Perl runner available at: ${repo}`);
@@ -123,12 +134,12 @@ async function installNew() {
   await task(bash, ['--noprofile', '--norc', script], repo, { ...(process.platform === 'win32' ? core.cygwinEnvironment(perl) : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) });
   // macOS installer may install Homebrew Perl for the first time.
   perl = core.installedPerl(await findPerl(), perl);
-  return { repo, perl, java };
+  return { repo, perl, java, cwd: repo };
 }
 async function saveRuntime(runtime) {
   if (!runtime?.perl) throw new Error('A Perl executable is required.');
   core.assertRepo(runtime.repo);
-  const cwd = await folder('Choose your local SAS project folder (used for relative file and macro discovery)', vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
+  const cwd = runtime.cwd || await folder('Choose your local SAS project folder (used for relative file and macro discovery)', vscode.workspace.workspaceFolders?.[0]?.uri.fsPath);
   if (!cwd) return false;
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   // Stable copies survive extension versioned directory changes.

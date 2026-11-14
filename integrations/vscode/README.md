@@ -4,7 +4,7 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.6.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.6). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.6.vsix`.
+1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix`.
 2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
@@ -12,30 +12,27 @@ An interactive **Connect SAS to your AI assistant** walkthrough is also availabl
 
 ## What setup does
 
-### Where the source and manual runner are installed
+### Where the scripts are installed
 
-**Install MCP4SAS for this computer** downloads the complete GitHub source into
-the extension's managed runtime folder and runs the platform installer there.
-Your selected **SAS project folder** is separate: it holds your programs, input
-data and macros. Selecting a project does not copy MCP4SAS into that folder.
+**Install MCP4SAS for this computer** downloads the GitHub source and installs
+the scripts directly into the folder currently open in VS Code. With multiple
+open folders, select the destination when asked. The same folder becomes the
+SAS project and runtime, so you can run the Perl scripts in its Cygwin terminal.
+Open a folder before running Quick Setup. Existing complete MCP4SAS checkouts
+are reused; Git history and unrelated files are preserved. Conflicting files
+are reported before copying, rather than overwritten. The download does not
+create a second Git repository inside an existing project.
 
-Setup reports both paths in **Output → MCP4SAS**. On a standard Windows profile
-the managed source is under
-`%APPDATA%\Code\User\globalStorage\chengzhongshan.mcp4sas\runtime`.
-
-Run **MCP4SAS: Open MCP4SAS Runtime Terminal** from the Command Palette to open
-the selected shell directly in the runtime folder, with the selected environment.
-Then submit a saved program or inline SAS manually:
+From a terminal in that folder:
 
 ```bash
 perl run_sas_codes_or_files_in_ODA.pl --code 'proc print data=sashelp.class; run;'
 ```
 
-This route uses the same SASPy connection and needs no AI request. Relative
-input paths in this terminal are relative to the runtime directory; use full
-paths for files in another project. The assistant's working directory remains
-the SAS project you selected. To manage a source checkout in your own directory,
-clone the repository there and choose **Use my existing MCP4SAS installation**.
+All existing commands, including **Open MCP4SAS Runtime Terminal**, login and
+JAR setup, remain available. Earlier managed installations continue to work.
+To switch one to the open folder, rerun Quick Setup and select **Install
+MCP4SAS for this computer**. Your account setup and SAS requirements still apply.
 
 ### Default Cygwin terminal on Windows
 
@@ -120,6 +117,6 @@ npm test
 npm run package
 ```
 
-The output is `dist/mcp4sas-0.1.6.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
+The output is `dist/mcp4sas-0.1.5.vsix` at the repository root. `npm run test:host` launches an isolated VS Code extension-host test; it does not install into your regular profile or change personal assistant settings.
 
 This integration is independently maintained by the MCP4SAS author; it is not an official Microsoft, GitHub, OpenAI or SAS extension. New integration code has its own scoped MIT license; original repository code retains its existing rights.

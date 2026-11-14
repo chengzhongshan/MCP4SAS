@@ -81,6 +81,28 @@ test('invalid installations fail before configuration', () => {
     assert.throws(() => c.assertRepo(partial), /missing run_sas_codes_or_files_in_ODA\.pl/);
   } finally { fs.rmSync(partial, { recursive: true, force: true }); }
 });
+test('workspace install preserves user files and Git metadata and checks conflicts before writing', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-workspace-'));
+  try {
+    const source = path.join(root, 'source'), target = path.join(root, 'project');
+    for (const file of ['server.pl', 'run_sas_codes_or_files_in_ODA.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh', '.git/config']) {
+      fs.mkdirSync(path.dirname(path.join(source, file)), { recursive: true });
+      fs.writeFileSync(path.join(source, file), file);
+    }
+    fs.mkdirSync(path.join(target, '.git'), { recursive: true });
+    fs.writeFileSync(path.join(target, '.git/config'), 'user git');
+    fs.writeFileSync(path.join(target, 'analysis.sas'), 'user analysis');
+    fs.writeFileSync(path.join(target, 'server.pl'), 'conflicting user file');
+    assert.throws(() => c.installSourceFiles(source, target), /would overwrite/);
+    assert.equal(fs.existsSync(path.join(target, 'install')), false, 'conflict check precedes all writes');
+    fs.unlinkSync(path.join(target, 'server.pl'));
+    c.installSourceFiles(source, target);
+    c.installSourceFiles(source, target);
+    c.assertRepo(target);
+    assert.equal(fs.readFileSync(path.join(target, '.git/config'), 'utf8'), 'user git');
+    assert.equal(fs.readFileSync(path.join(target, 'analysis.sas'), 'utf8'), 'user analysis');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
 test('shell quoting treats spaces, apostrophes and shell expansions literally', () => {
   assert.equal(c.shellQuote("a'b $(test)"), "'a'\\''b $(test)'");
 });
