@@ -33,12 +33,16 @@ def find_macro(name,roots):
         for directory in (Path(root),Path(root)/'Macros'):
             if directory.is_dir() and directory not in directories:
                 directories.append(directory)
-    for directory in directories:
-        exact=directory/wanted
-        if exact.is_file():
+    # Path.is_file() on macOS's usual case-insensitive volume accepts a
+    # differently cased spelling; Path.resolve() does not restore its basename.
+    # Inspect actual directory entries so uploaded names retain their spelling.
+    entries=[(directory,[p for p in directory.iterdir() if p.is_file()]) for directory in directories]
+    for directory,files in entries:
+        exact=next((p for p in files if p.name==wanted),None)
+        if exact is not None:
             return exact.resolve()
-    for directory in directories:
-        found=[p for p in directory.iterdir() if p.name.casefold()==wanted.casefold() and p.is_file()]
+    for directory,files in entries:
+        found=[p for p in files if p.name.casefold()==wanted.casefold()]
         if len(found)>1:
             raise ValueError(f'Ambiguous case-insensitive macro source: {name} in {directory}')
         if found:
