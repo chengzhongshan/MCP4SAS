@@ -183,6 +183,9 @@ removes only inactive, age-eligible directories with a valid ownership marker.
 - The kill option closes only this Python session; it does not stop unrelated
   Perl/SASPy/Java processes. Result directories retain their reports and status
   records. Internal Perl worker flags are not public Python options.
+- File-deletion filters use Python regular expressions and skip directory
+  entries. Use the separately guarded directory-cleanup operation for folders.
+  Advanced Perl-specific regex constructs are not implicitly translated.
 - HTTP is SDK-managed Streamable HTTP, not Mojolicious. Keep it on loopback;
   this local code-execution server is not configured for public hosting.
 - Exact source versions and reused Python/SAS assets are recorded in

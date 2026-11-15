@@ -2,9 +2,9 @@ name: Python runtime
 on:
   push:
     branches: [main, feature/python-port]
-    paths: ['MCP4SAS_Use_Python/**', '*.py', 'tools/*.py', 'examples/poc/*.py', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'tools/*.py', 'examples/poc/**', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   pull_request:
-    paths: ['MCP4SAS_Use_Python/**', '*.py', 'tools/*.py', 'examples/poc/*.py', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'tools/*.py', 'examples/poc/**', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   workflow_dispatch:
 permissions:
   contents: read

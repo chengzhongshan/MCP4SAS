@@ -168,7 +168,7 @@ def execute(args):
                     for entry in entries:
                         name=entry if isinstance(entry,str) else entry[0]
                         # Directories require the separately guarded cleanup operation.
-                        if not name.endswith('/') and regex.search(name):
+                        if not name.endswith(('/','\\')) and regex.search(name):
                             result['deleted'].append(runner.delete(name,args.delete_dir))
             code_exit=result['diagnostics']['exit_code']
     except OSError as exc:

@@ -14,7 +14,7 @@ Implemented: source inventory, source analysis, diagnostics, dependency resoluti
 SASPy transport, CLI, MCP server, cleanup, profiling, expression subsetting and PoC
 utilities. Root, tools and examples/poc Python launchers are beside Perl counterparts.
 
-Observed: 28 offline tests passed, including 308 original-Perl lexical comparisons,
+Observed: 30 offline tests passed, including 308 original-Perl lexical comparisons,
 5 diagnostic references and 2 exact cleanup-program comparisons. Actual stdio and
 Streamable HTTP MCP clients passed discovery, background completion, failure and
 unknown-PID checks. Native Windows SAS ODA passed positive/negative, recursive local
@@ -24,9 +24,11 @@ All six original PoC examples executed through Python and passed 11,929 numerica
 file and row-count checks. Original graphics/table-recursion warnings remain logged.
 Private logs and outputs are under test-results/oda-native-python-v3/ (Git-ignored).
 
-Next: finish native Windows local-SAS and live MCP checks, publish the isolated
-feature branch, verify the new six-job Python CI matrix, review the final diff and
-record the final commit. Main, the Perl runtime, existing plugin and book are unchanged.
+Native Windows SAS COM and direct SAS executable checks passed. Actual Python MCP
+stdio/SAS ODA calls passed positive and negative completion reporting. The initial
+macOS filename-case issue is fixed; the six-job matrix passed at code commit
+dd9fba6 (run 43656356598). Final report/cleanup-guard changes are pending one final
+branch CI run and Git review. Main, the Perl runtime, existing plugin and book are unchanged.
 
 No claim of complete Perl compatibility or live platform validation is made until
 the corresponding evidence is recorded.

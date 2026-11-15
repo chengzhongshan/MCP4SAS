@@ -16,6 +16,10 @@ def pid_alive(pid):
         kernel = ctypes.WinDLL('kernel32',use_last_error=True)
         kernel.OpenProcess.argtypes = [wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]
         kernel.OpenProcess.restype = wintypes.HANDLE
+        kernel.GetExitCodeProcess.argtypes = [wintypes.HANDLE,ctypes.POINTER(wintypes.DWORD)]
+        kernel.GetExitCodeProcess.restype = wintypes.BOOL
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.restype = wintypes.BOOL
         handle = kernel.OpenProcess(0x1000,False,pid)
         if not handle:
             return ctypes.get_last_error() == 5

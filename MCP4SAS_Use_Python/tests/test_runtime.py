@@ -159,6 +159,19 @@ class UtilityTests(unittest.TestCase):
         with patch('MCP4SAS_Use_Python.runner.Backend',side_effect=AssertionError('must not connect')):
             with contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(['--file','__missing_file__.sas']),2)
+    def test_file_regex_never_deletes_unix_or_windows_directory_entries(self):
+        deleted=[]
+        class FakeRunner:
+            def __init__(self,**kwargs): pass
+            def __enter__(self): return self
+            def __exit__(self,*args): pass
+            def dirlist(self,path): return ['Macros/','Other\\','one.txt','two.csv']
+            def delete(self,path,parent):
+                deleted.append(path)
+                return {'status':'ok'}
+        with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(['--delete-file-rgx','.*','--output-prefix',str(Path(temp)/'result')]),0)
+        self.assertEqual(deleted,['one.txt','two.csv'])
 
 class TransportTests(unittest.TestCase):
     def test_fragmented_frames_and_progress(self):
