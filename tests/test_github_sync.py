@@ -25,7 +25,14 @@ env.update(GIT_AUTHOR_NAME='Sync Test', GIT_AUTHOR_EMAIL='test@example.invalid',
            GIT_COMMITTER_NAME='Sync Test', GIT_COMMITTER_EMAIL='test@example.invalid',
            GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
            GIT_TERMINAL_PROMPT='0')
-bash = os.environ.get('TEST_BASH') or shutil.which('bash')
+bash = os.environ.get('TEST_BASH')
+if not bash and os.name=='nt':
+    # PATH often resolves bash to the WSL launcher, which cannot consume native
+    # Windows paths and may not have a working Linux distribution installed.
+    git=shutil.which('git')
+    git_bash=Path(git).resolve().parents[1]/'bin/bash.exe' if git else None
+    if git_bash and git_bash.is_file():bash=str(git_bash)
+bash = bash or shutil.which('bash')
 assert bash, 'Bash is required'
 script = Path(__file__).resolve().parents[1] / 'update_github_upload.sh'
 

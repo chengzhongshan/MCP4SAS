@@ -1,7 +1,7 @@
 name: Python runtime
 on:
   push:
-    branches: [main, feature/python-port, fix/copilot-runner-review]
+    branches: [main, feature/python-port, fix/copilot-runner-review, test/complete-runner-suite]
     paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   pull_request:
     paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
@@ -33,6 +33,14 @@ jobs:
         run: python -m unittest discover -s MCP4SAS_Use_Python/tests -v
       - name: Report prerequisites without SAS login
         run: python MCP4SAS_Use_Python/install.py --check
+      - name: Run all native Python counterparts of the root regression scripts
+        run: python tests/run_complete_suite.py --language python --out MCP4SAS_Use_Python/test-results/ci-root-suite
+      - name: Preserve per-script test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-regressions-${{ matrix.os }}-${{ matrix.python }}
+          path: MCP4SAS_Use_Python/test-results/ci-root-suite/
       - name: Check the CLI aliases and scientific example plans
         run: |
           python run_sas_codes_or_files_in_ODA.py --code "proc print data=sashelp.class;run;" --dry-run

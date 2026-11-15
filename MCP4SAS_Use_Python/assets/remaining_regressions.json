@@ -1,0 +1,4463 @@
+{
+  "comment_quote_preflight": {
+    "source_file": "tests/test_comment_quote_preflight.pl",
+    "source_sha256": "fd2938ac85b34ca4cc30540e7441f46b6bde3f5337f329b2e08de20e0dbf1d03",
+    "calls": [
+      {
+        "arguments": [
+          "%macro demo;\ndata x; text='/*'; run;\n/* real comment */\n%mend;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%macro demo;\ndata x; text='/*'; run;\n                  \n%mend;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "%macro demo;\ndata x; text=    ; run;\n                  \n%mend;",
+          "single_quotes": [
+            {
+              "end": 30,
+              "start": 26
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "%macro demo;\ndata x; text='/*'; run;\n/* real comment */\n%mend;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%macro demo;\ndata x; text=    ; run;\n                  \n%mend;"
+      },
+      {
+        "arguments": [
+          "%macro demo;\ndata x; text='/*'; run;\n/* real comment */\n%mend;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value=1; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x;                  value=1; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x;                  value=1; run;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value=1; run;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x;                  value=1; run;"
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value=1; run;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "options notes; %* author's macro comment; data x; value=1; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "options notes;                            data x; value=1; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "options notes;                            data x; value=1; run;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "options notes; %* author's macro comment; data x; value=1; run;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "options notes;                            data x; value=1; run;"
+      },
+      {
+        "arguments": [
+          "options notes; %* author's macro comment; data x; value=1; run;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='it''s /* text */'; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; text='it''s /* text */'; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; text=                  ; run;",
+          "single_quotes": [
+            {
+              "end": 31,
+              "start": 13
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data x; text='it''s /* text */'; run;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; text=                  ; run;"
+      },
+      {
+        "arguments": [
+          "data x; text='it''s /* text */'; run;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/*\n%put sample; ordinary prose;\n%macorparas\n*/"
+        ],
+        "function": "mask_comments",
+        "list_context": 0,
+        "result": "  \n                            \n           \n  "
+      },
+      {
+        "arguments": [
+          "/*\n%put sample; ordinary prose;\n%macorparas\n*/"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "  \n                            \n           \n  "
+      },
+      {
+        "arguments": [
+          "data x; text='/*'; run;\n/* genuinely unclosed"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; text='/*'; run;\n                     ",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2
+              ],
+              "line": 2,
+              "message": "Unclosed block comment starting on line 2",
+              "type": "unclosed_block_comment"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; text=    ; run;\n                     ",
+          "single_quotes": [
+            {
+              "end": 17,
+              "start": 13
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data x; text='/*'; run;\n/* genuinely unclosed"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; text=    ; run;\n                     "
+      },
+      {
+        "arguments": [
+          "data x; text='/*'; run;\n/* genuinely unclosed"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value='unclosed; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x;                  value='unclosed; run;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Unclosed single-quoted string starting on line 1",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x;                  value=               ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value='unclosed; run;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x;                  value=               "
+      },
+      {
+        "arguments": [
+          "data x; * author's note; value='unclosed; run;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; value=2 %* explanation; * 'unclosed;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; value=2                 * 'unclosed;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Unclosed single-quoted string starting on line 1",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; value=2                 *           ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; value=2 %* explanation; * 'unclosed;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; value=2                 *           "
+      },
+      {
+        "arguments": [
+          "data x; value=2 %* explanation; * 'unclosed;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%put actual; unquoted prose;"
+        ],
+        "function": "mask_comments",
+        "list_context": 0,
+        "result": "%put actual; unquoted prose;"
+      }
+    ]
+  },
+  "deferred_include_paths": {
+    "source_file": "tests/test_deferred_include_paths.pl",
+    "source_sha256": "ac621ee554b34c2901a387edb744a45c1e9e22ded8523e6efd37d7e32d21c8d1",
+    "calls": [
+      {
+        "arguments": [
+          "%include 'author''s file.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "author's file.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%include ''actual.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "actual.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%include ''actual.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "actual.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%include ''author''''s file.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "author's file.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('data x; run;'||'%include ''next.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "next.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='%include ''literal.sas'';'; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%let x=%nrstr(%include ''literal.sas'';);'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* %include 'comment.sas'; */"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=dosubl('%let x=1;')||'%outside_literal()'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=dosubl('%let x=1;')||                    ; run;"
+      }
+    ]
+  },
+  "deferred_macro_literals": {
+    "source_file": "tests/test_deferred_macro_literals.pl",
+    "source_sha256": "4c48f7e1ecdb9916cf30205a878de5846e155043cc88a6f6400d314ceef83c67",
+    "calls": [
+      {
+        "arguments": [
+          "data _null_; call execute('%let text=%nrstr(%literal_never_called());'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; call execute('%let text=%nrstr(                       );'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%let text=%bquote(%real_dependency());'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; call execute('%let text=%bquote(%real_dependency());'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('data x; value=''%ordinary_literal()''; run;'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; call execute('data x; value=                       ; run;'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%include \"actual.sas\";'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "actual.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('data x; value=\"%real_double_quote()\"; run;'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; call execute('data x; value=\"%real_double_quote()\"; run;'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%let text=%nrstr(%literal_never_called());'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; rc=dosubl('%let text=%nrstr(                       );'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%let text=%bquote(%real_dependency());'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; rc=dosubl('%let text=%bquote(%real_dependency());'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('data x; value=''%ordinary_literal()''; run;'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; rc=dosubl('data x; value=                       ; run;'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%include \"actual.sas\";'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "actual.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('data x; value=\"%real_double_quote()\"; run;'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; rc=dosubl('data x; value=\"%real_double_quote()\"; run;'); run;"
+      }
+    ]
+  },
+  "double_quoted_deferred_includes": {
+    "source_file": "tests/test_double_quoted_deferred_includes.pl",
+    "source_sha256": "d6bcf5a6b2537069332cdd84d5c3b349d7722612440abd9a71ff187854d75812",
+    "calls": [
+      {
+        "arguments": [
+          "data _null_; rc=dosubl(\"%include 'one.sas';\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "one.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; CALL EXECUTE(\"%INC 'two.sas';\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "two.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'first.sas'; data _null_; rc=dosubl(\"%inc 'second.sas';\"); run; %inc 'third.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas",
+            "third.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl(\"%include \"\"quoted.sas\"\";\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "quoted.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl(\"%include 'author''s.sas';\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "author's.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl(\"data _null_; rc=dosubl('%include ''nested.sas'';'); run;\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "nested.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute(cats(\"%include 'concat.sas';\",' ')); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "concat.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=\"%include 'data.sas';\"; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=dosubl('%let x=1;')||\"%include 'outside.sas';\"; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=resolve(\"%include 'macro_text.sas';\"); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* dosubl(\"%include 'comment.sas';\") */"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      }
+    ]
+  },
+  "fileref_name_advisory": {
+    "source_file": "tests/test_fileref_name_advisory.pl",
+    "source_sha256": "e32071a1e6de1ecf10251d07bdf69ad98c363d6cbb7904fc59c23f32cd06d4a2",
+    "calls": [
+      {
+        "arguments": [
+          "data x; run;\nfilename toolongref temp;"
+        ],
+        "function": "fileref_name_issues",
+        "list_context": 0,
+        "result": [
+          {
+            "context_ref": [
+              2
+            ],
+            "line": 2,
+            "message": "Literal fileref 'toolongref' exceeds the SAS limit of 8 characters; choose a shorter fileref.",
+            "type": "invalid_literal_fileref_name"
+          }
+        ]
+      },
+      {
+        "arguments": [
+          "filename eightref temp;"
+        ],
+        "function": "fileref_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* filename toolongref temp; */ data x; value='filename toolongref temp;'; run;"
+        ],
+        "function": "fileref_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "filename &dynamic_ref temp;"
+        ],
+        "function": "fileref_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      }
+    ]
+  },
+  "format_name_advisory": {
+    "source_file": "tests/test_format_name_advisory.pl",
+    "source_sha256": "dfcf5223951637ebfd1ad3669b03fdd7bb79472b3e29439d0f54c2e27bbd662c",
+    "calls": [
+      {
+        "arguments": [
+          "proc format;\nvalue bad1 1='one';\ninvalue bad2 'x'=1;\nrun;"
+        ],
+        "function": "format_name_issues",
+        "list_context": 0,
+        "result": [
+          {
+            "context_ref": [
+              2
+            ],
+            "line": 2,
+            "message": "Literal value name 'bad1' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",
+            "type": "invalid_literal_format_name"
+          },
+          {
+            "context_ref": [
+              3
+            ],
+            "line": 3,
+            "message": "Literal invalue name 'bad2' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",
+            "type": "invalid_literal_format_name"
+          }
+        ]
+      },
+      {
+        "arguments": [
+          "proc format; value good1fmt 1='one'; value $goodchar 'Y'='yes'; run;"
+        ],
+        "function": "format_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; value bad1; run;"
+        ],
+        "function": "format_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* proc format; value bad1; run; */"
+        ],
+        "function": "format_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "proc format; value &dynamic_name 1='one'; run;"
+        ],
+        "function": "format_name_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      }
+    ]
+  },
+  "include_abbreviation": {
+    "source_file": "tests/test_include_abbreviation.pl",
+    "source_sha256": "a1a5c075bbaf25bc98e19cb94d26743c6cb3c11726437b369add8aa3b24bdce5",
+    "calls": [
+      {
+        "arguments": [
+          "%inc 'one.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "one.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%INC 'one.sas' \"two.sas\" / source2;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "one.sas",
+            "two.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'first.sas'; data _null_; rc=dosubl('%inc ''second.sas'';'); run; %inc 'third.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas",
+            "third.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%inc 'author''s.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "author's.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%INC \"deferred.sas\";'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "deferred.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%inc fref;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%incidental 'not-an-include.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* %inc 'comment.sas'; */ data x; value='%inc ''literal.sas'';'; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%let sample=%nrstr(%inc 'inert.sas';);"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%inc 'source.sas';"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%inc             ;"
+      },
+      {
+        "arguments": [
+          "INC"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "%incidental 'source.sas';"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%incidental             ;"
+      },
+      {
+        "arguments": [
+          "QSCAN"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "QSUBSTR"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "QUPCASE"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "QLOWCASE"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "NRQUOTE"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "INDEX"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "SYMDEL"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "SYSMACDELETE"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "SYSCALL"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "SYMGLOBL"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "SYMLOCAL"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "%let x=%qscan(%str(a,b),1,%str(,)); %symdel x;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%qscan(%str(a,b),1,%str(,)); %symdel x;"
+      },
+      {
+        "arguments": [
+          "let"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "qscan"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "str"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "symdel"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "inc"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "qsubstr"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "qupcase"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "qlowcase"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "nrquote"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "index"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "sysmacdelete"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "syscall"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "symglobl"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "symlocal"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "user_defined_helper"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 0
+      }
+    ]
+  },
+  "include_file_lists": {
+    "source_file": "tests/test_include_file_lists.pl",
+    "source_sha256": "1b4659ff6619f4c20595a97535ab8cbe424bb3cf3cba6ed3c309e5c4553bba21",
+    "calls": [
+      {
+        "arguments": [
+          "%include 'first.sas' \"second.sas\";"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'one.sas' /* separator */ 'two.sas' / source2;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "one.sas",
+            "two.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'semi;colon.sas' 'author''s.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "semi;colon.sas",
+            "author's.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%include ''first.sas'' ''second.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%include ''first.sas'' ''second.sas'';'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'first.sas'; title 'unrelated.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'first.sas' / source2; title 'unrelated.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='%include ''first.sas'' ''second.sas'';'; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%include 'first.sas' 'second.sas';);"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* %include 'first.sas' 'second.sas'; */"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      }
+    ]
+  },
+  "include_source_order": {
+    "source_file": "tests/test_include_source_order.pl",
+    "source_sha256": "96752cd120ed2043151f6559486ad578e5248a2bfe4af6e88b4ead6bad8b7945",
+    "calls": [
+      {
+        "arguments": [
+          "%include 'first.sas' 'second.sas';\ndata _null_; call execute('%include ''third.sas'' ''fourth.sas'';'); run;\ndata _null_; rc=dosubl('data _null_; call execute(''%include ''''fifth.sas'''';''); run;'); run;\n%include 'sixth.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "first.sas",
+            "second.sas",
+            "third.sas",
+            "fourth.sas",
+            "fifth.sas",
+            "sixth.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%include ''third.sas'' ''fourth.sas'';'); run;\n%include 'first.sas' 'second.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "third.sas",
+            "fourth.sas",
+            "first.sas",
+            "second.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "%include 'same.sas'; data _null_; rc=dosubl('%include ''middle.sas'';'); run; %include 'same.sas';"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "same.sas",
+            "middle.sas",
+            "same.sas"
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "/* %include 'ignored.sas'; */ %include 'real.sas'; data _null_; text='%include ''data.sas'';'; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "real.sas"
+          ]
+        ]
+      }
+    ]
+  },
+  "inline_data_preflight": {
+    "source_file": "tests/test_inline_data_preflight.pl",
+    "source_sha256": "cf52a54f065e0dcbe331cb921868024772bab364f1e10251cd1d07aa8a6afed0",
+    "calls": [
+      {
+        "arguments": [
+          "data x; input surname $; datalines;\nO'Brien\n;\nrun;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input surname $; datalines;\n       \n;\nrun;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; input surname $; datalines;\n       \n;\nrun;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input surname $; datalines;\nO'Brien\n;\nrun;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input surname $; datalines;\n       \n;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input surname $; datalines;\nO'Brien\n;\nrun;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input surname $; datalines;\nO'Brien\n;\nrun;"
+        ],
+        "function": "mask_inline_data",
+        "list_context": 0,
+        "result": "data x; input surname $; datalines;\n       \n;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards;\n/*raw\n;\nrun;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input text $; cards;\n     \n;\nrun;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; input text $; cards;\n     \n;\nrun;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards;\n/*raw\n;\nrun;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input text $; cards;\n     \n;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards;\n/*raw\n;\nrun;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards;\n/*raw\n;\nrun;"
+        ],
+        "function": "mask_inline_data",
+        "list_context": 0,
+        "result": "data x; input text $; cards;\n     \n;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n*/raw\n%macro not_code\nsemicolon;raw\n;;;;\nrun;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input text $; datalines4;\n     \n               \n             \n;;;;\nrun;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; input text $; datalines4;\n     \n               \n             \n;;;;\nrun;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n*/raw\n%macro not_code\nsemicolon;raw\n;;;;\nrun;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input text $; datalines4;\n     \n               \n             \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n*/raw\n%macro not_code\nsemicolon;raw\n;;;;\nrun;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n*/raw\n%macro not_code\nsemicolon;raw\n;;;;\nrun;"
+        ],
+        "function": "mask_inline_data",
+        "list_context": 0,
+        "result": "data x; input text $; datalines4;\n     \n               \n             \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards4;\n'unbalanced\n;;;;\nrun;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input text $; cards4;\n           \n;;;;\nrun;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data x; input text $; cards4;\n           \n;;;;\nrun;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards4;\n'unbalanced\n;;;;\nrun;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input text $; cards4;\n           \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards4;\n'unbalanced\n;;;;\nrun;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input text $; cards4;\n'unbalanced\n;;;;\nrun;"
+        ],
+        "function": "mask_inline_data",
+        "list_context": 0,
+        "result": "data x; input text $; cards4;\n           \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n2\n"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input x; datalines;\n \n \n",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "line": 1,
+              "message": "Inline data declaration DATALINES is missing its terminating line",
+              "type": "unclosed_inline_data"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; input x; datalines;\n \n \n",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n2\n"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input x; datalines;\n \n \n"
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n2\n"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input x; datalines;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Inline data declaration DATALINES is missing its terminating line",
+              "type": "unclosed_inline_data"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; input x; datalines;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input x; datalines;"
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='datalines;'; run;\ntext='unclosed;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; text='datalines;'; run;\ntext='unclosed;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2
+              ],
+              "line": 2,
+              "message": "Unclosed single-quoted string starting on line 2",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; text=            ; run;\ntext=          ",
+          "single_quotes": [
+            {
+              "end": 25,
+              "start": 13
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data x; text='datalines;'; run;\ntext='unclosed;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; text=            ; run;\ntext=          "
+      },
+      {
+        "arguments": [
+          "data x; text='datalines;'; run;\ntext='unclosed;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "/* datalines; */\ndata x; text='unclosed;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "                \ndata x; text='unclosed;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2
+              ],
+              "line": 2,
+              "message": "Unclosed single-quoted string starting on line 2",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "                \ndata x; text=          ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "/* datalines; */\ndata x; text='unclosed;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "                \ndata x; text=          "
+      },
+      {
+        "arguments": [
+          "/* datalines; */\ndata x; text='unclosed;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n;\n/* unclosed"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; input x; datalines;\n \n;\n           ",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                2,
+                3,
+                4
+              ],
+              "line": 4,
+              "message": "Unclosed block comment starting on line 4",
+              "type": "unclosed_block_comment"
+            }
+          ],
+          "macro_quotes": [],
+          "masked": "data x; input x; datalines;\n \n;\n           ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n;\n/* unclosed"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input x; datalines;\n \n;\n           "
+      },
+      {
+        "arguments": [
+          "data x; input x; datalines;\n1\n;\n/* unclosed"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n%put literal; ordinary data;\n%macorparas\ndatalines; raw text\n;;;;\nrun;"
+        ],
+        "function": "mask_comments",
+        "list_context": 0,
+        "result": "data x; input text $; datalines4;\n                            \n           \n                   \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "data x; input text $; datalines4;\n%put literal; ordinary data;\n%macorparas\ndatalines; raw text\n;;;;\nrun;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; input text $; datalines4;\n                            \n           \n                   \n;;;;\nrun;"
+      },
+      {
+        "arguments": [
+          "%put real; unquoted prose;"
+        ],
+        "function": "mask_comments",
+        "list_context": 0,
+        "result": "%put real; unquoted prose;"
+      }
+    ]
+  },
+  "inline_macro_preflight": {
+    "source_file": "tests/test_inline_macro_preflight.pl",
+    "source_sha256": "640c9ace1c72b88f241454965b9260ef3698effa500fc3de00f7881f68f2f19c",
+    "calls": [
+      {
+        "arguments": [
+          "options mprint; %macro demo;\ndata x; n=1; run;\n%mend;\n%demo;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "options mprint; %macro demo;\ndata x; n=1; run;\n%mend;\n%demo;"
+      },
+      {
+        "arguments": [
+          "options mprint; %macro demo;\ndata x; n=1; run;\n%mend;\n%demo;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%macro first; %return; %mend; %macro second; %goto done; %done: %mend;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%macro first; %return; %mend; %macro second; %goto done; %done: %mend;"
+      },
+      {
+        "arguments": [
+          "%macro first; %return; %mend; %macro second; %goto done; %done: %mend;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%macro outer; %macro inner; %mend; %mend;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%macro outer; %macro inner; %mend; %mend;"
+      },
+      {
+        "arguments": [
+          "%macro outer; %macro inner; %mend; %mend;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='%macro fake; %mend; %goto nope;'; run; /* %macro ignored */"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; text=                                 ; run;                     "
+      },
+      {
+        "arguments": [
+          "data x; text='%macro fake; %mend; %goto nope;'; run; /* %macro ignored */"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "options notes;\n%macro unclosed;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "options notes;\n%macro unclosed;"
+      },
+      {
+        "arguments": [
+          "options notes;\n%macro unclosed;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          [
+            {
+              "context_ref": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "line": 2,
+              "message": "A %macro block appears to be missing its matching %mend",
+              "type": "unclosed_macro_definition"
+            }
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "options notes; %mend;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "options notes; %mend;"
+      },
+      {
+        "arguments": [
+          "options notes; %mend;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1,
+                2,
+                3
+              ],
+              "line": 1,
+              "message": "Macro end statement %mend appears outside a %macro/%mend block",
+              "type": "open_code_mend"
+            }
+          ]
+        ]
+      },
+      {
+        "arguments": [
+          "data x; run;\noptions notes; %goto nowhere;"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "data x; run;\noptions notes; %goto nowhere;"
+      },
+      {
+        "arguments": [
+          "data x; run;\noptions notes; %goto nowhere;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          [
+            {
+              "context_ref": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ],
+              "line": 2,
+              "message": "Macro control statement %goto appears in open SAS code; place it inside a %macro/%mend definition",
+              "type": "open_code_macro_control"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "literal_execution_contexts": {
+    "source_file": "tests/test_literal_execution_contexts.pl",
+    "source_sha256": "4b78b8fd4c71596fc5ee28419f575ad2fad3686692fbd649492c89431f80fb15",
+    "calls": [
+      {
+        "arguments": [
+          "data a; x='plain'; y=\"plain\"; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x='plain'; y=\"plain\"; run;",
+          "double_quotes": [
+            {
+              "end": 28,
+              "start": 21
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=       ; y=       ; run;",
+          "single_quotes": [
+            {
+              "end": 17,
+              "start": 10
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=resolve(strip('%needed()')); y='%unused()'; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=resolve(strip('%needed()')); y='%unused()'; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=resolve(strip(           )); y=           ; run;",
+          "single_quotes": [
+            {
+              "end": 35,
+              "start": 24
+            },
+            {
+              "end": 52,
+              "start": 41
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; rc=dosubl('%include \"first.sas\";'); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; rc=dosubl('%include \"first.sas\";'); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; rc=dosubl(                       ); run;",
+          "single_quotes": [
+            {
+              "end": 41,
+              "start": 18
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; call execute(cats('%first(', strip('value'), ');')); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; call execute(cats('%first(', strip('value'), ');')); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; call execute(cats(         , strip(       ),     )); run;",
+          "single_quotes": [
+            {
+              "end": 35,
+              "start": 26
+            },
+            {
+              "end": 50,
+              "start": 43
+            },
+            {
+              "end": 57,
+              "start": 53
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; rc=dosubl(resolve('%outer()')); x='%after()'; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; rc=dosubl(resolve('%outer()')); x='%after()'; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; rc=dosubl(resolve(          )); x=          ; run;",
+          "single_quotes": [
+            {
+              "end": 36,
+              "start": 26
+            },
+            {
+              "end": 52,
+              "start": 42
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; rc=dosubl(\"%include 'second.sas';\"); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; rc=dosubl(\"%include 'second.sas';\"); run;",
+          "double_quotes": [
+            {
+              "end": 42,
+              "start": 18
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; rc=dosubl(                        ); run;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data a; x='dosubl('; y='%inert()'; /* call execute('fake'); */ run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x='dosubl('; y='%inert()';                             run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=         ; y=          ;                             run;",
+          "single_quotes": [
+            {
+              "end": 19,
+              "start": 10
+            },
+            {
+              "end": 33,
+              "start": 23
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=resolve('%nrstr(%protected())'); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=resolve('%nrstr(%protected())'); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=resolve(                      ); run;",
+          "single_quotes": [
+            {
+              "end": 40,
+              "start": 18
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=myresolve('%inert()'); rc=mydosubl('text'); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=myresolve('%inert()'); rc=mydosubl('text'); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=myresolve(          ); rc=mydosubl(      ); run;",
+          "single_quotes": [
+            {
+              "end": 30,
+              "start": 20
+            },
+            {
+              "end": 51,
+              "start": 45
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=resolve('escaped ''quote'' %needed()'); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=resolve('escaped ''quote'' %needed()'); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=resolve(                             ); run;",
+          "single_quotes": [
+            {
+              "end": 47,
+              "start": 18
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=\"before\"; call execute('%next()'); y='after'; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=\"before\"; call execute('%next()'); y='after'; run;",
+          "double_quotes": [
+            {
+              "end": 18,
+              "start": 10
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=        ; call execute(         ); y=       ; run;",
+          "single_quotes": [
+            {
+              "end": 42,
+              "start": 33
+            },
+            {
+              "end": 54,
+              "start": 47
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data a; x=call 'masked' execute ('edge'); run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data a; x=call 'masked' execute ('edge'); run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data a; x=call          execute (      ); run;",
+          "single_quotes": [
+            {
+              "end": 23,
+              "start": 15
+            },
+            {
+              "end": 39,
+              "start": 33
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "data t1; a='label 1'; b=resolve('%needed1()'); c=dosubl('%include \"part1.sas\";'); d='after'; run;\ndata t2; a='label 2'; b=resolve('%needed2()'); c=dosubl('%include \"part2.sas\";'); d='after'; run;\ndata t3; a='label 3'; b=resolve('%needed3()'); c=dosubl('%include \"part3.sas\";'); d='after'; run;\ndata t4; a='label 4'; b=resolve('%needed4()'); c=dosubl('%include \"part4.sas\";'); d='after'; run;\ndata t5; a='label 5'; b=resolve('%needed5()'); c=dosubl('%include \"part5.sas\";'); d='after'; run;\ndata t6; a='label 6'; b=resolve('%needed6()'); c=dosubl('%include \"part6.sas\";'); d='after'; run;\ndata t7; a='label 7'; b=resolve('%needed7()'); c=dosubl('%include \"part7.sas\";'); d='after'; run;\ndata t8; a='label 8'; b=resolve('%needed8()'); c=dosubl('%include \"part8.sas\";'); d='after'; run;\ndata t9; a='label 9'; b=resolve('%needed9()'); c=dosubl('%include \"part9.sas\";'); d='after'; run;\ndata t10; a='label 10'; b=resolve('%needed10()'); c=dosubl('%include \"part10.sas\";'); d='after'; run;\ndata t11; a='label 11'; b=resolve('%needed11()'); c=dosubl('%include \"part11.sas\";'); d='after'; run;\ndata t12; a='label 12'; b=resolve('%needed12()'); c=dosubl('%include \"part12.sas\";'); d='after'; run;\ndata t13; a='label 13'; b=resolve('%needed13()'); c=dosubl('%include \"part13.sas\";'); d='after'; run;\ndata t14; a='label 14'; b=resolve('%needed14()'); c=dosubl('%include \"part14.sas\";'); d='after'; run;\ndata t15; a='label 15'; b=resolve('%needed15()'); c=dosubl('%include \"part15.sas\";'); d='after'; run;\ndata t16; a='label 16'; b=resolve('%needed16()'); c=dosubl('%include \"part16.sas\";'); d='after'; run;\ndata t17; a='label 17'; b=resolve('%needed17()'); c=dosubl('%include \"part17.sas\";'); d='after'; run;\ndata t18; a='label 18'; b=resolve('%needed18()'); c=dosubl('%include \"part18.sas\";'); d='after'; run;\ndata t19; a='label 19'; b=resolve('%needed19()'); c=dosubl('%include \"part19.sas\";'); d='after'; run;\ndata t20; a='label 20'; b=resolve('%needed20()'); c=dosubl('%include \"part20.sas\";'); d='after'; run;\ndata t21; a='label 21'; b=resolve('%needed21()'); c=dosubl('%include \"part21.sas\";'); d='after'; run;\ndata t22; a='label 22'; b=resolve('%needed22()'); c=dosubl('%include \"part22.sas\";'); d='after'; run;\ndata t23; a='label 23'; b=resolve('%needed23()'); c=dosubl('%include \"part23.sas\";'); d='after'; run;\ndata t24; a='label 24'; b=resolve('%needed24()'); c=dosubl('%include \"part24.sas\";'); d='after'; run;\ndata t25; a='label 25'; b=resolve('%needed25()'); c=dosubl('%include \"part25.sas\";'); d='after'; run;\ndata t26; a='label 26'; b=resolve('%needed26()'); c=dosubl('%include \"part26.sas\";'); d='after'; run;\ndata t27; a='label 27'; b=resolve('%needed27()'); c=dosubl('%include \"part27.sas\";'); d='after'; run;\ndata t28; a='label 28'; b=resolve('%needed28()'); c=dosubl('%include \"part28.sas\";'); d='after'; run;\ndata t29; a='label 29'; b=resolve('%needed29()'); c=dosubl('%include \"part29.sas\";'); d='after'; run;\ndata t30; a='label 30'; b=resolve('%needed30()'); c=dosubl('%include \"part30.sas\";'); d='after'; run;\ndata t31; a='label 31'; b=resolve('%needed31()'); c=dosubl('%include \"part31.sas\";'); d='after'; run;\ndata t32; a='label 32'; b=resolve('%needed32()'); c=dosubl('%include \"part32.sas\";'); d='after'; run;\ndata t33; a='label 33'; b=resolve('%needed33()'); c=dosubl('%include \"part33.sas\";'); d='after'; run;\ndata t34; a='label 34'; b=resolve('%needed34()'); c=dosubl('%include \"part34.sas\";'); d='after'; run;\ndata t35; a='label 35'; b=resolve('%needed35()'); c=dosubl('%include \"part35.sas\";'); d='after'; run;\ndata t36; a='label 36'; b=resolve('%needed36()'); c=dosubl('%include \"part36.sas\";'); d='after'; run;\ndata t37; a='label 37'; b=resolve('%needed37()'); c=dosubl('%include \"part37.sas\";'); d='after'; run;\ndata t38; a='label 38'; b=resolve('%needed38()'); c=dosubl('%include \"part38.sas\";'); d='after'; run;\ndata t39; a='label 39'; b=resolve('%needed39()'); c=dosubl('%include \"part39.sas\";'); d='after'; run;\ndata t40; a='label 40'; b=resolve('%needed40()'); c=dosubl('%include \"part40.sas\";'); d='after'; run;\ndata t41; a='label 41'; b=resolve('%needed41()'); c=dosubl('%include \"part41.sas\";'); d='after'; run;\ndata t42; a='label 42'; b=resolve('%needed42()'); c=dosubl('%include \"part42.sas\";'); d='after'; run;\ndata t43; a='label 43'; b=resolve('%needed43()'); c=dosubl('%include \"part43.sas\";'); d='after'; run;\ndata t44; a='label 44'; b=resolve('%needed44()'); c=dosubl('%include \"part44.sas\";'); d='after'; run;\ndata t45; a='label 45'; b=resolve('%needed45()'); c=dosubl('%include \"part45.sas\";'); d='after'; run;\ndata t46; a='label 46'; b=resolve('%needed46()'); c=dosubl('%include \"part46.sas\";'); d='after'; run;\ndata t47; a='label 47'; b=resolve('%needed47()'); c=dosubl('%include \"part47.sas\";'); d='after'; run;\ndata t48; a='label 48'; b=resolve('%needed48()'); c=dosubl('%include \"part48.sas\";'); d='after'; run;\ndata t49; a='label 49'; b=resolve('%needed49()'); c=dosubl('%include \"part49.sas\";'); d='after'; run;\ndata t50; a='label 50'; b=resolve('%needed50()'); c=dosubl('%include \"part50.sas\";'); d='after'; run;\ndata t51; a='label 51'; b=resolve('%needed51()'); c=dosubl('%include \"part51.sas\";'); d='after'; run;\ndata t52; a='label 52'; b=resolve('%needed52()'); c=dosubl('%include \"part52.sas\";'); d='after'; run;\ndata t53; a='label 53'; b=resolve('%needed53()'); c=dosubl('%include \"part53.sas\";'); d='after'; run;\ndata t54; a='label 54'; b=resolve('%needed54()'); c=dosubl('%include \"part54.sas\";'); d='after'; run;\ndata t55; a='label 55'; b=resolve('%needed55()'); c=dosubl('%include \"part55.sas\";'); d='after'; run;\ndata t56; a='label 56'; b=resolve('%needed56()'); c=dosubl('%include \"part56.sas\";'); d='after'; run;\ndata t57; a='label 57'; b=resolve('%needed57()'); c=dosubl('%include \"part57.sas\";'); d='after'; run;\ndata t58; a='label 58'; b=resolve('%needed58()'); c=dosubl('%include \"part58.sas\";'); d='after'; run;\ndata t59; a='label 59'; b=resolve('%needed59()'); c=dosubl('%include \"part59.sas\";'); d='after'; run;\ndata t60; a='label 60'; b=resolve('%needed60()'); c=dosubl('%include \"part60.sas\";'); d='after'; run;\ndata t61; a='label 61'; b=resolve('%needed61()'); c=dosubl('%include \"part61.sas\";'); d='after'; run;\ndata t62; a='label 62'; b=resolve('%needed62()'); c=dosubl('%include \"part62.sas\";'); d='after'; run;\ndata t63; a='label 63'; b=resolve('%needed63()'); c=dosubl('%include \"part63.sas\";'); d='after'; run;\ndata t64; a='label 64'; b=resolve('%needed64()'); c=dosubl('%include \"part64.sas\";'); d='after'; run;\ndata t65; a='label 65'; b=resolve('%needed65()'); c=dosubl('%include \"part65.sas\";'); d='after'; run;\ndata t66; a='label 66'; b=resolve('%needed66()'); c=dosubl('%include \"part66.sas\";'); d='after'; run;\ndata t67; a='label 67'; b=resolve('%needed67()'); c=dosubl('%include \"part67.sas\";'); d='after'; run;\ndata t68; a='label 68'; b=resolve('%needed68()'); c=dosubl('%include \"part68.sas\";'); d='after'; run;\ndata t69; a='label 69'; b=resolve('%needed69()'); c=dosubl('%include \"part69.sas\";'); d='after'; run;\ndata t70; a='label 70'; b=resolve('%needed70()'); c=dosubl('%include \"part70.sas\";'); d='after'; run;\ndata t71; a='label 71'; b=resolve('%needed71()'); c=dosubl('%include \"part71.sas\";'); d='after'; run;\ndata t72; a='label 72'; b=resolve('%needed72()'); c=dosubl('%include \"part72.sas\";'); d='after'; run;\ndata t73; a='label 73'; b=resolve('%needed73()'); c=dosubl('%include \"part73.sas\";'); d='after'; run;\ndata t74; a='label 74'; b=resolve('%needed74()'); c=dosubl('%include \"part74.sas\";'); d='after'; run;\ndata t75; a='label 75'; b=resolve('%needed75()'); c=dosubl('%include \"part75.sas\";'); d='after'; run;\ndata t76; a='label 76'; b=resolve('%needed76()'); c=dosubl('%include \"part76.sas\";'); d='after'; run;\ndata t77; a='label 77'; b=resolve('%needed77()'); c=dosubl('%include \"part77.sas\";'); d='after'; run;\ndata t78; a='label 78'; b=resolve('%needed78()'); c=dosubl('%include \"part78.sas\";'); d='after'; run;\ndata t79; a='label 79'; b=resolve('%needed79()'); c=dosubl('%include \"part79.sas\";'); d='after'; run;\ndata t80; a='label 80'; b=resolve('%needed80()'); c=dosubl('%include \"part80.sas\";'); d='after'; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data t1; a='label 1'; b=resolve('%needed1()'); c=dosubl('%include \"part1.sas\";'); d='after'; run;\ndata t2; a='label 2'; b=resolve('%needed2()'); c=dosubl('%include \"part2.sas\";'); d='after'; run;\ndata t3; a='label 3'; b=resolve('%needed3()'); c=dosubl('%include \"part3.sas\";'); d='after'; run;\ndata t4; a='label 4'; b=resolve('%needed4()'); c=dosubl('%include \"part4.sas\";'); d='after'; run;\ndata t5; a='label 5'; b=resolve('%needed5()'); c=dosubl('%include \"part5.sas\";'); d='after'; run;\ndata t6; a='label 6'; b=resolve('%needed6()'); c=dosubl('%include \"part6.sas\";'); d='after'; run;\ndata t7; a='label 7'; b=resolve('%needed7()'); c=dosubl('%include \"part7.sas\";'); d='after'; run;\ndata t8; a='label 8'; b=resolve('%needed8()'); c=dosubl('%include \"part8.sas\";'); d='after'; run;\ndata t9; a='label 9'; b=resolve('%needed9()'); c=dosubl('%include \"part9.sas\";'); d='after'; run;\ndata t10; a='label 10'; b=resolve('%needed10()'); c=dosubl('%include \"part10.sas\";'); d='after'; run;\ndata t11; a='label 11'; b=resolve('%needed11()'); c=dosubl('%include \"part11.sas\";'); d='after'; run;\ndata t12; a='label 12'; b=resolve('%needed12()'); c=dosubl('%include \"part12.sas\";'); d='after'; run;\ndata t13; a='label 13'; b=resolve('%needed13()'); c=dosubl('%include \"part13.sas\";'); d='after'; run;\ndata t14; a='label 14'; b=resolve('%needed14()'); c=dosubl('%include \"part14.sas\";'); d='after'; run;\ndata t15; a='label 15'; b=resolve('%needed15()'); c=dosubl('%include \"part15.sas\";'); d='after'; run;\ndata t16; a='label 16'; b=resolve('%needed16()'); c=dosubl('%include \"part16.sas\";'); d='after'; run;\ndata t17; a='label 17'; b=resolve('%needed17()'); c=dosubl('%include \"part17.sas\";'); d='after'; run;\ndata t18; a='label 18'; b=resolve('%needed18()'); c=dosubl('%include \"part18.sas\";'); d='after'; run;\ndata t19; a='label 19'; b=resolve('%needed19()'); c=dosubl('%include \"part19.sas\";'); d='after'; run;\ndata t20; a='label 20'; b=resolve('%needed20()'); c=dosubl('%include \"part20.sas\";'); d='after'; run;\ndata t21; a='label 21'; b=resolve('%needed21()'); c=dosubl('%include \"part21.sas\";'); d='after'; run;\ndata t22; a='label 22'; b=resolve('%needed22()'); c=dosubl('%include \"part22.sas\";'); d='after'; run;\ndata t23; a='label 23'; b=resolve('%needed23()'); c=dosubl('%include \"part23.sas\";'); d='after'; run;\ndata t24; a='label 24'; b=resolve('%needed24()'); c=dosubl('%include \"part24.sas\";'); d='after'; run;\ndata t25; a='label 25'; b=resolve('%needed25()'); c=dosubl('%include \"part25.sas\";'); d='after'; run;\ndata t26; a='label 26'; b=resolve('%needed26()'); c=dosubl('%include \"part26.sas\";'); d='after'; run;\ndata t27; a='label 27'; b=resolve('%needed27()'); c=dosubl('%include \"part27.sas\";'); d='after'; run;\ndata t28; a='label 28'; b=resolve('%needed28()'); c=dosubl('%include \"part28.sas\";'); d='after'; run;\ndata t29; a='label 29'; b=resolve('%needed29()'); c=dosubl('%include \"part29.sas\";'); d='after'; run;\ndata t30; a='label 30'; b=resolve('%needed30()'); c=dosubl('%include \"part30.sas\";'); d='after'; run;\ndata t31; a='label 31'; b=resolve('%needed31()'); c=dosubl('%include \"part31.sas\";'); d='after'; run;\ndata t32; a='label 32'; b=resolve('%needed32()'); c=dosubl('%include \"part32.sas\";'); d='after'; run;\ndata t33; a='label 33'; b=resolve('%needed33()'); c=dosubl('%include \"part33.sas\";'); d='after'; run;\ndata t34; a='label 34'; b=resolve('%needed34()'); c=dosubl('%include \"part34.sas\";'); d='after'; run;\ndata t35; a='label 35'; b=resolve('%needed35()'); c=dosubl('%include \"part35.sas\";'); d='after'; run;\ndata t36; a='label 36'; b=resolve('%needed36()'); c=dosubl('%include \"part36.sas\";'); d='after'; run;\ndata t37; a='label 37'; b=resolve('%needed37()'); c=dosubl('%include \"part37.sas\";'); d='after'; run;\ndata t38; a='label 38'; b=resolve('%needed38()'); c=dosubl('%include \"part38.sas\";'); d='after'; run;\ndata t39; a='label 39'; b=resolve('%needed39()'); c=dosubl('%include \"part39.sas\";'); d='after'; run;\ndata t40; a='label 40'; b=resolve('%needed40()'); c=dosubl('%include \"part40.sas\";'); d='after'; run;\ndata t41; a='label 41'; b=resolve('%needed41()'); c=dosubl('%include \"part41.sas\";'); d='after'; run;\ndata t42; a='label 42'; b=resolve('%needed42()'); c=dosubl('%include \"part42.sas\";'); d='after'; run;\ndata t43; a='label 43'; b=resolve('%needed43()'); c=dosubl('%include \"part43.sas\";'); d='after'; run;\ndata t44; a='label 44'; b=resolve('%needed44()'); c=dosubl('%include \"part44.sas\";'); d='after'; run;\ndata t45; a='label 45'; b=resolve('%needed45()'); c=dosubl('%include \"part45.sas\";'); d='after'; run;\ndata t46; a='label 46'; b=resolve('%needed46()'); c=dosubl('%include \"part46.sas\";'); d='after'; run;\ndata t47; a='label 47'; b=resolve('%needed47()'); c=dosubl('%include \"part47.sas\";'); d='after'; run;\ndata t48; a='label 48'; b=resolve('%needed48()'); c=dosubl('%include \"part48.sas\";'); d='after'; run;\ndata t49; a='label 49'; b=resolve('%needed49()'); c=dosubl('%include \"part49.sas\";'); d='after'; run;\ndata t50; a='label 50'; b=resolve('%needed50()'); c=dosubl('%include \"part50.sas\";'); d='after'; run;\ndata t51; a='label 51'; b=resolve('%needed51()'); c=dosubl('%include \"part51.sas\";'); d='after'; run;\ndata t52; a='label 52'; b=resolve('%needed52()'); c=dosubl('%include \"part52.sas\";'); d='after'; run;\ndata t53; a='label 53'; b=resolve('%needed53()'); c=dosubl('%include \"part53.sas\";'); d='after'; run;\ndata t54; a='label 54'; b=resolve('%needed54()'); c=dosubl('%include \"part54.sas\";'); d='after'; run;\ndata t55; a='label 55'; b=resolve('%needed55()'); c=dosubl('%include \"part55.sas\";'); d='after'; run;\ndata t56; a='label 56'; b=resolve('%needed56()'); c=dosubl('%include \"part56.sas\";'); d='after'; run;\ndata t57; a='label 57'; b=resolve('%needed57()'); c=dosubl('%include \"part57.sas\";'); d='after'; run;\ndata t58; a='label 58'; b=resolve('%needed58()'); c=dosubl('%include \"part58.sas\";'); d='after'; run;\ndata t59; a='label 59'; b=resolve('%needed59()'); c=dosubl('%include \"part59.sas\";'); d='after'; run;\ndata t60; a='label 60'; b=resolve('%needed60()'); c=dosubl('%include \"part60.sas\";'); d='after'; run;\ndata t61; a='label 61'; b=resolve('%needed61()'); c=dosubl('%include \"part61.sas\";'); d='after'; run;\ndata t62; a='label 62'; b=resolve('%needed62()'); c=dosubl('%include \"part62.sas\";'); d='after'; run;\ndata t63; a='label 63'; b=resolve('%needed63()'); c=dosubl('%include \"part63.sas\";'); d='after'; run;\ndata t64; a='label 64'; b=resolve('%needed64()'); c=dosubl('%include \"part64.sas\";'); d='after'; run;\ndata t65; a='label 65'; b=resolve('%needed65()'); c=dosubl('%include \"part65.sas\";'); d='after'; run;\ndata t66; a='label 66'; b=resolve('%needed66()'); c=dosubl('%include \"part66.sas\";'); d='after'; run;\ndata t67; a='label 67'; b=resolve('%needed67()'); c=dosubl('%include \"part67.sas\";'); d='after'; run;\ndata t68; a='label 68'; b=resolve('%needed68()'); c=dosubl('%include \"part68.sas\";'); d='after'; run;\ndata t69; a='label 69'; b=resolve('%needed69()'); c=dosubl('%include \"part69.sas\";'); d='after'; run;\ndata t70; a='label 70'; b=resolve('%needed70()'); c=dosubl('%include \"part70.sas\";'); d='after'; run;\ndata t71; a='label 71'; b=resolve('%needed71()'); c=dosubl('%include \"part71.sas\";'); d='after'; run;\ndata t72; a='label 72'; b=resolve('%needed72()'); c=dosubl('%include \"part72.sas\";'); d='after'; run;\ndata t73; a='label 73'; b=resolve('%needed73()'); c=dosubl('%include \"part73.sas\";'); d='after'; run;\ndata t74; a='label 74'; b=resolve('%needed74()'); c=dosubl('%include \"part74.sas\";'); d='after'; run;\ndata t75; a='label 75'; b=resolve('%needed75()'); c=dosubl('%include \"part75.sas\";'); d='after'; run;\ndata t76; a='label 76'; b=resolve('%needed76()'); c=dosubl('%include \"part76.sas\";'); d='after'; run;\ndata t77; a='label 77'; b=resolve('%needed77()'); c=dosubl('%include \"part77.sas\";'); d='after'; run;\ndata t78; a='label 78'; b=resolve('%needed78()'); c=dosubl('%include \"part78.sas\";'); d='after'; run;\ndata t79; a='label 79'; b=resolve('%needed79()'); c=dosubl('%include \"part79.sas\";'); d='after'; run;\ndata t80; a='label 80'; b=resolve('%needed80()'); c=dosubl('%include \"part80.sas\";'); d='after'; run;",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [],
+          "masked": "data t1; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t2; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t3; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t4; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t5; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t6; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t7; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t8; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t9; a=         ; b=resolve(            ); c=dosubl(                       ); d=       ; run;\ndata t10; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t11; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t12; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t13; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t14; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t15; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t16; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t17; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t18; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t19; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t20; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t21; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t22; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t23; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t24; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t25; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t26; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t27; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t28; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t29; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t30; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t31; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t32; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t33; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t34; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t35; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t36; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t37; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t38; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t39; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t40; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t41; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t42; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t43; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t44; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t45; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t46; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t47; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t48; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t49; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t50; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t51; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t52; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t53; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t54; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t55; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t56; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t57; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t58; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t59; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t60; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t61; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t62; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t63; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t64; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t65; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t66; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t67; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t68; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t69; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t70; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t71; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t72; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t73; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t74; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t75; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t76; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t77; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t78; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t79; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;\ndata t80; a=          ; b=resolve(             ); c=dosubl(                        ); d=       ; run;",
+          "single_quotes": [
+            {
+              "end": 20,
+              "start": 11
+            },
+            {
+              "end": 44,
+              "start": 32
+            },
+            {
+              "end": 79,
+              "start": 56
+            },
+            {
+              "end": 91,
+              "start": 84
+            },
+            {
+              "end": 118,
+              "start": 109
+            },
+            {
+              "end": 142,
+              "start": 130
+            },
+            {
+              "end": 177,
+              "start": 154
+            },
+            {
+              "end": 189,
+              "start": 182
+            },
+            {
+              "end": 216,
+              "start": 207
+            },
+            {
+              "end": 240,
+              "start": 228
+            },
+            {
+              "end": 275,
+              "start": 252
+            },
+            {
+              "end": 287,
+              "start": 280
+            },
+            {
+              "end": 314,
+              "start": 305
+            },
+            {
+              "end": 338,
+              "start": 326
+            },
+            {
+              "end": 373,
+              "start": 350
+            },
+            {
+              "end": 385,
+              "start": 378
+            },
+            {
+              "end": 412,
+              "start": 403
+            },
+            {
+              "end": 436,
+              "start": 424
+            },
+            {
+              "end": 471,
+              "start": 448
+            },
+            {
+              "end": 483,
+              "start": 476
+            },
+            {
+              "end": 510,
+              "start": 501
+            },
+            {
+              "end": 534,
+              "start": 522
+            },
+            {
+              "end": 569,
+              "start": 546
+            },
+            {
+              "end": 581,
+              "start": 574
+            },
+            {
+              "end": 608,
+              "start": 599
+            },
+            {
+              "end": 632,
+              "start": 620
+            },
+            {
+              "end": 667,
+              "start": 644
+            },
+            {
+              "end": 679,
+              "start": 672
+            },
+            {
+              "end": 706,
+              "start": 697
+            },
+            {
+              "end": 730,
+              "start": 718
+            },
+            {
+              "end": 765,
+              "start": 742
+            },
+            {
+              "end": 777,
+              "start": 770
+            },
+            {
+              "end": 804,
+              "start": 795
+            },
+            {
+              "end": 828,
+              "start": 816
+            },
+            {
+              "end": 863,
+              "start": 840
+            },
+            {
+              "end": 875,
+              "start": 868
+            },
+            {
+              "end": 904,
+              "start": 894
+            },
+            {
+              "end": 929,
+              "start": 916
+            },
+            {
+              "end": 965,
+              "start": 941
+            },
+            {
+              "end": 977,
+              "start": 970
+            },
+            {
+              "end": 1006,
+              "start": 996
+            },
+            {
+              "end": 1031,
+              "start": 1018
+            },
+            {
+              "end": 1067,
+              "start": 1043
+            },
+            {
+              "end": 1079,
+              "start": 1072
+            },
+            {
+              "end": 1108,
+              "start": 1098
+            },
+            {
+              "end": 1133,
+              "start": 1120
+            },
+            {
+              "end": 1169,
+              "start": 1145
+            },
+            {
+              "end": 1181,
+              "start": 1174
+            },
+            {
+              "end": 1210,
+              "start": 1200
+            },
+            {
+              "end": 1235,
+              "start": 1222
+            },
+            {
+              "end": 1271,
+              "start": 1247
+            },
+            {
+              "end": 1283,
+              "start": 1276
+            },
+            {
+              "end": 1312,
+              "start": 1302
+            },
+            {
+              "end": 1337,
+              "start": 1324
+            },
+            {
+              "end": 1373,
+              "start": 1349
+            },
+            {
+              "end": 1385,
+              "start": 1378
+            },
+            {
+              "end": 1414,
+              "start": 1404
+            },
+            {
+              "end": 1439,
+              "start": 1426
+            },
+            {
+              "end": 1475,
+              "start": 1451
+            },
+            {
+              "end": 1487,
+              "start": 1480
+            },
+            {
+              "end": 1516,
+              "start": 1506
+            },
+            {
+              "end": 1541,
+              "start": 1528
+            },
+            {
+              "end": 1577,
+              "start": 1553
+            },
+            {
+              "end": 1589,
+              "start": 1582
+            },
+            {
+              "end": 1618,
+              "start": 1608
+            },
+            {
+              "end": 1643,
+              "start": 1630
+            },
+            {
+              "end": 1679,
+              "start": 1655
+            },
+            {
+              "end": 1691,
+              "start": 1684
+            },
+            {
+              "end": 1720,
+              "start": 1710
+            },
+            {
+              "end": 1745,
+              "start": 1732
+            },
+            {
+              "end": 1781,
+              "start": 1757
+            },
+            {
+              "end": 1793,
+              "start": 1786
+            },
+            {
+              "end": 1822,
+              "start": 1812
+            },
+            {
+              "end": 1847,
+              "start": 1834
+            },
+            {
+              "end": 1883,
+              "start": 1859
+            },
+            {
+              "end": 1895,
+              "start": 1888
+            },
+            {
+              "end": 1924,
+              "start": 1914
+            },
+            {
+              "end": 1949,
+              "start": 1936
+            },
+            {
+              "end": 1985,
+              "start": 1961
+            },
+            {
+              "end": 1997,
+              "start": 1990
+            },
+            {
+              "end": 2026,
+              "start": 2016
+            },
+            {
+              "end": 2051,
+              "start": 2038
+            },
+            {
+              "end": 2087,
+              "start": 2063
+            },
+            {
+              "end": 2099,
+              "start": 2092
+            },
+            {
+              "end": 2128,
+              "start": 2118
+            },
+            {
+              "end": 2153,
+              "start": 2140
+            },
+            {
+              "end": 2189,
+              "start": 2165
+            },
+            {
+              "end": 2201,
+              "start": 2194
+            },
+            {
+              "end": 2230,
+              "start": 2220
+            },
+            {
+              "end": 2255,
+              "start": 2242
+            },
+            {
+              "end": 2291,
+              "start": 2267
+            },
+            {
+              "end": 2303,
+              "start": 2296
+            },
+            {
+              "end": 2332,
+              "start": 2322
+            },
+            {
+              "end": 2357,
+              "start": 2344
+            },
+            {
+              "end": 2393,
+              "start": 2369
+            },
+            {
+              "end": 2405,
+              "start": 2398
+            },
+            {
+              "end": 2434,
+              "start": 2424
+            },
+            {
+              "end": 2459,
+              "start": 2446
+            },
+            {
+              "end": 2495,
+              "start": 2471
+            },
+            {
+              "end": 2507,
+              "start": 2500
+            },
+            {
+              "end": 2536,
+              "start": 2526
+            },
+            {
+              "end": 2561,
+              "start": 2548
+            },
+            {
+              "end": 2597,
+              "start": 2573
+            },
+            {
+              "end": 2609,
+              "start": 2602
+            },
+            {
+              "end": 2638,
+              "start": 2628
+            },
+            {
+              "end": 2663,
+              "start": 2650
+            },
+            {
+              "end": 2699,
+              "start": 2675
+            },
+            {
+              "end": 2711,
+              "start": 2704
+            },
+            {
+              "end": 2740,
+              "start": 2730
+            },
+            {
+              "end": 2765,
+              "start": 2752
+            },
+            {
+              "end": 2801,
+              "start": 2777
+            },
+            {
+              "end": 2813,
+              "start": 2806
+            },
+            {
+              "end": 2842,
+              "start": 2832
+            },
+            {
+              "end": 2867,
+              "start": 2854
+            },
+            {
+              "end": 2903,
+              "start": 2879
+            },
+            {
+              "end": 2915,
+              "start": 2908
+            },
+            {
+              "end": 2944,
+              "start": 2934
+            },
+            {
+              "end": 2969,
+              "start": 2956
+            },
+            {
+              "end": 3005,
+              "start": 2981
+            },
+            {
+              "end": 3017,
+              "start": 3010
+            },
+            {
+              "end": 3046,
+              "start": 3036
+            },
+            {
+              "end": 3071,
+              "start": 3058
+            },
+            {
+              "end": 3107,
+              "start": 3083
+            },
+            {
+              "end": 3119,
+              "start": 3112
+            },
+            {
+              "end": 3148,
+              "start": 3138
+            },
+            {
+              "end": 3173,
+              "start": 3160
+            },
+            {
+              "end": 3209,
+              "start": 3185
+            },
+            {
+              "end": 3221,
+              "start": 3214
+            },
+            {
+              "end": 3250,
+              "start": 3240
+            },
+            {
+              "end": 3275,
+              "start": 3262
+            },
+            {
+              "end": 3311,
+              "start": 3287
+            },
+            {
+              "end": 3323,
+              "start": 3316
+            },
+            {
+              "end": 3352,
+              "start": 3342
+            },
+            {
+              "end": 3377,
+              "start": 3364
+            },
+            {
+              "end": 3413,
+              "start": 3389
+            },
+            {
+              "end": 3425,
+              "start": 3418
+            },
+            {
+              "end": 3454,
+              "start": 3444
+            },
+            {
+              "end": 3479,
+              "start": 3466
+            },
+            {
+              "end": 3515,
+              "start": 3491
+            },
+            {
+              "end": 3527,
+              "start": 3520
+            },
+            {
+              "end": 3556,
+              "start": 3546
+            },
+            {
+              "end": 3581,
+              "start": 3568
+            },
+            {
+              "end": 3617,
+              "start": 3593
+            },
+            {
+              "end": 3629,
+              "start": 3622
+            },
+            {
+              "end": 3658,
+              "start": 3648
+            },
+            {
+              "end": 3683,
+              "start": 3670
+            },
+            {
+              "end": 3719,
+              "start": 3695
+            },
+            {
+              "end": 3731,
+              "start": 3724
+            },
+            {
+              "end": 3760,
+              "start": 3750
+            },
+            {
+              "end": 3785,
+              "start": 3772
+            },
+            {
+              "end": 3821,
+              "start": 3797
+            },
+            {
+              "end": 3833,
+              "start": 3826
+            },
+            {
+              "end": 3862,
+              "start": 3852
+            },
+            {
+              "end": 3887,
+              "start": 3874
+            },
+            {
+              "end": 3923,
+              "start": 3899
+            },
+            {
+              "end": 3935,
+              "start": 3928
+            },
+            {
+              "end": 3964,
+              "start": 3954
+            },
+            {
+              "end": 3989,
+              "start": 3976
+            },
+            {
+              "end": 4025,
+              "start": 4001
+            },
+            {
+              "end": 4037,
+              "start": 4030
+            },
+            {
+              "end": 4066,
+              "start": 4056
+            },
+            {
+              "end": 4091,
+              "start": 4078
+            },
+            {
+              "end": 4127,
+              "start": 4103
+            },
+            {
+              "end": 4139,
+              "start": 4132
+            },
+            {
+              "end": 4168,
+              "start": 4158
+            },
+            {
+              "end": 4193,
+              "start": 4180
+            },
+            {
+              "end": 4229,
+              "start": 4205
+            },
+            {
+              "end": 4241,
+              "start": 4234
+            },
+            {
+              "end": 4270,
+              "start": 4260
+            },
+            {
+              "end": 4295,
+              "start": 4282
+            },
+            {
+              "end": 4331,
+              "start": 4307
+            },
+            {
+              "end": 4343,
+              "start": 4336
+            },
+            {
+              "end": 4372,
+              "start": 4362
+            },
+            {
+              "end": 4397,
+              "start": 4384
+            },
+            {
+              "end": 4433,
+              "start": 4409
+            },
+            {
+              "end": 4445,
+              "start": 4438
+            },
+            {
+              "end": 4474,
+              "start": 4464
+            },
+            {
+              "end": 4499,
+              "start": 4486
+            },
+            {
+              "end": 4535,
+              "start": 4511
+            },
+            {
+              "end": 4547,
+              "start": 4540
+            },
+            {
+              "end": 4576,
+              "start": 4566
+            },
+            {
+              "end": 4601,
+              "start": 4588
+            },
+            {
+              "end": 4637,
+              "start": 4613
+            },
+            {
+              "end": 4649,
+              "start": 4642
+            },
+            {
+              "end": 4678,
+              "start": 4668
+            },
+            {
+              "end": 4703,
+              "start": 4690
+            },
+            {
+              "end": 4739,
+              "start": 4715
+            },
+            {
+              "end": 4751,
+              "start": 4744
+            },
+            {
+              "end": 4780,
+              "start": 4770
+            },
+            {
+              "end": 4805,
+              "start": 4792
+            },
+            {
+              "end": 4841,
+              "start": 4817
+            },
+            {
+              "end": 4853,
+              "start": 4846
+            },
+            {
+              "end": 4882,
+              "start": 4872
+            },
+            {
+              "end": 4907,
+              "start": 4894
+            },
+            {
+              "end": 4943,
+              "start": 4919
+            },
+            {
+              "end": 4955,
+              "start": 4948
+            },
+            {
+              "end": 4984,
+              "start": 4974
+            },
+            {
+              "end": 5009,
+              "start": 4996
+            },
+            {
+              "end": 5045,
+              "start": 5021
+            },
+            {
+              "end": 5057,
+              "start": 5050
+            },
+            {
+              "end": 5086,
+              "start": 5076
+            },
+            {
+              "end": 5111,
+              "start": 5098
+            },
+            {
+              "end": 5147,
+              "start": 5123
+            },
+            {
+              "end": 5159,
+              "start": 5152
+            },
+            {
+              "end": 5188,
+              "start": 5178
+            },
+            {
+              "end": 5213,
+              "start": 5200
+            },
+            {
+              "end": 5249,
+              "start": 5225
+            },
+            {
+              "end": 5261,
+              "start": 5254
+            },
+            {
+              "end": 5290,
+              "start": 5280
+            },
+            {
+              "end": 5315,
+              "start": 5302
+            },
+            {
+              "end": 5351,
+              "start": 5327
+            },
+            {
+              "end": 5363,
+              "start": 5356
+            },
+            {
+              "end": 5392,
+              "start": 5382
+            },
+            {
+              "end": 5417,
+              "start": 5404
+            },
+            {
+              "end": 5453,
+              "start": 5429
+            },
+            {
+              "end": 5465,
+              "start": 5458
+            },
+            {
+              "end": 5494,
+              "start": 5484
+            },
+            {
+              "end": 5519,
+              "start": 5506
+            },
+            {
+              "end": 5555,
+              "start": 5531
+            },
+            {
+              "end": 5567,
+              "start": 5560
+            },
+            {
+              "end": 5596,
+              "start": 5586
+            },
+            {
+              "end": 5621,
+              "start": 5608
+            },
+            {
+              "end": 5657,
+              "start": 5633
+            },
+            {
+              "end": 5669,
+              "start": 5662
+            },
+            {
+              "end": 5698,
+              "start": 5688
+            },
+            {
+              "end": 5723,
+              "start": 5710
+            },
+            {
+              "end": 5759,
+              "start": 5735
+            },
+            {
+              "end": 5771,
+              "start": 5764
+            },
+            {
+              "end": 5800,
+              "start": 5790
+            },
+            {
+              "end": 5825,
+              "start": 5812
+            },
+            {
+              "end": 5861,
+              "start": 5837
+            },
+            {
+              "end": 5873,
+              "start": 5866
+            },
+            {
+              "end": 5902,
+              "start": 5892
+            },
+            {
+              "end": 5927,
+              "start": 5914
+            },
+            {
+              "end": 5963,
+              "start": 5939
+            },
+            {
+              "end": 5975,
+              "start": 5968
+            },
+            {
+              "end": 6004,
+              "start": 5994
+            },
+            {
+              "end": 6029,
+              "start": 6016
+            },
+            {
+              "end": 6065,
+              "start": 6041
+            },
+            {
+              "end": 6077,
+              "start": 6070
+            },
+            {
+              "end": 6106,
+              "start": 6096
+            },
+            {
+              "end": 6131,
+              "start": 6118
+            },
+            {
+              "end": 6167,
+              "start": 6143
+            },
+            {
+              "end": 6179,
+              "start": 6172
+            },
+            {
+              "end": 6208,
+              "start": 6198
+            },
+            {
+              "end": 6233,
+              "start": 6220
+            },
+            {
+              "end": 6269,
+              "start": 6245
+            },
+            {
+              "end": 6281,
+              "start": 6274
+            },
+            {
+              "end": 6310,
+              "start": 6300
+            },
+            {
+              "end": 6335,
+              "start": 6322
+            },
+            {
+              "end": 6371,
+              "start": 6347
+            },
+            {
+              "end": 6383,
+              "start": 6376
+            },
+            {
+              "end": 6412,
+              "start": 6402
+            },
+            {
+              "end": 6437,
+              "start": 6424
+            },
+            {
+              "end": 6473,
+              "start": 6449
+            },
+            {
+              "end": 6485,
+              "start": 6478
+            },
+            {
+              "end": 6514,
+              "start": 6504
+            },
+            {
+              "end": 6539,
+              "start": 6526
+            },
+            {
+              "end": 6575,
+              "start": 6551
+            },
+            {
+              "end": 6587,
+              "start": 6580
+            },
+            {
+              "end": 6616,
+              "start": 6606
+            },
+            {
+              "end": 6641,
+              "start": 6628
+            },
+            {
+              "end": 6677,
+              "start": 6653
+            },
+            {
+              "end": 6689,
+              "start": 6682
+            },
+            {
+              "end": 6718,
+              "start": 6708
+            },
+            {
+              "end": 6743,
+              "start": 6730
+            },
+            {
+              "end": 6779,
+              "start": 6755
+            },
+            {
+              "end": 6791,
+              "start": 6784
+            },
+            {
+              "end": 6820,
+              "start": 6810
+            },
+            {
+              "end": 6845,
+              "start": 6832
+            },
+            {
+              "end": 6881,
+              "start": 6857
+            },
+            {
+              "end": 6893,
+              "start": 6886
+            },
+            {
+              "end": 6922,
+              "start": 6912
+            },
+            {
+              "end": 6947,
+              "start": 6934
+            },
+            {
+              "end": 6983,
+              "start": 6959
+            },
+            {
+              "end": 6995,
+              "start": 6988
+            },
+            {
+              "end": 7024,
+              "start": 7014
+            },
+            {
+              "end": 7049,
+              "start": 7036
+            },
+            {
+              "end": 7085,
+              "start": 7061
+            },
+            {
+              "end": 7097,
+              "start": 7090
+            },
+            {
+              "end": 7126,
+              "start": 7116
+            },
+            {
+              "end": 7151,
+              "start": 7138
+            },
+            {
+              "end": 7187,
+              "start": 7163
+            },
+            {
+              "end": 7199,
+              "start": 7192
+            },
+            {
+              "end": 7228,
+              "start": 7218
+            },
+            {
+              "end": 7253,
+              "start": 7240
+            },
+            {
+              "end": 7289,
+              "start": 7265
+            },
+            {
+              "end": 7301,
+              "start": 7294
+            },
+            {
+              "end": 7330,
+              "start": 7320
+            },
+            {
+              "end": 7355,
+              "start": 7342
+            },
+            {
+              "end": 7391,
+              "start": 7367
+            },
+            {
+              "end": 7403,
+              "start": 7396
+            },
+            {
+              "end": 7432,
+              "start": 7422
+            },
+            {
+              "end": 7457,
+              "start": 7444
+            },
+            {
+              "end": 7493,
+              "start": 7469
+            },
+            {
+              "end": 7505,
+              "start": 7498
+            },
+            {
+              "end": 7534,
+              "start": 7524
+            },
+            {
+              "end": 7559,
+              "start": 7546
+            },
+            {
+              "end": 7595,
+              "start": 7571
+            },
+            {
+              "end": 7607,
+              "start": 7600
+            },
+            {
+              "end": 7636,
+              "start": 7626
+            },
+            {
+              "end": 7661,
+              "start": 7648
+            },
+            {
+              "end": 7697,
+              "start": 7673
+            },
+            {
+              "end": 7709,
+              "start": 7702
+            },
+            {
+              "end": 7738,
+              "start": 7728
+            },
+            {
+              "end": 7763,
+              "start": 7750
+            },
+            {
+              "end": 7799,
+              "start": 7775
+            },
+            {
+              "end": 7811,
+              "start": 7804
+            },
+            {
+              "end": 7840,
+              "start": 7830
+            },
+            {
+              "end": 7865,
+              "start": 7852
+            },
+            {
+              "end": 7901,
+              "start": 7877
+            },
+            {
+              "end": 7913,
+              "start": 7906
+            },
+            {
+              "end": 7942,
+              "start": 7932
+            },
+            {
+              "end": 7967,
+              "start": 7954
+            },
+            {
+              "end": 8003,
+              "start": 7979
+            },
+            {
+              "end": 8015,
+              "start": 8008
+            },
+            {
+              "end": 8044,
+              "start": 8034
+            },
+            {
+              "end": 8069,
+              "start": 8056
+            },
+            {
+              "end": 8105,
+              "start": 8081
+            },
+            {
+              "end": 8117,
+              "start": 8110
+            }
+          ]
+        }
+      },
+      {
+        "arguments": [
+          "call execute('%include \"a.sas\";'); x=resolve('%include \"inert.sas\";'); rc=dosubl(\"%include 'b.sas';\");"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "a.sas",
+            "b.sas"
+          ]
+        ]
+      }
+    ]
+  },
+  "macro_quoting_preflight": {
+    "source_file": "tests/test_macro_quoting_preflight.pl",
+    "source_sha256": "ac6ba492828d555b77539a6cb1a8fcb6c36030b8ab55cd8d3267a1f0caa7e7bf",
+    "calls": [
+      {
+        "arguments": [
+          "%let x=%str(%');"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%str(%');",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 15,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=        ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%str(%');"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=        ;"
+      },
+      {
+        "arguments": [
+          "%let x=%str(%();"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%str(%();",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 15,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=        ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%str(%();"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=        ;"
+      },
+      {
+        "arguments": [
+          "%let x=%str(%));"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%str(%));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 15,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=        ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%str(%));"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=        ;"
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(O'Brien);"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%bquote(O'Brien);",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 15,
+              "children": [],
+              "closed": 1,
+              "end": 23,
+              "name": "bquote",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(O'Brien);"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=                ;"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(alpha;beta);"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%nrstr(alpha;beta);",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [],
+              "closed": 1,
+              "end": 25,
+              "name": "nrstr",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                  ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(alpha;beta);"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=                  ;"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed());"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%nrstr(%not_executed());",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [],
+              "closed": 1,
+              "end": 30,
+              "name": "nrstr",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=                       ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed());"
+        ],
+        "function": "mask_noncode",
+        "list_context": 0,
+        "result": "%let x=                       ;"
+      },
+      {
+        "arguments": [
+          "%let x=%str(%(;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%str(%(;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                -1,
+                0,
+                1
+              ],
+              "line": 1,
+              "message": "Macro quoting function %str( is missing its closing ')'",
+              "type": "unclosed_macro_invocation"
+            }
+          ],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 0,
+              "end": 15,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=        ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%str(%');\ndata x; value='unclosed;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%str(%');\ndata x; value='unclosed;",
+          "double_quotes": [],
+          "findings": [
+            {
+              "context_ref": [
+                0,
+                1,
+                2
+              ],
+              "line": 2,
+              "message": "Unclosed single-quoted string starting on line 2",
+              "type": "unclosed_single_quote"
+            }
+          ],
+          "macro_quotes": [
+            {
+              "body": 12,
+              "children": [],
+              "closed": 1,
+              "end": 15,
+              "name": "str",
+              "start": 7
+            }
+          ],
+          "masked": "%let x=        ;\ndata x; value=          ",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed()); %real_dependency;"
+        ],
+        "function": "mask_macro_literals",
+        "list_context": 0,
+        "result": "%let x=%nrstr(               ); %real_dependency;"
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(%evaluated_first());"
+        ],
+        "function": "mask_macro_literals",
+        "list_context": 0,
+        "result": "%let x=%bquote(%evaluated_first());"
+      },
+      {
+        "arguments": [
+          "data x; text='%literal_not_executed()'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=                         ; run;"
+      },
+      {
+        "arguments": [
+          "data x; text=\"%evaluated_macro()\"; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=\"%evaluated_macro()\"; run;"
+      },
+      {
+        "arguments": [
+          "data _null_; call execute('%delayed_macro();'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; call execute('%delayed_macro();'); run;"
+      },
+      {
+        "arguments": [
+          "data _null_; rc=dosubl('%immediate_macro();'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; rc=dosubl('%immediate_macro();'); run;"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed());"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%nrstr(               );"
+      },
+      {
+        "arguments": [
+          "let"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "nrstr"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(%evaluated_first());"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%bquote(%evaluated_first());"
+      },
+      {
+        "arguments": [
+          "bquote"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "evaluated_first"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 0
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%include 'masked.sas';);"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%nrstr(                      );"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%include 'masked.sas';); %include \"real's file.sas\";"
+        ],
+        "function": "include_targets",
+        "list_context": 0,
+        "result": [
+          "real's file.sas"
+        ]
+      },
+      {
+        "arguments": [
+          "data x; value='%include \"not executed.sas\";'; run;"
+        ],
+        "function": "include_targets",
+        "list_context": 0,
+        "result": []
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed()); %real_dependency;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%nrstr(               ); %real_dependency;"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_executed()); %real_dependency;"
+        ],
+        "function": "include_targets",
+        "list_context": 0,
+        "result": []
+      },
+      {
+        "arguments": [
+          "real_dependency"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 0
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(%nrstr(%nested_literal()));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%bquote(%nrstr(                 ));"
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(%nrstr(%nested_literal()));"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%bquote(%nrstr(%nested_literal()));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 15,
+              "children": [
+                {
+                  "body": 22,
+                  "children": [],
+                  "closed": 1,
+                  "end": 40,
+                  "name": "nrstr",
+                  "start": 15
+                }
+              ],
+              "closed": 1,
+              "end": 41,
+              "name": "bquote",
+              "start": 7
+            },
+            {
+              "body": 22,
+              "children": [],
+              "closed": 1,
+              "end": 40,
+              "name": "nrstr",
+              "start": 15
+            }
+          ],
+          "masked": "%let x=                                  ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "data x; value=\"%nrstr(%nested_literal())\"; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; value=\"%nrstr(                 )\"; run;"
+      },
+      {
+        "arguments": [
+          "data x; value=\"%nrstr(%nested_literal())\"; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; value=\"%nrstr(%nested_literal())\"; run;",
+          "double_quotes": [
+            {
+              "end": 41,
+              "start": 14
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 22,
+              "children": [],
+              "closed": 1,
+              "end": 40,
+              "name": "nrstr",
+              "start": 15
+            }
+          ],
+          "masked": "data x; value=                           ; run;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%quote(%bquote(%nrstr(%nested_literal())));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%quote(%bquote(%nrstr(                 )));"
+      },
+      {
+        "arguments": [
+          "%let x=%quote(%bquote(%nrstr(%nested_literal())));"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "%let x=%quote(%bquote(%nrstr(%nested_literal())));",
+          "double_quotes": [],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 14,
+              "children": [
+                {
+                  "body": 22,
+                  "children": [
+                    {
+                      "body": 29,
+                      "children": [],
+                      "closed": 1,
+                      "end": 47,
+                      "name": "nrstr",
+                      "start": 22
+                    }
+                  ],
+                  "closed": 1,
+                  "end": 48,
+                  "name": "bquote",
+                  "start": 14
+                }
+              ],
+              "closed": 1,
+              "end": 49,
+              "name": "quote",
+              "start": 7
+            },
+            {
+              "body": 22,
+              "children": [
+                {
+                  "body": 29,
+                  "children": [],
+                  "closed": 1,
+                  "end": 47,
+                  "name": "nrstr",
+                  "start": 22
+                }
+              ],
+              "closed": 1,
+              "end": 48,
+              "name": "bquote",
+              "start": 14
+            },
+            {
+              "body": 29,
+              "children": [],
+              "closed": 1,
+              "end": 47,
+              "name": "nrstr",
+              "start": 22
+            }
+          ],
+          "masked": "%let x=                                          ;",
+          "single_quotes": []
+        }
+      },
+      {
+        "arguments": [
+          "%let x=%bquote(%quote(%real_nested()));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%bquote(%quote(%real_nested()));"
+      },
+      {
+        "arguments": [
+          "data x; value=\"%str(%\")\"; run;"
+        ],
+        "function": "analyze_source",
+        "list_context": 0,
+        "result": {
+          "comments_masked": "data x; value=\"%str(%\")\"; run;",
+          "double_quotes": [
+            {
+              "end": 24,
+              "start": 14
+            }
+          ],
+          "findings": [],
+          "macro_quotes": [
+            {
+              "body": 20,
+              "children": [],
+              "closed": 1,
+              "end": 23,
+              "name": "str",
+              "start": 15
+            }
+          ],
+          "masked": "data x; value=          ; run;",
+          "single_quotes": []
+        }
+      }
+    ]
+  },
+  "open_code_macro_diagnostics": {
+    "source_file": "tests/test_open_code_macro_diagnostics.pl",
+    "source_sha256": "02b577cd75f72e2587f05670a1f0fc4d93a26b02668930fe911d24ce07243df3",
+    "calls": [
+      {
+        "arguments": [
+          "%if 1 %then /* comments are whitespace */ %do; %put okay; %end;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%macro m; %local x; %do i=1 %to 3; %if &i %then %do; %end; %end; %mend;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%let text=%nrstr(%local foo; %do i=1 %to 2; %end;);"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data a; text='%if 1 %then %put no; %local foo;'; run;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data a; input line $char80.; datalines;\n%local x; %goto done;\n;\nrun;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "%if 1 %then %do;\n%put pending;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 0,
+        "result": [
+          {
+            "context_ref": [
+              -1,
+              0,
+              1,
+              2,
+              3
+            ],
+            "line": 1,
+            "message": "Open-code %DO group is missing a matching %END; finish the conditional before submission",
+            "type": "unclosed_open_code_do"
+          }
+        ]
+      },
+      {
+        "arguments": [
+          "/* comment */\n%let a=b\n%put &a;"
+        ],
+        "function": "open_code_macro_issues",
+        "list_context": 0,
+        "result": [
+          {
+            "context_ref": [
+              0,
+              1,
+              2,
+              3,
+              4
+            ],
+            "line": 2,
+            "message": "Possible missing semicolon after %let before another macro statement; this can cause open-code statement recursion",
+            "type": "macro_statement_recursion"
+          }
+        ]
+      }
+    ]
+  },
+  "resolve_macro_dependencies": {
+    "source_file": "tests/test_resolve_macro_dependencies.pl",
+    "source_sha256": "a71ba8387cbcd761403d7b36864e7e65d32e3c3d897d1050f5992ce4a12f263f",
+    "calls": [
+      {
+        "arguments": [
+          "data x; text=resolve('%needed_macro()'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=resolve('%needed_macro()'); run;"
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('%needed_macro()'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=RESOLVE(strip('%needed_macro()')); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=RESOLVE(strip('%needed_macro()')); run;"
+      },
+      {
+        "arguments": [
+          "data x; text=RESOLVE(strip('%needed_macro()')); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('%needed_macro(str='||value||')'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=resolve('%needed_macro(str='||value||')'); run;"
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('%needed_macro(str='||value||')'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; text='%never_called()'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=                 ; run;"
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('&x')||'%never_called()'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=resolve('&x')||                 ; run;"
+      },
+      {
+        "arguments": [
+          "data x; text=myresolve('%never_called()'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=myresolve(                 ); run;"
+      },
+      {
+        "arguments": [
+          "data x; text='resolve('||'%never_called()'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=          ||                 ; run;"
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('%nrstr(%never_called())'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=resolve('%nrstr(               )'); run;"
+      },
+      {
+        "arguments": [
+          "data x; text=resolve('%include \"text_only.sas\";'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          []
+        ]
+      },
+      {
+        "arguments": [
+          "data x; rc=dosubl('%include \"actual.sas\";'); run;"
+        ],
+        "function": "include_targets",
+        "list_context": 1,
+        "result": [
+          [
+            "actual.sas"
+          ]
+        ]
+      }
+    ]
+  },
+  "sas_supplied_autocall": {
+    "source_file": "tests/test_sas_supplied_autocall.pl",
+    "source_sha256": "12b710acd31117712ce8dc252da8261978746eebc5601eb864110702ed90dd03",
+    "calls": [
+      {
+        "arguments": [
+          "left"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "LEFT"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "trim"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "TRIM"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 1
+      },
+      {
+        "arguments": [
+          "my_left"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 0
+      },
+      {
+        "arguments": [
+          "clustergram4sas"
+        ],
+        "function": "is_builtin_macro_name",
+        "list_context": 0,
+        "result": 0
+      }
+    ]
+  },
+  "unquote_macro_dependencies": {
+    "source_file": "tests/test_unquote_macro_dependencies.pl",
+    "source_sha256": "67534bffa05f1ee469ccd68525915c1e96f3d8dfeef140c00b36fa3771d67193",
+    "calls": [
+      {
+        "arguments": [
+          "%let x=%unquote(%nrstr(%released_macro()));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%unquote(%nrstr(%released_macro()));"
+      },
+      {
+        "arguments": [
+          "%let x=%UNQUOTE(%NRSTR(%released_macro()));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%UNQUOTE(%NRSTR(%released_macro()));"
+      },
+      {
+        "arguments": [
+          "%let x=%unquote(%str(prefix)%nrstr(%released_macro()));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%unquote(%str(prefix)%nrstr(%released_macro()));"
+      },
+      {
+        "arguments": [
+          "data _null_; text=resolve('%unquote(%nrstr(%released_macro()))'); run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data _null_; text=resolve('%unquote(%nrstr(%released_macro()))'); run;"
+      },
+      {
+        "arguments": [
+          "data x; text=\"%unquote(%nrstr(%released_macro()))\"; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=\"%unquote(%nrstr(%released_macro()))\"; run;"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%not_released());"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%nrstr(               );"
+      },
+      {
+        "arguments": [
+          "%let x=%nrstr(%unquote(%nrstr(%not_released())));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%nrstr(                                 );"
+      },
+      {
+        "arguments": [
+          "%let x=%unquote(%nrstr(%nrstr(%not_released())));"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "%let x=%unquote(%nrstr(%nrstr(               )));"
+      },
+      {
+        "arguments": [
+          "data x; text='%unquote(%nrstr(%not_released()))'; run;"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "data x; text=                                   ; run;"
+      },
+      {
+        "arguments": [
+          "/* %unquote(%nrstr(%not_released())) */"
+        ],
+        "function": "macro_dependency_view",
+        "list_context": 0,
+        "result": "                                       "
+      }
+    ]
+  }
+}

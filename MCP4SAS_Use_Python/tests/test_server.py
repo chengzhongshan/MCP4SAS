@@ -44,7 +44,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                 break
             await asyncio.sleep(.1)
         self.assertTrue(done.isError)
-        self.assertEqual(done.structuredContent['exit_code'],2)
+        self.assertEqual(done.structuredContent['exit_code'],1)
         self.assertIn('preflight failed',done.content[0].text)
 
     async def test_stdio_discovery_background_status_and_failure(self):

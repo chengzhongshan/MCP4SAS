@@ -89,12 +89,28 @@ def rewrite_paths(code,mapping):
     for local,remote in mapping.items():
         if local==remote:
             continue
-        for match in re.finditer(re.escape(local),visible):
-            before=visible[match.start()-1:match.start()] if match.start() else ''
-            after=visible[match.end():match.end()+1]
-            if (before in ("'",'"',' ') or not before) and (after in ("'",'"',';',')',' ','\n','\r') or not after):
-                replacements.append((match.start(),match.end(),remote))
-    for start,end,value in sorted(set(replacements),reverse=True):
+        # SAS doubles quotes once per surrounding literal. Deferred CALL EXECUTE
+        # or DOSUBL includes may therefore contain four apostrophes. Match the
+        # corresponding spelling without altering the decoded filename.
+        pending=[(local,remote)];seen=set()
+        while pending:
+            spelling,target=pending.pop()
+            if spelling in seen or len(spelling)>len(code):continue
+            seen.add(spelling)
+            for match in re.finditer(re.escape(spelling),visible):
+                before=visible[match.start()-1:match.start()] if match.start() else ''
+                after=visible[match.end():match.end()+1]
+                if (before in ("'",'"',' ') or not before) and (after in ("'",'"',';',')',' ','\n','\r') or not after):
+                    replacements.append((match.start(),match.end(),target))
+            for quote in ("'",'"'):
+                escaped=spelling.replace(quote,quote*2)
+                if escaped!=spelling:pending.append((escaped,target.replace(quote,quote*2)))
+    # Compute all spans against original source, then apply once. A remote path
+    # containing the local alias must not be rewritten a second time.
+    accepted=[]
+    for candidate in sorted(set(replacements),key=lambda v:(-(v[1]-v[0]),v[0])):
+        if not any(candidate[0]<end and start<candidate[1] for start,end,_ in accepted):accepted.append(candidate)
+    for start,end,value in sorted(accepted,reverse=True):
         code=code[:start]+value+code[end:]
     return code
 

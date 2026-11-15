@@ -439,7 +439,11 @@ def download_files_archive(items, session_obj):
 def transfer_many(sas,payload,home,fileinfo):
     adapter=ArchiveSession(sas,home,fileinfo)
     uploads=payload.get('uploads',[]); downloads=payload.get('downloads',[])
-    if _archive_transfer_enabled(payload) and len(uploads)>=2:
+    # SASPy's single-file upload cannot safely quote apostrophes in its remote
+    # FILENAME statement. A one-member archive uses the verified SAS ZIP copy
+    # path, even when optional multi-file batching is disabled.
+    quoted_name=any("'" in os.path.basename(str(item.get('local_path','')).replace('\\','/')) for item in uploads)
+    if (_archive_transfer_enabled(payload) and len(uploads)>=2) or quoted_name:
         up,_=upload_files_archive(uploads,adapter)
     else:
         up=[]

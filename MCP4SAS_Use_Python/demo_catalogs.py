@@ -35,8 +35,21 @@ def catalog(batch):
 def generate(batch,out,library_root=None):
     cases=catalog(batch)
     out=Path(out).resolve()
-    out.mkdir(parents=True,exist_ok=False)
     provenance=json.loads((ROOT/'tests/sas_library_source_manifest.json').read_text(encoding='utf-8'))
+    # Validate every reference before creating outputs. A changed source in the
+    # last case must not leave a misleading, partially generated collection.
+    if out.exists():raise FileExistsError(out)
+    for case in cases:
+        ref=case.get('source_ref')
+        if ref:
+            record=provenance[ref]
+            collection,filename=ref.split(':',1)
+            collection={'E':'Easy-For-Error-Codes-SAS','D':'SAS_Code_Database'}[collection]
+            if library_root:
+                path=Path(library_root)/collection/filename
+                if hashlib.sha256(path.read_bytes()).hexdigest()!=record['sha256']:
+                    raise ValueError(f'Library source changed: {path}')
+    out.mkdir(parents=True,exist_ok=False)
     for case in cases:
         ref=case.get('source_ref')
         if ref:
@@ -44,10 +57,6 @@ def generate(batch,out,library_root=None):
             collection,filename=ref.split(':',1)
             collection={'E':'Easy-For-Error-Codes-SAS','D':'SAS_Code_Database'}[collection]
             case.update(source_collection=collection,source_file=filename,source_sha256=record['sha256'])
-            if library_root:
-                path=Path(library_root)/collection/filename
-                if hashlib.sha256(path.read_bytes()).hexdigest()!=record['sha256']:
-                    raise ValueError(f'Library source changed: {path}')
         fixtures=case.get('fixtures',[]) or ([case['fixture']] if 'fixture' in case else [])
         paths=[]
         for index,body in enumerate(fixtures,1):

@@ -232,6 +232,7 @@ Run the offline tests with the configured Python:
 
 ```bash
 python -m unittest discover -s MCP4SAS_Use_Python/tests -v
+python tests/run_complete_suite.py --language python
 ```
 
 They include frozen behavior captured from the original Perl modules, actual
@@ -247,3 +248,15 @@ Choose a new output directory. Complete submitted SAS, logs and results are
 retained there and excluded from Git. See `VALIDATION.md` for observed results
 and limitations; no scientific, platform or speed claim follows merely from
 successful packaging.
+
+The expanded [regression guide](../tests/README.md) covers native Python
+counterparts beside the Perl tests, all 4,550 numerical SAS cases, the 590-case
+MCP catalogs, cleanup checks and independent saved-evidence auditing. Structural
+macro errors now leave a terminal failed status without opening SAS. Use
+`--no-submission-preflight` only when deliberately testing actual SAS diagnostics.
+Format and fileref naming hints remain advisory.
+
+Filenames containing apostrophes use a safe one-member ZIP upload to avoid an
+unsafe SASPy filename-quoting path. This safety path also applies when optional
+multi-file archive batching is disabled. Deferred includes preserve SAS quote
+escaping when local paths are rewritten to the uploaded locations.

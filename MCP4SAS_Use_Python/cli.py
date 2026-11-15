@@ -222,6 +222,9 @@ def parser():
     p.add_argument('--no-run-timeout',action='store_true',help='Disable the overall run timeout.')
     p.add_argument('--no-html-info','--no-html_info',action='store_true',help='Do not save the returned HTML file.')
     p.add_argument('--dry-run',action='store_true',help='Print dependency/preflight information without connecting to SAS.')
+    p.add_argument('--submission-preflight',action=argparse.BooleanOptionalAction,
+                   default=os.environ.get('SUBMISSION_PREFLIGHT_ENABLED','1').lower() not in ('0','false','no','off'),
+                   help='Block lexical and structural macro errors before SAS execution. Disable only to inspect actual SAS compiler diagnostics.')
     p.add_argument('--json',action='store_true',help='Print machine-readable outcome rather than a text report.')
     p.add_argument('--monitor-status-file',help='Follow a live run-status JSON file and exit when complete.')
     p.add_argument('--monitor-interval-seconds',type=int,default=5,help='Polling interval for --monitor-status-file.')
@@ -298,9 +301,27 @@ def execute(args):
     if args.dry_run:
         print(json.dumps(dict(dry_run=True,persistent=persistent,session_id=session_id,dependencies=plan.as_dict(),preflight=analysis['findings'],advisories=advisories),indent=2))
         return 0
-    # Only lexical failures block submission; advisory heuristics preserve SAS as authority.
-    if analysis['findings']:
-        raise ValueError('SAS source preflight failed: '+json.dumps(analysis['findings']))
+    # Format/fileref naming hints remain advisory; structural control errors use
+    # the same default guard as the Perl runner. Never create a SAS session for
+    # a submission rejected here, and still leave a terminal status for agents.
+    blocking=list(analysis['findings'])+source_analysis.open_code_macro_issues(code,analysis['masked'])
+    for path,text in plan.texts.items():
+        dependency=source_analysis.analyze_source(text)
+        blocking.extend(dict(item,source_file=str(path)) for item in
+                        dependency['findings']+source_analysis.open_code_macro_issues(text,dependency['masked']))
+    if args.submission_preflight and blocking:
+        outdir=Path(args.output_prefix or 'SAS_Output_Python_'+datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+secrets.token_hex(4)).resolve()
+        outdir.mkdir(parents=True,exist_ok=True)
+        message='Submission preflight failed; skipped SAS submit.'
+        report='=== Submission Preflight ===\n'+message+'\n'+json.dumps(blocking,indent=2)+'\n'
+        log_path=outdir/'output.html.info.txt';log_path.write_text(report,encoding='utf-8')
+        result=dict(exit_code=1,runtime='python',error=message,preflight=blocking,log='',lst='',log_path=str(log_path))
+        atomic_json(outdir/'result.json',result)
+        atomic_json(outdir/'output.html.run.status.json',dict(state='failed',complete=True,success=False,
+            exit_code=1,runtime='python',session_id=session_id,failure_class='submission_preflight',message=message,
+            finished_at=datetime.now(timezone.utc).isoformat(),log_path=str(log_path)))
+        print(json.dumps(result) if args.json else report)
+        return 1
     if not args.skip_sas_oda_auth_bootstrap:
         configure_credentials(args)
     from .runner import Runner
