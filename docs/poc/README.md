@@ -76,7 +76,8 @@ numerical checker. Results go into a new `SAS_Output_PoC_*` directory. The
 `submit/` directory retains the SAS log, `collect/` retains transfer diagnostics,
 `files/` contains downloaded results and `run.json` records the case and warnings.
 
-The default persistent session is `poc_showcase`. Run the examples sequentially;
+The default persistent session is `poc_showcase` for Perl and
+`poc_showcase_python` for Python. Run the examples sequentially;
 use `--session-id another_name` for a separate session. Inputs with the packaged
 `poc261112_*` basenames are staged in SAS HOME. Generated figures and numerical
 tables are collected from that session's WORK directory.

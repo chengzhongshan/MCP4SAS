@@ -45,5 +45,6 @@ Python counterparts, with 44 paired command blocks. The scope includes 17 newly
 implemented developer/demo sources (32 implemented / 82 deferred in the inventory).
 The 43-test local suite and six selected live SAS ODA cases passed. All 590
 original SAS examples were generated and checked for unchanged source/fixtures;
-this does not mean all 590 were executed. Cross-platform branch CI is pending.
+this does not mean all 590 were executed. All six cross-platform jobs passed in
+run 43660360756 at code commit 21bc495; the completed update is published to main.
 See HOMEPAGE_DEMO_VALIDATION.md for the exact scope, fixes and evidence limits.

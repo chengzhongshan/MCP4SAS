@@ -83,5 +83,9 @@ unchanged. Pre-existing local backend whitespace edits and `debug.log` are exclu
 
 The six-job Python matrix installs dependencies, runs the offline suite and
 executes the new regression/generation entry points on Windows, macOS and Ubuntu
-with Python 3.10 and 3.13. The current follow-up awaits that branch run before
-publication to main; its actual outcome will be recorded here.
+with Python 3.10 and 3.13. All six jobs passed in
+[run 43660360756](https://github.com/chengzhongshan/MCP4SAS/actions/runs/43660360756)
+at code commit `21bc49584627a217dbc830dbd629aa399396d241`, including all 43 tests
+and the additional standalone entry-point checks. Subsequent documentation-only
+corrections clarify environment setup and the distinct default PoC session names;
+the documentation link/option check was rerun successfully after those edits.

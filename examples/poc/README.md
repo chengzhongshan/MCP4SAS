@@ -35,7 +35,8 @@ python examples/poc/run_example.py --case multi_gwas_gtf
 
 </details>
 
-Run them sequentially. The default session is `poc_showcase`; supply
+Run them sequentially. The default session is `poc_showcase` for Perl and
+`poc_showcase_python` for Python; supply
 `--session-id NAME` to select another. Each run creates a new local output
 directory. Use `--outdir DIR` to choose its location, or `--dry-run` to inspect
 the plan without running SAS. An existing output directory is preserved.

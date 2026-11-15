@@ -109,15 +109,17 @@ The Bash examples use Bash syntax; native Windows users can follow the
 The Python commands do not invoke Perl or need Cygwin. Keep the same runtime
 and session name across submissions when reusing WORK tables.
 
-Run the [platform installer](#manual-installation) first, then use these commands
-from the MCP4SAS directory. Choose one target below in a fresh shell. The
+For Perl, run the [platform installer](#manual-installation); for Python, use
+the separate environment setup above. Run the commands from the MCP4SAS
+directory. Choose one target below in a fresh shell. The
 connection check submits `proc setinit;run;` before you run an analysis.
 An explicitly selected profile never silently falls back to another target.
 
 ### SAS ODA
 
-Use the installer's Python/SASPy environment and your privately configured ODA
-account. The connection check offers credential setup when needed.
+Use the installer's environment for Perl, or your activated environment for the
+Python runner, with your privately configured ODA account. If credentials are
+missing, follow [First SAS ODA Login](#first-sas-oda-login).
 
 **Company network:** SASPy needs outbound TCP **8591** to the SAS ODA
 hostnames for your home region. If this connection is blocked, contact IT/IS
@@ -412,6 +414,10 @@ macOS, Windows/Cygwin, and Conda installations on every pull request and push
 to `main`.
 
 ## Requirements
+
+These are the existing Perl runtime's prerequisites. The independent
+[Python edition](MCP4SAS_Use_Python/README.md) requires Python 3.10+ and its
+listed packages, with no Perl/Cygwin requirement.
 
 - A SAS OnDemand for Academics account, a local SAS installation, or a licensed
   remote SAS IOM server.
