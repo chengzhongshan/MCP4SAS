@@ -221,7 +221,14 @@ The launcher uses VS Code's bundled Node/Electron runtime, so a separate Node in
 - **Tools discovered, SAS fails:** repair SASPy target, Java/IOM configuration and authentication. Discovery does not validate those.
 - **Missing SAS Java classes or IOM JARs:** the extension does not bundle SAS proprietary JARs. Download the SAS-provided archive from the [official SAS download page](https://support.sas.com/downloads/package.htm?pid=2494), signing in with your own SAS Profile if requested. Extract it outside the repository. Locate `sas.rutil.jar`, `sas.rutil.nls.jar` and `sastpj.rutil.jar`, then set `MCP4SAS_SASPY_IOM_DIR` to their containing directory before running the MCP4SAS installer/configuration helper. Follow the [Java setup and troubleshooting guide](https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/JAVA_SETUP_TROUBLESHOOTING.md) for the exact commands and configuration checks. Restart VS Code from the configured environment so its MCP subprocesses inherit your settings. Installing Java alone does not supply these SAS libraries.
 - **Wrong relative path:** rerun Quick Setup and choose the actual project folder. The active editor file does not change the saved server folder automatically.
-- **Restricted network:** installers need access to official Cygwin, GitHub, CPAN and Python/package mirrors. Follow institutional proxy rules; no TLS bypass is added.
+- **Restricted network:** installers need access to official Cygwin, GitHub,
+  CPAN and Python/package mirrors. On Windows, Quick Setup combines Cygwin's
+  public roots with the currently valid certificates in the Windows Trusted
+  Root stores, verifies `https://cpanmin.us`, and passes that private bundle to
+  Git, curl and the installer. This supports institution-managed TLS inspection
+  without disabling certificate verification. If verification still fails,
+  ask IT to install the institution's current root certificate in Windows;
+  MCP4SAS never falls back to `curl -k`.
 - **Remote VS Code:** SSH, WSL, containers and browser-based VS Code are not supported by this first guided desktop release. Configure their own MCP environment explicitly. Native Windows/Cygwin is a distinct route from WSL.
 - **Platform evidence:** see [validation report](https://github.com/chengzhongshan/MCP4SAS/blob/main/integrations/vscode/VALIDATION.md). Shared code tests are not proof of fresh installations or interactive Copilot model execution on every OS.
 

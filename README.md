@@ -403,6 +403,20 @@ Cygwin setup from Windows after closing Cygwin programs. The checked package
 set includes Git, Perl, Python 3.12 with pip/development headers, GCC, make,
 HTTPS tools and ZIP utilities.
 
+VS Code Quick Setup also handles institution-managed TLS inspection securely.
+It creates a private bundle containing Cygwin's public roots and the currently
+valid roots already trusted by Windows, verifies the CPAN bootstrap URL, and
+passes the bundle to Git, curl and `cpanm`. It does not disable TLS checks. For
+a manual Cygwin installation, an administrator-provided PEM bundle can be used
+explicitly:
+
+```bash
+export MCP4SAS_CA_BUNDLE="$HOME/institution-ca-bundle.pem"
+bash install/install_cygwin.sh
+```
+
+The installer rejects a missing or empty `MCP4SAS_CA_BUNDLE`.
+
 For an environment whose prerequisites you have already verified explicitly:
 
 ```bash

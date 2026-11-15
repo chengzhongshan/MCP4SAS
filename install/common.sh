@@ -291,6 +291,13 @@ install_perl_deps() {
   local -a install_options=(--from "$cpan_mirror" --notest --local-lib-contained "${MCP4SAS_LOCAL_PERL}" --installdeps "${MCP4SAS_ROOT}")
   log "Installing Perl dependencies under ${MCP4SAS_LOCAL_PERL}"
   mkdir -p "${MCP4SAS_ROOT}/local"
+  if [ -n "${MCP4SAS_CA_BUNDLE:-}" ]; then
+    [ -r "${MCP4SAS_CA_BUNDLE}" ] && [ -s "${MCP4SAS_CA_BUNDLE}" ] || die "MCP4SAS_CA_BUNDLE does not name a readable certificate bundle: ${MCP4SAS_CA_BUNDLE}"
+    export CURL_CA_BUNDLE="${CURL_CA_BUNDLE:-${MCP4SAS_CA_BUNDLE}}"
+    export SSL_CERT_FILE="${SSL_CERT_FILE:-${MCP4SAS_CA_BUNDLE}}"
+    export GIT_SSL_CAINFO="${GIT_SSL_CAINFO:-${MCP4SAS_CA_BUNDLE}}"
+    log "Using the configured TLS certificate bundle: ${MCP4SAS_CA_BUNDLE}"
+  fi
   if command_exists uname && uname -s | grep -qi '^CYGWIN'; then
     # Windows Perl distributions are commonly inherited through PATH inside
     # Cygwin. Their cpanm executable and modules are ABI-incompatible with

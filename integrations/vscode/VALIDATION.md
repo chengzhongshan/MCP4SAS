@@ -183,3 +183,35 @@ Actual checks:
 Evidence: local ignored SAS_Output_installer_dll_fix/ directory. The rebuilt
 VSIX retains version 0.1.5; its current digest is in the release SHA256SUMS.
 The main source/checkpoint and artifact publication are recorded in Git.
+
+## 15 November 2026 - corporate TLS trust recovery (0.1.5)
+
+Quick Setup reproduced Cygwin curl exit 60 while downloading `cpanmin.us` at a
+site using Cloudflare Gateway TLS inspection. The presented certificate was
+issued by a self-signed managed Gateway root that was valid and trusted by
+Windows but absent from Cygwin's Mozilla-derived bundle. Python/SASPy setup had
+already succeeded; the failure was isolated to the Perl dependency bootstrap.
+
+The Windows extension now creates a private combined bundle from Cygwin's
+public roots and currently valid certificates in the Windows Current User and
+Local Machine Trusted Root stores. Existing user-provided CA variables take
+precedence. Quick Setup verifies the CPAN bootstrap URL before cloning or
+starting the installer and passes the bundle to Git, curl, `cpanm`, and the
+installer task. The shared installer validates `MCP4SAS_CA_BUNDLE` and exports
+the corresponding standard client variables. Certificate verification remains
+enabled; there is no insecure fallback.
+
+The generated bundle contained 167 certificates and successfully verified the
+actual intercepted `cpanmin.us` connection with Cygwin curl 8.23.0. All 42 Node
+tests and all 41 Perl-installer shell checks passed, including preservation of
+custom CA settings, setup-task propagation, and rejection of a missing bundle.
+An independent Windows-roots-only bundle also verified the intercepted URL,
+without relying on any repaired Cygwin trust anchors. The real installation in
+the affected Windows project completed with exit 0 and the final installation
+smoke check passed, including Perl syntax, SASPy import, Java/classpath,
+macro lifecycle, path handling, and archive transfer checks. The real VS Code
+extension-host test passed activation, all eleven commands, MCP provider
+registration, and built-in installer task success/failure reporting.
+The rebuilt VSIX includes the PowerShell certificate helper and retains
+version 0.1.5. These are installation and extension-host checks, not a new
+authenticated live SAS ODA submission.

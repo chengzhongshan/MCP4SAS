@@ -93,6 +93,30 @@ async function ensureCygwinPrerequisites(perl) {
   const remaining=await core.run(bash,['--noprofile','--norc','-c',probe],{env,timeout:30000});
   if(remaining.trim())throw new Error('Cygwin prerequisite check still failed: '+remaining);
 }
+async function prepareCygwinTrust(perl) {
+  const cygwinRoot = path.dirname(path.dirname(perl));
+  const trustDir = path.join(context.globalStorageUri.fsPath, 'trust');
+  const bundle = path.join(trustDir, 'windows-cygwin-ca-bundle.pem');
+  const baseBundle = path.join(cygwinRoot, 'etc', 'pki', 'ca-trust', 'extracted', 'pem', 'tls-ca-bundle.pem');
+  fs.mkdirSync(trustDir, { recursive: true });
+  await core.run('powershell.exe', [
+    '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+    '-File', path.join(__dirname, 'windows-ca-bundle.ps1'),
+    '-OutputPath', bundle,
+    '-BaseBundle', baseBundle
+  ], { timeout: 30000 });
+  if (!fs.existsSync(bundle) || fs.statSync(bundle).size < 1024) throw new Error('Windows trusted-root export produced an empty CA bundle.');
+  const posixBundle = await core.toPosix(bundle, perl);
+  const env = core.caBundleEnvironment(posixBundle, core.cygwinEnvironment(perl));
+  const curl = path.join(path.dirname(perl), 'curl.exe');
+  try {
+    await core.run(curl, ['-fsSIL', 'https://cpanmin.us'], { env, timeout: 30000 });
+  } catch (error) {
+    throw new Error(`Cygwin TLS verification failed after importing the Windows trusted roots. Ask IT to confirm the corporate TLS root is installed in Windows, then retry Quick Setup. ${error.message}`);
+  }
+  output.appendLine(`Cygwin TLS uses Windows and Cygwin trusted roots: ${bundle}`);
+  return env;
+}
 function windowsJava() {
   const candidates = [process.env.SASPY_JAVA_WIN, process.env.SASPY_JAVA, process.env.JAVA_HOME && path.join(process.env.JAVA_HOME, 'bin', 'java.exe')];
   for (const vendor of ['Microsoft', 'Eclipse Adoptium', 'Java']) {
@@ -134,6 +158,7 @@ async function installNew() {
   await core.assertWritableProject(repo, perl);
   const java = process.platform === 'win32' ? await ensureWindowsJava() : undefined;
   if(process.platform === 'win32')await ensureCygwinPrerequisites(perl);
+  const cygwinEnv = process.platform === 'win32' ? await prepareCygwinTrust(perl) : undefined;
   const install = core.platformInstaller(process.platform);
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   if (fs.existsSync(path.join(repo, 'server.pl'))) {
@@ -148,7 +173,7 @@ async function installNew() {
     const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-source-'));
     try {
       const source = path.join(staging, 'source');
-      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Downloading MCP4SAS scripts into ${repo}` }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: core.cygwinEnvironment(perl) } : {}) }));
+      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Downloading MCP4SAS scripts into ${repo}` }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: cygwinEnv } : {}) }));
       core.installSourceFiles(source, repo);
       output.appendLine(`MCP4SAS source copy completed: ${repo}`);
     } finally {
@@ -162,7 +187,7 @@ async function installNew() {
   const logfile=path.join(repo,'local','install-logs','vscode-'+Date.now()+'.log');
   const wrapper=path.join(__dirname,'installer-task.sh');
   const [wrapperPath,logPath]=process.platform==='win32' ? await Promise.all([core.toPosix(wrapper,perl),core.toPosix(logfile,perl)]) : [wrapper,logfile];
-  await task(bash, ['--noprofile', '--norc', wrapperPath,logPath,script], repo, { ...(process.platform === 'win32' ? {...core.cygwinEnvironment(perl),MCP4SAS_SKIP_CYGWIN_SETUP:'1'} : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) },{logFile:logfile});
+  await task(bash, ['--noprofile', '--norc', wrapperPath,logPath,script], repo, { ...(process.platform === 'win32' ? {...cygwinEnv,MCP4SAS_SKIP_CYGWIN_SETUP:'1'} : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) },{logFile:logfile});
   // macOS installer may install Homebrew Perl for the first time.
   perl = core.installedPerl(await findPerl(), perl);
   return { repo, perl, java, cwd: repo };

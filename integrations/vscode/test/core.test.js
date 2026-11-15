@@ -14,6 +14,16 @@ test('Cygwin setup selects its own DLL directory and retains certificate setting
   assert.equal(env.HTTPS_PROXY, 'proxy');
   assert.equal(base.Path, 'C:/other-cygwin/bin;C:/Windows');
 });
+test('generated CA bundle fills missing TLS settings without replacing user choices', () => {
+  const generated = c.caBundleEnvironment('/private/windows-cygwin.pem', { HTTPS_PROXY: 'proxy' });
+  for (const key of ['MCP4SAS_CA_BUNDLE', 'CURL_CA_BUNDLE', 'SSL_CERT_FILE', 'GIT_SSL_CAINFO']) {
+    assert.equal(generated[key], '/private/windows-cygwin.pem');
+  }
+  const custom = c.caBundleEnvironment('/generated.pem', { CURL_CA_BUNDLE: '/user.pem', GIT_SSL_CAINFO: '/git.pem' });
+  assert.equal(custom.CURL_CA_BUNDLE, '/user.pem');
+  assert.equal(custom.GIT_SSL_CAINFO, '/git.pem');
+  assert.equal(custom.SSL_CERT_FILE, '/generated.pem');
+});
 const launch = c.launcher('C:\\A folder\\runtime.json', 'C:\\A folder\\relay.js', 'C:\\Code\\Code.exe');
 test('installation retains manually selected portable Perl when discovery cannot find it', () => {
   assert.equal(c.installedPerl(null, '/portable/bin/perl.exe'), '/portable/bin/perl.exe');

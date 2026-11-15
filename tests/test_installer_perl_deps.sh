@@ -14,9 +14,11 @@ trap cleanup EXIT
 mkdir -p "$fixture/bin"
 export MCP4SAS_TEST_ARGS_LOG="$fixture/args"
 export MCP4SAS_TEST_CURL_LOG="$fixture/curl"
+export MCP4SAS_TEST_ENV_LOG="$fixture/env"
 cat > "$fixture/bin/cpanm" <<'MOCK'
 #!/usr/bin/env bash
 printf '%s\n' "$@" > "$MCP4SAS_TEST_ARGS_LOG"
+printf '%s\n' "${CURL_CA_BUNDLE:-}" "${SSL_CERT_FILE:-}" "${GIT_SSL_CAINFO:-}" > "$MCP4SAS_TEST_ENV_LOG"
 exit "${MCP4SAS_TEST_INSTALL_EXIT:-0}"
 MOCK
 chmod +x "$fixture/bin/cpanm"
@@ -53,6 +55,7 @@ run_case() {
   assert test "${args[6]}" = "$MCP4SAS_ROOT"
 }
 unset MCP4SAS_CPAN_MIRROR
+unset MCP4SAS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE GIT_SSL_CAINFO
 unset MCP4SAS_TEST_INSTALL_EXIT
 run_case CYGWIN_NT-10.0
 assert test "${args[7]}" = --no-lwp
@@ -61,6 +64,11 @@ assert test "${args[9]}" = --curl
 assert test "${args[10]}" = --verbose
 assert test "$CPANM" = "$MCP4SAS_ROOT/local/cpanm"
 assert grep -qx https://cpanmin.us "$MCP4SAS_TEST_CURL_LOG"
+export MCP4SAS_CA_BUNDLE="$fixture/ca.pem"
+printf '%s\n' 'test certificate' > "$MCP4SAS_CA_BUNDLE"
+run_case CYGWIN_NT-10.0
+while IFS= read -r value; do assert test "$value" = "$MCP4SAS_CA_BUNDLE"; done < "$MCP4SAS_TEST_ENV_LOG"
+unset MCP4SAS_CA_BUNDLE CURL_CA_BUNDLE SSL_CERT_FILE GIT_SSL_CAINFO
 run_case Linux
 assert test "${#args[@]}" = 7
 assert test "$CPANM" = "$fixture/bin/cpanm"
@@ -72,4 +80,10 @@ set +e
 rc=$?
 set -e
 assert test "$rc" = 23
+export MCP4SAS_CA_BUNDLE="$fixture/missing-ca.pem"
+set +e
+( install_perl_deps ) >/dev/null 2>&1
+rc=$?
+set -e
+assert test "$rc" = 1
 printf '1..%s\n' "$count"

@@ -70,6 +70,13 @@ function cygwinEnvironment(perl, base = process.env) {
   env.PATH = path.dirname(perl) + (inherited ? ';' + inherited : '');
   return env;
 }
+function caBundleEnvironment(bundle, base = process.env) {
+  const env = { ...base };
+  for (const key of ['MCP4SAS_CA_BUNDLE', 'CURL_CA_BUNDLE', 'SSL_CERT_FILE', 'GIT_SSL_CAINFO']) {
+    if (!env[key]) env[key] = bundle;
+  }
+  return env;
+}
 async function assertWritableProject(directory, perl, { platform = process.platform, runCommand = run, filesystem = fs } = {}) {
   const probe = path.join(directory, `.mcp4sas-write-${require('node:crypto').randomUUID()}`);
   const token = require('node:crypto').randomUUID();
@@ -193,4 +200,4 @@ function allocateSessionPort() {
     server.listen(0, '127.0.0.1', () => { const port = server.address().port; server.close(() => resolve(port)); });
   });
 }
-module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, connectionEnvironment, allocateSessionPort, cygwinEnvironment, assertWritableProject, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };
+module.exports = { run, platformInstaller, installSourceFiles, cleanupStaging, connectionEnvironment, allocateSessionPort, cygwinEnvironment, caBundleEnvironment, assertWritableProject, installedPerl, discoveryReply, assertRepo, shellQuote, launcher, mergeCodex, writeCodex, writePrivate, toPosix, runtimeEnvironment, BEGIN, END };

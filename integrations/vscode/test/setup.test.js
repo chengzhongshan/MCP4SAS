@@ -58,10 +58,19 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     ...core,
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
-    async run(command, args) {
+    async run(command, args, options = {}) {
       if(command===path.join(path.dirname(portable),'bash.exe')&&args.includes('-c')) {
         if(args.at(-1).includes('MCP4SAS_PROBE_PID='))return 'MCP4SAS_PROBE_PID=100\n 100 1 100 1000 ?\n'+(busyPrerequisites?' 200 1 200 2000 ?\n':'');
         return missingPrerequisites;
+      }
+      if(command==='powershell.exe') {
+        const bundle=args[args.indexOf('-OutputPath')+1];
+        fs.mkdirSync(path.dirname(bundle),{recursive:true});fs.writeFileSync(bundle,'certificate fixture\n'.repeat(100));
+        return '';
+      }
+      if(command===path.join(path.dirname(portable),'curl.exe')) {
+        assert.equal(options.env.CURL_CA_BUNDLE,path.join(storage,'trust','windows-cygwin-ca-bundle.pem'));
+        return 'HTTP/2 200';
       }
       if(args.includes('--code')) {
         const directory=args[args.indexOf('--output-prefix')+1];fs.mkdirSync(directory,{recursive:true});
@@ -70,6 +79,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       }
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
       assert.equal(args[0], 'clone');
+      assert.equal(options.env.GIT_SSL_CAINFO,path.join(storage,'trust','windows-cygwin-ca-bundle.pem'));
       const repo = args.at(-1);
       for (const file of ['server.pl', 'run_sas_codes_or_files_in_ODA.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
         const target = path.join(repo, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, 'fixture');
@@ -121,6 +131,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.ok(tasks[0].execution instanceof vscode.ProcessExecution);
     assert.equal(tasks[0].definition.type,'process','uses the built-in task type, not an unregistered custom provider');
     assert.equal(tasks[0].execution.options.env.MCP4SAS_SKIP_CYGWIN_SETUP,'1','verified existing Cygwin is never upgraded from its own Bash');
+    assert.equal(tasks[0].execution.options.env.CURL_CA_BUNDLE,path.join(storage,'trust','windows-cygwin-ca-bundle.pem'),'installer receives the verified Windows/Cygwin CA bundle');
     assert.deepEqual(Array.from(tasks[0].execution.args).slice(0, 2), ['--noprofile', '--norc']);
     assert.equal(states.get('copilotEnabled'), true);
     assert.ok(fs.existsSync(path.join(storage, 'relay.js')));
