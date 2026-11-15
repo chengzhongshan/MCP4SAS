@@ -83,9 +83,9 @@ account configuration, licensed JARs and the environment are excluded from Git.
 The [Python workflow](https://github.com/chengzhongshan/MCP4SAS/actions/workflows/python-runtime.yml)
 installs dependencies and exercises real Python backend processes and MCP stdio/HTTP
 clients on Windows, macOS and Ubuntu with Python 3.10 and 3.13. All six jobs passed
-in [run 43656356598](https://github.com/chengzhongshan/MCP4SAS/actions/runs/43656356598).
-That run covered the optimized code and 29 tests; the final file-deletion guard
-adds one test and is checked in the subsequent final branch run.
+in [run 43657296733](https://github.com/chengzhongshan/MCP4SAS/actions/runs/43657296733)
+at code commit `458bb485c5792182c7a846f82088c5938079c907`. All 30 tests passed in
+each of the six jobs, including the final file-deletion guard regression test.
 
 No new Python runtime connection to SAS from macOS/Linux is claimed.
 The old Perl and VS Code workflows remain independent. Python defaults to targeted
