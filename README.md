@@ -11,7 +11,7 @@ The 9-minute 54-second video also includes macOS and Ubuntu instructions.
 
 [Open video directly](https://chengzhongshan.github.io/MCP4SAS/installation.mp4) · [Download MP4](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Clean_Captions_20261114.mp4) · [Watch offline](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Offline_20261114.zip) · [Written setup guide](integrations/vscode/README.md)
 
-Run SAS with AI agents through MCP, or from Perl/Bash: connect to **SAS OnDemand
+Run SAS with AI agents through MCP, or from Perl or Python: connect to **SAS OnDemand
 for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
 
 [Quick start](#quick-start) · [Scientific showcases](#scientific-proof-of-concept-and-runnable-examples) · [Installation](#manual-installation) · [Local SAS home directories](docs/LOCAL_SAS_HOME.md)
@@ -29,11 +29,25 @@ Native Windows Python does not require Cygwin. Existing Perl and VS Code setups
 remain available; see the Python edition's validation notes and compatibility details.
 
 <p align="center">
-  <a href="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb">
-    <img width="100%" alt="MCP4SAS workflow: MCP server, SASPy and direct local SAS execution paths" src="https://github.com/user-attachments/assets/c2406e84-fc6c-44d4-b320-62c7f757d4fb" />
+  <a href="docs/architecture/mcp4sas-workflow.svg">
+    <img width="100%" alt="MCP4SAS workflow: Perl or Python MCP servers and runners, persistent SASPy sessions, and one-shot direct local SAS execution" src="docs/architecture/mcp4sas-workflow.svg" />
   </a>
 </p>
 <p align="center"><sub>Click the workflow figure to open the full-resolution version.</sub></p>
+
+**Choose Perl or Python:** use `server.pl` with the Perl runners, or `server.py`
+with the Python runners. Both provide SAS execution, background jobs and
+diagnostics. You can also run saved SAS programs directly without an AI agent:
+
+```bash
+perl run_sas_codes_or_files_in_ODA.pl --file test.sas
+python run_sas_codes_or_files_in_ODA.py --file test.sas
+```
+
+Use the Python command after [installing and activating its environment](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+The existing VS Code plugin retains its Perl setup; Python is an optional
+connection. See the [workflow explanation](docs/architecture/README.md) and
+[Python validation results](MCP4SAS_Use_Python/VALIDATION.md).
 
 ## Scientific proof of concept and runnable examples
 

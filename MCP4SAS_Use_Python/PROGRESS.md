@@ -29,8 +29,10 @@ stdio/SAS ODA calls passed positive and negative completion reporting. The initi
 macOS filename-case issue is fixed; the final six-job matrix passed at code commit
 458bb485c5792182c7a846f82088c5938079c907 (run 43657296733), with all 30 tests on
 each platform/Python combination. The agreed runtime-and-utilities scope is complete.
-Main, the Perl runtime, existing plugin and book are unchanged. Pre-existing local
-changes in MCPDeps/sas_oda_session_server.py and debug.log were not included.
+The subsequent homepage update publishes this optional Python edition on main
+with a dual-runtime workflow diagram and runnable commands. The Perl runtime,
+existing plugin and book are unchanged. Pre-existing local changes in
+MCPDeps/sas_oda_session_server.py and debug.log were not included.
 
 No claim of complete Perl compatibility or live platform validation is made until
 the corresponding evidence is recorded.

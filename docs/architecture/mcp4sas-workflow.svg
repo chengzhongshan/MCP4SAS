@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1140" viewBox="0 0 1440 1140" role="img" aria-labelledby="title desc">
+  <title id="title">MCP4SAS workflow with Perl and Python runtimes</title>
+  <desc id="desc">AI clients use either server.pl over HTTP or server.py over stdio or Streamable HTTP. Each runtime manages background jobs and PID polling. SASPy execution uses paired Perl and Python runners, persistent SASPy session backends, and SAS OnDemand or configured local or remote SAS. Direct local execution uses RunLocalSASDirectly.sh for Perl or local_direct.py for Python, without SASPy or persistent sessions. Both paths return SAS logs, results and diagnostics. Users can also call the runners without an AI agent.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#263b55"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#172c46}
+      .title{font-size:32px;font-weight:700}
+      .heading{font-size:25px;font-weight:700}
+      .label{font-size:21px;font-weight:700}
+      .body{font-size:19px}
+      .small{font-size:17px}
+      .mono{font-family:Consolas,'Liberation Mono',monospace;font-size:16px}
+      .blue{fill:#173f8a}.teal{fill:#007d79}.muted{fill:#50617a}
+      .box{fill:white;stroke:#284d86;stroke-width:2}
+      .line{fill:none;stroke:#263b55;stroke-width:2.4;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="1140" fill="#fff"/>
+  <text x="720" y="47" text-anchor="middle" class="title">MCP4SAS: choose Perl or Python</text>
+  <text x="720" y="80" text-anchor="middle" class="body muted">AI-assisted execution or command-line SAS, with traceable outputs and diagnostics</text>
+
+  <rect x="36" y="122" width="220" height="116" rx="14" class="box"/>
+  <text x="146" y="167" text-anchor="middle" class="label">AI client</text>
+  <text x="146" y="198" text-anchor="middle" class="body">Codex / Copilot / other</text>
+  <path d="M256 180H310" class="line"/>
+
+  <rect x="310" y="110" width="638" height="140" rx="14" class="box"/>
+  <path d="M629 128V232" stroke="#cfdae8" stroke-width="2"/>
+  <text x="470" y="148" text-anchor="middle" class="label blue">Perl: server.pl</text>
+  <text x="470" y="179" text-anchor="middle" class="body">MCP HTTP endpoint</text>
+  <text x="470" y="211" text-anchor="middle" class="small muted">Existing VS Code plugin setup</text>
+  <text x="788" y="148" text-anchor="middle" class="label teal">Python: server.py</text>
+  <text x="788" y="179" text-anchor="middle" class="body">stdio / Streamable HTTP</text>
+  <text x="788" y="211" text-anchor="middle" class="small muted">Official Python MCP SDK</text>
+  <path d="M948 180H1000" class="line"/>
+
+  <rect x="1000" y="122" width="404" height="116" rx="14" class="box"/>
+  <text x="1202" y="160" text-anchor="middle" class="label">Background worker / job manager</text>
+  <text x="1202" y="193" text-anchor="middle" class="body">Each runtime manages its own jobs</text>
+  <text x="1202" y="221" text-anchor="middle" class="small muted">Poll long-running jobs by PID</text>
+  <path d="M1202 238V280H456V315" class="line"/>
+  <path d="M1202 280V315" class="line"/>
+
+  <rect x="36" y="316" width="840" height="592" rx="16" fill="#f1f6fe" stroke="#5280c6" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="456" y="354" text-anchor="middle" class="heading blue">SASPy-backed path</text>
+
+  <rect x="60" y="383" width="383" height="116" rx="12" class="box"/>
+  <text x="252" y="416" text-anchor="middle" class="label blue">Perl runner</text>
+  <text x="252" y="448" text-anchor="middle" class="mono">run_sas_codes_or_files_in_ODA.pl</text>
+  <text x="252" y="478" text-anchor="middle" class="small muted">Manual CLI or Perl MCP tool</text>
+  <rect x="469" y="383" width="383" height="116" rx="12" fill="#fff" stroke="#007d79" stroke-width="2"/>
+  <text x="661" y="416" text-anchor="middle" class="label teal">Python runner</text>
+  <text x="661" y="448" text-anchor="middle" class="mono">run_sas_codes_or_files_in_ODA.py</text>
+  <text x="661" y="478" text-anchor="middle" class="small muted">Manual CLI or Python MCP tool</text>
+
+  <path d="M252 499V535" class="line"/>
+  <path d="M661 499V535" class="line"/>
+  <rect x="60" y="536" width="383" height="112" rx="12" class="box"/>
+  <text x="252" y="573" text-anchor="middle" class="mono">MCPDeps/SAS_ODA_Runner.pm</text>
+  <text x="252" y="605" text-anchor="middle" class="body">Perl orchestration</text>
+  <text x="252" y="632" text-anchor="middle" class="small muted">Source checks, dependencies, transfers</text>
+  <rect x="469" y="536" width="383" height="112" rx="12" fill="#fff" stroke="#007d79" stroke-width="2"/>
+  <text x="661" y="573" text-anchor="middle" class="mono">MCP4SAS_Use_Python/runner.py</text>
+  <text x="661" y="605" text-anchor="middle" class="body">Native Python orchestration</text>
+  <text x="661" y="632" text-anchor="middle" class="small muted">Source checks, dependencies, transfers</text>
+
+  <path d="M252 648V674H456V694" class="line"/>
+  <path d="M661 648V674H456" fill="none" stroke="#263b55" stroke-width="2.4"/>
+  <rect x="100" y="695" width="712" height="77" rx="12" class="box"/>
+  <text x="456" y="727" text-anchor="middle" class="label">Python SASPy session backend</text>
+  <text x="456" y="754" text-anchor="middle" class="small muted">Separate implementation per runtime; persistent sessions supported</text>
+  <path d="M456 772V800" class="line"/>
+  <rect x="100" y="801" width="712" height="83" rx="12" class="box"/>
+  <text x="456" y="831" text-anchor="middle" class="label">SAS targets via configured SASPy profiles</text>
+  <text x="456" y="862" text-anchor="middle" class="body">SAS ODA · Local Windows / Linux SAS · Remote SAS via IOM</text>
+
+  <rect x="908" y="316" width="496" height="592" rx="16" fill="#f5f7fa" stroke="#78869a" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="1156" y="354" text-anchor="middle" class="heading">Direct local SAS path</text>
+  <rect x="932" y="383" width="448" height="154" rx="12" class="box"/>
+  <text x="1156" y="417" text-anchor="middle" class="body blue">Perl server → shell helper</text>
+  <text x="1156" y="446" text-anchor="middle" class="mono">RunLocalSASDirectly.sh</text>
+  <path d="M951 462H1361" stroke="#cfdae8"/>
+  <text x="1156" y="490" text-anchor="middle" class="body teal">Python server → native Python</text>
+  <text x="1156" y="519" text-anchor="middle" class="mono">MCP4SAS_Use_Python/local_direct.py</text>
+  <path d="M1156 537V577" class="line"/>
+  <rect x="955" y="578" width="402" height="142" rx="12" class="box"/>
+  <text x="1156" y="617" text-anchor="middle" class="label">Licensed local SAS batch process</text>
+  <text x="1156" y="654" text-anchor="middle" class="body">Local Linux SAS</text>
+  <text x="1156" y="687" text-anchor="middle" class="body">Windows sas.exe</text>
+  <text x="1156" y="765" text-anchor="middle" class="body">No SASPy dependency on this path</text>
+  <text x="1156" y="798" text-anchor="middle" class="body">One-shot execution</text>
+  <text x="1156" y="827" text-anchor="middle" class="small muted">WORK state does not carry between calls</text>
+  <text x="1156" y="865" text-anchor="middle" class="small muted">Python path needs neither Bash nor Perl</text>
+
+  <path d="M456 908V941H720V972" class="line"/>
+  <path d="M1156 908V941H720" fill="none" stroke="#263b55" stroke-width="2.4"/>
+  <rect x="400" y="973" width="640" height="113" rx="14" class="box"/>
+  <text x="720" y="1008" text-anchor="middle" class="heading">Outputs and diagnostics</text>
+  <text x="720" y="1040" text-anchor="middle" class="body">SAS logs · HTML / figures / data · status JSON</text>
+  <text x="720" y="1068" text-anchor="middle" class="small muted">Review scientific values and rendered appearance separately</text>
+  <text x="720" y="1120" text-anchor="middle" class="small muted">No AI agent? Run the Perl or Python CLI directly; the MCP server is optional.</text>
+</svg>
