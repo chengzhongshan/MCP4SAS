@@ -22,10 +22,12 @@ def main():
     mode=p.add_mutually_exclusive_group(required=True)
     mode.add_argument('--live',action='store_true');mode.add_argument('--generate-only',action='store_true')
     p.add_argument('--perl');p.add_argument('--batches',default='1,2,3,4,5,6,7,8');p.add_argument('--out',type=Path,required=True)
+    p.add_argument('--only',help='Explicit selected IDs for a single batch; no failed job is replayed automatically.')
     args=p.parse_args()
     if args.runtime=='perl' and not args.perl:p.error('--perl is required for the original harness')
     batches=[int(v) for v in args.batches.split(',')]
     if len(set(batches))!=len(batches) or any(v not in range(1,9) for v in batches):p.error('Invalid --batches')
+    if args.only and len(batches)!=1:p.error('--only requires exactly one --batches value')
     args.out=args.out.resolve();args.out.mkdir(parents=True,exist_ok=False)
     env=dict(os.environ,OPEN_RESULT='0',SAS_ODA_AUTOLOAD_MACROS='0',PIPELINE_PYTHON_BIN=Path(sys.executable).as_posix())
     env['SASPY_CFGNAME']='oda';env['SASPY_CFGFILE']=(ROOT/'MCP4SAS_Use_Python/.saspy-config/sascfg_personal.py').as_posix()
@@ -51,10 +53,11 @@ def main():
                 '--live' if args.live else '--generate-only','--batch',str(batch),
                 '--out',(args.out/('batch'+str(batch))).as_posix()]
             if args.runtime=='perl' and args.live:command+=['--url',f'http://127.0.0.1:{http_port}/mcp']
+            if args.only:command+=['--only',args.only]
             start=time.monotonic();print('START '+args.runtime+' batch '+str(batch),flush=True)
             with (args.out/('batch'+str(batch)+'.log')).open('wb') as log:
                 result=subprocess.run(command,cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=3600)
-            row=dict(batch=batch,exit_code=result.returncode,seconds=round(time.monotonic()-start,3),runtime=args.runtime,mode='live' if args.live else 'generate-only')
+            row=dict(batch=batch,exit_code=result.returncode,seconds=round(time.monotonic()-start,3),runtime=args.runtime,mode='live' if args.live else 'generate-only',selected_ids=args.only)
             records.append(row);(args.out/'execution.json').write_text(json.dumps(records,indent=2)+'\n',encoding='utf-8')
             print(json.dumps(row),flush=True)
     finally:

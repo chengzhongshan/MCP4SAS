@@ -380,6 +380,11 @@ def execute(args):
         code_exit=124 if isinstance(exc,TimeoutError) else 1
         result['error']=str(exc)+instructions(str(exc))
     except Exception as exc:
+        # SASPy can raise instead of returning a SAS log. Preserve the distinct
+        # infrastructure code so clients do not keep using a dead SAS session.
+        exception_diagnostics=diagnostics.classify(str(exc))
+        if exception_diagnostics['exit_code'] in (73,74):
+            result['diagnostics']=exception_diagnostics
         code_exit=result.get('diagnostics',{}).get('exit_code') or 1
         result['error']=str(exc)+instructions(str(exc))
     html_path=None

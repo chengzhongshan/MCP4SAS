@@ -12,27 +12,27 @@
     {
       "perl": "MCPDeps/test_sas_log_and_labels.pl",
       "python": "MCPDeps/test_sas_log_and_labels.py",
-      "python_sha256": "7da908837c0d0ca24f655d432a365f18b94304a539106c95b817b9639a9828a4"
+      "python_sha256": "6321f00d3b7eacf45c41931c35e11da945d07a4e6a6f9688164f0f30a60a8c17"
     },
     {
       "perl": "MCPDeps/test_sas_oda_connection_lifecycle.pl",
       "python": "MCPDeps/test_sas_oda_connection_lifecycle.py",
-      "python_sha256": "2b1f8707804df29ab6e5d4a100ca25be3ef00be7b9570a530da34bc495b528c0"
+      "python_sha256": "0d33634c5810bb7a9a85b82cb01eff49a4d56ff0b393c9ea51de6ba82ee21777"
     },
     {
       "perl": "MCPDeps/test_sas_oda_debug_macro_guard.pl",
       "python": "MCPDeps/test_sas_oda_debug_macro_guard.py",
-      "python_sha256": "fd014117116d8c8feeb9715449af5227d140382b555abd63cb04bf4e828596b2"
+      "python_sha256": "33d2c05859e50854389680f1049b057a666400098cd82ef44afb17301c9cdf26"
     },
     {
       "perl": "MCPDeps/test_sas_oda_include_lookup.pl",
       "python": "MCPDeps/test_sas_oda_include_lookup.py",
-      "python_sha256": "77aefa4c74850fb2fff49bb67e5c656a2c5de658781ea0380b75c0b11de23314"
+      "python_sha256": "5a2887549046b81b5fd68781859fe5cefe0dc71bced3dc6d8d320757c52a8504"
     },
     {
       "perl": "MCPDeps/test_sas_oda_macro_helper_reuse.pl",
       "python": "MCPDeps/test_sas_oda_macro_helper_reuse.py",
-      "python_sha256": "ee97e9cea292581ada5184aa7cf51f792ba4d586d1fa4cea103a87436e1621d0"
+      "python_sha256": "234a092d034a3578d8286a98473d23dbae7762bd6732b758f3d7152d302b474e"
     },
     {
       "perl": "cleanup_mcp4sas_intermediates.pl",
@@ -62,42 +62,42 @@
     {
       "perl": "tests/covid19_gwas_validation_tasks_001_500.pl",
       "python": "tests/covid19_gwas_validation_tasks_001_500.py",
-      "python_sha256": "b2eaf796ec80b3383b27c41999ae52241391173617317624e72bc962a17edbfa"
+      "python_sha256": "1a09edd452fc9d0d2d3192221d0aa2c5bd9b7e1ef9252d6835ede245414dd236"
     },
     {
       "perl": "tests/new_examples_191_290.pl",
       "python": "tests/new_examples_191_290.py",
-      "python_sha256": "59ed46c0f959a9cbfbdce8de4f66506e79bd43968d9551c9a1471042353930d6"
+      "python_sha256": "8d3fbfa7cc3fdc02f7b472af5b2eab91bd80a11dca6c17278b8827e7b303d1ee"
     },
     {
       "perl": "tests/new_examples_31_60.pl",
       "python": "tests/new_examples_31_60.py",
-      "python_sha256": "408ee6a54712d7b2689bfe3d614745dc6b5da6b0b28e1751464f0e769a3e722b"
+      "python_sha256": "66c91b9c629edbd3849d42986891e83abedc6f5a3d21599dc72d9e32c4cae3f3"
     },
     {
       "perl": "tests/new_examples_61_90.pl",
       "python": "tests/new_examples_61_90.py",
-      "python_sha256": "0d45589480bfa27ced29fd8f167762de803fb7389d8062b27b49384637a97664"
+      "python_sha256": "50ede35b4381fb3749f4e373595762263c8408a16b35998a821372e54dba57da"
     },
     {
       "perl": "tests/new_validation_tasks_001_100.pl",
       "python": "tests/new_validation_tasks_001_100.py",
-      "python_sha256": "3dedc684f0d48200983634ce1de64c4bf2edfc098844447d028b9d3a9ac0bdec"
+      "python_sha256": "0430d5b639cfc94df4b7ffa97813c2b80fe85fd9bc39b85a85336162dd2f1772"
     },
     {
       "perl": "tests/run_live_examples.pl",
       "python": "tests/run_live_examples.py",
-      "python_sha256": "a7a777b30eb9061cc3e142e7faed1e2e9aa695b151d5d675c7a9ec2b9527afd1"
+      "python_sha256": "38e9fe238a763ab050df333e2fb3992770e6a978ff03567f57a6733ed840a326"
     },
     {
       "perl": "tests/run_live_new_examples_30.pl",
       "python": "tests/run_live_new_examples_30.py",
-      "python_sha256": "346fb1cf080497a2d158fb7726de44f41caae06a12480ce9b6b6e6d40aa6d1e2"
+      "python_sha256": "882b601e2b76981f3a041f51a9b494f826a8e628e6c0bce9ef7ecbada736a87a"
     },
     {
       "perl": "tools/build_covid19_validation_corpus.pl",
       "python": "tools/build_covid19_validation_corpus.py",
-      "python_sha256": "3ee83ea1a481e5398f7a911972f39817d3e9d024c022c5db88b02fa0fe71d836"
+      "python_sha256": "a2b44d36d6f4c4ecfbb5373f7cc71fd824dd636224338d208eb65906baa293c0"
     },
     {
       "perl": "tools/profile_sas_source.pl",

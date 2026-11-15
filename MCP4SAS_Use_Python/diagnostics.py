@@ -66,12 +66,12 @@ def classify(text):
     text = sas_log(text)
     error_lines = re.findall(r'^\s*ERROR(?:\s+\d+-\d+)?:[^\r\n]*',text,re.I|re.M)
     failure, code = '', 0
-    runtime_lines=[line for line in text.splitlines() if not re.match(r'^\s*\d+(?:\s+|!\s*)',line)]
+    runtime_lines=[line for line in text.splitlines() if not re.match(r'^\s*(?:\d+(?:\s+|!\s*)|MPRINT\([^)]*\):|MLOGIC\([^)]*\):|SYMBOLGEN:)',line,re.I)]
     if any(re.search(r'^\s*ERROR:\s+Insufficient space in\b|^\s*ERROR:.*(?:No space left on device|Disk quota exceeded|file system is full|disk is full|quota[^\r\n]*exceed)|^\s*(?:ERROR:\s*)?UNIX errno\s*=\s*(?:28|122)(?:\D|$)',line,re.I) for line in runtime_lines):
         failure, code = 'sas_oda_space_exhaustion',73
     elif any(re.search(r'^\s*ERROR:\s+Windows error code:\s*67 in hx_disk_access\b',line,re.I) for line in runtime_lines):
         failure, code = 'sas_windows_network_path_unavailable',1
-    elif re.search(r'No SAS process attached|SAS process has terminated unexpectedly|SAS submit returned empty output and the SAS session was no longer usable|session server[^\n]*(?:terminated|closed)|remote SAS[^\n]*(?:terminated|disconnected)',text,re.I):
+    elif any(re.search(r'No SAS process attached|SAS process has terminated unexpectedly|SAS submit returned empty output and the SAS session was no longer usable|session server[^\n]*(?:terminated|closed)|remote SAS[^\n]*(?:terminated|disconnected)',line,re.I) for line in runtime_lines):
         failure, code = 'sas_oda_remote_session_termination',74
     elif error_lines:
         failure, code = 'sas_program_error',1

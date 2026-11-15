@@ -1,11 +1,11 @@
 {
-  "source_commit": "bcce7da3eafb8d3bb26ac3fa14e1be952daa8799",
+  "source_commit": "dda2d00d2973368916bc4608d1d0f0a777aaf6f6",
   "source_files": {
     "run_live_new_examples_30.pl": "2f598be5e6d80792df8dadca0094238897c0f43f6ba1e8f385d22bb20c84b068",
     "new_examples_31_60.pl": "59fe68f0545c586979df619edb39b75546fa9094a69d441bf8d24a56ba74abe8",
     "new_examples_61_90.pl": "724f437d72ef27a4e45d5e42a143e42508780c3ddc05c29008274611a4c6d103",
     "new_examples_91_190.pl": "70f667fd9925c10ed9e9e0d59e7b053efd34db63d78cbb7110d2128060467e70",
-    "new_examples_191_290.pl": "0c6cc516a630dfd6b2dd148e18d6142ffffa13e7571b6d2e75cb8a5486fc1297",
+    "new_examples_191_290.pl": "525b387003c4dad739d26a9058ad5501441a4e0976539193b02406548e661c5b",
     "new_examples_291_390.pl": "0b19559f6a9b1a67777852cbc6e2b85ea0ab2ffcc199651493a44b9d4dc9ad25",
     "new_examples_391_490.pl": "4da53001e25c800bc5bfabdbed5eb940124eccea241b7183d7bcfb8b389a42af",
     "new_examples_491_590.pl": "3507d3eef0dcfd993932645ad50c8d2377d9ca89ef293d686cc2cdeb4d3c06bd"
@@ -1652,8 +1652,10 @@
       },
       {
         "description": "n=2 and width=12",
+        "diagnostic": "Variable word is uninitialized",
         "id": "240",
         "name": "dictionary_columns_work_lookup",
+        "quality": 1,
         "sas": "data e240lookup; length word $12; x=1; run; proc sql; create table e240 as select count(*) as n,max(length) as width from dictionary.columns where libname='WORK' and memname='E240LOOKUP'; quit;\ndata _null_; set e240; if n=2 and width=12 then put 'MCP30_OK_240'; else put 'ERROR: MCP30_ASSERT_240'; run;\nproc print data=e240; run;\n",
         "source_ref": "D:Proc contents output variable information without ODS print.sas"
       },
