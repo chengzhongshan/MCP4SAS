@@ -1,5 +1,14 @@
 # Installation video
 
+The current edition includes matching **Perl and Python** commands for SAS
+submission, saved files, scientific examples and output checking. The final
+section explains native Python setup on Windows, macOS and Ubuntu and the
+optional Python MCP server. The existing 0.1.5 plugin keeps its Perl runtime.
+
+The [Python scene source](python-demo-scenes.json) retains the editable command
+cards and narration. Read the [paired demo guide](../PYTHON_DEMOS.md) for runnable
+commands and evidence limits.
+
 Watch online: https://chengzhongshan.github.io/MCP4SAS/
 
 The README links to the browser player on GitHub Pages. The MP4 and offline

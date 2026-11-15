@@ -1,6 +1,6 @@
 ## MCP4SAS: connect your AI assistant to SAS
 
-Welcome! Let's install MCP4SAS in Visual Studio Code, connect to SAS, and see both GitHub Copilot and Codex run a SAS program. We'll start here, on the MCP4SAS GitHub homepage.
+Welcome! Let's connect SAS to Visual Studio Code, and watch Copilot and Codex run a program. MCP4SAS welcomes both Perl and Python users. We'll follow the existing plugin setup first, then show the matching Python commands. We begin on the MCP4SAS GitHub homepage.
 
 ## Create your working folder
 
@@ -120,7 +120,7 @@ Here the runner confirms the ODA connection. You can now move on to submitting a
 
 ## Submit SAS code directly
 
-Run the inline PROC PRINT example from the terminal. The command uses the configured connection without an AI request.
+This command uses the Perl runner to submit SAS code. Check the returned log and HTML. Later in this video, we'll run the same SAS program with the matching Python runner.
 
 ## The SAS job is running
 
@@ -236,4 +236,32 @@ On Ubuntu, install Git if needed, clone the repository, and run the Ubuntu insta
 
 ## The same VS Code extension on all three systems
 
-The same VSIX extension works on Windows, Mac and Ubuntu. Open your intended working folder, run Quick Setup, and select your assistant. Cygwin is only needed on Windows. Keep passwords private, save your SAS files, and verify the actual output and log. The links, commands and caption file accompany this video.
+The same VSIX extension works on Windows, Mac and Ubuntu. Its current setup uses the Perl runtime, with Cygwin on Windows. Prefer Python? You can use a separate native Python environment, without Perl or Cygwin. Let's look at that option next.
+
+## MCP4SAS is for Perl and Python users
+
+You don't have to be a Perl programmer to use MCP4SAS. Python users have their own runner, beside the Perl version. These two commands submit the same SAS program. Choose either one. Your SAS code and reusable macros stay in SAS; the runner handles the connection, files and results.
+
+## Windows: set up native Python
+
+For Python on Windows, open PowerShell in your MCP4SAS folder. Create a separate environment, activate it, install the listed packages, and run the configurator. No Cygwin is needed for this Python route. SAS OnDemand still needs Java, the encryption files downloaded from SAS, and your own account. The written guide also explains what to do if PowerShell blocks activation.
+
+## macOS and Ubuntu: the Python alternative
+
+On a Mac or Ubuntu, create and activate the environment with these commands. Then install the packages and run the same Python configurator. Ubuntu may need the Python venv package first. You can choose this route instead of the Perl installer. For SAS OnDemand, the account and encryption-file requirements are unchanged.
+
+## Save test.sas; choose either runner
+
+Remember the saved-file example from earlier? Python users simply choose the matching dot-py runner. Save test dot sass before submitting it, and check that your terminal is in the right folder. You can run either command without an AI assistant. When reusing a named SAS session, stay with the same runtime; Perl and Python keep separate session registries.
+
+## The same scientific examples in both languages
+
+The scientific examples have Python counterparts too. Choose either command for the expression clustergram, or the regional plot comparing several genome-wide association studies. Both routes reuse the original SAS programs, macros and input data. They also collect the figures and numerical tables. You aren't asking an AI model to invent a replacement plot.
+
+## Use an AI agent with the Python server
+
+For AI-assisted work, the Python edition has its own MCP server. A client can launch it over standard input and output, or connect to the loopback HTTP endpoint shown here. Use one transport, not both commands at once. The Python guide shows the separate client configuration. The existing extension still uses Perl; installing the Python files doesn't silently change your assistant's connection.
+
+## Check the figures, numerical tables and SAS log
+
+Use the matching checker to verify the downloaded files and numerical results. Replace the placeholder with your actual results folder, and read the complete SAS log, including warnings. Automated checks don't replace scientific interpretation or a visual review. Whether you prefer Perl or Python, MCP4SAS gives you a repeatable route from saved SAS code to results. The links below take you to both sets of examples.

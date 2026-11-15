@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Install MCP4SAS | Watch the Copilot and Codex walkthrough</title>
-  <meta name="description" content="Install MCP4SAS in VS Code and see GitHub Copilot and Codex run SAS. Includes Windows setup, SAS encryption files, and macOS and Ubuntu instructions.">
+  <title>Install MCP4SAS | Perl and Python walkthrough</title>
+  <meta name="description" content="MCP4SAS for Perl and Python users: VS Code installation, Copilot and Codex SAS demos, matching Python commands, and Windows, macOS and Ubuntu setup.">
   <meta property="og:title" content="Install MCP4SAS: video walkthrough">
   <meta property="og:image" content="https://chengzhongshan.github.io/MCP4SAS/preview.png">
   <link rel="stylesheet" href="style.css">
@@ -14,12 +14,12 @@
   <nav aria-label="Project links"><a href="https://github.com/chengzhongshan/MCP4SAS">MCP4SAS on GitHub</a><a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/integrations/vscode/README.md">Installation guide</a></nav>
   <header>
     <p class="eyebrow">SAS + VS CODE + AI AGENTS</p>
-    <h1>Install MCP4SAS, then run SAS with Copilot and Codex</h1>
-    <p class="intro">Follow the Windows installation and watch both assistants run a SAS program. macOS and Ubuntu instructions follow at the end.</p>
+    <h1>MCP4SAS for Perl and Python users</h1>
+    <p class="intro">Follow the Windows plugin installation and watch Copilot and Codex run SAS. Then choose the matching Python setup and commands on Windows, macOS or Ubuntu.</p>
   </header>
   <div class="player">
     <video id="movie" controls preload="none" playsinline poster="homepage.jpg" aria-label="MCP4SAS installation walkthrough">
-      <source src="installation.mp4" type="video/mp4">
+      <source src="installation.mp4?v=0006d5131065" type="video/mp4">
       Your browser cannot play this video. Use the MP4 download below.
     </video>
     <button class="cover" id="start" aria-label="Play MCP4SAS installation walkthrough">
@@ -30,25 +30,32 @@
   <p id="player-status" role="status" aria-live="polite">9 minutes 54 seconds. English narration and captions are included.</p>
   <div class="actions">
     <a class="button" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/mcp4sas-0.1.5.vsix">Download VS Code extension 0.1.5</a>
-    <a class="button secondary" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Clean_Captions_20261114.mp4">Download MP4</a>
-    <a class="button secondary" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Offline_20261114.zip">Watch offline</a>
+    <a class="button secondary" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Perl_and_Python_20261114.mp4">Download MP4</a>
+    <a class="button secondary" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Perl_and_Python_20261114.zip">Watch offline</a>
   </div>
   <section aria-labelledby="chapters-title">
     <h2 id="chapters-title">Jump to a step</h2>
     <ol class="chapters">
-      <li><a href="#t=21" data-time="21"><time>0:21</time><span>Open your working folder</span></a></li>
-      <li><a href="#t=35" data-time="35"><time>0:35</time><span>Install the VS Code extension</span></a></li>
-      <li><a href="#t=52" data-time="52"><time>0:52</time><span>Run Quick Setup</span></a></li>
-      <li><a href="#t=136" data-time="136"><time>2:16</time><span>Download the SAS encryption files</span></a></li>
-      <li><a href="#t=193" data-time="193"><time>3:13</time><span>Configure your private SAS ODA login</span></a></li>
-      <li><a href="#t=256" data-time="256"><time>4:16</time><span>Check company-network access (TCP 8591)</span></a></li>
-      <li><a href="#t=316" data-time="316"><time>5:16</time><span>Save and submit a SAS program</span></a></li>
-      <li><a href="#t=378" data-time="378"><time>6:18</time><span>GitHub Copilot: run SAS</span></a></li>
-      <li><a href="#t=451" data-time="451"><time>7:31</time><span>Codex: run SAS</span></a></li>
-      <li><a href="#t=488" data-time="488"><time>8:08</time><span>Automatic Python and SAS detection</span></a></li>
-      <li><a href="#t=528" data-time="528"><time>8:48</time><span>Windows command-line installation</span></a></li>
-      <li><a href="#t=544" data-time="544"><time>9:04</time><span>macOS installation</span></a></li>
-      <li><a href="#t=559" data-time="559"><time>9:19</time><span>Ubuntu installation</span></a></li>
+      <li><a href="#t=20" data-time="20"><time>0:20</time><span>Create your working folder</span></a></li>
+      <li><a href="#t=41" data-time="41"><time>0:41</time><span>Install the extension from VSIX</span></a></li>
+      <li><a href="#t=58" data-time="58"><time>0:58</time><span>Open MCP4SAS Quick Setup</span></a></li>
+      <li><a href="#t=142" data-time="142"><time>2:22</time><span>Get the encryption JARs directly from SAS</span></a></li>
+      <li><a href="#t=199" data-time="199"><time>3:19</time><span>Configure SAS ODA Login</span></a></li>
+      <li><a href="#t=262" data-time="262"><time>4:22</time><span>Check access through your company network</span></a></li>
+      <li><a href="#t=334" data-time="334"><time>5:34</time><span>Write and save your SAS code</span></a></li>
+      <li><a href="#t=388" data-time="388"><time>6:28</time><span>Copilot: ask to run SAS</span></a></li>
+      <li><a href="#t=462" data-time="462"><time>7:42</time><span>Codex: ask to test the SAS program</span></a></li>
+      <li><a href="#t=498" data-time="498"><time>8:18</time><span>SAS setup is detected automatically</span></a></li>
+      <li><a href="#t=538" data-time="538"><time>8:58</time><span>Windows CMD alternative</span></a></li>
+      <li><a href="#t=554" data-time="554"><time>9:14</time><span>macOS: terminal installation</span></a></li>
+      <li><a href="#t=569" data-time="569"><time>9:29</time><span>Ubuntu: terminal installation</span></a></li>
+      <li><a href="#t=598" data-time="598"><time>9:58</time><span>MCP4SAS is for Perl and Python users</span></a></li>
+      <li><a href="#t=618" data-time="618"><time>10:18</time><span>Windows: set up native Python</span></a></li>
+      <li><a href="#t=643" data-time="643"><time>10:43</time><span>macOS and Ubuntu: the Python alternative</span></a></li>
+      <li><a href="#t=664" data-time="664"><time>11:04</time><span>Save test.sas; choose either runner</span></a></li>
+      <li><a href="#t=686" data-time="686"><time>11:26</time><span>The same scientific examples in both languages</span></a></li>
+      <li><a href="#t=709" data-time="709"><time>11:49</time><span>Use an AI agent with the Python server</span></a></li>
+      <li><a href="#t=735" data-time="735"><time>12:15</time><span>Check the figures, numerical tables and SAS log</span></a></li>
     </ol>
   </section>
   <section class="tips" aria-label="Before you connect">
@@ -56,6 +63,7 @@
     <div><h2>Get the SAS files</h2><p>Download the three encryption JARs from <a href="https://support.sas.com/downloads/package.htm?pid=2494">SAS</a>, sign in if requested, and extract them. Java alone does not provide these files.</p></div>
     <div><h2>On a company network?</h2><p>SAS ODA uses outbound TCP <strong>8591</strong>. If blocked, ask IT/IS to allow access to your account's SAS ODA home-region servers. See <a href="https://support.sas.com/ondemand/saspy.html">SAS configuration guidance</a>.</p></div>
   </section>
+  <p><strong>Prefer Python?</strong> The video now includes a dedicated Python section. Follow the <a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/MCP4SAS_Use_Python/README.md">Python setup guide</a> or browse the <a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/PYTHON_DEMOS.md">paired Perl/Python demos</a>. The current plugin keeps its Perl connection; Python is optional.</p>
   <p class="small">Quick Setup detects Python and SASPy automatically. Local SAS requires an existing licensed installation. Keep account credentials in the private setup terminal. The video already contains the smaller captions; leave external subtitles off.</p>
   <footer>By Zhongshan Cheng. <a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/installation/transcript.md">Read the transcript</a> &middot; <a href="https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5">Release downloads</a></footer>
 </main>

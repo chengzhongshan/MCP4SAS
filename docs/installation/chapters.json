@@ -1,67 +1,102 @@
 [
   {
-    "seconds": 21,
-    "label": "0:21",
-    "title": "Open your working folder"
+    "seconds": 20,
+    "label": "0:20",
+    "title": "Create your working folder"
   },
   {
-    "seconds": 35,
-    "label": "0:35",
-    "title": "Install the VS Code extension"
+    "seconds": 41,
+    "label": "0:41",
+    "title": "Install the extension from VSIX"
   },
   {
-    "seconds": 52,
-    "label": "0:52",
-    "title": "Run Quick Setup"
+    "seconds": 58,
+    "label": "0:58",
+    "title": "Open MCP4SAS Quick Setup"
   },
   {
-    "seconds": 136,
-    "label": "2:16",
-    "title": "Download the SAS encryption files"
+    "seconds": 142,
+    "label": "2:22",
+    "title": "Get the encryption JARs directly from SAS"
   },
   {
-    "seconds": 193,
-    "label": "3:13",
-    "title": "Configure your private SAS ODA login"
+    "seconds": 199,
+    "label": "3:19",
+    "title": "Configure SAS ODA Login"
   },
   {
-    "seconds": 256,
-    "label": "4:16",
-    "title": "Check company-network access (TCP 8591)"
+    "seconds": 262,
+    "label": "4:22",
+    "title": "Check access through your company network"
   },
   {
-    "seconds": 316,
-    "label": "5:16",
-    "title": "Save and submit a SAS program"
+    "seconds": 334,
+    "label": "5:34",
+    "title": "Write and save your SAS code"
   },
   {
-    "seconds": 378,
-    "label": "6:18",
-    "title": "GitHub Copilot: run SAS"
+    "seconds": 388,
+    "label": "6:28",
+    "title": "Copilot: ask to run SAS"
   },
   {
-    "seconds": 451,
-    "label": "7:31",
-    "title": "Codex: run SAS"
+    "seconds": 462,
+    "label": "7:42",
+    "title": "Codex: ask to test the SAS program"
   },
   {
-    "seconds": 488,
-    "label": "8:08",
-    "title": "Automatic Python and SAS detection"
+    "seconds": 498,
+    "label": "8:18",
+    "title": "SAS setup is detected automatically"
   },
   {
-    "seconds": 528,
-    "label": "8:48",
-    "title": "Windows command-line installation"
+    "seconds": 538,
+    "label": "8:58",
+    "title": "Windows CMD alternative"
   },
   {
-    "seconds": 544,
-    "label": "9:04",
-    "title": "macOS installation"
+    "seconds": 554,
+    "label": "9:14",
+    "title": "macOS: terminal installation"
   },
   {
-    "seconds": 559,
-    "label": "9:19",
-    "title": "Ubuntu installation"
+    "seconds": 569,
+    "label": "9:29",
+    "title": "Ubuntu: terminal installation"
+  },
+  {
+    "seconds": 598,
+    "label": "9:58",
+    "title": "MCP4SAS is for Perl and Python users"
+  },
+  {
+    "seconds": 618,
+    "label": "10:18",
+    "title": "Windows: set up native Python"
+  },
+  {
+    "seconds": 643,
+    "label": "10:43",
+    "title": "macOS and Ubuntu: the Python alternative"
+  },
+  {
+    "seconds": 664,
+    "label": "11:04",
+    "title": "Save test.sas; choose either runner"
+  },
+  {
+    "seconds": 686,
+    "label": "11:26",
+    "title": "The same scientific examples in both languages"
+  },
+  {
+    "seconds": 709,
+    "label": "11:49",
+    "title": "Use an AI agent with the Python server"
+  },
+  {
+    "seconds": 735,
+    "label": "12:15",
+    "title": "Check the figures, numerical tables and SAS log"
   }
 ]

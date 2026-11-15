@@ -1,0 +1,106 @@
+[
+  {
+    "title": "MCP4SAS is for Perl and Python users",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "perl run_sas_codes_or_files_in_ODA.pl --code \"proc print data=sashelp.class; run;\"",
+      "python run_sas_codes_or_files_in_ODA.py --code \"proc print data=sashelp.class; run;\""
+    ],
+    "lines": [
+      "Choose either runner; the SAS program stays the same.",
+      "Both can submit SAS, handle files and return logs."
+    ],
+    "narration": "You don't have to be a Perl programmer to use MCP4SAS. Python users have their own runner, beside the Perl version. These two commands submit the same SAS program. Choose either one. Your SAS code and reusable macros stay in SAS; the runner handles the connection, files and results.",
+    "pythonEdition": true
+  },
+  {
+    "title": "Windows: set up native Python",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "py -3 -m venv MCP4SAS_Use_Python/.venv",
+      ".\\MCP4SAS_Use_Python\\.venv\\Scripts\\Activate.ps1",
+      "python -m pip install -r MCP4SAS_Use_Python/requirements.txt",
+      "python MCP4SAS_Use_Python/install.py"
+    ],
+    "lines": [
+      "PowerShell · repository folder · Python 3.10 or later",
+      "SAS ODA still needs Java, SAS JARs and your private account."
+    ],
+    "narration": "For Python on Windows, open PowerShell in your MCP4SAS folder. Create a separate environment, activate it, install the listed packages, and run the configurator. No Cygwin is needed for this Python route. SAS OnDemand still needs Java, the encryption files downloaded from SAS, and your own account. The written guide also explains what to do if PowerShell blocks activation.",
+    "pythonEdition": true
+  },
+  {
+    "title": "macOS and Ubuntu: the Python alternative",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "python3 -m venv MCP4SAS_Use_Python/.venv",
+      "source MCP4SAS_Use_Python/.venv/bin/activate",
+      "python -m pip install -r MCP4SAS_Use_Python/requirements.txt",
+      "python MCP4SAS_Use_Python/install.py"
+    ],
+    "lines": [
+      "Use the same repository; choose the Perl or Python setup.",
+      "Ubuntu may need: sudo apt-get install python3-venv"
+    ],
+    "narration": "On a Mac or Ubuntu, create and activate the environment with these commands. Then install the packages and run the same Python configurator. Ubuntu may need the Python venv package first. You can choose this route instead of the Perl installer. For SAS OnDemand, the account and encryption-file requirements are unchanged.",
+    "pythonEdition": true
+  },
+  {
+    "title": "Save test.sas; choose either runner",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "perl run_sas_codes_or_files_in_ODA.pl --file test.sas",
+      "python run_sas_codes_or_files_in_ODA.py --file test.sas"
+    ],
+    "lines": [
+      "Save the file with Ctrl+S before submitting it.",
+      "Use the same runtime and session name when reusing WORK tables."
+    ],
+    "narration": "Remember the saved-file example from earlier? Python users simply choose the matching dot-py runner. Save test dot sass before submitting it, and check that your terminal is in the right folder. You can run either command without an AI assistant. When reusing a named SAS session, stay with the same runtime; Perl and Python keep separate session registries.",
+    "pythonEdition": true
+  },
+  {
+    "title": "The same scientific examples in both languages",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "perl examples/poc/run_example.pl --case clustergram",
+      "python examples/poc/run_example.py --case clustergram",
+      "perl examples/poc/run_example.pl --case multi_gwas_gtf",
+      "python examples/poc/run_example.py --case multi_gwas_gtf"
+    ],
+    "lines": [
+      "The original SAS macros and datasets are reused."
+    ],
+    "narration": "The scientific examples have Python counterparts too. Choose either command for the expression clustergram, or the regional plot comparing several genome-wide association studies. Both routes reuse the original SAS programs, macros and input data. They also collect the figures and numerical tables. You aren't asking an AI model to invent a replacement plot.",
+    "pythonEdition": true
+  },
+  {
+    "title": "Use an AI agent with the Python server",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "python server.py",
+      "python server.py daemon --host 127.0.0.1 --port 8081"
+    ],
+    "lines": [
+      "stdio: the MCP client starts server.py.",
+      "HTTP alternative: http://127.0.0.1:8081/mcp",
+      "The current 0.1.5 plugin keeps its Perl setup."
+    ],
+    "narration": "For AI-assisted work, the Python edition has its own MCP server. A client can launch it over standard input and output, or connect to the loopback HTTP endpoint shown here. Use one transport, not both commands at once. The Python guide shows the separate client configuration. The existing extension still uses Perl; installing the Python files doesn't silently change your assistant's connection.",
+    "pythonEdition": true
+  },
+  {
+    "title": "Check the figures, numerical tables and SAS log",
+    "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
+    "code": [
+      "perl examples/poc/validate_outputs.pl --case clustergram --dir PATH_TO_RESULTS/files",
+      "python examples/poc/validate_outputs.py --case clustergram --dir PATH_TO_RESULTS/files"
+    ],
+    "lines": [
+      "Replace PATH_TO_RESULTS with your actual output folder.",
+      "Perl or Python: keep the SAS log and inspect the returned figure."
+    ],
+    "narration": "Use the matching checker to verify the downloaded files and numerical results. Replace the placeholder with your actual results folder, and read the complete SAS log, including warnings. Automated checks don't replace scientific interpretation or a visual review. Whether you prefer Perl or Python, MCP4SAS gives you a repeatable route from saved SAS code to results. The links below take you to both sets of examples.",
+    "pythonEdition": true
+  }
+]
