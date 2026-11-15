@@ -439,9 +439,19 @@ for my $case (@cases) {
         my $log_path="$directory/output.html.info.txt";
         my $log=-f $log_path ? load_text($log_path) : '';
         push @problems,'full log missing' unless length $log;
-        push @problems,'expected diagnostic absent' if $case->{diagnostic} && $log !~ /$case->{diagnostic}/i;
+        my ($runtime_log)=$log=~/^=== SAS Log ===\r?\n(.*?)(?:\r?\n=== Output ===|\z)/ms;
+        $runtime_log //= '';
+        push @problems,'SAS runtime log missing' unless $runtime_log=~/\S/;
+        my $visible=join "\n",grep {!/^\s*(?:\d+(?:\s+|!\s*)|MPRINT\([^)]*\):|SYMBOLGEN:|MLOGIC\([^)]*\):)/i} split /\r?\n/,$runtime_log;
+        my $diagnostic_text=$visible;
+        if ($case->{fail}) {
+            push @problems,'infrastructure/worker failure cannot validate an intentional SAS error' unless defined($exit) && $exit==1;
+            $diagnostic_text=join "\n",grep {/^\s*(?:ERROR|WARNING)(?:\s+\d+-\d+)?:/i} split /\r?\n/,$visible;
+            push @problems,'expected runtime SAS diagnostic absent' unless $diagnostic_text=~/\S/;
+        }
+        push @problems,'expected diagnostic absent' if $case->{diagnostic} && $diagnostic_text !~ /$case->{diagnostic}/i;
         push @problems,'unexpected dependency injection' if $case->{forbid} && $log =~ /$case->{forbid}/i;
-        push @problems,'computed result marker absent' if !$case->{fail} && $log !~ /^MCP30_OK_$case->{id}\s*$/m;
+        push @problems,'computed result marker absent' if !$case->{fail} && $runtime_log !~ /^MCP30_OK_$case->{id}\s*$/m;
         my @html=glob("$directory/sas_res_*.html");
         $result->{html}=[map { +{path=>$_,bytes=>-s $_} } @html];
         push @problems,'nonempty HTML missing' if !$case->{fail} && (!exists($case->{html}) || $case->{html}) && !grep { -s $_ } @html;

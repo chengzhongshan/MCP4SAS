@@ -227,7 +227,9 @@ class Backend:
             if classify(str(exc))['exit_code'] in (73,74):
                 # Discard this unusable bridge only. Do not retry user SAS, and
                 # do not disturb another runtime or named session.
-                stop_owned_pid(self.pid,self.timeout_grace_seconds,process=self.process)
+                # This session is already unusable. Waiting the ordinary
+                # timeout grace cannot recover it and only delays diagnosis.
+                stop_owned_pid(self.pid,0,process=self.process)
                 self.record.unlink(missing_ok=True)
             raise
 

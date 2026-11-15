@@ -75,9 +75,18 @@ def assess(case,done,batch):
     path=Path(data.get('log_path') or '__missing_log__')
     log=path.read_text(encoding='utf-8',errors='replace') if path.is_file() else ''
     if not log: problems.append('Full local SAS log missing')
-    if case.get('diagnostic') and not re.search(case['diagnostic'],log,re.I): problems.append('Expected diagnostic absent')
+    runtime=re.search(r'^=== SAS Log ===\r?\n(.*?)(?:\r?\n=== Output ===|\Z)',log,re.M|re.S)
+    runtime_log=runtime[1] if runtime else ''
+    visible='\n'.join(line for line in runtime_log.splitlines() if not re.match(r'^\s*(?:\d+(?:\s+|!\s*)|MPRINT\([^)]*\):|SYMBOLGEN:|MLOGIC\([^)]*\):)',line,re.I))
+    if not runtime_log.strip():problems.append('SAS runtime log missing')
+    diagnostic_text=visible
+    if case.get('fail'):
+        if data.get('exit_code')!=1:problems.append('Infrastructure/worker failure cannot validate an intentional SAS error')
+        diagnostic_text='\n'.join(line for line in visible.splitlines() if re.match(r'^\s*(?:ERROR|WARNING)(?:\s+\d+-\d+)?:',line,re.I))
+        if not diagnostic_text:problems.append('Expected runtime SAS diagnostic absent')
+    if case.get('diagnostic') and not re.search(case['diagnostic'],diagnostic_text,re.I): problems.append('Expected diagnostic absent')
     if case.get('forbid') and re.search(case['forbid'],log,re.I): problems.append('Forbidden dependency injected')
-    if not case.get('fail') and not re.search(r'^MCP30_OK_'+re.escape(case['id'])+r'\s*$',log,re.M): problems.append('Computed result marker absent')
+    if not case.get('fail') and not re.search(r'^MCP30_OK_'+re.escape(case['id'])+r'\s*$',runtime_log,re.M): problems.append('Computed result marker absent')
     diagnostics=data.get('diagnostics',{})
     for key,field in [('quality','data_quality_count'),('warning','warning_count')]:
         if case.get(key) and not diagnostics.get(field): problems.append(f'Expected {key} diagnostic absent')

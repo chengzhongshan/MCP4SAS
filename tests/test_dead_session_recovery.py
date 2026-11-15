@@ -28,7 +28,7 @@ class DeadSessionTests(unittest.TestCase):
         backend=object.__new__(transport.Backend)
         backend.session_id='only_this_session';backend.local_home=None
         backend.port=1;backend.token='fixture-token';backend.timeout=1
-        backend.timeout_grace_seconds=0;backend.pid=123;backend.process=None;backend.record=Mock()
+        backend.timeout_grace_seconds=15;backend.pid=123;backend.process=None;backend.record=Mock()
         with patch.object(transport,'request',side_effect=RuntimeError('No SAS process attached')) as request,patch.object(transport,'stop_owned_pid') as stop:
             with self.assertRaises(RuntimeError):backend.call('submit',code='data x;run;')
             request.assert_called_once();stop.assert_called_once_with(123,0,process=None)

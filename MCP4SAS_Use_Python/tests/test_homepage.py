@@ -80,9 +80,9 @@ class HomepageDemoTests(unittest.TestCase):
             log=Path(temp)/'output.html.info.txt'
             data=dict(structuredContent=dict(status='COMPLETE',exit_code=0,log_path=str(log),diagnostics={}),isError=False)
             self.assertFalse(assess(case,data,1)['passed'])
-            log.write_text('MCP30_OK_01\n')
+            log.write_text('=== SAS Log ===\nMCP30_OK_01\n=== Output ===\n')
             self.assertTrue(assess(case,data,1)['passed'])
-            log.write_text('12 %put MCP30_OK_01;\n')
+            log.write_text('=== SAS Log ===\n12 %put MCP30_OK_01;\n=== Output ===\n')
             self.assertFalse(assess(case,data,1)['passed'])
 
     def test_pinned_builder_reads_git_objects_not_dirty_worktree(self):
