@@ -1,0 +1,80 @@
+{
+  "date": "2026-11-15",
+  "video": "MCP4SAS_Install_Perl_Python_AutoEnv_20261115.mp4",
+  "sha256": "702de3344bf01d90b83d46e950d392192ae0d120173483cd8a4decee93a47d55",
+  "bytes": 58496926,
+  "duration_seconds": 776.752,
+  "scenes": 67,
+  "changed_scenes": [
+    60,
+    62,
+    63
+  ],
+  "original_screenshots": 52,
+  "creation_order": "PASS",
+  "screenshot_hashes": "PASS",
+  "unchanged_capture_content": "PASS",
+  "simplified_commands": "PASS: no environment creation/activation command cards",
+  "voice": "en-US-AvaMultilingualNeural",
+  "small_caption_layers": 1,
+  "subtitle_tracks": 0,
+  "decoding": "passed, no diagnostics",
+  "first_frame": {
+    "key_frame": 1,
+    "best_effort_timestamp_time": "0.000000",
+    "side_data_list": [
+      {
+        "side_data_type": "H.26[45] User Data Unregistered SEI message"
+      }
+    ]
+  },
+  "opening_black_frames": "none detected in first ten seconds",
+  "text_overflows": [],
+  "local_player": {
+    "url": "file:///E:/LongCOVID_HGI_GWAS/PGC_Large_GWASs/Manuscript4AI_with_PGC_GWASs/FR_Reviewers_Comments/perlMCP4Gemini_Paper/MCP4SAS_Windows_Video/render/public_site/index.html",
+    "initial": {
+      "paused": true,
+      "time": 0,
+      "poster_width": 1920,
+      "cover_visible": true,
+      "subtitle_tracks": 0,
+      "chapters": 20
+    },
+    "playback": "PASS",
+    "cover_until_decoded_frame": "PASS",
+    "seeks": [
+      {
+        "title": "Codex: ask to test the SAS program",
+        "seconds": 462,
+        "status": "PASS"
+      },
+      {
+        "title": "MCP4SAS is for Perl and Python users",
+        "seconds": 603,
+        "status": "PASS"
+      }
+    ],
+    "mobile": {
+      "width": 390,
+      "content": 390
+    },
+    "script_errors": []
+  },
+  "cygwin_smoke": {
+    "base_interpreter": "/usr/bin/python",
+    "base_has_saspy": false,
+    "automatic_relaunch": true,
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 0,
+    "scope": "Existing installed Cygwin project; no manual activation or explicit interpreter override. Not a new installation."
+  },
+  "poc": {
+    "cases": 6,
+    "passed": 6,
+    "checks": 11929,
+    "warnings": 23,
+    "report": "../PYTHON_POC_VALIDATION_20261115.md"
+  },
+  "limitations": "Original installation screenshots and tested command cards; not a fresh installation recording. Six PoC cases ran on native Windows Python/ODA; Cygwin auto-selection was checked separately. Optional Python MCP server requires its documented dependencies."
+}

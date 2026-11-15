@@ -236,19 +236,19 @@ On Ubuntu, install Git if needed, clone the repository, and run the Ubuntu insta
 
 ## The same VS Code extension on all three systems
 
-The same VSIX extension works on Windows, Mac and Ubuntu. Its current setup uses the Perl runtime, with Cygwin on Windows. Prefer Python? You can use a separate native Python environment, without Perl or Cygwin. Let's look at that option next.
+The same VSIX extension works on Windows, Mac and Ubuntu. Its current setup uses the Perl runtime, with Cygwin on Windows. Python users can also run the matching commands from the project terminal. After setup, the runner can find the installed SASPy environment for you. Let's try it, without activating an environment by hand.
 
 ## MCP4SAS is for Perl and Python users
 
 You don't have to be a Perl programmer to use MCP4SAS. Python users have their own runner, beside the Perl version. These two commands submit the same SAS program. Choose either one. Your SAS code and reusable macros stay in SAS; the runner handles the connection, files and results.
 
-## Windows: set up native Python
+## Windows: run Python directly in Cygwin
 
-For Python on Windows, open PowerShell in your MCP4SAS folder. Create a separate environment, activate it, install the listed packages, and run the configurator. No Cygwin is needed for this Python route. SAS OnDemand still needs Java, the encryption files downloaded from SAS, and your own account. The written guide also explains what to do if PowerShell blocks activation.
+Stay in the Cygwin terminal opened in your MCP4SAS folder. Once installation and SAS configuration are complete, just type python, followed by the runner and your code or saved file. The runner finds the project's compatible SASPy environment automatically. There is no separate activation command to copy. You still need your SAS account, Java, and the encryption files downloaded from SAS. If setup is incomplete, follow the runner's diagnostic message before retrying.
 
-## macOS and Ubuntu: the Python alternative
+## macOS and Ubuntu: the same simple commands
 
-On a Mac or Ubuntu, create and activate the environment with these commands. Then install the packages and run the same Python configurator. Ubuntu may need the Python venv package first. You can choose this route instead of the Perl installer. For SAS OnDemand, the account and encryption-file requirements are unchanged.
+On a Mac or Ubuntu, finish the platform installer shown earlier, then use python three for the same commands. Run them from the MCP4SAS folder. The runner can reuse a compatible project environment, so you don't need to activate it for each submission. The separate Python guide is available if you want a native Python-only installation. Your SAS account and encryption-file requirements stay the same.
 
 ## Save test.sas; choose either runner
 

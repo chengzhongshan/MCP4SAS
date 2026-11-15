@@ -14,35 +14,32 @@
     "pythonEdition": true
   },
   {
-    "title": "Windows: set up native Python",
+    "title": "Windows: run Python directly in Cygwin",
     "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
     "code": [
-      "py -3 -m venv MCP4SAS_Use_Python/.venv",
-      ".\\MCP4SAS_Use_Python\\.venv\\Scripts\\Activate.ps1",
-      "python -m pip install -r MCP4SAS_Use_Python/requirements.txt",
-      "python MCP4SAS_Use_Python/install.py"
+      "python run_sas_codes_or_files_in_ODA.py --code \"proc print data=sashelp.class; run;\"",
+      "python run_sas_codes_or_files_in_ODA.py --file test.sas"
     ],
     "lines": [
-      "PowerShell · repository folder · Python 3.10 or later",
-      "SAS ODA still needs Java, SAS JARs and your private account."
+      "After Quick Setup, use Cygwin in your MCP4SAS folder.",
+      "The runner finds the installed project SASPy environment.",
+      "Save test.sas first; no manual environment activation is needed."
     ],
-    "narration": "For Python on Windows, open PowerShell in your MCP4SAS folder. Create a separate environment, activate it, install the listed packages, and run the configurator. No Cygwin is needed for this Python route. SAS OnDemand still needs Java, the encryption files downloaded from SAS, and your own account. The written guide also explains what to do if PowerShell blocks activation.",
+    "narration": "Stay in the Cygwin terminal opened in your MCP4SAS folder. Once installation and SAS configuration are complete, just type python, followed by the runner and your code or saved file. The runner finds the project's compatible SASPy environment automatically. There is no separate activation command to copy. You still need your SAS account, Java, and the encryption files downloaded from SAS. If setup is incomplete, follow the runner's diagnostic message before retrying.",
     "pythonEdition": true
   },
   {
-    "title": "macOS and Ubuntu: the Python alternative",
+    "title": "macOS and Ubuntu: the same simple commands",
     "tag": "PERL + PYTHON · CHOOSE YOUR RUNTIME",
     "code": [
-      "python3 -m venv MCP4SAS_Use_Python/.venv",
-      "source MCP4SAS_Use_Python/.venv/bin/activate",
-      "python -m pip install -r MCP4SAS_Use_Python/requirements.txt",
-      "python MCP4SAS_Use_Python/install.py"
+      "python3 run_sas_codes_or_files_in_ODA.py --file test.sas",
+      "python3 examples/poc/run_example.py --case clustergram"
     ],
     "lines": [
-      "Use the same repository; choose the Perl or Python setup.",
-      "Ubuntu may need: sudo apt-get install python3-venv"
+      "Complete the platform installer and SAS configuration first.",
+      "Run from the MCP4SAS folder; reuse its compatible Python environment."
     ],
-    "narration": "On a Mac or Ubuntu, create and activate the environment with these commands. Then install the packages and run the same Python configurator. Ubuntu may need the Python venv package first. You can choose this route instead of the Perl installer. For SAS OnDemand, the account and encryption-file requirements are unchanged.",
+    "narration": "On a Mac or Ubuntu, finish the platform installer shown earlier, then use python three for the same commands. Run them from the MCP4SAS folder. The runner can reuse a compatible project environment, so you don't need to activate it for each submission. The separate Python guide is available if you want a native Python-only installation. Your SAS account and encryption-file requirements stay the same.",
     "pythonEdition": true
   },
   {

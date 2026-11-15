@@ -65,38 +65,38 @@
     "title": "Ubuntu: terminal installation"
   },
   {
-    "seconds": 598,
-    "label": "9:58",
+    "seconds": 603,
+    "label": "10:03",
     "title": "MCP4SAS is for Perl and Python users"
   },
   {
-    "seconds": 618,
-    "label": "10:18",
-    "title": "Windows: set up native Python"
+    "seconds": 623,
+    "label": "10:23",
+    "title": "Windows: run Python directly in Cygwin"
   },
   {
-    "seconds": 643,
-    "label": "10:43",
-    "title": "macOS and Ubuntu: the Python alternative"
+    "seconds": 654,
+    "label": "10:54",
+    "title": "macOS and Ubuntu: the same simple commands"
   },
   {
-    "seconds": 664,
-    "label": "11:04",
+    "seconds": 679,
+    "label": "11:19",
     "title": "Save test.sas; choose either runner"
   },
   {
-    "seconds": 686,
-    "label": "11:26",
+    "seconds": 701,
+    "label": "11:41",
     "title": "The same scientific examples in both languages"
   },
   {
-    "seconds": 709,
-    "label": "11:49",
+    "seconds": 724,
+    "label": "12:04",
     "title": "Use an AI agent with the Python server"
   },
   {
-    "seconds": 735,
-    "label": "12:15",
+    "seconds": 750,
+    "label": "12:30",
     "title": "Check the figures, numerical tables and SAS log"
   }
 ]

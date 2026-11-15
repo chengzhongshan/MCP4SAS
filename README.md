@@ -7,10 +7,10 @@
 [![Play the MCP4SAS installation video](docs/installation/preview.png)](https://chengzhongshan.github.io/MCP4SAS/)
 
 Follow Windows installation, then watch **GitHub Copilot and Codex each run SAS**.
-The updated 12-minute 42-second video includes **matching Perl and Python commands**, native Python setup,
+The updated 12-minute 57-second video includes **matching Perl and Python commands**, automatic Python environment selection in Cygwin,
 and macOS and Ubuntu instructions. Both runtimes can run saved SAS without an AI agent.
 
-[Open video directly](https://chengzhongshan.github.io/MCP4SAS/installation.mp4) · [Download MP4](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Perl_and_Python_20261114.mp4) · [Watch offline](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Perl_and_Python_20261114.zip) · [Written setup guide](integrations/vscode/README.md)
+[Open video directly](https://chengzhongshan.github.io/MCP4SAS/installation.mp4) · [Download MP4](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Perl_Python_AutoEnv_20261115.mp4) · [Watch offline](https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Installation_Perl_Python_AutoEnv_20261115.zip) · [Written setup guide](integrations/vscode/README.md)
 
 Run SAS with AI agents through MCP, or from Perl or Python: connect to **SAS OnDemand
 for Academics (SAS ODA), local Linux SAS, and local Windows SAS** through SASPy.
