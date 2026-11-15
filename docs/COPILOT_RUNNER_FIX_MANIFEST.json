@@ -1,0 +1,256 @@
+{
+  "baseline_commit": "b7e3f7e63ebbaa09dd4fb747b19742a614e41a85",
+  "source_kind": "Author-supplied edited installation; no Git metadata",
+  "source_files": [
+    {
+      "path": "MCP4SAS_Use_Python/README.md",
+      "source_sha256": "457f8599a55105796d72034d8b932bbb6e40304a35a847c410446d05551f8bfc",
+      "source_bytes": 10988,
+      "reviewed_lf_sha256": "8180fe949ea4de3a5c8ddd12449f3ea0fa1948e49c671d15e16e64fb02e4ae4d"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/cli.py",
+      "source_sha256": "1c181f60befdf130b77ab273f947529e1fd0f864e535df650d16d690e0ddb94a",
+      "source_bytes": 23305,
+      "reviewed_lf_sha256": "fd1d5b7fd324939b1a15a8b2ef181b945d1800dd646ce28b2c259429777efda7"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/dependencies.py",
+      "source_sha256": "5395e9e12cd332edabec81220280e1a36623ac1cb7d2070a0e2d5134081d7ef0",
+      "source_bytes": 10222,
+      "reviewed_lf_sha256": "5395e9e12cd332edabec81220280e1a36623ac1cb7d2070a0e2d5134081d7ef0"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/diagnostics.py",
+      "source_sha256": "d2ecc7fc99db160898a76a5d6b39c41886b2226b5596c1a4319d30f51aace262",
+      "source_bytes": 6200,
+      "reviewed_lf_sha256": "3eec72bd35eef3a326063d598ce7e1407885a156f37105efa6d22407d5790d8e"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/runner.py",
+      "source_sha256": "ac54ca11b4e1069c0323910ea7a7af0d37edbf40d7e5dfe3bc223af179ea0f47",
+      "source_bytes": 4127,
+      "reviewed_lf_sha256": "ac54ca11b4e1069c0323910ea7a7af0d37edbf40d7e5dfe3bc223af179ea0f47"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/tests/test_runtime.py",
+      "source_sha256": "8e4ad9972480179412f471a19cb89adeab724b7ca0dd52b32dd9b5de940f1920",
+      "source_bytes": 19733,
+      "reviewed_lf_sha256": "95880ff1b188a5a9d2fa8bfc1f86824ae53be2e353dba8140238851f553a2fb4"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/transport.py",
+      "source_sha256": "35057c237b514aeea2d1fd94b00052d72f546c5da70522c5323749db71fcb5a0",
+      "source_bytes": 11061,
+      "reviewed_lf_sha256": "bc8b9804bc77b2b19b53794ee870f166d3aeef06fe9b003301a549212c5f2ebd"
+    },
+    {
+      "path": "MCPDeps/SAS_Evaluation_Log.pm",
+      "source_sha256": "3311ef5fcd5ecf2431c484deca0a93acab6fca76fd0c96b238702f2db7da1ee3",
+      "source_bytes": 3504,
+      "reviewed_lf_sha256": "89a813c7812755b8f446ce7ce906d9464bddb9c74ea773199590b3fe74eb7816"
+    },
+    {
+      "path": "MCPDeps/SAS_Log_Diagnostics.pm",
+      "source_sha256": "1761a755900225eee6d08bb33761375d98111947d9e7adf0729b49fc7897d97b",
+      "source_bytes": 5505,
+      "reviewed_lf_sha256": "717fdc711b24d64a6ab11dbeaa7eb36059d03ff64674ddba4b752f374deb6743"
+    },
+    {
+      "path": "MCPDeps/SAS_ODA_Runner.pm",
+      "source_sha256": "a91a30feec102ec4cc782e010dccad5a504d467e36f15c39954e47579f9a59d4",
+      "source_bytes": 192506,
+      "reviewed_lf_sha256": "a91a30feec102ec4cc782e010dccad5a504d467e36f15c39954e47579f9a59d4"
+    },
+    {
+      "path": "README.md",
+      "source_sha256": "fd35023dcf0574d5a204c7c267312c0450db2f9f683ca1156f5ef4c5283adfdb",
+      "source_bytes": 59778,
+      "reviewed_lf_sha256": "fd35023dcf0574d5a204c7c267312c0450db2f9f683ca1156f5ef4c5283adfdb"
+    },
+    {
+      "path": "run_sas_codes_or_files_in_ODA.pl",
+      "source_sha256": "f0e1f6c7d64b63ab521aa75438d4e0731adf464b7e6466345fc5e33bedfee0b6",
+      "source_bytes": 153118,
+      "reviewed_lf_sha256": "8c9cac292a65b6d3b3d78fd583534de325d06d0067b5c4c624e2630dda4fe92b"
+    },
+    {
+      "path": "run_sas_codes_or_script_in_ODA.pl",
+      "source_sha256": "f0e1f6c7d64b63ab521aa75438d4e0731adf464b7e6466345fc5e33bedfee0b6",
+      "source_bytes": 153118,
+      "reviewed_lf_sha256": "8c9cac292a65b6d3b3d78fd583534de325d06d0067b5c4c624e2630dda4fe92b"
+    },
+    {
+      "path": "tests/test_expected_failure_evaluation.pl",
+      "source_sha256": "f164439a3a13da75bcf0f2ed5e32e1b10499b960e9736f460a5144f6f885ce5f",
+      "source_bytes": 3304,
+      "reviewed_lf_sha256": "724137798eb93c70c4ec0830d3a642686643daacadc4024533364a8dd0024c58"
+    },
+    {
+      "path": "tests/test_sas_log_diagnostics.pl",
+      "source_sha256": "09edb4f1e54df2041c11405c3e77ea9afc87c53e55a1050ffd8e8f260bc9dee5",
+      "source_bytes": 3253,
+      "reviewed_lf_sha256": "09edb4f1e54df2041c11405c3e77ea9afc87c53e55a1050ffd8e8f260bc9dee5"
+    },
+    {
+      "path": "MCPDeps/test_sas_oda_macro_dir_fallback.pl",
+      "source_sha256": "1987e87bb8f635a7f46bf805d0ac88d79b33db96fbe228a72eeb934b61f322b7",
+      "source_bytes": 1458,
+      "reviewed_lf_sha256": "3d652039226d53208a55cc21b2e8f49686a6c1d37e2bc1281f997e38a8d5628a"
+    }
+  ],
+  "source_preserved": true,
+  "reviewed_hash_basis": "UTF-8 file bytes with CRLF normalized to LF",
+  "python_tests": 64,
+  "perl_assertions": 91,
+  "perl_checks": [
+    {
+      "script": "MCPDeps/test_sas_oda_macro_dir_fallback.pl",
+      "exit_code": 0,
+      "assertions": 5
+    },
+    {
+      "script": "MCPDeps/test_sas_log_and_labels.pl",
+      "exit_code": 0,
+      "assertions": 30
+    },
+    {
+      "script": "tests/test_sas_log_diagnostics.pl",
+      "exit_code": 0,
+      "assertions": 15
+    },
+    {
+      "script": "tests/test_expected_failure_evaluation.pl",
+      "exit_code": 0,
+      "assertions": 21
+    },
+    {
+      "script": "tests/test_copilot_runner_review.pl",
+      "exit_code": 0,
+      "assertions": 16
+    },
+    {
+      "script": "tests/test_runner_preflight_parity.pl",
+      "exit_code": 0,
+      "assertions": 4
+    }
+  ],
+  "live_sas": {
+    "target": "oda",
+    "cases": [
+      {
+        "case": "python_macro",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 15.229,
+        "stdout_bytes": 1805,
+        "log_bytes": 1564,
+        "html_bytes": 33284,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_environment_handoff",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 10.009,
+        "stdout_bytes": 1365,
+        "log_bytes": 1110,
+        "html_bytes": 33284,
+        "interpreter_handoff": true
+      },
+      {
+        "case": "perl_macro",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 38.69,
+        "stdout_bytes": 2376,
+        "log_bytes": 2542,
+        "html_bytes": 32126,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "perl_expected_error",
+        "exit_code": 1,
+        "expected_exit": 1,
+        "passed": true,
+        "problems": [],
+        "seconds": 9.474,
+        "stdout_bytes": 1367,
+        "log_bytes": 1615,
+        "html_bytes": 0,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_expected_error",
+        "exit_code": 1,
+        "expected_exit": 1,
+        "passed": true,
+        "problems": [],
+        "seconds": 1.279,
+        "stdout_bytes": 1030,
+        "log_bytes": 780,
+        "html_bytes": 0,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_literal_path",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 1.237,
+        "stdout_bytes": 1029,
+        "log_bytes": 781,
+        "html_bytes": 0,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_timeout",
+        "exit_code": 124,
+        "expected_exit": 124,
+        "passed": true,
+        "problems": [],
+        "seconds": 4.074,
+        "stdout_bytes": 353,
+        "log_bytes": 110,
+        "html_bytes": 0,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_recovery",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 15.701,
+        "stdout_bytes": 1343,
+        "log_bytes": 1099,
+        "html_bytes": 33284,
+        "interpreter_handoff": false
+      },
+      {
+        "case": "python_session_close",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "problems": [],
+        "seconds": 1.136,
+        "stdout_bytes": 416,
+        "log_bytes": 167,
+        "html_bytes": 0,
+        "interpreter_handoff": false
+      }
+    ]
+  },
+  "limitations": [
+    "Live SAS ODA from Windows only in this review.",
+    "Timings are not a paired performance or token-cost benchmark.",
+    "Private logs/configurations and JARs are excluded."
+  ]
+}

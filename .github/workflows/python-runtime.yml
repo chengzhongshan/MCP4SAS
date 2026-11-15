@@ -1,7 +1,7 @@
 name: Python runtime
 on:
   push:
-    branches: [main, feature/python-port]
+    branches: [main, feature/python-port, fix/copilot-runner-review]
     paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   pull_request:
     paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
@@ -46,6 +46,7 @@ jobs:
           python MCPDeps/test_sas_oda_connection_lifecycle.py
           python MCPDeps/test_sas_oda_include_lookup.py
           python MCPDeps/test_sas_oda_macro_helper_reuse.py
+          python MCPDeps/test_sas_oda_macro_dir_fallback.py
           python tests/new_validation_tasks_001_100.py
           python tests/covid19_gwas_validation_tasks_001_500.py
           python tests/run_live_new_examples_30.py --generate-only --batch 8 --out MCP4SAS_Use_Python/test-results/ci-batch8

@@ -48,3 +48,14 @@ original SAS examples were generated and checked for unchanged source/fixtures;
 this does not mean all 590 were executed. All six cross-platform jobs passed in
 run 43660360756 at code commit 21bc495; the completed update is published to main.
 See HOMEPAGE_DEMO_VALIDATION.md for the exact scope, fixes and evidence limits.
+
+## Author's Copilot-fix review
+
+Branch fix/copilot-runner-review compares 16 edited files from the author's local
+test installation with baseline b7e3f7e. The source installation is unchanged.
+Reviewed fixes include environment handoff, separate HTML output, browser controls,
+macro-directory fallback, network-path diagnostics and owned timeout cleanup.
+Unsafe implicit escape conversion, unanchored error matching and extra normal
+shutdown waits were corrected. Native Windows validation passed 64 Python tests,
+91 Perl assertions and nine live SAS ODA operations. Cross-platform branch CI is
+pending before publication. See docs/COPILOT_RUNNER_FIX_REVIEW.md at repository root.

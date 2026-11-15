@@ -18,7 +18,8 @@ sub evaluate {
         push @warnings,$line if $line=~/^\s*WARNING(?:\s+\d+-\d+)?:/i;
     }
     my $failure_class=ref($args{status}) eq 'HASH' ? ($args{status}{failure_class}//'') : '';
-    my $infrastructure_failure=$failure_class=~/^sas_oda_(?:space_exhaustion|remote_session_termination)$/
+    my $infrastructure_failure=$failure_class=~/^(?:sas_oda_(?:space_exhaustion|remote_session_termination)|sas_windows_network_path_unavailable)$/
+        || scalar(grep {/^\s*ERROR:\s+Windows error code:\s*67 in hx_disk_access\b/i} @errors)
         || (defined($args{exit_code}) && ($args{exit_code}==73 || $args{exit_code}==74));
     if (ref($args{status}) eq 'HASH') {
         $infrastructure_failure ||= ($args{status}{state}//'')=~/^(?:timeout|timed_out)$/i

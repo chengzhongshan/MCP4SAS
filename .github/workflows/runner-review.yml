@@ -1,0 +1,32 @@
+name: Runner regression checks
+on:
+  push:
+    branches: [main, fix/copilot-runner-review]
+    paths: ['run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', '.github/workflows/runner-review.yml']
+  pull_request:
+    paths: ['run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', '.github/workflows/runner-review.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  perl:
+    name: Perl regressions / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check both compatibility entry points and offline behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          perl -c run_sas_codes_or_files_in_ODA.pl
+          perl -c run_sas_codes_or_script_in_ODA.pl
+          perl MCPDeps/test_sas_oda_macro_dir_fallback.pl
+          perl MCPDeps/test_sas_log_and_labels.pl
+          perl tests/test_sas_log_diagnostics.pl
+          perl tests/test_expected_failure_evaluation.pl
+          perl tests/test_copilot_runner_review.pl
+          perl tests/test_runner_preflight_parity.pl

@@ -138,6 +138,7 @@ use Scalar::Util qw(blessed);
 my ($code, $file, $macro_dir, $no_html, $output_prefix, $help, $persistent, $session_id,
     $dry_run, $dir4listing, $monitor_status_file, $monitor_interval_seconds,
     $kill_saspy_sessions);
+my $macro_dir_warning = '';
 my ($internal_runner_result_json, $internal_execution_file, $internal_execution_code_file,
     $internal_macro_dir, $internal_open_html, $internal_persistent, $internal_session_id);
 my (@upload_files, @download_files, @download_local_paths, @delete_files, @delete_file_rgxs, @file_infos);
@@ -489,6 +490,11 @@ GetOptions(
     '_internal-persistent!' => \$internal_persistent,
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
+
+if (defined $macro_dir) {
+    ($macro_dir, $macro_dir_warning) =
+      SAS_ODA_Runner::normalize_local_macro_dir($macro_dir);
+}
 
 $ENV{SASPY_CFGNAME} = $saspy_cfgname if defined($saspy_cfgname) && length($saspy_cfgname);
 $ENV{SASPY_CFGFILE} = $saspy_cfgfile if defined($saspy_cfgfile) && length($saspy_cfgfile);
@@ -980,15 +986,19 @@ if (!$help && defined($classify_sas_log) && length($classify_sas_log)) {
     close $classify_fh;
     my $has_space_failure = sas_log_contains_space_exhaustion($classify_text) ? 1 : 0;
     my $has_remote_termination = !$has_space_failure && sas_log_contains_remote_termination($classify_text) ? 1 : 0;
+    my $has_windows_network_failure = !$has_space_failure && !$has_remote_termination
+      && sas_log_contains_windows_network_path_failure($classify_text) ? 1 : 0;
     print encode_json({
         sas_log       => $classify_sas_log,
         failure_class => ($has_space_failure ? 'sas_oda_space_exhaustion'
-          : ($has_remote_termination ? 'sas_oda_remote_session_termination' : '')),
+          : ($has_remote_termination ? 'sas_oda_remote_session_termination'
+            : ($has_windows_network_failure ? 'sas_windows_network_path_unavailable' : ''))),
         error_code    => ($has_space_failure ? 'SAS_ODA_WORKSPACE_EXHAUSTION'
-          : ($has_remote_termination ? 'SAS_ODA_REMOTE_SESSION_TERMINATED' : '')),
-        retryable     => (($has_space_failure || $has_remote_termination) ? JSON::PP::false : JSON::PP::true),
+          : ($has_remote_termination ? 'SAS_ODA_REMOTE_SESSION_TERMINATED'
+            : ($has_windows_network_failure ? 'SAS_WINDOWS_NETWORK_PATH_UNAVAILABLE' : ''))),
+        retryable     => (($has_space_failure || $has_remote_termination || $has_windows_network_failure) ? JSON::PP::false : JSON::PP::true),
     }), "\n";
-    exit($has_space_failure ? 73 : ($has_remote_termination ? 74 : 0));
+    exit($has_space_failure ? 73 : ($has_remote_termination ? 74 : ($has_windows_network_failure ? 1 : 0)));
 }
 
 if ($help || (!$check_sas_oda_login_only && !$classify_sas_log && !$monitor_status_file && !$code && !$file && !@upload_files && !@download_files && !@delete_files && !@delete_file_rgxs && !@delete_directory_rgxs && !$delete_directory_dry_run && !$dir4listing && !@file_infos)
@@ -1004,7 +1014,7 @@ Options:
                              Literal '\n', '\r\n', and '\t' sequences in a
                              direct --code string are expanded before submit.
   -f, --file <file>          SAS script file to execute
-  -m, --macro-dir <dir>      Directory containing macro files (default: ./)
+  -m, --macro-dir <dir>      Directory containing macro files; unreachable paths fall back to the current working directory (default: ./)
   --no-html-info             output a plain text file containing the random html filename
   --no-html_info             Legacy alias for --no-html-info
   -p, --output-prefix <prefix> Prefix for output files (default: output)
@@ -1192,6 +1202,7 @@ if ($dry_run) {
     # Default session id when persistent mode is requested but none provided
     $session_id ||= "default_session" if $persistent;
     print "DRY-RUN: persistent=" . ($persistent ? 1 : 0) . " session_id=" . ($session_id // '(undef)') . "\n";
+    print "$macro_dir_warning\n" if length $macro_dir_warning;
     exit 0;
 }
 
@@ -2851,6 +2862,13 @@ sub sas_log_contains_space_exhaustion {
     return 0;
 }
 
+sub sas_log_contains_windows_network_path_failure {
+    my ($text) = @_;
+    return 0 unless defined($text) && length($text);
+    $text=$1 if $text =~ /^=== SAS Log ===\r?\n(.*?)(?:\r?\n=== Output ===|\z)/ms;
+    return $text =~ /^\s*ERROR:\s+Windows error code:\s*67 in hx_disk_access\b/mi ? 1 : 0;
+}
+
 sub compose_remote_path_for_match {
     my ($remote_dir, $entry) = @_;
     return $entry if !defined $remote_dir || $remote_dir eq '' || $remote_dir eq '.';
@@ -3210,6 +3228,19 @@ if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
 }
 
 if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
+    && ref($result) eq 'HASH'
+    && !$sas_execution_failure_class
+    && sas_log_contains_windows_network_path_failure(join("\n", $result->{error} // '', $result->{log} // ''))) {
+    $sas_execution_failed = 1;
+    $sas_execution_failure_class = 'sas_windows_network_path_unavailable';
+    my $first_line = first_fatal_sas_log_line(join("\n", $result->{error} // '', $result->{log} // ''));
+    $sas_execution_error = 'SAS could not access a Windows network path (error 67)';
+    $sas_execution_error .= ": $first_line" if length $first_line;
+    $sas_execution_error .= '. Verify that the UNC share is reachable from the SAS host; check FILENAME, LIBNAME and SASAUTOS settings. --macro-dir controls local discovery and cannot repair server-side paths.';
+    warn "ERROR: $sas_execution_error\n";
+}
+
+if (($execution_file || ($execution_code && $execution_code !~ /^\s*$/))
     && $persistent
     && $session_id
     && ref($result) eq 'HASH'
@@ -3269,6 +3300,11 @@ if (ref($result) eq 'HASH' && length($combined_preflight_report // '')) {
           ? ($result->{dep_logs} . "\n\n" . $combined_preflight_report)
           : $combined_preflight_report;
     }
+}
+if (ref($result) eq 'HASH' && length($macro_dir_warning)) {
+    $result->{dep_logs} = length($result->{dep_logs} // '')
+      ? ($macro_dir_warning . "\n" . $result->{dep_logs})
+      : $macro_dir_warning;
 }
 
 if ($include_debug_ctx && ref($result) eq 'HASH') {

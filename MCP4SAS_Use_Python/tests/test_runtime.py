@@ -12,10 +12,10 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock,patch
 
 from MCP4SAS_Use_Python import source_analysis as sa,diagnostics
-from MCP4SAS_Use_Python.cli import main
+from MCP4SAS_Use_Python.cli import ensure_saspy_environment,main,normalize_cli_code_text,parser
 from MCP4SAS_Use_Python.dependencies import Plan,find_macro,rewrite_paths
 from MCP4SAS_Use_Python.local_home import expand_code_paths
 from MCP4SAS_Use_Python.remote_cleanup import build_code
@@ -55,6 +55,22 @@ class SourceTests(unittest.TestCase):
         self.assertEqual(len(sa.format_name_issues('proc format; value age2 1=2;run;')),1)
 
 class DependencyTests(unittest.TestCase):
+    def test_unreachable_macro_dir_falls_back_to_process_working_directory(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp).resolve()
+            macro=root/'current_macro.sas'
+            macro.write_text('%macro current_macro; %mend;')
+            original=Path.cwd()
+            os.chdir(root)
+            try:
+                plan=Plan('%current_macro();',macro_dir=root/'missing')
+                self.assertEqual(plan.roots[-1],root)
+                self.assertIn(macro.resolve(),plan.macros)
+                self.assertIn('using the current working directory',plan.macro_dir_warning)
+                self.assertIn('macro_dir_warning',plan.as_dict())
+            finally:
+                os.chdir(original)
+
     def test_transitive_macro_include_and_data_graph(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp)
@@ -110,6 +126,13 @@ class DiagnosticsTests(unittest.TestCase):
         self.assertEqual(diagnostics.classify('ERROR: Insufficient space in file WORK.X.DATA.\n')['exit_code'],73)
         self.assertEqual(diagnostics.classify('No SAS process attached')['exit_code'],74)
         self.assertFalse(diagnostics.classify('No SAS process attached')['retryable'])
+    def test_windows_network_path_failure_has_actionable_diagnostic(self):
+        text='=== SAS Log ===\nERROR:  Windows error code: 67 in hx_disk_access for \\\\\\\\server\\\\share, The network name cannot be found.\n=== Output ==='
+        result=diagnostics.classify(text)
+        self.assertEqual(result['failure_class'],'sas_windows_network_path_unavailable')
+        self.assertFalse(result['retryable'])
+        self.assertEqual(result['infrastructure_count'],1)
+        self.assertIn('reachable from the SAS host',diagnostics.format_summary(result))
     def test_macro_hint(self):
         result=diagnostics.summarize('WARNING: Apparent invocation of macro HELLO not resolved.')
         self.assertEqual(result['macro_diagnostics'][0]['kind'],'unresolved_macro_invocation')
@@ -152,9 +175,98 @@ class UtilityTests(unittest.TestCase):
         self.assertIn('dry_run=1',code)
     def test_help_dry_run_and_alias_need_no_saspy(self):
         for name in ('run_sas_codes_or_files_in_ODA.py','run_sas_codes_or_script_in_ODA.py'):
+            help_result=subprocess.run([sys.executable,'-S',str(ROOT/name)],capture_output=True,text=True,cwd=ROOT)
+            self.assertEqual(help_result.returncode,0,help_result.stderr)
+            self.assertIn('usage:',help_result.stdout.lower())
+            self.assertIn('--file',help_result.stdout)
             result=subprocess.run([sys.executable,'-S',str(ROOT/name),'--code','proc print;run;','--dry-run'],capture_output=True,text=True,cwd=ROOT)
             self.assertEqual(result.returncode,0,result.stderr)
             self.assertTrue(json.loads(result.stdout)['dry_run'])
+    def test_cli_options_match_perl_compatibility_forms(self):
+        args=parser().parse_args([
+            '--cleanup-empty-output-dir=0','--download-file','~/remote.txt',
+            '--download-local-path','local.txt','--no-prompt-sas-oda-auth',
+            '--no-skip-sas-oda-auth-bootstrap','--no-check-sas-oda-login-only',
+            '--no-delete-directory-dry-run','--run-timeout-grace-seconds','4',
+        ])
+        self.assertEqual(args.cleanup_empty_output_dir,'0')
+        self.assertEqual(args.download_file,['~/remote.txt'])
+        self.assertEqual(args.download_local_path,['local.txt'])
+        self.assertFalse(args.prompt_sas_oda_auth)
+        self.assertFalse(args.skip_sas_oda_auth_bootstrap)
+        self.assertFalse(args.check_sas_oda_login_only)
+        self.assertFalse(args.delete_directory_dry_run)
+        self.assertEqual(args.run_timeout_grace_seconds,4)
+        help_text=parser().format_help()
+        for option in ('--macro-dir','--upload-file','--download-file','--delete-file-rgx','--file-info','--monitor-status-file','--run-timeout-grace-seconds'):
+            self.assertIn(option,help_text)
+    def test_cli_expands_escaped_code_whitespace_like_perl(self):
+        self.assertEqual(normalize_cli_code_text(r'data x;\r\nrun;\t'), 'data x;\nrun;\t')
+    def test_cli_restarts_with_project_python_when_saspy_is_missing(self):
+        args=parser().parse_args(['--code','proc print;run;'])
+        candidate=Path('project-env/python')
+        with patch('MCP4SAS_Use_Python.cli.importlib.util.find_spec',return_value=None),patch('MCP4SAS_Use_Python.cli.find_saspy_interpreter',return_value=(candidate,{'prefix':'project-env'})),patch('MCP4SAS_Use_Python.cli.os.execv') as execv,patch('MCP4SAS_Use_Python.cli.subprocess.run',return_value=Mock(returncode=0)) as restart,patch.dict(os.environ,{'MCP4SAS_PYTHON_ENV_REEXEC':''}),contextlib.redirect_stderr(io.StringIO()):
+            if os.name=='nt':
+                with self.assertRaises(SystemExit) as stopped: ensure_saspy_environment(args)
+                self.assertEqual(stopped.exception.code,0)
+            else: ensure_saspy_environment(args)
+        command=[str(candidate),str(ROOT/'run_sas_codes_or_files_in_ODA.py'),*sys.argv[1:]]
+        if os.name=='nt':
+            self.assertEqual(restart.call_args.args[0],command)
+            execv.assert_not_called()
+        else: execv.assert_called_once_with(str(candidate),command)
+    def test_cli_dry_run_does_not_require_saspy_environment(self):
+        args=parser().parse_args(['--code','proc print;run;','--dry-run'])
+        with patch('MCP4SAS_Use_Python.cli.importlib.util.find_spec') as find_spec,patch('MCP4SAS_Use_Python.cli.find_saspy_interpreter') as find_python:
+            ensure_saspy_environment(args)
+        find_spec.assert_not_called()
+        find_python.assert_not_called()
+    def test_cli_passes_timeout_grace_to_backend(self):
+        seen={}
+        class FakeRunner:
+            def __init__(self,**kwargs): seen.update(kwargs)
+            def __enter__(self): return self
+            def __exit__(self,*args): pass
+            def run(self,*args,**kwargs):
+                return dict(log='NOTE: SAS completed.',lst='',diagnostics=diagnostics.classify('NOTE: SAS completed.'))
+        with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch.dict(os.environ,{'OPEN_RESULT':'0'}),contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(['--code','proc print;run;','--run-timeout-grace-seconds','7','--output-prefix',str(Path(temp)/'result')]),0)
+        self.assertEqual(seen['timeout_grace_seconds'],7)
+    def test_cli_saves_html_without_dumping_markup_to_terminal(self):
+        html='<html><body><table><tr><td>result</td></tr></table></body></html>'
+        class FakeRunner:
+            def __init__(self,**kwargs): pass
+            def __enter__(self): return self
+            def __exit__(self,*args): pass
+            def run(self,*args,**kwargs):
+                return dict(log='NOTE: SAS completed.',lst=html,diagnostics=diagnostics.classify('NOTE: SAS completed.'))
+        with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch('MCP4SAS_Use_Python.cli.open_result_html') as open_html,patch.dict(os.environ,{'OPEN_RESULT':'0'}),contextlib.redirect_stdout(io.StringIO()) as stdout:
+            output=Path(temp)/'result'
+            self.assertEqual(main(['--code','proc print;run;','--output-prefix',str(output)]),0)
+            terminal=stdout.getvalue()
+            self.assertNotIn('<html>',terminal)
+            self.assertIn('HTML output saved to: '+str(output/'output.html'),terminal)
+            self.assertEqual((output/'output.html').read_text(encoding='utf-8'),html)
+            open_html.assert_not_called()
+    def test_cli_opens_saved_html_by_default(self):
+        html='<html><body>result</body></html>'
+        class FakeRunner:
+            def __init__(self,**kwargs): pass
+            def __enter__(self): return self
+            def __exit__(self,*args): pass
+            def run(self,*args,**kwargs):
+                return dict(log='NOTE: SAS completed.',lst=html,diagnostics=diagnostics.classify('NOTE: SAS completed.'))
+        with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch('MCP4SAS_Use_Python.cli.open_result_html') as open_html,patch.dict(os.environ,{}),contextlib.redirect_stdout(io.StringIO()):
+            os.environ.pop('OPEN_RESULT',None)
+            output=Path(temp)/'result'
+            self.assertEqual(main(['--code','proc print;run;','--output-prefix',str(output)]),0)
+            open_html.assert_called_once_with(output/'output.html')
+    def test_cygwin_html_open_uses_cygstart(self):
+        from MCP4SAS_Use_Python.cli import open_result_html
+        path=Path('result/output.html')
+        with patch('MCP4SAS_Use_Python.cli.sys.platform','cygwin'),patch('MCP4SAS_Use_Python.cli.shutil.which',return_value='/usr/bin/cygstart'),patch('MCP4SAS_Use_Python.cli.subprocess.Popen') as popen:
+            self.assertTrue(open_result_html(path))
+        popen.assert_called_once_with(['/usr/bin/cygstart',str(path)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
     def test_bad_input_never_constructs_backend(self):
         with patch('MCP4SAS_Use_Python.runner.Backend',side_effect=AssertionError('must not connect')):
             with contextlib.redirect_stderr(io.StringIO()):
@@ -197,6 +309,24 @@ class TransportTests(unittest.TestCase):
         thread.join()
         self.assertEqual(result['log'],'done')
         self.assertEqual(len(progress),1)
+    def test_timeout_uses_configured_grace_for_backend_shutdown(self):
+        from MCP4SAS_Use_Python.transport import Backend
+        backend=Backend.__new__(Backend)
+        backend.timeout=1
+        backend.timeout_grace_seconds=7
+        backend.session_id='test'
+        backend.local_home=None
+        backend.port=1234
+        backend.token='token'
+        backend.launcher_pid=42
+        backend.pid=42
+        backend.process=None
+        backend.record=Mock()
+        with patch('MCP4SAS_Use_Python.transport.request',side_effect=TimeoutError('timed out')),patch('MCP4SAS_Use_Python.transport.stop_owned_pid') as stop:
+            with self.assertRaises(TimeoutError):
+                backend.call('submit')
+        stop.assert_called_once_with(42,7,process=None)
+        backend.record.unlink.assert_called_once_with(missing_ok=True)
 
 if __name__=='__main__':
     unittest.main()

@@ -37,8 +37,14 @@ them from [SAS](https://support.sas.com/downloads/package.htm?pid=2494), then re
 python MCP4SAS_Use_Python/install.py --jars-dir /path/to/extracted/jars
 ```
 
-Use the Python executable in the new environment for all commands below. Activate
-that environment if you want to type simply `python`:
+After installation, the direct SAS runner automatically relaunches with a
+compatible project environment when the active Python cannot import SASPy. It
+searches `PIPELINE_PYTHON_BIN`, `.venv-pipeline`, and this folder's `.venv`;
+activation is not required for the runner. An explicit `PIPELINE_PYTHON_BIN`
+must be valid; it is not silently replaced. Candidate interpreters must match
+the current platform. This does not install missing
+packages. For the MCP server and other Python commands, use or activate the
+environment explicitly:
 
 ```powershell
 ./MCP4SAS_Use_Python/.venv/Scripts/Activate.ps1
@@ -48,8 +54,8 @@ that environment if you want to type simply `python`:
 source MCP4SAS_Use_Python/.venv/bin/activate
 ```
 
-Activation is optional; if PowerShell blocks activation, use the full executable
-path shown above. The generated credential-free configuration is stored under
+If PowerShell blocks activation, use the full executable path shown above. The
+generated credential-free configuration is stored under
 `.saspy-config/` here. An explicit `--saspy-cfgfile` or `SASPY_CFGFILE` takes
 precedence, so established private SASPy profiles can still be used.
 
@@ -61,17 +67,46 @@ python run_sas_codes_or_files_in_ODA.py --file analysis.sas
 python run_sas_codes_or_files_in_ODA.py --file analysis.sas --macro-dir /path/to/my/Macros
 ```
 
+For direct CLI runs, the HTML result opens in the default browser automatically.
+Set `OPEN_RESULT=0` (or `false`) to disable this; background MCP jobs and explicit
+`--json` calls suppress browser opening. HTML is saved separately; the text
+report contains the SAS log and an output path instead of a page of HTML markup.
+
 Local `%include` files, called local macros and their dependencies are inspected
 recursively. The runtime uploads required source/data files, rewrites their
 execution copies and leaves the originals unchanged. Multiple transfers use the
 existing verified ZIP protocol. Conflicting upload basenames fail before a
 transfer, rather than silently overwriting each other.
+If an explicitly supplied `--macro-dir` path is missing or unreadable, MCP4SAS falls back to the process
+working directory (the VS Code workspace directory when launched there) and
+records a warning in the preflight report.
 
 To preview the dependency plan without connecting to SAS:
 
 ```bash
 python run_sas_codes_or_files_in_ODA.py --file analysis.sas --macro-dir /path/to/my/Macros --dry-run
 ```
+
+The Python CLI exposes the Perl runner's main option groups and aliases for
+submission, persistent sessions, transfers, remote file management, SASPy
+configuration, authentication, log classification, status monitoring, and
+timeouts. Run `python run_sas_codes_or_files_in_ODA.py --help` for the full
+option list and defaults. Repeat `--upload-file`, `--download-file`,
+`--download-local-path`, `--delete-file`, `--delete-file-rgx`,
+`--delete-directory-rgx`, and `--file-info` to process multiple items.
+Calling the runner without arguments also prints this help instead of treating
+the missing submission as an error.
+Compatibility forms include `-c`, `-f`, `-m`, `-p`, `-s`, `-u`, `-d`, `-k`,
+`-l`, `--check-saspy-connection-only`, `--no-html_info`, and
+`--cleanup-empty-output-dir 0|1`. Literal backslashes are preserved by default.
+Use `--decode-code-escapes` explicitly to expand `\n`, `\r\n`, `\r`, and `\t`
+in a direct `--code` string for Perl compatibility; do not use this with Windows
+paths or regex literals. Files and stdin are never decoded. Backend operations
+use `--run-timeout-seconds`; multiple operations and startup/shutdown can add
+elapsed time. After an operation times out, termination waits up to
+`--run-timeout-grace-seconds` before forcing the owned process tree to stop.
+Normal shutdown does not add this grace period. Negative timeout values fail
+validation; use `--no-run-timeout` explicitly when needed.
 
 If ODA credentials have not been configured, enter them privately:
 

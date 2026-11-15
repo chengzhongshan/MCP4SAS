@@ -141,6 +141,20 @@ sub _runner_temp_dir {
     return getcwd();
 }
 
+sub normalize_local_macro_dir {
+    my ($requested) = @_;
+    $requested = './' unless defined($requested) && length($requested);
+    if (-d $requested && opendir(my $macro_dir_handle, $requested)) {
+        closedir($macro_dir_handle);
+        return ($requested, '');
+    }
+
+    my $cwd = getcwd();
+    die "Cannot determine the current working directory for macro discovery\n"
+      unless defined($cwd) && length($cwd);
+    return ($cwd, "WARNING: --macro-dir '$requested' is not reachable; using the current working directory '$cwd' instead.");
+}
+
 my $INLINE_PYTHON_SOURCE = <<'END_PYTHON';
 import saspy
 import json
@@ -3443,13 +3457,16 @@ END_NONPERSISTENT_ACTION_PY
 
 sub new {
     my ($class, %args) = @_;
+    my ($local_macro_dir, $macro_dir_warning) =
+      normalize_local_macro_dir($args{local_macro_dir});
     my $requested_persistent = $args{persistent} // 0;
     my $session_id = $args{session_id};
     if (!defined($session_id) || !length($session_id)) {
         $session_id = join('_', 'oneshot', $$, int(time() * 1000), int(rand(1_000_000)));
     }
     my $self = {
-        local_macro_dir => $args{local_macro_dir} || "./",
+        local_macro_dir => $local_macro_dir,
+        macro_dir_warning => $macro_dir_warning,
         open_html => $args{open_html} // 1,
         _session => undef,
         _transfer_session => undef,
@@ -3808,6 +3825,8 @@ sub _replace_dependency_path {
 sub _process_dependencies {
     my ($self, $code) = @_;
     my @logs;
+    push @logs, $self->{macro_dir_warning}
+      if defined($self->{macro_dir_warning}) && length($self->{macro_dir_warning});
     my %uploaded;
     my $scan_code = _dependency_scan_code($code);
     my $macro_code = SAS_Source_Analysis::macro_dependency_view($code);

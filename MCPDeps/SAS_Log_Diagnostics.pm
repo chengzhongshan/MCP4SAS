@@ -38,6 +38,14 @@ sub summarize {
     my $result = {warnings => [], data_quality => [], macro_diagnostics => []};
     for my $line (split /\r?\n/, $text) {
         $line =~ s/^\s+|\s+$//g;
+        if ($line =~ /^ERROR:\s+Windows error code:\s*67 in hx_disk_access\b/i) {
+            $result->{infrastructure_diagnostics} ||= [];
+            push @{$result->{infrastructure_diagnostics}}, {
+                kind => 'windows_network_path_unavailable',
+                message => $line,
+                hint => 'Windows error 67 means the network name is unavailable. Verify that the UNC share is reachable from the SAS host; check FILENAME, LIBNAME and SASAUTOS settings. --macro-dir controls local discovery and cannot repair server-side paths.',
+            } unless $seen{"infrastructure\0$line"}++;
+        }
         if (my $macro=_macro_diagnostic($line)) {
             push @{$result->{macro_diagnostics}},$macro unless $seen{"macro\0$line"}++;
         }
@@ -55,12 +63,14 @@ sub summarize {
     $result->{warning_count} = scalar @{$result->{warnings}};
     $result->{data_quality_count} = scalar @{$result->{data_quality}};
     $result->{macro_count} = scalar @{$result->{macro_diagnostics}};
+    $result->{infrastructure_count} = scalar @{$result->{infrastructure_diagnostics}}
+        if $result->{infrastructure_diagnostics};
     return $result;
 }
 
 sub format_summary {
     my ($result) = @_;
-    return '' unless $result->{warning_count} || $result->{data_quality_count} || $result->{macro_count};
+    return '' unless $result->{warning_count} || $result->{data_quality_count} || $result->{macro_count} || $result->{infrastructure_count};
     my $text = "SAS diagnostics: $result->{warning_count} warning(s), "
         . "$result->{data_quality_count} data-quality diagnostic(s).\n";
     for my $kind (qw(warnings data_quality)) {
@@ -72,6 +82,11 @@ sub format_summary {
         $text.="Macro diagnostics: $result->{macro_count}.\n";
         my @macros=@{$result->{macro_diagnostics}}; splice @macros,3 if @macros>3;
         $text.=join('',map {"  $_->{message}\n  Hint: $_->{hint}\n"} @macros);
+    }
+    if ($result->{infrastructure_count}) {
+        $text.="Infrastructure diagnostics: $result->{infrastructure_count}.\n";
+        my @items=@{$result->{infrastructure_diagnostics} || []}; splice @items,3 if @items>3;
+        $text.=join('',map {"  $_->{message}\n  Hint: $_->{hint}\n"} @items);
     }
     return $text . "\n";
 }

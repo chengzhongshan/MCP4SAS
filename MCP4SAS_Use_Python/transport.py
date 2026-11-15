@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 from .tempfiles import pid_alive
+from .windows_processes import identity as windows_identity,owned_tree as windows_owned_tree
 
 MAX_FRAME = 256 * 1024 * 1024
 
@@ -53,18 +54,52 @@ def request(port,token,payload,timeout=120,progress=None):
 def stop_owned_process(process):
     if process.poll() is not None:
         return
-    stop_owned_pid(process.pid)
+    stop_owned_pid(process.pid,process=process)
 
-def stop_owned_pid(pid):
+def stop_owned_pid(pid,grace_seconds=0,process=None):
+    grace_seconds=max(0,grace_seconds)
+    windows_tree={}
+    def process_tree_alive():
+        if process is not None:
+            process.poll()
+        if os.name=='nt':
+            return any(windows_identity(child)==stamp for child,stamp in windows_tree.items())
+        try:
+            os.killpg(pid,0)
+            return True
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
     if os.name=='nt':
-        subprocess.run(['taskkill.exe','/PID',str(pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=False)
+        if grace_seconds==0:
+            subprocess.run(['taskkill.exe','/PID',str(pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=False)
+            return
+        try:
+            windows_tree=windows_owned_tree(pid)
+        except OSError:
+            # Keep the established forced tree termination if enumeration is
+            # unavailable; do not first kill the root and lose its descendants.
+            subprocess.run(['taskkill.exe','/PID',str(pid),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=False)
+            return
+        if pid in windows_tree and windows_identity(pid)==windows_tree[pid]:
+            subprocess.run(['taskkill.exe','/PID',str(pid),'/T'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=False)
+        deadline=time.monotonic()+grace_seconds
+        while process_tree_alive() and time.monotonic()<deadline:
+            time.sleep(max(0,min(.1,deadline-time.monotonic())))
+        for child,stamp in windows_tree.items():
+            if windows_identity(child)==stamp:
+                subprocess.run(['taskkill.exe','/PID',str(child),'/T','/F'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=False)
     else:
         import signal
         with contextlib.suppress(ProcessLookupError):
             os.killpg(pid,signal.SIGTERM)
-        time.sleep(.2)
-        with contextlib.suppress(ProcessLookupError):
-            os.killpg(pid,signal.SIGKILL)
+        deadline=time.monotonic()+grace_seconds
+        while process_tree_alive() and time.monotonic()<deadline:
+            time.sleep(max(0,min(.1,deadline-time.monotonic())))
+        if process_tree_alive():
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(pid,signal.SIGKILL)
 
 @contextlib.contextmanager
 def registry_lock(directory,name='startup.lock',timeout=40):
@@ -95,10 +130,11 @@ def registry_lock(directory,name='startup.lock',timeout=40):
         path.unlink(missing_ok=True)
 
 class Backend:
-    def __init__(self,session_id=None,timeout=3600,env=None,local_home=None,state_dir=None):
+    def __init__(self,session_id=None,timeout=3600,env=None,local_home=None,state_dir=None,timeout_grace_seconds=15):
         self.persistent=bool(session_id)
         self.session_id=session_id or 'one_shot_'+secrets.token_hex(8)
         self.timeout=timeout
+        self.timeout_grace_seconds=max(0,timeout_grace_seconds)
         self.env=dict(os.environ,**(env or {}))
         self.local_home=local_home
         self.process=None
@@ -183,7 +219,7 @@ class Backend:
             return request(self.port,self.token,payload,timeout=self.timeout)
         except (TimeoutError,socket.timeout):
             # User SAS code may have run partially. Do not replay it.
-            stop_owned_pid(self.launcher_pid)
+            stop_owned_pid(self.pid,self.timeout_grace_seconds,process=self.process)
             self.record.unlink(missing_ok=True)
             raise
 

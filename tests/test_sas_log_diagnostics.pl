@@ -36,4 +36,8 @@ like($flowover->{data_quality}[0],qr/INPUT statement/,'input-record loss diagnos
 is(SAS_Log_Diagnostics::summarize("23 NOTE: No observations in data set WORK.SOURCE.\n")->{data_quality_count},0,'empty-data note in a source listing is not counted');
 is(SAS_Log_Diagnostics::summarize("NOTE: Variable n is uninitialized.\n")->{data_quality_count},1,'uninitialized variable is an advisory diagnostic');
 is(SAS_Log_Diagnostics::summarize("42 NOTE: Variable n is uninitialized.\n")->{data_quality_count},0,'source listing does not fabricate an uninitialized-variable note');
+my $network=SAS_Log_Diagnostics::summarize("ERROR:  Windows error code: 67 in hx_disk_access for \\\\\\\\server\\\\share, The network name cannot be found.\n");
+is($network->{infrastructure_count},1,'Windows network-path failure is classified as infrastructure');
+like(SAS_Log_Diagnostics::format_summary($network),qr/Verify that the UNC share is reachable from the SAS host/,'network-path diagnostic gives a targeted recovery hint');
+is(SAS_Log_Diagnostics::summarize("12 ERROR: Windows error code: 67 in hx_disk_access\n")->{infrastructure_count} // 0,0,'source listing is not reported as a runtime network failure');
 done_testing();

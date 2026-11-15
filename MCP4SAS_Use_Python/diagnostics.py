@@ -20,6 +20,14 @@ def summarize(text):
     seen = set()
     for line in sas_log(text).splitlines():
         line = line.strip()
+        if re.match(r'^ERROR:\s+Windows error code:\s*67 in hx_disk_access\b',line,re.I):
+            if ('infrastructure',line) not in seen:
+                result.setdefault('infrastructure_diagnostics',[]).append(dict(
+                    kind='windows_network_path_unavailable',
+                    message=line,
+                    hint='Windows error 67 means the network name is unavailable. Verify that the UNC share is reachable from the SAS host; check FILENAME, LIBNAME and SASAUTOS settings. --macro-dir controls local discovery and cannot repair server-side paths.',
+                ))
+                seen.add(('infrastructure',line))
         if re.match(r'^(?:ERROR|WARNING)(?:\s+\d+-\d+)?:',line,re.I):
             for pattern,kind,hint in MACRO_HINTS:
                 if re.search(pattern,line,re.I):
@@ -36,10 +44,12 @@ def summarize(text):
             result[kind].append(line)
             seen.add((kind,line))
     result.update(warning_count=len(result['warnings']),data_quality_count=len(result['data_quality']),macro_count=len(result['macro_diagnostics']))
+    if result.get('infrastructure_diagnostics'):
+        result['infrastructure_count']=len(result['infrastructure_diagnostics'])
     return result
 
 def format_summary(result):
-    if not any(result[key] for key in ('warning_count','data_quality_count','macro_count')):
+    if not any(result.get(key,0) for key in ('warning_count','data_quality_count','macro_count','infrastructure_count')):
         return ''
     text = f"SAS diagnostics: {result['warning_count']} warning(s), {result['data_quality_count']} data-quality diagnostic(s).\n"
     for kind in ('warnings','data_quality'):
@@ -47,6 +57,9 @@ def format_summary(result):
     if result['macro_count']:
         text += f"Macro diagnostics: {result['macro_count']}.\n"
         text += ''.join(f"  {item['message']}\n  Hint: {item['hint']}\n" for item in result['macro_diagnostics'][:3])
+    if result.get('infrastructure_count'):
+        text += f"Infrastructure diagnostics: {result['infrastructure_count']}.\n"
+        text += ''.join(f"  {item['message']}\n  Hint: {item['hint']}\n" for item in result['infrastructure_diagnostics'][:3])
     return text+'\n'
 
 def classify(text):
@@ -56,6 +69,8 @@ def classify(text):
     runtime_lines=[line for line in text.splitlines() if not re.match(r'^\s*\d+(?:\s+|!\s*)',line)]
     if any(re.search(r'^\s*ERROR:\s+Insufficient space in\b|^\s*ERROR:.*(?:No space left on device|Disk quota exceeded|file system is full|disk is full|quota[^\r\n]*exceed)|^\s*(?:ERROR:\s*)?UNIX errno\s*=\s*(?:28|122)(?:\D|$)',line,re.I) for line in runtime_lines):
         failure, code = 'sas_oda_space_exhaustion',73
+    elif any(re.search(r'^\s*ERROR:\s+Windows error code:\s*67 in hx_disk_access\b',line,re.I) for line in runtime_lines):
+        failure, code = 'sas_windows_network_path_unavailable',1
     elif re.search(r'No SAS process attached|SAS process has terminated unexpectedly|SAS submit returned empty output and the SAS session was no longer usable|session server[^\n]*(?:terminated|closed)|remote SAS[^\n]*(?:terminated|disconnected)',text,re.I):
         failure, code = 'sas_oda_remote_session_termination',74
     elif error_lines:

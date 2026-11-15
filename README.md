@@ -23,6 +23,9 @@ For slow submissions or file transfers, see the
 measured fixes and provides a local source profiler for investigating similar
 delays.
 
+For environment selection, compact Python output, inaccessible macro folders and
+Windows network-path errors, see the [reviewed runner fixes](docs/COPILOT_RUNNER_FIX_REVIEW.md).
+
 An independent [Python runtime and utilities edition](MCP4SAS_Use_Python/README.md)
 is available alongside the Perl implementation. Its `.py` runners sit beside
 their Perl counterparts; the implementation is kept in `MCP4SAS_Use_Python`.
@@ -104,7 +107,10 @@ and its dependencies; local SAS itself must already be installed and licensed.
 
 Choose one runtime for each example. The original command is shown first;
 expand **Python alternative** for its matching command. Before using Python,
-[install and activate its Python 3.10+ environment](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+[install its Python 3.10+ environment](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+The direct Python runner automatically relaunches with the project environment
+if the active interpreter lacks SASPy; the MCP server still needs that
+environment to be selected or activated explicitly.
 The Bash examples use Bash syntax; native Windows users can follow the
 [PowerShell setup and local SAS example](docs/PYTHON_DEMOS.md#native-windows-powershell).
 The Python commands do not invoke Perl or need Cygwin. Keep the same runtime
@@ -118,9 +124,9 @@ An explicitly selected profile never silently falls back to another target.
 
 ### SAS ODA
 
-Use the installer's environment for Perl, or your activated environment for the
-Python runner, with your privately configured ODA account. If credentials are
-missing, follow [First SAS ODA Login](#first-sas-oda-login).
+Use the installer's environment for Perl, or let the Python runner find its
+installed project environment, with your privately configured ODA account. If
+credentials are missing, follow [First SAS ODA Login](#first-sas-oda-login).
 
 **Company network:** SASPy needs outbound TCP **8591** to the SAS ODA
 hostnames for your home region. If this connection is blocked, contact IT/IS

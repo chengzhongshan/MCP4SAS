@@ -4,6 +4,7 @@ SAS built-ins and quoted DATA values are not macro dependencies. Missing local
 paths remain SAS/server paths. Conflicting upload basenames fail before transfer.
 """
 from pathlib import Path
+import os
 import re
 from . import source_analysis as source
 
@@ -118,7 +119,21 @@ class Plan:
     def __init__(self,code,source_file=None,macro_dir=None,uploads=()):
         self.code=code
         self.roots=[Path(source_file).resolve().parent] if source_file else []
-        self.roots.extend([Path(macro_dir).resolve()] if macro_dir else [])
+        self.macro_dir_warning=''
+        if macro_dir:
+            directory=Path(macro_dir)
+            accessible=directory.is_dir()
+            if accessible:
+                try:
+                    with os.scandir(directory):
+                        pass
+                except OSError:
+                    accessible=False
+            if accessible:
+                self.roots.append(directory.resolve())
+            else:
+                cwd=Path.cwd().resolve()
+                self.macro_dir_warning=f'WARNING: --macro-dir {str(directory)!r} is not reachable; using the current working directory {str(cwd)!r} instead.'
         self.roots.append(Path.cwd())
         self.files={}
         self.texts={}
@@ -180,7 +195,10 @@ class Plan:
                 self.add(path,alias)
 
     def as_dict(self):
-        return dict(uploads=[str(p) for p in self.files.values()],local_macros=[str(p) for p in self.macros],remote_macros=self.remote_macros,include_files=[str(p) for p in self.texts],source_file_count=len(self.texts))
+        result=dict(uploads=[str(p) for p in self.files.values()],local_macros=[str(p) for p in self.macros],remote_macros=self.remote_macros,include_files=[str(p) for p in self.texts],source_file_count=len(self.texts))
+        if self.macro_dir_warning:
+            result['macro_dir_warning']=self.macro_dir_warning
+        return result
 
     def prepare(self,scratch,home,skip_if_same=True):
         mapping={alias:home.rstrip('/')+'/'+path.name for alias,path in self.aliases.items()}

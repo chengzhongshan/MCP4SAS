@@ -21,13 +21,13 @@ def guard_printto(code):
 '''
 
 class Runner:
-    def __init__(self,session_id=None,timeout=3600,cfgname=None,cfgfile=None,local_home=None,archive_transfers=True,skip_upload_if_same=True,backend_factory=Backend):
+    def __init__(self,session_id=None,timeout=3600,cfgname=None,cfgfile=None,local_home=None,archive_transfers=True,skip_upload_if_same=True,backend_factory=Backend,timeout_grace_seconds=15):
         env=dict(SAS_ODA_AUTOLOAD_MACROS=os.environ.get('SAS_ODA_AUTOLOAD_MACROS','0'))
         if cfgname:
             env['SASPY_CFGNAME']=cfgname
         if cfgfile:
             env['SASPY_CFGFILE']=str(Path(cfgfile).resolve(strict=True))
-        self.backend=backend_factory(session_id=session_id,timeout=timeout,env=env,local_home=local_home)
+        self.backend=backend_factory(session_id=session_id,timeout=timeout,timeout_grace_seconds=timeout_grace_seconds,env=env,local_home=local_home)
         self.archive_transfers=archive_transfers
         self.skip_upload_if_same=skip_upload_if_same
         self.local_home=local_home

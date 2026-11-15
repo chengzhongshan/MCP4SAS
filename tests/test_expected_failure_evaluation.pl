@@ -29,4 +29,6 @@ ok(!check('ERROR: ambiguous',exit_code=>74)->{passes}{F1951},'remote termination
 ok(!check('ERROR: ambiguous',exit_code=>73)->{passes}{F1951},'space exhaustion cannot pass as a program error');
 ok(!check('ERROR: ambiguous',exit_code=>124)->{passes}{F1951},'timeout exit cannot pass as a program error');
 ok(!check('ERROR: ambiguous',status=>{failure_class=>'sas_oda_remote_session_termination'})->{passes}{F1951},'classified termination is rejected even if its exit code is overridden');
+ok(!check('ERROR: ambiguous',status=>{failure_class=>'sas_windows_network_path_unavailable'})->{passes}{F1951},'classified Windows network failure is rejected even if its exit code is overridden');
+ok(!check('ERROR: Windows error code: 67 in hx_disk_access')->{passes}{F1951},'raw Windows infrastructure failure cannot validate an intentional program error');
 done_testing();
