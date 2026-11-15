@@ -21,7 +21,8 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   fs.mkdirSync(project);
   const commands = new Map(), states = new Map(), errors = [], tasks = [], terminals = [];
   const settings = new Map([['profiles.windows', { 'My existing shell': { path: 'original.exe' } }]]);
-  let configureTerminal = true;
+  let configureTerminal = true, sasCheckFailure = false;
+  const statusBar={show(){},dispose(){}};
   const choices = ['Install MCP4SAS for this computer', 'Choose an existing Cygwin Perl', [{ label: 'GitHub Copilot' }]];
   const dialogs = [portable];
   let onTaskEnd;
@@ -32,7 +33,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       return { inspect: key => ({ globalValue: settings.get(key) }), async update(key, value) { settings.set(key, value); } };
     } }, env: {}, ConfigurationTarget: { Global: 1, WorkspaceFolder: 3 },
     Uri: { file: fsPath => ({ fsPath }) },
-    ProgressLocation: { Notification: 1 }, TaskScope: { Global: 1 }, TaskRevealKind: {}, TaskPanelKind: {},
+    ProgressLocation: { Notification: 1 }, StatusBarAlignment: {Right:2}, TaskScope: { Global: 1 }, TaskRevealKind: {}, TaskPanelKind: {},
     EventEmitter: class { event() {} fire() {} dispose() {} },
     ShellExecution: class { constructor() { throw new Error('Installer must not use the default terminal shell'); } },
     ProcessExecution: class { constructor(command, args, options) { Object.assign(this, { command, args, options }); } },
@@ -40,6 +41,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     commands: { registerCommand(id, fn) { commands.set(id, fn); return disposable(); } },
     lm: { registerMcpServerDefinitionProvider: disposable },
     window: {
+      createStatusBarItem() { return statusBar; },
       createTerminal(options) { terminals.push(options); return { show() {} }; },
       createOutputChannel: () => ({ appendLine() {}, show() {}, dispose() {} }),
       showQuickPick: async () => choices.shift(),
@@ -57,6 +59,11 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
     async run(command, args) {
+      if(args.includes('--code')) {
+        const directory=args[args.indexOf('--output-prefix')+1];fs.mkdirSync(directory,{recursive:true});
+        fs.writeFileSync(path.join(directory,'output.html.info.txt'),(sasCheckFailure?'ERROR: test failure\n':'')+'MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\n');
+        return 'SAS log saved to: '+directory;
+      }
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));
       assert.equal(args[0], 'clone');
       const repo = args.at(-1);
@@ -83,6 +90,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       }
     });
     const api = await module.exports.activate({ extensionPath, globalStorageUri: { fsPath: storage }, subscriptions: [], globalState: { get: key => states.get(key), async update(key, value) { states.set(key, value); } } });
+    assert.match(statusBar.text,/Set Up SAS/);
     await commands.get('mcp4sas.setup')();
     assert.deepEqual(errors, []);
     const saved = JSON.parse(fs.readFileSync(path.join(storage, 'runtime.json'), 'utf8'));
@@ -90,6 +98,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.equal(saved.cwd, project);
     assert.equal(saved.repo, project, 'scripts are installed directly in the open workspace');
     assert.equal(saved.java, java);
+    assert.match(statusBar.text,/SAS ODA/);assert.equal(statusBar.command,'mcp4sas.switchSas');
     assert.ok(fs.existsSync(path.join(saved.repo, 'run_sas_codes_or_files_in_ODA.pl')));
     assert.equal(terminals.length, 1, 'Windows setup automatically opens the project terminal');
     assert.equal(terminals[0].env.SASPY_CFGNAME, 'oda', 'automatic terminal uses the newly detected SAS target');
@@ -152,6 +161,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     await commands.get('mcp4sas.detectSetup')();
     const local=JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8'));
     assert.equal(local.saspyCfgname,'winlocal_com');assert.equal(local.python,python);
+    assert.match(statusBar.text,/Windows SAS/);
     assert.equal(dialogs.length,dialogsBefore,'no Python or config file picker is needed');
     assert.match(fs.readFileSync(local.saspyCfgfile,'utf8'),/sas.iomprovider/);
     assert.ok(Number(local.sessionPort)>0);
@@ -163,6 +173,9 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     await commands.get('mcp4sas.detectSetup')();
     const oda=JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8'));
     assert.equal(oda.saspyCfgname,'oda');assert.equal(oda.python,'/selected/python','ODA returns to detected Cygwin Python');
+    assert.match(statusBar.text,/SAS ODA/);
+    const checkedDirectory=await api.testSelectedSas();assert.ok(fs.existsSync(path.join(checkedDirectory,'output.html.info.txt')),'compact CLI stdout is checked through the real log file');
+    sasCheckFailure=true;await assert.rejects(api.testSelectedSas(),/did not return the expected observed values/);sasCheckFailure=false;
     detected={...detected,local:undefined,native:{candidate:python,saspy:false}};
     choices.push({label:'SAS installed on this computer',kind:'local'});
     const beforeInstall=tasks.length;

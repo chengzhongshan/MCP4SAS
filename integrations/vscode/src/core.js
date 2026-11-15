@@ -180,6 +180,8 @@ async function runtimeEnvironment(config) {
 function connectionEnvironment(config, base = process.env) {
   const env = { ...base };
   env.SASPY_CFGNAME = config.saspyCfgname || env.SASPY_CFGNAME || 'oda';
+  // An inherited local profile must not override a newly selected ODA target.
+  if (config.saspyCfgname && !config.saspyCfgfile) delete env.SASPY_CFGFILE;
   if (config.saspyCfgfile) env.SASPY_CFGFILE = config.saspyCfgfile;
   if (config.python) env.PIPELINE_PYTHON_BIN = config.python;
   if (config.sessionPort) env.SAS_ODA_SESSION_PORT = String(config.sessionPort);

@@ -19,6 +19,8 @@
   "contributes": {
     "configuration": { "title": "MCP4SAS", "properties": { "mcp4sas.configureCygwinTerminal": { "type": "boolean", "default": true, "description": "On local Windows, register Cygwin and select it as the default terminal once a Cygwin runtime is available. Later manual default-profile choices are retained." } } },
     "commands": [
+      { "command": "mcp4sas.switchSas", "title": "MCP4SAS: Switch SAS Target" },
+      { "command": "mcp4sas.testSas", "title": "MCP4SAS: Test Selected SAS" },
       { "command": "mcp4sas.detectSetup", "title": "MCP4SAS: Detect SAS Setup" },
       { "command": "mcp4sas.openRuntimeTerminal", "title": "MCP4SAS: Open MCP4SAS Runtime Terminal" },
       { "command": "mcp4sas.configureLogin", "title": "MCP4SAS: Configure SAS ODA Login" },

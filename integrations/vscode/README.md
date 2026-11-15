@@ -1,8 +1,9 @@
 # MCP4SAS for VS Code
 
-Perl and Python commands below are alternatives. For Python, first
-[install and activate the separate environment](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
-Use one runtime consistently for a persistent session.
+Perl and Python commands below are alternatives. After installation, the direct
+Python runner finds its compatible project SASPy environment automatically.
+See the [Python setup guide](../../MCP4SAS_Use_Python/README.md) for a separate
+native environment. Use one runtime consistently for a persistent session.
 
 Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configuration by hand.
 
@@ -82,6 +83,43 @@ For Copilot the extension uses VS Code's MCP definition-provider API. It does no
 
 ## SAS access is still yours
 
+### Switch between ODA and local SAS
+
+Click **SAS ODA**, **Windows SAS**, or **Linux SAS** in the status bar, or run
+**MCP4SAS: Switch SAS Target**. Choose **SAS OnDemand for Academics** or
+**SAS installed on this computer**. The extension finds Python automatically
+and remembers each target's interpreter, profile and configuration. There are
+no Python-path or configuration-file pickers in this switch.
+
+After upgrading to this build, reload VS Code once to load the updated relay.
+Subsequent switches take effect on the next assistant submission without
+restarting Copilot or Codex. Jobs already submitted stay on their original
+target and can still be polled. A request that explicitly names a different
+target is rejected before SAS submission, preventing stale assistant settings
+from silently sending code to the wrong system.
+
+Select **Test SAS Now**, or run **MCP4SAS: Test Selected SAS**, to submit a
+small SASHELP.CLASS check without an AI assistant. A verified result has 19
+known ages, zero missing ages, minimum 11 and maximum 16. Read the saved SAS
+log; finding software and discovering MCP tools are separate checks.
+
+Existing terminals keep their old environment. Use **Open Runtime Terminal**
+after switching for manual commands on the selected target. Existing SAS WORK
+tables remain with the session/target that created them; switching does not
+transfer those tables to another SAS environment.
+
+Windows automatically configured COM uses **one-shot** submissions. Submit a
+complete program in each call; WORK does not carry between calls. The relay
+sets `persistent=false` for COM and rejects unsupported persistent requests.
+An existing Windows IOM profile is preserved for persistent SAS work. On a
+Linux desktop with licensed SAS installed, the same switch generates a local
+STDIO profile using the detected SAS executable and supports named persistent
+sessions. This does not install SAS or turn Windows WSL/SSH into a supported
+local extension host.
+
+Reusable checks and the debugging record are documented in
+[tests/VSCODE_SAS_SWITCHING.md](../../tests/VSCODE_SAS_SWITCHING.md).
+
 ### Automatic SAS setup
 
 Quick Setup finds the required Python environment, SASPy, installed SAS and
@@ -90,8 +128,8 @@ choose IOM versus COM, or select a SASPy configuration file.
 
 If SAS is installed locally, setup asks one simple question: **SAS OnDemand
 for Academics** or **SAS installed on this computer**. Without local SAS,
-setup uses ODA. Run **MCP4SAS: Detect SAS Setup** to repeat detection or switch
-between these choices later. Your other extension commands remain available.
+setup uses ODA. Run **MCP4SAS: Detect SAS Setup** to repeat detection, or click
+the status-bar SAS target to switch. Your other extension commands remain available.
 
 For Windows local SAS, setup detects native Windows Python with SASPy and
 pywin32. If support is missing, visible installer tasks create a private
@@ -111,9 +149,9 @@ rather than before every submitted SAS program.
 
 Existing custom SASPy configurations are retained. Advanced users can still
 supply their established environment variables or use the original Perl CLI.
-After changing the execution target, restart the assistant MCP connection and
-request a fresh-session SAS test. Actual results and the SAS log verify the
-connection; software detection alone does not.
+After changing the execution target, use **Test Selected SAS** to verify the
+connection. The updated relay reads the selection before each new request;
+software detection alone does not verify SAS execution.
 
 ### Company networks and SAS ODA
 

@@ -9,8 +9,9 @@ const http = require('node:http');
 const readline = require('node:readline');
 const cp = require('node:child_process');
 const core = require('./core');
-let child;
-function cleanup() { if (child && child.exitCode === null) child.kill(); }
+const routing = require('./routing');
+const children = new Set();
+function cleanup() { for (const child of children) if (child.exitCode === null) child.kill(); }
 process.on('exit', cleanup);
 process.on('SIGTERM', () => process.exit(0));
 process.on('SIGINT', () => process.exit(0));
@@ -41,7 +42,8 @@ async function start(config) {
   const env = await core.runtimeEnvironment(config);
   const script = await core.toPosix(path.join(config.repo, 'server.pl'), config.perl);
   const port = await freePort();
-  child = cp.spawn(config.perl, [script, 'daemon', '-m', 'production', '-l', `http://127.0.0.1:${port}`], { cwd: config.cwd, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = cp.spawn(config.perl, [script, 'daemon', '-m', 'production', '-l', `http://127.0.0.1:${port}`], { cwd: config.cwd, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  children.add(child);
   // All diagnostics go to stderr. stdout is reserved exclusively for MCP JSON.
   child.stdout.pipe(process.stderr, { end: false }); child.stderr.pipe(process.stderr, { end: false });
   let failure; child.on('error', e => { failure = e; });
@@ -51,7 +53,7 @@ async function start(config) {
     if (child.exitCode !== null) throw new Error('MCP4SAS exited during startup. Run Quick Setup or inspect the MCP output.');
     try {
       const response = await post(port, { jsonrpc: '2.0', id: 'readiness', method: 'tools/list' }, 1500);
-      if (Array.isArray(response.result?.tools) && child.exitCode === null) return port;
+      if (Array.isArray(response.result?.tools) && child.exitCode === null) return {port,child,config};
     } catch { /* Wait for our own server; never attach to an existing fixed port. */ }
     await new Promise(r => setTimeout(r, 150));
   }
@@ -60,11 +62,19 @@ async function start(config) {
 async function main() {
   const i = process.argv.indexOf('--config');
   if (i < 0 || !process.argv[i + 1]) throw new Error('Usage: relay.js --config /absolute/runtime.json');
-  const config = JSON.parse(fs.readFileSync(process.argv[i + 1], 'utf8'));
+  const configFile = process.argv[i + 1];
+  const readConfig = () => JSON.parse(fs.readFileSync(configFile, 'utf8'));
   // Subscribe before startup so a client's EOF cannot leave a stray backend.
   const lines = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   const iterator = lines[Symbol.asyncIterator]();
-  const port = await start(config);
+  const backends = new Map(), jobs = new Map();
+  async function selectedBackend(config) {
+    const key = routing.key(config);
+    let backend = backends.get(key);
+    if(!backend||backend.child.exitCode!==null) { backend=await start(config);backends.set(key,backend); }
+    return backend;
+  }
+  await selectedBackend(readConfig());
   // Processing is serialized because the original HTTP server owns ordered sessions.
   for await (const line of { [Symbol.asyncIterator]: () => iterator }) {
     let request;
@@ -72,7 +82,15 @@ async function main() {
     catch { process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC request' } }) + '\n'); continue; }
     const hasId = Object.hasOwn(request, 'id');
     try {
-      const response = await post(port, request);
+      const config = readConfig();
+      // Poll running jobs on their original target even after the UI changes.
+      // New submissions read the saved selection without restarting the client.
+      const job = routing.jobId(request);
+      const backend = (job && jobs.get(job)) || await selectedBackend(config);
+      const routed = job ? request : routing.submission(request,config);
+      let response = await post(backend.port, routed);
+      routing.rememberJob(routed,response,backend,jobs);
+      if(request.method==='tools/list')response=routing.describe(response,config);
       if (!hasId) continue; // Pinned server returns bodies for notifications; never emit those.
       if (response.id !== request.id) throw new Error('MCP response ID mismatch');
       process.stdout.write(JSON.stringify(response) + '\n');

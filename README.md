@@ -96,6 +96,11 @@ token-cost savings or biological validity. The oncoprint is explicitly synthetic
 
 ## Supported SAS connections
 
+In VS Code, click **SAS ODA**, **Windows SAS** or **Linux SAS** in the status
+bar to change the selected target, then choose **Test SAS Now**. Python and
+SASPy settings are detected and remembered for each target. See the
+[switching guide and repeatable tests](tests/VSCODE_SAS_SWITCHING.md).
+
 | SAS target | SASPy profile | Connection and prerequisites |
 | --- | --- | --- |
 | SAS ODA | `oda` | SAS account, network access, Java, and SAS IOM encryption JARs obtained through SAS. |

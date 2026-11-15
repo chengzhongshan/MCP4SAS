@@ -2,9 +2,9 @@ name: VS Code integration
 on:
   push:
     branches: [main, feature/vscode-guided-setup]
-    paths: ['integrations/vscode/**', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
+    paths: ['integrations/vscode/**', 'tests/*vscode*.cjs', 'tests/VSCODE_SAS_SWITCHING.md', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
   pull_request:
-    paths: ['integrations/vscode/**', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
+    paths: ['integrations/vscode/**', 'tests/*vscode*.cjs', 'tests/VSCODE_SAS_SWITCHING.md', 'MCPDeps/**', 'install/**', 'server.pl', '.github/workflows/vscode-extension.yml']
   workflow_dispatch:
 permissions:
   contents: read

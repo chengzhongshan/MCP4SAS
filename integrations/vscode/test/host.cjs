@@ -9,7 +9,7 @@ exports.run = async () => {
   assert.ok(extension);
   const api = await extension.activate();
   const commands = await vscode.commands.getCommands(true);
-  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'detectSetup']) assert.ok(commands.includes(`mcp4sas.${name}`));
+  for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'detectSetup', 'switchSas', 'testSas']) assert.ok(commands.includes(`mcp4sas.${name}`));
   assert.deepEqual(api.provider.provideMcpServerDefinitions(), []);
   if (process.platform === 'win32') {
     const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-terminal-'));
@@ -57,6 +57,26 @@ exports.run = async () => {
   const pick = vscode.window.showQuickPick;
   const info = vscode.window.showInformationMessage;
   try {
+    if(process.env.MCP4SAS_LIVE_SWITCH_RUNTIME) {
+      const file=process.env.MCP4SAS_LIVE_SWITCH_RUNTIME,original=fs.readFileSync(file),saved=JSON.parse(original),results=[];
+      fs.mkdirSync(path.dirname(api.configFile()),{recursive:true});
+      fs.writeFileSync(api.configFile(),JSON.stringify(saved));
+      vscode.window.showInformationMessage=async()=>undefined;
+      for(const kind of ['oda','local','oda']) {
+        vscode.window.showQuickPick=async items=>items.find(item=>item.kind===kind);
+        await vscode.commands.executeCommand('mcp4sas.switchSas');
+        const selected=JSON.parse(fs.readFileSync(api.configFile(),'utf8'));
+        assert.equal(selected.saspyCfgname==='oda',kind==='oda');
+        const directory=await api.testSelectedSas();
+        const log=fs.readFileSync(path.join(directory,'output.html.info.txt'),'utf8');
+        assert.match(log,/^MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\s*$/m);
+        assert.match(log,new RegExp('^MCP4SAS_PLATFORM '+(kind==='oda'?'LIN':'WIN'),'m'));
+        results.push({kind,profile:selected.saspyCfgname,directory,verified:true});
+      }
+      assert.deepEqual(fs.readFileSync(file),original,'real user target configuration is unchanged');
+      if(process.env.MCP4SAS_LIVE_SWITCH_OUT)fs.writeFileSync(process.env.MCP4SAS_LIVE_SWITCH_OUT,JSON.stringify({results,installed_config_unchanged:true,scope:'Real VS Code command handlers and actual Windows SAS/ODA; picker selection automated, no AI model turn.'},null,2));
+      console.log('PASS: real VS Code ODA/local/ODA commands and observed SAS values');
+    }
     fs.mkdirSync(path.dirname(api.configFile()), { recursive: true });
     fs.writeFileSync(api.configFile(), JSON.stringify({ repo: path.resolve(__dirname, '../../..'), perl: 'test-only-perl', cwd: __dirname }));
     vscode.window.showQuickPick = async () => [{ label: 'GitHub Copilot' }];
@@ -77,5 +97,5 @@ exports.run = async () => {
   }
   const result = cp.spawnSync(process.execPath, ['-e', 'process.stdout.write("electron-node-ok")'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true, encoding: 'utf8' });
   assert.equal(result.status, 0); assert.equal(result.stdout, 'electron-node-ok');
-  console.log('PASS: real VS Code activation, nine commands, empty/configured MCP provider, Copilot connection, Electron Node launcher');
+  console.log('PASS: real VS Code activation, eleven commands, empty/configured MCP provider, Copilot connection, Electron Node launcher');
 };

@@ -64,6 +64,9 @@ them as excluded, and cannot turn an incomplete collection into a complete one.
 
 ## What a counterpart means
 
+For the extension's target-switching regressions, live Windows/ODA examples
+and Linux configuration coverage, see [VSCODE_SAS_SWITCHING.md](VSCODE_SAS_SWITCHING.md).
+
 The `.py` files beside the original `.pl` tests use three approaches:
 
 - Native functional tests exercise the public Python CLI/MCP interfaces.

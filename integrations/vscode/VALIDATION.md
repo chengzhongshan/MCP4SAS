@@ -1,5 +1,40 @@
 # VS Code integration validation
 
+## Updated 0.1.5 build — switching ODA and local SAS
+
+15 November 2026. Added a clickable SAS target in the status bar, **Switch SAS
+Target**, and **Test Selected SAS**. Target-specific interpreter/configuration
+and session-port settings are preserved. The stdio relay rereads the selection
+for new submissions; pending-job polls retain their original backend. Explicit
+stale profile/configuration arguments are rejected before SAS submission.
+Windows COM defaults to one-shot execution and rejects unsupported persistent
+requests. Existing Windows IOM and Linux STDIO configurations remain supported.
+
+All **41 Node tests passed**, including same-transport switching with a fake
+SAS backend, Windows/Linux configuration separation, status-bar changes,
+saved-log validation of compact CLI output, and COM persistence guards.
+The real Windows VS Code host passed activation, eleven commands, MCP provider
+and launcher checks, and shared VS Code/Cygwin workspace file access. Its actual
+Switch SAS Target and Test Selected SAS commands successfully ran ODA/local/ODA;
+all returned SASHELP.CLASS ages N=19, NMISS=0, minimum=11 and maximum=16.
+
+The real stdio/HTTP relay also passed nine checks against the author's installed
+MCP4SAS backend: Windows COM and ODA positive/negative jobs, polling an ODA job
+after a local switch, switch-back/recovery, stale-target rejection, and Windows
+IOM persistence. IOM saved value 42 in WORK and read it in the next submission.
+Positive executions had zero SAS warnings and errors. Two deliberately missing
+datasets produced the expected SAS errors. Installed user selection was unchanged
+by the isolated tests; no AI model conversation is claimed.
+
+Raw records are retained locally under `SAS_Output_vscode_switch_20261115_r3/`.
+The initial uninstalled-checkout failure and the initial stdout-only host-check
+failure are retained and explained in [the reproducible debugging examples](../../tests/VSCODE_SAS_SWITCHING.md).
+Linux discovery, configuration restoration, environment isolation and transport
+routing are covered offline. **Live licensed Linux SAS execution was not available
+on this Windows workstation.** The same live harness can be run on a Linux SAS
+host. Existing supported local desktop scope remains; WSL/SSH/container hosting
+is not added by this change. Version remains **0.1.5**.
+
 ## 0.1.2 — Cygwin default terminal
 
 Windows setup now registers an interactive login Bash profile using the selected Cygwin installation and chooses it as the user default once. `CHERE_INVOKING=1` preserves the terminal working directory. Automatic activation can also configure an already detected Cygwin installation. Later manual default-profile choices are retained; an explicit command can restore Cygwin. Other profile entries, macOS/Linux and remote windows remain unaffected. Automatic configuration can be disabled with `mcp4sas.configureCygwinTerminal=false`.

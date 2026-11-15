@@ -1,0 +1,118 @@
+{
+    "date":  "2026-11-15",
+    "version":  "0.1.5",
+    "unit_tests_passed":  41,
+    "live_relay_checks":  [
+                              {
+                                  "name":  "local-positive",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "oda-job-polled-after-local-switch",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "local-negative",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "oda-positive-after-switch-back",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "oda-negative",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "stale-target-rejected-before-submission",
+                                  "status":  "PASS"
+                              },
+                              {
+                                  "name":  "oda-after-negative-recovery",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "windows-iom-positive",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              },
+                              {
+                                  "name":  "windows-iom-persistent-work",
+                                  "status":  "PASS",
+                                  "warnings":  0
+                              }
+                          ],
+    "live_relay_complete":  true,
+    "real_extension_host_checks":  [
+                                       {
+                                           "kind":  "oda",
+                                           "profile":  "oda",
+                                           "verified":  true
+                                       },
+                                       {
+                                           "kind":  "local",
+                                           "profile":  "winlocal_com",
+                                           "verified":  true
+                                       },
+                                       {
+                                           "kind":  "oda",
+                                           "profile":  "oda",
+                                           "verified":  true
+                                       }
+                                   ],
+    "user_selection_unchanged":  true,
+    "live_platforms":  [
+                           "Windows SAS COM",
+                           "Windows SAS IOM",
+                           "SAS ODA"
+                       ],
+    "linux_coverage":  "Offline detection/configuration/environment/routing tests; live licensed Linux SAS not available",
+    "raw_evidence_directory":  "SAS_Output_vscode_switch_20261115_r3 (local, ignored by Git)",
+    "mcp_records_sha256":  "17336b1ab5607279fcc0047f8e87bc019af333aa4c0fe6647fbd2aa25ccb4b50",
+    "backend_policy":  "Current relay tested against existing installed MCP4SAS backend; original installation not modified",
+    "installed_backend_sha256":  "7f64363513048a22fdcdfde48e589134207c5fc18a0352d62e7642eae277134f",
+    "sources":  [
+                    {
+                        "file":  "integrations/vscode/src/core.js",
+                        "sha256":  "637ce31c46a1a66fe7bc3824b85925b53f1375b12cb9766ad4f2103f46217a2a"
+                    },
+                    {
+                        "file":  "integrations/vscode/src/detect.js",
+                        "sha256":  "34e0f8e3f676d60463d5d2989546eee82e85025a21ec6921de0e484541fd283b"
+                    },
+                    {
+                        "file":  "integrations/vscode/src/extension.js",
+                        "sha256":  "811814c7c23eb50e2205892c6798e0ecd53a2cd67a33b3f42c188786677e8535"
+                    },
+                    {
+                        "file":  "integrations/vscode/src/relay.js",
+                        "sha256":  "484ba170d93884c8e09c0190df709f06e6bb54e5b166f7ce52351c795f4bcdf2"
+                    },
+                    {
+                        "file":  "integrations/vscode/src/routing.js",
+                        "sha256":  "6ce9f167f4c1a17d508a15c879bb728a2267505803f98beedde263800f22e169"
+                    },
+                    {
+                        "file":  "integrations/vscode/test/targets.test.js",
+                        "sha256":  "9a6168c9ae846cb56be3c1d8d8b7ac6e2b63ed9340bde307436b3234025a002e"
+                    },
+                    {
+                        "file":  "integrations/vscode/test/relay-switch.test.js",
+                        "sha256":  "d6a2842aac7e246ef2ea877b56bcd724c16589add70b8e9a5ae21261b2dcfd62"
+                    },
+                    {
+                        "file":  "tests/run_vscode_sas_switch_live.cjs",
+                        "sha256":  "eca5a14120cebaf15071fa6efea99cd8c3f9d89aaa6012fa16b37ab10b43cc3a"
+                    },
+                    {
+                        "file":  "tests/run_vscode_extension_host.cjs",
+                        "sha256":  "c7c375cd9073a7355cd131bf3642ca38757e32b52c13e586f77941b9e6cc69d0"
+                    }
+                ]
+}

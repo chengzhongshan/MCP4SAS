@@ -12,13 +12,13 @@ function discoveryPaths(config, options = {}) {
   const onPath = name => (env.PATH || env.Path || '').split(platform === 'win32' ? ';' : ':').filter(Boolean).map(d=>p.join(d,name));
   const roots = [env.VIRTUAL_ENV, env.CONDA_PREFIX, ...['anaconda3','miniconda3','miniforge3','mambaforge'].map(d=>p.join(home,d))].filter(Boolean);
   try { roots.push(...io.readFileSync(p.join(home,'.conda','environments.txt'),'utf8').split(/\r?\n/).filter(Boolean).slice(0,24)); } catch { /* optional metadata */ }
-  const python = [config.python, env.PIPELINE_PYTHON_BIN, p.join(config.repo,'.venv-pipeline','bin','python'), p.join(config.repo,'.venv-pipeline','Scripts','python.exe')];
+  const python = [config.python, ...Object.values(config.targets||{}).map(x=>x.python), env.PIPELINE_PYTHON_BIN, p.join(config.repo,'.venv-pipeline','bin','python'), p.join(config.repo,'.venv-pipeline','Scripts','python.exe')];
   for (const root of roots) python.push(p.join(root,platform === 'win32' ? 'python.exe' : 'bin/python'));
   if (platform === 'win32') {
     for (const parent of [env.LOCALAPPDATA && p.join(env.LOCALAPPDATA,'Programs','Python'), env.ProgramFiles && p.join(env.ProgramFiles,'Python')].filter(Boolean)) for(const d of dirs(parent)) python.push(p.join(d,'python.exe'));
     python.push(...onPath('python.exe'),...onPath('python3.exe'));
   } else python.push(...onPath('python3'),...onPath('python'),'/usr/bin/python3','/opt/homebrew/bin/python3','/usr/local/bin/python3');
-  const sas = [env.SAS_EXECUTABLE, env.SASPY_LOCAL_SAS_PATH, env.MCP4SAS_LOCAL_SAS_PATH];
+  const sas = [config.sasExecutable, config.targets?.local?.sasExecutable, env.SAS_EXECUTABLE, env.SASPY_LOCAL_SAS_PATH, env.MCP4SAS_LOCAL_SAS_PATH];
   if(platform === 'win32') {
     for(const root of [env.SASROOT, p.join(env.ProgramFiles||'C:\\Program Files','SASHome','SASFoundation'),p.join(env['ProgramFiles(x86)']||'C:\\Program Files (x86)','SASHome','SASFoundation')].filter(Boolean)) {
       sas.push(p.join(root,'sas.exe'));for(const d of dirs(root))sas.push(p.join(d,'sas.exe'));
@@ -67,23 +67,37 @@ async function detect(config, options = {}) {
   }catch{/* broken/stale interpreter is not advertised */}}}));
   python.sort((a,b)=>paths.python.indexOf(a.candidate)-paths.python.indexOf(b.candidate));
   const ready=python.filter(x=>x.saspy), native=python.filter(x=>platform==='win32'?x.platform==='win32':x.platform===platform);
-  const oda=ready.find(x=>x.candidate===config.python)||ready[0];
+  // A local COM environment can import SASPy without being configured for ODA.
+  // Prefer the remembered ODA interpreter when switching back.
+  const odaPython=config.saspyCfgname==='oda'?config.python:config.targets?.oda?.python;
+  const oda=ready.find(x=>x.candidate===odaPython||x.python===odaPython)||ready.find(x=>x.platform==='cygwin')||ready[0];
   const local=paths.sas.length ? native.find(x=>x.saspy&&(platform!=='win32'||x.com||config.saspyCfgname==='winlocal')) : undefined;
   return {platform,python,oda,local,native:native[0],sas:paths.sas[0],jarDirectory:paths.jarDirs[0],needsLocalSupport:!!paths.sas.length&&!local};
 }
 function configuredTarget(config, found, kind) {
+  const targets=rememberTargets(config);
   const r={...config};
+  for(const key of CONNECTION_KEYS)delete r[key];
+  Object.assign(r,targets[kind]||{});
+  r.targets=targets;
   if(kind==='local') {
     if(!found.local||!found.sas)throw Error('Local SAS support was not detected. Run Quick Setup to install the required Python support.');
     r.python=found.local.candidate;
     if(!/^(winlocal|winlocal_com|linuxlocal|local|stdio)$/.test(r.saspyCfgname||''))delete r.saspyCfgfile;
-    r.saspyCfgname=found.platform==='win32'?(config.saspyCfgname==='winlocal'?'winlocal':'winlocal_com'):'linuxlocal';
+    r.saspyCfgname=found.platform==='win32'?(r.saspyCfgname==='winlocal'?'winlocal':'winlocal_com'):'linuxlocal';
     r.sasExecutable=found.sas;
   } else {
     if(!found.oda)throw Error('SASPy was not found. Run MCP4SAS: Quick Setup and choose Install MCP4SAS for this computer to install the required environment.');
     r.python=found.oda.platform==='cygwin'?found.oda.python:found.oda.candidate;r.saspyCfgname='oda';delete r.sasExecutable;
-    if(config.saspyCfgname&&config.saspyCfgname!=='oda')delete r.saspyCfgfile;
   }
   return r;
 }
-module.exports={discoveryPaths,detect,parseProbe,configuredTarget,JARS};
+const CONNECTION_KEYS=['python','saspyCfgname','saspyCfgfile','sasExecutable','sessionPort'];
+function targetKind(profile) { return /^(winlocal|winlocal_com|linuxlocal|local|stdio)$/.test(profile||'')?'local':!profile||profile==='oda'?'oda':'custom'; }
+function rememberTargets(config) {
+  const targets={...config.targets};
+  const kind=targetKind(config.saspyCfgname);
+  targets[kind]=Object.fromEntries(CONNECTION_KEYS.filter(k=>config[k]!==undefined).map(k=>[k,config[k]]));
+  return targets;
+}
+module.exports={discoveryPaths,detect,parseProbe,configuredTarget,rememberTargets,targetKind,CONNECTION_KEYS,JARS};
