@@ -57,5 +57,7 @@ Reviewed fixes include environment handoff, separate HTML output, browser contro
 macro-directory fallback, network-path diagnostics and owned timeout cleanup.
 Unsafe implicit escape conversion, unanchored error matching and extra normal
 shutdown waits were corrected. Native Windows validation passed 64 Python tests,
-91 Perl assertions and nine live SAS ODA operations. Cross-platform branch CI is
-pending before publication. See docs/COPILOT_RUNNER_FIX_REVIEW.md at repository root.
+91 Perl assertions and ten live SAS ODA operations. All six Python jobs passed
+in run 43677593186, and all three Perl jobs passed in run 43677287994. The fixes
+are integrated into local/main and GitHub/main. See
+docs/COPILOT_RUNNER_FIX_REVIEW.md at repository root.

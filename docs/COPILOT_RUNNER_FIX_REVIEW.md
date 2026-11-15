@@ -27,6 +27,9 @@ passed. Windows now launches the selected interpreter with a subprocess argument
 list, preserving quoting and the actual exit status. Unix retains `execv`. A
 cross-platform subprocess regression now tests the handoff with spaces, quotes
 and a Windows path without requiring a SAS account.
+CI exposed an additional Windows stream-inheritance issue in base Python;
+the handoff now forwards stdin/stdout/stderr explicitly. Copilot's HTML tests
+also needed resolved temporary paths for macOS aliases and Windows short names.
 
 **Literal escape conversion is opt-in.** Unconditionally converting `\n` and
 `\t` could damage `C:\new\table.tsv`, regular expressions or quoted SAS text.
@@ -82,6 +85,10 @@ The opt-in live review completed **nine operations** against SAS ODA:
 | Python recovery | A fresh session returned count = 19 after timeout, without replaying the failed sleep |
 | Python session close | Selected review session closed, exit 0 |
 
+After the stream-forwarding correction, a tenth live operation repeated the
+Windows environment handoff and returned count = 19, exit 0, captured terminal
+output and a separate 33,284-byte HTML file.
+
 In the reviewed Python macro run, HTML occupied 33,284 bytes, while terminal
 output occupied 1,805 bytes and the text log 1,564 bytes. This records output
 separation, not measured model-token or monetary savings. The live runs mix
@@ -97,8 +104,14 @@ the intended SAS error rather than accepting any nonzero result.
 
 ## Scope and cross-platform checks
 
-The six-job Python matrix and three-job Perl regression matrix cover Windows,
-macOS and Ubuntu. Their actual branch results will be recorded before merging.
+All six Python jobs passed in
+[run 43677593186](https://github.com/chengzhongshan/MCP4SAS/actions/runs/43677593186)
+at runtime commit `ed9bcb3b9264bf77995d45fc61cfba2704a63420`.
+All three Perl jobs passed in
+[run 43677287994](https://github.com/chengzhongshan/MCP4SAS/actions/runs/43677287994)
+at `18d530e44629183d2895a1eec066b5ad6c864668`; subsequent runtime edits changed only
+the Python handoff and Python test path expectations. These matrices cover Windows,
+macOS and Ubuntu, with Python 3.10 and 3.13.
 Live SAS in this review used Windows Python/Cygwin Perl connecting to SAS ODA;
 it does not establish live SAS compatibility on every platform or rerun all
 research figures. Windows network-share availability remains a configuration

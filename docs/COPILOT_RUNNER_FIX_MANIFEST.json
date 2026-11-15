@@ -12,7 +12,7 @@
       "path": "MCP4SAS_Use_Python/cli.py",
       "source_sha256": "1c181f60befdf130b77ab273f947529e1fd0f864e535df650d16d690e0ddb94a",
       "source_bytes": 23305,
-      "reviewed_lf_sha256": "fd1d5b7fd324939b1a15a8b2ef181b945d1800dd646ce28b2c259429777efda7"
+      "reviewed_lf_sha256": "acc926cfb4f5edb0424c08e05cdba83c83b857466dcc1b1e882ed0a724a3d5ad"
     },
     {
       "path": "MCP4SAS_Use_Python/dependencies.py",
@@ -36,7 +36,7 @@
       "path": "MCP4SAS_Use_Python/tests/test_runtime.py",
       "source_sha256": "8e4ad9972480179412f471a19cb89adeab724b7ca0dd52b32dd9b5de940f1920",
       "source_bytes": 19733,
-      "reviewed_lf_sha256": "95880ff1b188a5a9d2fa8bfc1f86824ae53be2e353dba8140238851f553a2fb4"
+      "reviewed_lf_sha256": "a60af459748bb658cbe70dee853bc468cfaa64d25a382e13ff3ec5a724163d18"
     },
     {
       "path": "MCP4SAS_Use_Python/transport.py",
@@ -66,7 +66,7 @@
       "path": "README.md",
       "source_sha256": "fd35023dcf0574d5a204c7c267312c0450db2f9f683ca1156f5ef4c5283adfdb",
       "source_bytes": 59778,
-      "reviewed_lf_sha256": "fd35023dcf0574d5a204c7c267312c0450db2f9f683ca1156f5ef4c5283adfdb"
+      "reviewed_lf_sha256": "b90f537a95fc3846bad9a6554f6dde5c657f3f4687728821fbf7fbce8d2143cd"
     },
     {
       "path": "run_sas_codes_or_files_in_ODA.pl",
@@ -100,7 +100,7 @@
     }
   ],
   "source_preserved": true,
-  "reviewed_hash_basis": "UTF-8 file bytes with CRLF normalized to LF",
+  "reviewed_hash_basis": "Git blob bytes at reviewed_source_commit",
   "python_tests": 64,
   "perl_assertions": 91,
   "perl_checks": [
@@ -245,6 +245,17 @@
         "log_bytes": 167,
         "html_bytes": 0,
         "interpreter_handoff": false
+      },
+      {
+        "case": "python_final_windows_handoff",
+        "exit_code": 0,
+        "expected_exit": 0,
+        "passed": true,
+        "seconds": 8.732,
+        "stdout_bytes": 1481,
+        "log_bytes": 1247,
+        "html_bytes": 33284,
+        "interpreter_handoff": true
       }
     ]
   },
@@ -252,5 +263,22 @@
     "Live SAS ODA from Windows only in this review.",
     "Timings are not a paired performance or token-cost benchmark.",
     "Private logs/configurations and JARs are excluded."
+  ],
+  "reviewed_source_commit": "ed9bcb3b9264bf77995d45fc61cfba2704a63420",
+  "ci": [
+    {
+      "name": "Python runtime",
+      "run_id": 43677593186,
+      "conclusion": "success",
+      "jobs": 6,
+      "commit": "ed9bcb3b9264bf77995d45fc61cfba2704a63420"
+    },
+    {
+      "name": "Runner regression checks",
+      "run_id": 43677287994,
+      "conclusion": "success",
+      "jobs": 3,
+      "commit": "18d530e44629183d2895a1eec066b5ad6c864668"
+    }
   ]
 }
