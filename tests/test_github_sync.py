@@ -63,6 +63,42 @@ with tempfile.TemporaryDirectory(prefix='mcp4sas-sync-') as temp:
     sync(first, '--dry-run')
     assert before == (first / '.git' / 'index').read_bytes()
     assert head == run(first, 'git', 'rev-parse', 'HEAD')
+
+    # macOS's system Bash can interrupt echo when an asynchronous process
+    # substitution exits. Make the rev-list child linger after writing its one
+    # line: the final preview must wait for completion, not just read the line.
+    delayed_git = root / 'delayed_git.sh'
+    child_done = root / 'rev_list_child_done'
+    delayed_git.write_text('''git() {
+  if [[ "$1" == rev-list && "${2:-}" == --left-right ]]; then
+    command git "$@"
+    sleep 0.2
+    : > "$MCP4SAS_SYNC_CHILD_DONE"
+  else
+    command git "$@"
+  fi
+}
+echo() {
+  if [[ "${1:-}" == Preview\\ only* && ! -f "$MCP4SAS_SYNC_CHILD_DONE" ]]; then
+    builtin echo 'FAIL: preview printed before rev-list child completed' >&2
+    return 1
+  fi
+  builtin echo "$@"
+}
+''', encoding='utf-8', newline='\n')
+    previous_env = env.copy()
+    try:
+        env.update(BASH_ENV=delayed_git.as_posix(),
+                   MCP4SAS_SYNC_CHILD_DONE=child_done.as_posix())
+        sync(first, '--dry-run')
+        assert child_done.is_file()
+        assert before == (first / '.git' / 'index').read_bytes()
+        assert head == run(first, 'git', 'rev-parse', 'HEAD')
+    finally:
+        env.clear()
+        env.update(previous_env)
+    print('PASS: preview waits for rev-list child completion before writing its summary')
+
     sync(first, 'Add helper')
     tracked = run(first, 'git', 'ls-files')
     assert 'helper.pl' in tracked

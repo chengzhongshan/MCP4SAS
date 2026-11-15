@@ -216,7 +216,11 @@ main() {
   fi
   if (( DRY_RUN )); then
     if git show-ref --verify --quiet "$remote_ref"; then
-      read -r local_ahead remote_ahead < <(git rev-list --left-right --count HEAD..."$remote_ref")
+      # Wait for git to exit, not merely for its first output line. On macOS's
+      # system Bash, the late SIGCHLD from a process substitution can interrupt
+      # the following echo's write and fail an otherwise successful preview.
+      ahead_counts="$(git rev-list --left-right --count HEAD..."$remote_ref")"
+      read -r local_ahead remote_ahead <<< "$ahead_counts"
       echo "Existing commits: $local_ahead local-only, $remote_ahead remote-only."
     fi
     echo 'Preview only; no files, real index, branch history, or GitHub content were changed.'
