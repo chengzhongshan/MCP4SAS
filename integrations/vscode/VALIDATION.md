@@ -138,3 +138,48 @@ Before installation and terminal creation, the extension checks real file access
 All 32 Node tests pass, including permission denial, mismatched file mapping, cleanup, current-folder switching, automatic terminal creation, portable Cygwin and prior setup regressions. The real installed Windows VS Code extension-host test passed: it opened a separate workspace with spaces and an apostrophe in its name, deliberately saved a different runtime cwd, opened the MCP4SAS terminal in the workspace, read a SAS file saved through VS Code's filesystem API, and appended to it through Cygwin. Nine commands, MCP provider and Electron/Node launcher checks also passed. The isolated host test ran outside the restricted filesystem sandbox; its launcher quotes the controlled workspace path for test-electron's Windows shell. Nonfatal editor/test-framework diagnostics are retained in the local test log.
 
 Fresh Windows installation, macOS/Linux execution and scientific analyses were not rerun for this terminal-only change. The universal extension remains version 0.1.5.
+
+
+## 15 November 2026 ? in-use Cygwin DLL installer recovery (0.1.5)
+
+The user's setup.log reproduced an unnecessary gettext/libintl upgrade while
+Cygwin programs were active. Replacing cygintl-8.dll failed with Permission
+denied; setup tried to terminate processes and ended unsuccessfully. The source
+copy itself succeeded. An unregistered custom task type also appeared in the
+VS Code task log.
+
+Quick Setup now probes working packages before cloning source, retains ready
+Cygwin installations, installs only missing prerequisites from native Windows
+when the runtime is idle, and never invokes the package manager from its own
+Bash. Missing packages with active Cygwin processes produce a specific message
+instead of terminating those processes. A fresh Cygwin bootstrap includes the
+Python/pip/headers and build tools needed by the project installer.
+
+Installer tasks use VS Code's built-in process type, match returned
+TaskExecution handles (not a custom definition field that VS Code can remove),
+and retain installer output and exit status under local/install-logs.
+
+Actual checks:
+
+- The read-only prerequisite probe found all packages ready on the user's
+  existing Cygwin. The official setup log timestamp did not change during the
+  repaired project installation.
+- The actual Test_MCP4SAS installation finished with exit 0, including SASPy
+  import, Java/classpath checks, Perl/server syntax and installation smoke
+  tests. Existing account configuration was preserved. This is installation
+  validation, not a new SAS ODA login or scientific-analysis run. The fresh
+  Cygwin SASPy environment still reports the normal manual guidance for
+  proprietary SAS encryption JARs; the extension retains the configured
+  existing Python environment.
+- All 41 Node tests passed, including existing portable-Cygwin setup, normalized
+  task definitions, a logged exit-17 failure and the missing-package/busy-runtime
+  guard. Six shell regression checks passed.
+- A real isolated Windows VS Code extension host passed actual process-task
+  success and exit-17 failure, Cygwin/project file read/write, command/provider
+  activation and the launcher checks. An initial task test incorrectly used
+  the Electron editor binary as a command-line Node executable; its log is
+  retained. The corrected test uses normal OS commands and passed.
+
+Evidence: local ignored SAS_Output_installer_dll_fix/ directory. The rebuilt
+VSIX retains version 0.1.5; its current digest is in the release SHA256SUMS.
+The main source/checkpoint and artifact publication are recorded in Git.

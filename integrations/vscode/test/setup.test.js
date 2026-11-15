@@ -25,7 +25,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   const statusBar={show(){},dispose(){}};
   const choices = ['Install MCP4SAS for this computer', 'Choose an existing Cygwin Perl', [{ label: 'GitHub Copilot' }]];
   const dialogs = [portable];
-  let onTaskEnd;
+  let onTaskEnd,taskExitCode=0,missingPrerequisites='',busyPrerequisites=false;
   const disposable = () => ({ dispose() {} });
   const vscode = {
     workspace: { isTrusted: true, workspaceFolders: [{ uri: { fsPath: project } }], getConfiguration(section) {
@@ -51,7 +51,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     },
     tasks: {
       onDidEndTaskProcess(fn) { onTaskEnd = fn; return disposable(); },
-      async executeTask(task) { tasks.push(task); if(task.execution.args[1]==='venv'){const exe=path.join(task.execution.args[2],'Scripts','python.exe');fs.mkdirSync(path.dirname(exe),{recursive:true});fs.writeFileSync(exe,'fixture');} queueMicrotask(() => onTaskEnd({ execution: { task }, exitCode: 0 })); }
+      async executeTask(task) { tasks.push(task); if(task.execution.args[1]==='venv'){const exe=path.join(task.execution.args[2],'Scripts','python.exe');fs.mkdirSync(path.dirname(exe),{recursive:true});fs.writeFileSync(exe,'fixture');} const execution={task:{...task,definition:{type:'process'}}};queueMicrotask(() => onTaskEnd({ execution, exitCode: taskExitCode }));return execution; }
     }
   };
   const mockedCore = {
@@ -59,6 +59,10 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
     async run(command, args) {
+      if(command===path.join(path.dirname(portable),'bash.exe')&&args.includes('-c')) {
+        if(args.at(-1).includes('MCP4SAS_PROBE_PID='))return 'MCP4SAS_PROBE_PID=100\n 100 1 100 1000 ?\n'+(busyPrerequisites?' 200 1 200 2000 ?\n':'');
+        return missingPrerequisites;
+      }
       if(args.includes('--code')) {
         const directory=args[args.indexOf('--output-prefix')+1];fs.mkdirSync(directory,{recursive:true});
         fs.writeFileSync(path.join(directory,'output.html.info.txt'),(sasCheckFailure?'ERROR: test failure\n':'')+'MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\n');
@@ -80,7 +84,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
   const module = { exports: {} };
   try {
     vm.runInNewContext(fs.readFileSync(path.join(extensionPath, 'src', 'extension.js'), 'utf8'), {
-      module, process: { platform: 'win32', execPath: process.execPath, env: { LOCALAPPDATA: root, ProgramFiles: root, SASPY_JAVA_WIN: java } },
+      module, __dirname:path.join(extensionPath,'src'), process: { platform: 'win32', execPath: process.execPath, env: { LOCALAPPDATA: root, ProgramFiles: root, SASPY_JAVA_WIN: java } },
       require(name) {
         if (name === 'vscode') return vscode;
         if (name === './core') return mockedCore;
@@ -115,6 +119,8 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     vscode.workspace.workspaceFolders = [{ uri: { fsPath: project } }];
     assert.equal(tasks[0].execution.command, path.join(path.dirname(portable), 'bash.exe'));
     assert.ok(tasks[0].execution instanceof vscode.ProcessExecution);
+    assert.equal(tasks[0].definition.type,'process','uses the built-in task type, not an unregistered custom provider');
+    assert.equal(tasks[0].execution.options.env.MCP4SAS_SKIP_CYGWIN_SETUP,'1','verified existing Cygwin is never upgraded from its own Bash');
     assert.deepEqual(Array.from(tasks[0].execution.args).slice(0, 2), ['--noprofile', '--norc']);
     assert.equal(states.get('copilotEnabled'), true);
     assert.ok(fs.existsSync(path.join(storage, 'relay.js')));
@@ -186,6 +192,16 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.match(tasks.at(-1).execution.command,/native-saspy/);
     assert.ok(tasks.at(-1).execution.args.includes('saspy'));assert.ok(tasks.at(-1).execution.args.includes('pywin32'));
     assert.notEqual(tasks.at(-1).execution.command,python,'base Python packages are not modified');
+    const failedLog=path.join(project,'failed-install.log');fs.writeFileSync(failedLog,'ERROR: fixture prerequisite failed\n');
+    taskExitCode=17;
+    await assert.rejects(api.task('fixture',['install'],project,{}, {logFile:failedLog}),/exit 17.*Log:[\s\S]*fixture prerequisite failed/);
+    taskExitCode=0;
+    missingPrerequisites='python312-pip';busyPrerequisites=true;
+    choices.push('Install MCP4SAS for this computer','Choose an existing Cygwin Perl');dialogs.push(portable);
+    const tasksBeforeBusyCheck=tasks.length;
+    await commands.get('mcp4sas.setup')();
+    assert.match(errors.at(-1),/python312-pip.*Close Cygwin/);
+    assert.equal(tasks.length,tasksBeforeBusyCheck,'missing packages with active sessions cannot start an installer task');
     vscode.env.remoteName = 'ssh-remote';
     await api.configureCygwinTerminal(portable, true);
     assert.equal(settings.get('defaultProfile.windows'), 'My existing shell', 'remote settings are untouched');

@@ -35,24 +35,34 @@ async function choosePerl() {
   if (perl && process.platform === 'win32' && !fs.existsSync(path.join(path.dirname(perl), 'cygpath.exe'))) throw new Error('Choose Perl from the Cygwin installation containing cygpath.exe.');
   return perl;
 }
-async function task(command, args, cwd, env = {}) {
-  const definition = { type: 'mcp4sas-setup', nonce: String(Date.now()) };
+async function task(command, args, cwd, env = {}, details = {}) {
+  const definition = { type: 'process', nonce: require('node:crypto').randomUUID() };
   // Pass native executable paths directly to VS Code, independent of the
   // user's default terminal shell (Cygwin interprets Windows backslashes).
   const execution = new vscode.ProcessExecution(command, args, { cwd, env });
   const t = new vscode.Task(definition, vscode.TaskScope.Global, 'MCP4SAS installer', 'MCP4SAS', execution);
   t.presentationOptions = { reveal: vscode.TaskRevealKind.Always, panel: vscode.TaskPanelKind.Dedicated, focus: true };
   return new Promise((resolve, reject) => {
-    const subscription = vscode.tasks.onDidEndTaskProcess(event => {
-      if (event.execution.task.definition.nonce !== definition.nonce) return;
+    let execution;
+    const early=[];
+    const completed=event=>{
+      // VS Code normalizes built-in process definitions and may remove custom
+      // fields. Match the TaskExecution returned by executeTask, not a nonce.
+      if(!execution){early.push(event);return;}
+      if(event.execution!==execution)return;
       subscription.dispose();
-      if (event.exitCode === 0) resolve(); else reject(new Error('Installer did not finish successfully. Read the installer terminal, fix its reported prerequisite, then run Quick Setup again.'));
-    });
-    vscode.tasks.executeTask(t).catch(e => { subscription.dispose(); reject(e); });
+      if (event.exitCode === 0) resolve(); else {
+        let tail='';
+        if(details.logFile && fs.existsSync(details.logFile))tail=fs.readFileSync(details.logFile,'utf8').split(/\r?\n/).filter(Boolean).slice(-12).join('\n');
+        reject(new Error(`Installer failed (exit ${event.exitCode ?? 'unknown'}). ${details.logFile ? 'Log: '+details.logFile+'. ' : 'Read the installer terminal. '}${tail ? '\n'+tail : ''}`));
+      }
+    };
+    const subscription = vscode.tasks.onDidEndTaskProcess(completed);
+    vscode.tasks.executeTask(t).then(handle=>{execution=handle;for(const event of early)completed(event);}).catch(e => { subscription.dispose(); reject(e); });
   });
 }
-async function bootstrapCygwin() {
-  const root = path.join(process.env.LOCALAPPDATA || os.homedir(), 'MCP4SAS', 'cygwin');
+async function bootstrapCygwin(existingPerl, packages = 'bash,git,curl,perl,ca-certificates,gcc-core,gcc-g++,make,python3,python312,python312-devel,python312-pip,unzip,wget,zip') {
+  const root = existingPerl ? path.dirname(path.dirname(existingPerl)) : path.join(process.env.LOCALAPPDATA || os.homedir(), 'MCP4SAS', 'cygwin');
   const cache = path.join(context.globalStorageUri.fsPath, 'downloads');
   fs.mkdirSync(cache, { recursive: true });
   const setup = path.join(cache, 'setup-x86_64.exe');
@@ -64,11 +74,24 @@ async function bootstrapCygwin() {
   output.appendLine('Installing a per-user Cygwin environment. Package downloads may take several minutes.'); output.show(true);
   // setup runs hidden; progress is reported here. No shell-built command or elevation.
   await new Promise((resolve, reject) => {
-    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', 'bash,git,curl,perl,ca-certificates'], { windowsHide: true, env: core.cygwinEnvironment(path.join(root, 'bin', 'perl.exe')) });
+    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', packages], { windowsHide: true, env: core.cygwinEnvironment(path.join(root, 'bin', 'perl.exe')) });
     p.on('error', reject); p.stdout?.on('data', b => output.append(b.toString())); p.stderr?.on('data', b => output.append(b.toString()));
     p.on('close', code => code === 0 ? resolve() : reject(new Error(`Cygwin setup returned ${code}. Inspect ${root}/var/log/setup.log, then retry.`)));
   });
   return path.join(root, 'bin', 'perl.exe');
+}
+async function ensureCygwinPrerequisites(perl) {
+  const bash=path.join(path.dirname(perl),'bash.exe'),env=core.cygwinEnvironment(perl);
+  const probe=fs.readFileSync(path.join(__dirname,'cygwin_prerequisites.sh'),'utf8')+'\ncygwin_missing_prerequisites\n';
+  const missing=[...new Set((await core.run(bash,['--noprofile','--norc','-c',probe],{env,timeout:30000})).split(/\s+/).filter(Boolean))];
+  if(!missing.length){output.appendLine('Cygwin prerequisites already work; keeping installed packages and active sessions.');return;}
+  const state=await core.run(bash,['--noprofile','--norc','-c','printf "MCP4SAS_PROBE_PID=%s\\n" "$$"; /usr/bin/ps -l'],{env});
+  const probePid=Number(state.match(/MCP4SAS_PROBE_PID=(\d+)/)?.[1]);
+  const busy=state.split(/\r?\n/).map(line=>line.match(/^\s*(?:[A-Z]\s+)?(\d+)\s+(\d+)\s+\d+\s+\d+\s/)).filter(m=>m&&Number(m[1])!==probePid&&Number(m[2])!==probePid);
+  if(busy.length)throw new Error(`Cygwin needs these packages: ${missing.join(', ')}. Close Cygwin terminals and stop their running jobs, then retry Quick Setup. Setup will not terminate your processes to replace DLLs.`);
+  await bootstrapCygwin(perl,missing.join(','));
+  const remaining=await core.run(bash,['--noprofile','--norc','-c',probe],{env,timeout:30000});
+  if(remaining.trim())throw new Error('Cygwin prerequisite check still failed: '+remaining);
 }
 function windowsJava() {
   const candidates = [process.env.SASPY_JAVA_WIN, process.env.SASPY_JAVA, process.env.JAVA_HOME && path.join(process.env.JAVA_HOME, 'bin', 'java.exe')];
@@ -110,6 +133,7 @@ async function installNew() {
   }
   await core.assertWritableProject(repo, perl);
   const java = process.platform === 'win32' ? await ensureWindowsJava() : undefined;
+  if(process.platform === 'win32')await ensureCygwinPrerequisites(perl);
   const install = core.platformInstaller(process.platform);
   fs.mkdirSync(context.globalStorageUri.fsPath, { recursive: true });
   if (fs.existsSync(path.join(repo, 'server.pl'))) {
@@ -135,7 +159,10 @@ async function installNew() {
   output.appendLine(`MCP4SAS source and Perl runner available at: ${repo}`);
   const bash = process.platform === 'win32' ? path.join(path.dirname(perl), 'bash.exe') : '/bin/bash';
   const script = process.platform === 'win32' ? await core.toPosix(path.join(repo, 'install', install), perl) : path.join(repo, 'install', install);
-  await task(bash, ['--noprofile', '--norc', script], repo, { ...(process.platform === 'win32' ? core.cygwinEnvironment(perl) : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) });
+  const logfile=path.join(repo,'local','install-logs','vscode-'+Date.now()+'.log');
+  const wrapper=path.join(__dirname,'installer-task.sh');
+  const [wrapperPath,logPath]=process.platform==='win32' ? await Promise.all([core.toPosix(wrapper,perl),core.toPosix(logfile,perl)]) : [wrapper,logfile];
+  await task(bash, ['--noprofile', '--norc', wrapperPath,logPath,script], repo, { ...(process.platform === 'win32' ? {...core.cygwinEnvironment(perl),MCP4SAS_SKIP_CYGWIN_SETUP:'1'} : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) },{logFile:logfile});
   // macOS installer may install Homebrew Perl for the first time.
   perl = core.installedPerl(await findPerl(), perl);
   return { repo, perl, java, cwd: repo };
@@ -432,6 +459,6 @@ async function activate(ctx) {
       if (perl) await configureCygwinTerminal(perl);
     } catch (e) { output.appendLine(`Cygwin terminal setup: ${e.message}`); }
   }
-  return { provider, configFile, launchSettings, configureCygwinTerminal, openRuntimeTerminal, detectSetup, testSelectedSas, updateTargetStatus }; // Also exercised by extension-host tests.
+  return { provider, configFile, launchSettings, configureCygwinTerminal, openRuntimeTerminal, detectSetup, testSelectedSas, updateTargetStatus, task }; // Also exercised by extension-host tests.
 }
 module.exports = { activate };

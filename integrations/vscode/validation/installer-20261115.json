@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-15",
+  "version": "0.1.5",
+  "vsix_sha256": "72530ba5c9427d4f3f385e887f88db0d46a2b4d9207c7a2845d7b0d0221bfbfe",
+  "actual_installer_exit": 0,
+  "existing_cygwin_reused": true,
+  "cygwin_setup_log_unchanged": "2026-11-15 13:47:36 local",
+  "node_tests": {
+    "passed": 41,
+    "failed": 0
+  },
+  "shell_checks": {
+    "passed": 6,
+    "failed": 0
+  },
+  "real_vscode_host": {
+    "passed": true,
+    "scope": [
+      "built-in process task success",
+      "exit-17 propagation",
+      "project/Cygwin read-write",
+      "extension command/provider activation"
+    ]
+  },
+  "sas_login_or_research_pipeline_rerun": false,
+  "evidence_directory": "SAS_Output_installer_dll_fix",
+  "references": [
+    "https://cygwin.com/faq.html",
+    "https://www.cygwin.com/cygwin-ug-net/setup-net.html"
+  ]
+}

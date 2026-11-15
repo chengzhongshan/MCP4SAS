@@ -11,6 +11,14 @@ exports.run = async () => {
   const commands = await vscode.commands.getCommands(true);
   for (const name of ['setup', 'connect', 'check', 'help', 'cygwinTerminal', 'configureLogin', 'configureJars', 'openRuntimeTerminal', 'detectSetup', 'switchSas', 'testSas']) assert.ok(commands.includes(`mcp4sas.${name}`));
   assert.deepEqual(api.provider.provideMcpServerDefinitions(), []);
+  const taskMarker=path.join(vscode.workspace.workspaceFolders[0].uri.fsPath,'installer-task-check.txt');
+  const taskCommand=process.platform==='win32'?'powershell.exe':'/bin/sh';
+  const successArgs=process.platform==='win32'?['-NoProfile','-NonInteractive','-Command','[IO.File]::WriteAllText($env:MCP4SAS_TEST_TASK_FILE,"task-ok");exit 0']:['-c','printf task-ok > "$MCP4SAS_TEST_TASK_FILE"'];
+  const failureArgs=process.platform==='win32'?['-NoProfile','-NonInteractive','-Command','exit 17']:['-c','exit 17'];
+  await api.task(taskCommand,successArgs,path.dirname(taskMarker),{MCP4SAS_TEST_TASK_FILE:taskMarker});
+  assert.equal(fs.readFileSync(taskMarker,'utf8'),'task-ok');
+  await assert.rejects(api.task(taskCommand,failureArgs,path.dirname(taskMarker)),/exit 17/);
+  console.log('PASS: real built-in process tasks report success and exit-17 failure without a custom task provider');
   if (process.platform === 'win32') {
     const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-terminal-'));
     const perl = process.env.MCP4SAS_TEST_CYGWIN_PERL || path.join(scratch, 'bin', 'perl.exe');

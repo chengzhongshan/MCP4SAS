@@ -2,22 +2,18 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(/usr/bin/dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 . "${SCRIPT_DIR}/common.sh"
+export PATH="/usr/bin:/bin:$PATH"
+. "${SCRIPT_DIR}/cygwin_prerequisites.sh"
 
 command_exists cygpath || die "Run this script inside a Cygwin terminal"
 
 if [[ "${MCP4SAS_SKIP_CYGWIN_SETUP:-0}" != "1" ]]; then
-  SETUP_EXE="${MCP4SAS_CYGWIN_SETUP_EXE:-${MCP4SAS_ROOT}/local/setup-x86_64.exe}"
-  mkdir -p "$(/usr/bin/dirname "${SETUP_EXE}")"
-  if [ ! -s "${SETUP_EXE}" ]; then
-    log "Downloading Cygwin setup"
-    curl -L https://cygwin.com/setup-x86_64.exe -o "${SETUP_EXE}"
-    chmod +x "${SETUP_EXE}"
+  missing="$(cygwin_missing_prerequisites)"
+  if [[ -n "$missing" ]]; then
+    log "Missing Cygwin prerequisites: $(printf '%s' "$missing" | tr '\n' ' ')"
+    die "Run MCP4SAS: Quick Setup to install missing packages from Windows, or close Cygwin programs and add those packages using official Cygwin setup. This Bash installer will not upgrade DLLs used by your terminals or SAS sessions."
   fi
-  CYGROOT="$(cygpath -w /)"
-  MIRROR="${MCP4SAS_CYGWIN_MIRROR:-https://mirrors.kernel.org/sourceware/cygwin/}"
-  log "Installing Cygwin packages"
-  "${SETUP_EXE}" -q -B -g -n -N -d --no-write-registry -R "${CYGROOT}" -s "${MIRROR}" \
-    -P bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip
+  log "Cygwin prerequisites already work; reusing them without package upgrades."
 fi
 
 PYTHON_BIN="$(find_python)" || die "Python >= 3.8 not found"

@@ -30,6 +30,13 @@ are reused; Git history and unrelated files are preserved. Conflicting files
 are reported before copying, rather than overwritten. The download does not
 create a second Git repository inside an existing project.
 
+On Windows, Quick Setup checks prerequisites before downloading source. Working
+Cygwin packages are reused without upgrades. Missing packages are installed
+from Windows before starting the Bash installer; if that Cygwin has active
+processes, setup asks you to close them rather than terminating them to replace
+DLLs. Installer output is saved under `local/install-logs/` in the project.
+Failures show the exit code, log path and the last log lines in MCP4SAS Output.
+
 From a terminal in that folder:
 
 ```bash
@@ -73,7 +80,7 @@ Other terminal profiles are preserved. If you later select a different default u
 
 | Host | Guided installation |
 |---|---|
-| Windows x64 | Detects `C:\cygwin64`, `C:\cygwin` or its own per-user Cygwin. You can also browse to a portable Cygwin `bin/perl.exe`. If missing, downloads setup from `cygwin.com` and installs a per-user Cygwin with Git, Bash, Perl and HTTPS tools **first**. Detects Windows Java or offers Microsoft OpenJDK through winget/file selection, then runs `install/install_cygwin.sh`. |
+| Windows x64 | Detects `C:\cygwin64`, `C:\cygwin` or its own per-user Cygwin. You can also browse to a portable Cygwin `bin/perl.exe`. If missing, installs Cygwin with Git, Bash, Perl, Python/pip/headers, build and HTTPS tools **first**, before starting Bash. Detects Windows Java or offers Microsoft OpenJDK through winget/file selection, then runs `install/install_cygwin.sh`. Existing working packages are kept. |
 | macOS | Runs `install/install_macos.sh` in a visible task terminal. Xcode Command Line Tools, Homebrew and its permissions remain platform prerequisites; follow a reported prerequisite and retry. |
 | Ubuntu/Debian Linux | Installs Git through apt when missing, then runs `install/install_ubuntu.sh` in a visible task terminal; `sudo` may prompt there. Other Linux distributions should use an existing compatible installation. |
 

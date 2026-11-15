@@ -396,7 +396,14 @@ cd MCP4SAS
 bash install/install_cygwin.sh
 ```
 
-If you already installed the required Cygwin packages, skip the package update:
+The installer checks and reuses working Cygwin packages; it does not upgrade
+the DLLs used by the terminal running it. If prerequisites are missing, use
+**MCP4SAS: Quick Setup** in VS Code, or add the listed packages using official
+Cygwin setup from Windows after closing Cygwin programs. The checked package
+set includes Git, Perl, Python 3.12 with pip/development headers, GCC, make,
+HTTPS tools and ZIP utilities.
+
+For an environment whose prerequisites you have already verified explicitly:
 
 ```bash
 MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh

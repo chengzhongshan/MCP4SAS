@@ -59,7 +59,7 @@ jobs:
           $root = Join-Path $env:RUNNER_TEMP 'cygwin64'
           Invoke-WebRequest 'https://cygwin.com/setup-x86_64.exe' -OutFile $setup
           $setupArgs = @(
-            '-q', '-B', '-g', '-n', '-N', '-d', '--no-write-registry',
+            '-q', '-B', '-n', '-N', '-d', '--no-write-registry',
             '-R', $root,
             '-s', 'https://mirrors.kernel.org/sourceware/cygwin/',
             '-P', 'bash,ca-certificates,curl,gcc-core,gcc-g++,make,perl,python3,python312,python312-devel,python312-pip,unzip,wget,zip'
@@ -76,7 +76,7 @@ jobs:
           $bash = Join-Path $root 'bin\bash.exe'
           $cygpath = Join-Path $root 'bin\cygpath.exe'
           $env:MCP4SAS_CYGWIN_REPO = (& $cygpath -u $env:GITHUB_WORKSPACE).Trim()
-          & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && set -o pipefail && bash tests/test_installer_perl_deps.sh && bash tests/test_saspy_iom_classpath.sh && perl tests/test_java_setup_help.pl && perl tests/test_oda_credential_guidance.pl && perl tests/test_runner_preflight_parity.pl && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh 2>&1 | tee install.log'
+          & $bash -lc 'cd "$MCP4SAS_CYGWIN_REPO" && set -o pipefail && bash tests/test_cygwin_prerequisites.sh && bash tests/test_installer_perl_deps.sh && bash tests/test_saspy_iom_classpath.sh && perl tests/test_java_setup_help.pl && perl tests/test_oda_credential_guidance.pl && perl tests/test_runner_preflight_parity.pl && MCP4SAS_SKIP_CYGWIN_SETUP=1 bash install/install_cygwin.sh 2>&1 | tee install.log'
           $installExit = $LASTEXITCODE
           if ($installExit -ne 0) { exit $installExit }
       - uses: actions/upload-artifact@v7
