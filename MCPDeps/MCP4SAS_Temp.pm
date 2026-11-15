@@ -71,10 +71,12 @@ sub terminate_tree {
     my ($pid) = @_;
     return unless defined($pid) && $pid =~ /^\d+$/ && $pid > 0 && $pid != $$;
     my (%parent, %native);
-    my @command = $^O eq 'cygwin' ? ('ps', '-l') : ('ps', '-eo', 'pid=,ppid=');
+    my $cygwin_ps=File::Spec->catfile(dirname($^X),'ps.exe');
+    $cygwin_ps='ps' unless -x $cygwin_ps;
+    my @command = $^O eq 'cygwin' ? ($cygwin_ps, '-l') : ('ps', '-eo', 'pid=,ppid=');
     if ($^O ne 'MSWin32' && open(my $ps, '-|', @command)) {
         while (my $line = <$ps>) {
-            if ($^O eq 'cygwin' && $line =~ /^\s*(\d+)\s+(\d+)\s+\d+\s+(\d+)\s/) {
+            if ($^O eq 'cygwin' && $line =~ /^\s*(?:[A-Z]\s+)?(\d+)\s+(\d+)\s+\d+\s+(\d+)\s/) {
                 $parent{$1} = $2; $native{$1} = $3;
             } elsif ($^O ne 'cygwin' && $line =~ /^\s*(\d+)\s+(\d+)\s*$/) {
                 $parent{$1} = $2;

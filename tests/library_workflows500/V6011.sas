@@ -1,0 +1,34 @@
+/* New workflow V6011; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6011i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=-29.87;output;
+gene='gene01';tissue='c2';expression=-5.8;output;
+gene='gene01';tissue='c3';expression=-26.73;output;
+gene='gene02';tissue='c1';expression=70.26;output;
+gene='gene02';tissue='c2';expression=48.33;output;
+gene='gene02';tissue='c3';expression=-9.6;output;
+gene='gene03';tissue='c1';expression=-8.61;output;
+gene='gene03';tissue='c2';expression=42.46;output;
+gene='gene03';tissue='c3';expression=39.53;output;
+gene='gene04';tissue='c1';expression=-3.48;output;
+gene='gene04';tissue='c2';expression=13.59;output;
+gene='gene04';tissue='c3';expression=33.660000000000004;output;
+gene='gene05';tissue='c1';expression=38.65;output;
+gene='gene05';tissue='c2';expression=-25.28;output;
+gene='gene05';tissue='c3';expression=-20.21;output;
+gene='gene06';tissue='c1';expression=31.78;output;
+gene='gene06';tissue='c2';expression=26.85;output;
+gene='gene06';tissue='c3';expression=57.92;output;
+gene='gene07';tissue='c1';expression=56.91;output;
+gene='gene07';tissue='c2';expression=-22.02;output;
+gene='gene07';tissue='c3';expression=-21.95;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6011i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=0,dsdout=v6011o,outdir4matrix=);
+data v6011m(keep=metric value);set v6011o;length metric $120;array measured[*] c1 c2 c3;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6011m;set v6011m;format value best32.;run;
+proc export data=v6011m outfile="%sysfunc(pathname(work))/V6011.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6011;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6011:;quit;

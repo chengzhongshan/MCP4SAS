@@ -411,6 +411,46 @@ def session_home(sess):
     if getattr(sess, '_pipeline_local_home', ''):
         return sess._pipeline_local_home
     cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    hosts = getattr(cfg, 'iomhost', ()) or ()
+    hosts = [hosts] if isinstance(hosts, str) else hosts
+    is_oda = any(str(host).lower().rstrip('.').endswith('.oda.sas.com') for host in hosts)
+    if not is_oda:
+        # A local Windows/STDIO session must not inherit an ODA account's
+        # /home/user destination from the client's auth file or SYSUSERID.
+        sess.submit(r"""
+%global _mg_homepath;
+%let _mg_homepath=;
+data _null_;
+  length _mg_path $4096;
+  array _mg_candidates[6] $4096 _temporary_;
+  if symexist('_USERHOME') then _mg_candidates[1]=symget('_USERHOME');
+  if fileref('HOME')=0 then _mg_candidates[2]=pathname('HOME');
+  if upcase(symget('SYSSCP'))='WIN' then do;
+    _mg_candidates[3]=sysget('USERPROFILE');
+    _mg_candidates[4]=cats(sysget('HOMEDRIVE'),sysget('HOMEPATH'));
+  end;
+  else _mg_candidates[3]=sysget('HOME');
+  _mg_candidates[6]=pathname('WORK');
+  do _mg_i=1 to dim(_mg_candidates);
+    _mg_path=_mg_candidates[_mg_i];
+    if not missing(_mg_path) then do;
+      _mg_rc=filename('mghome',strip(_mg_path));
+      _mg_did=dopen('mghome');
+      if _mg_did>0 then do;
+        _mg_rc=dclose(_mg_did);
+        call symputx('_mg_homepath',strip(_mg_path),'G');
+        _mg_rc=filename('HOME',strip(_mg_path));
+        leave;
+      end;
+    end;
+  end;
+  _mg_rc=filename('mghome');
+run;
+""")
+        detected = str(sess.symget('_mg_homepath') or '').strip()
+        if not detected:
+            raise RuntimeError('SAS did not provide an accessible HOME directory; configure dir4local_sas_home explicitly.')
+        return detected
     userid = str(getattr(cfg, 'omruser', '') or '').strip()
     authkey = str(getattr(cfg, 'authkey', '') or '').strip()
     if not userid:

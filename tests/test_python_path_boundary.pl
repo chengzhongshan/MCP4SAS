@@ -35,6 +35,17 @@ is($nested->{payload}{uploads}[0]{local_path},$source_arg,'nested bulk upload pa
 is($nested->{payload}{downloads}[0]{local_path},$result_arg,'nested bulk download path normalized');
 is($nested->{payload}{downloads}[0]{remote_path},'~/remote','nested remote path preserved');
 SKIP: {
+    skip 'Cygwin converter ownership requires Windows Python under Cygwin',1
+      unless $^O eq 'cygwin' && SAS_ODA_Runner::_python_uses_windows_paths($python);
+    # Reproduce a Windows-launched Perl inheriting the wrong cygpath on PATH.
+    my $poison=File::Spec->catfile($dir,'cygpath');
+    open my $fake,'>',$poison or die $!;
+    print {$fake} "#!/bin/sh\nexit 91\n";close $fake;chmod 0755,$poison;
+    local $ENV{PATH}="$dir:$ENV{PATH}";
+    is(SAS_ODA_Runner::_normalize_local_path_for_python($source,$python),$source_arg,
+       'path conversion uses this Perl installation despite a conflicting PATH converter');
+}
+SKIP: {
     skip 'Cygwin POSIX Python control requires Cygwin',2 unless $^O eq 'cygwin' && -x '/usr/bin/python3';
     my $posix_arg=SAS_ODA_Runner::_normalize_local_path_for_python($source,'/usr/bin/python3');
     is(system('/usr/bin/python3','-c','import pathlib,sys; assert pathlib.Path(sys.argv[1]).read_bytes()==b"path boundary ok\n"',$posix_arg),0,

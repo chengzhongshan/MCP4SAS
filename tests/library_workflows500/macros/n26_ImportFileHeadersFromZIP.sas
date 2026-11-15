@@ -1,0 +1,312 @@
+/* Test-only namespaced definition from ImportFileHeadersFromZIP.sas; original SHA256 95b1fcace823e2737365db3c45b8e6fd7ce6546bc3db5f12e0ecf1d2bbac0766. */
+%macro n26_ImportFileHeadersFromZIP(
+zip=,/*Only provide file with .gz, .zip, or common text file without comporession
+Note: it is necessary to have fullpath for the input file!*/
+filename_rgx=.,
+obs=max,
+sasdsdout=x,
+deleteZIP=0,
+infile_command=%str(firstobs=1 obs=10;input;info=_infile_;),
+/*Better to use nrbquote to replace str and use unquote within the macro
+to get back the input infile_command;*/
+extra_infile_macrovar_prefix=infile_cmd,/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+it is better to use bquote or nrbquote to excape each extra infile command!*/
+num_infile_macro_vars=0,/*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+use_zcat=0,
+var4endlinenum=adj_endlinenum, /*make global var for the endline number but it is 
+necessary to use syminputx in the infile_command to record the endline number;
+call symputx("&var4endlinenum",trim(left(put(_n_,8.))));
+It is possible to assign other numeric value generated in the infile_command to 
+this macro var for other purpose, because this global macro var will be accessible 
+by other outsite macros!
+call symputx('adj_endlinenum',trim(left(put(rowtag,8.))));*/
+global_var_prefix4vars2drop=drop_var,/*To handle the issue of trunction of macro var infile_command if there are too many variables to be dropped in the infile procedure;
+it is feasible to create global macro variables with the same prefix, such as drop_var, to exclude them*/
+num_vars2drop=0 /*Provide postive number to work with the macro var global_var_prefix4vars2drop to resolve these variables to be excluded*/
+);
+
+%if not %sysfunc(prxmatch(/^[\.\/]|:/,&zip)) %then %let zip=./&zip;
+%put Your input zip path is &zip;
+
+*This will run first even it was put at the end of infile statment;
+%global &var4endlinenum;
+%let &var4endlinenum=-9;
+
+*Restrict obs to be a local macro var;
+%local obs;
+
+%if %n26_FileOrDirExist(&zip)=0 %then %do;
+  %put No file for the input macro var zip: &zip;
+  %abort 255;
+%end;
+
+*obs=max allows the macro to read all lines from files within zip or gzip;
+*If the purpose is to read headers, please use obs=10;
+*Adjust the length for the input line;
+*If supply infile_command, make sure the same number was asigned to obs for the macro var and infile_command;
+
+%local nfiles txtfilenames txtfilename;
+*Use a fake separator '_____' to read each single line into the var info;
+
+*Use default infile command;
+%if "&infile_command"="" %then %do;
+  %let infile_command=%str(
+  /* delimiter='09'x truncover dsd firstobs=1 obs=&obs; */
+  firstobs=1 obs=&obs;
+  input;
+  info=_infile_;
+  );
+%end;
+
+options compress=yes;
+%local gzip_tag;
+/*do not quote the keyword gz for index function*/
+*This is not comprehensive, and file with gz.tmp will be matched;
+*7zip will generate gz.tmp file;
+/*%if %index(&zip,gz) %then %do;*/
+%if %index(&zip,gz) and (not %index(&zip,gz.tmp)) %then %do;
+	%let gzip_tag=gzip;
+%end;
+%else %if (%index(&zip,zip)) %then %do;
+    %let gzip_tag=zip;
+%end;
+%else %do;
+    *This would be for uncompressed file;
+    %let gzip_tag=;
+%end;
+
+%if %length(%superq(filename_rgx))=0 %then %do;
+   %let filename_rgx=txt;
+%end;
+
+%if &sasdsdout eq %then %do;
+  %let sasdsdout=txtdsd;
+%end;
+
+%if "&gzip_tag"="gzip" %then %do;
+*Working on gz file;
+
+%let fname=%sysfunc(prxchange(s/(.*\/|\.zip|\.gz|\.tgz)//i,-1,&zip));
+/* filename target "%sysfunc(getoption(work))/&fname"; */
+/*gzip parameter is only available in latest SAS9.4M5*/
+/* identify a temp folder in the WORK directory */
+/* Note: SAS can not get the filenames included a gz file */
+/* SAS is only able to read the gz data as a whole */
+
+*Make this macro runnable for linux SAS version lower than 9.4;
+%if &use_zcat=1 %then %do;
+ %sysexec zcat &zip | head -n 2;
+%end;
+
+%if &sysrc=0 and &use_zcat=1 %then %do;
+ filename fromzip pipe "zcat &zip";
+%end;
+%else %do;
+ %if "&sysscp"="WIN" %then %do;
+	*Need to use 7zip in Windows;
+	*Uncompress gz file;
+ *Actionable command: 7z e B1_vs_B2.zscore.txt.gz -y;
+	%let _gzfile_=%scan(&zip,-1,/\);
+	*need to consider [\/\\] for the separator of &zip;
+	%let _gzdir_=%sysfunc(prxchange(s/(.*)[\/\\][^\/\\]+/$1/,-1,&zip));
+	*Need to confirm whether the _gzdir_ is parsed correctly;
+	*When the &zip var only contains relative path without '.' at the beginning of the dir string;
+	*The prxchange function can not generate right dir;
+	%if %n26_direxist(&_gzdir_) %then %do;
+	 %put your gz file dir is &_gzdir_, which exists;
+	%end;
+	%else %do;
+		%put your gz file dir is &_gzdir_, but which does not exist;
+		%abort 255;
+	%end;
+
+
+	%put you gz file is &_gzfile_;
+	*It is necessary to remove any ".txt" or similar appendix from the filename4dir;
+	*otherwise, Windows would fail to make a directory using the macro variable filename4dir;
+	%let filename4dir=%sysfunc(prxchange(s/(.bgz|.tgz|.gz|.tsv|.txt|.csv)//i,-1,&_gzfile_));
+	*This is to prevent the outdir4file with the same name as the gz file;
+	*windows will failed to create the dir if the gz file exists;
+	%if %sysfunc(exist(&_gzdir_/&filename4dir)) %then %do;
+	%put The dir &filename4dir exists, and we assume the file has been uncompressed!;
+	%end;
+	%else %do;
+ %n26_Run_7Zip(
+ Dir=&_gzdir_,
+ filename=&_gzfile_,
+ Zip_Cmd=e, 
+ Extra_Cmd= -y ,
+ outdir4file=&filename4dir
+ );
+	*Use the filename to create a dir to save uncompressed file;
+	*Note Run_7Zip will change dir into outdir4file;
+	%end;
+
+	%let uncmp_gzfile=%sysfunc(prxchange(s/\.gz//,-1,&_gzfile_));
+	*Use regular expression to match file, as the uncompressed file may have different appendix, such as tsv.gz.tmp;
+	filename fromzip "&_gzdir_/&filename4dir/*";
+	%end;
+	%else %do;
+  filename fromzip ZIP "&zip" GZIP;
+	%end;
+%end;
+
+data &sasdsdout; 
+%let _EFIERR_=0;/*set the error detection macro variable*/
+/* infile target delimiter='09'x missover dsd firstobs=2; */
+infile fromzip 
+%unquote(&infile_command);
+
+/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+%if &num_infile_macro_vars>0 %then %do;
+%do extra_i=1 %to &num_infile_macro_vars;
+    %unquote( &&&extra_infile_macrovar_prefix&extra_i);
+%end;
+%end;
+
+*Drop vars if num_vars2drop>0;
+%if &num_vars2drop>0 %then %do;
+%do di=1 %to &num_vars2drop;
+  drop &&&global_var_prefix4vars2drop&di;
+ %end;
+%end;
+
+
+if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
+run;
+filename fromzip clear;
+/* data _null_;    */
+/*    infile fromzip; */
+/*    file target; */
+/*    input; */
+/*    put _infile_ ; */
+/* run; */
+/*  */
+/* just get top 10000 records for debugging */
+/* options obs=10000; */
+/* proc import datafile=target dbms=tab out=&sasdsdout replace; */
+/* &extra_proc_import_codes; */
+/* run; */
+/* reset the max number of importing */
+/* options obs=max; */
+
+%end;
+
+%else %if ("&gzip_tag"="zip") %then %do;
+*Working on zip file;
+
+/* identify a temp folder in the WORK directory */
+%n26_GetZIPContents(zip=&zip,dsdout=contents);
+
+proc sql noprint;
+select memname into: txtfilenames separated by " "
+from contents
+where prxmatch("/&filename_rgx/i",memname);
+
+select dirname into: txtdirs separated by " "
+from contents
+where prxmatch("/&filename_rgx/i",memname);
+
+%let nfiles=%eval(%sysfunc(countc(&txtfilenames,%str( )))+1);
+
+%do fi=1 %to &nfiles;
+%let txtfilename=%scan(&txtfilenames,&fi,%str( ));
+%let txtdir=%scan(&txtdirs,&fi,%str( ));
+
+/* filename txtin "%sysfunc(getoption(work))/&txtfilename" ; */
+
+/*By putting the data into the work dir, it will occupy addtional space*/
+/*If knowing the data format, it is better to create dataset at the stage directly*/
+/* data _null_; */
+/*    using member syntax here */
+/*    %if %superq(txtdir)=. %then %do; infile inzip(&txtfilename) %end; %else %do; infile inzip(&txtdir/&txtfilename) %end;  */
+/*        lrecl=500 recfm=F length=length eof=eof unbuf; */
+/*    file txtin lrecl=500 recfm=N; */
+/*    input; */
+/*    put _infile_ $varying32767. length; */
+/*    return; */
+/*  eof: */
+/*    stop; */
+/* run; */
+
+data &sasdsdout ;
+length file $100.;
+%let _EFIERR_=0;/*set the error detection macro variable*/
+/* infile target delimiter='09'x missover dsd firstobs=2; */
+%if %superq(txtdir)=. %then %do; infile inzip(&txtfilename) %end; %else %do; infile inzip(&txtdir/&txtfilename) %end;
+%unquote(&infile_command);
+if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
+file="&txtfilename";
+run;
+
+%end;
+%end;
+
+%else %do;
+*Working on uncompressed file directly!;
+
+filename fromfile "&zip";
+data &sasdsdout; 
+%let _EFIERR_=0;/*set the error detection macro variable*/
+/* infile target delimiter='09'x missover dsd firstobs=2; */
+infile fromfile
+%unquote(&infile_command);
+
+/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+%if &num_infile_macro_vars>0 %then %do;
+%do extra_i=1 %to &num_infile_macro_vars;
+    %unquote( &&&extra_infile_macrovar_prefix&extra_i);
+%end;
+%end;
+
+*Drop vars if num_vars2drop>0;
+%if &num_vars2drop>0 %then %do;
+%do di=1 %to &num_vars2drop;
+  drop &&&global_var_prefix4vars2drop&di;
+ %end;
+%end;
+
+if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
+run;
+filename fromfile clear;
+
+%end;
+
+%if &deleteZIP eq 1 %then %do;
+/*Delete the gwas zip file to release space*/
+%n26_del_file_with_fullpath(fullpath=&zip);
+%put the input gz file &txtfilename is deleted to release space;
+
+/* %if &fi=1 %then %do;  */
+/* proc import datafile=txtin dbms=tab out=&sasdsdout replace; */
+/* %end; */
+/* %else %do; */
+/* proc import datafile=txtin dbms=tab out=&sasdsdout.&fi replace; */
+/* %end; */
+
+/* &extra_proc_import_codes; */
+/* run; */
+
+%end;
+
+/*Delete the gwas file to release space*/
+%n26_del_file_with_fullpath(fullpath=%sysfunc(getoption(work))/&txtfilename);
+
+/*Change char chr into numeric chr*/
+/* %chr_format_exchanger( */
+/* dsdin=&sasdsdout, */
+/* char2num=1, */
+/* chr_var=chr, */
+/* dsdout=&sasdsdout); */
+
+options compress=no;
+
+%if &&&var4endlinenum>0 %then
+%put The record number for the macro var &var4endlinenum: &&&var4endlinenum;
+
+%mend;

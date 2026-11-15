@@ -1,0 +1,22 @@
+/* New workflow V6021; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6021i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=13.13;output;
+gene='gene01';tissue='c2';expression=65.19999999999999;output;
+gene='gene01';tissue='c3';expression=-5.73;output;
+gene='gene02';tissue='c1';expression=66.26;output;
+gene='gene02';tissue='c2';expression=-4.67;output;
+gene='gene03';tissue='c1';expression=-1.6099999999999999;output;
+gene='gene03';tissue='c3';expression=20.53;output;
+gene='gene04';tissue='c2';expression=52.59;output;
+gene='gene04';tissue='c3';expression=45.660000000000004;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6021i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=0,dsdout=v6021o,outdir4matrix=);
+data v6021m(keep=metric value);set v6021o;length metric $120;array measured[*] c1 c2 c3;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6021m;set v6021m;format value best32.;run;
+proc export data=v6021m outfile="%sysfunc(pathname(work))/V6021.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6021;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6021:;quit;

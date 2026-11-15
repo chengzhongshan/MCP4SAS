@@ -942,6 +942,7 @@ if ($internal_runner_result_json) {
         open_html       => defined($internal_open_html) ? $internal_open_html : 1,
         session_id      => $internal_session_id,
         persistent      => $internal_persistent,
+        batch_dependencies => $archive_transfers,
     );
     my $worker_result;
     my $worker_error = '';
@@ -1612,6 +1613,7 @@ my $runner = SAS_ODA_Runner->new(
     open_html => !$no_html,
     session_id => $session_id,
     persistent => $persistent,
+    batch_dependencies => $archive_transfers,
 );
 
 sub make_runner {
@@ -1621,6 +1623,7 @@ sub make_runner {
         open_html       => $overrides{open_html} // (!$no_html),
         session_id      => exists $overrides{session_id} ? $overrides{session_id} : $session_id,
         persistent      => exists $overrides{persistent} ? $overrides{persistent} : $persistent,
+        batch_dependencies => $archive_transfers,
     );
 }
 
@@ -1809,6 +1812,7 @@ sub run_runner_submit_with_timeout {
             open_html       => $runner_open_html,
             session_id      => $runner_session_id,
             persistent      => $runner_persistent,
+            batch_dependencies => $archive_transfers,
         );
         my $worker_result;
         my $worker_error = '';

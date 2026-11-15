@@ -1744,8 +1744,19 @@ Current `Pillow` and `saspy` releases require modern Python.
 ### Local SAS home and Linux STDIO
 
 `--dir4local_sas_home DIR` supplies `~` for local Windows/Linux SAS; recognized
-local profiles default to the HTML output directory. See
+local profiles in the Perl runner default to the HTML output directory;
+the Python runner detects the SAS session's HOME unless an explicit directory
+is supplied. See
 [local SAS home examples](docs/LOCAL_SAS_HOME.md) for file operations, persistent
 sessions and the Linux `install/sascfg_linux_local.py` STDIO profile.
 Windows saving/transfers were tested live; Linux selection and failure handling
 were tested offline because no local Linux SAS was available.
+
+### SAS library and sample-book regression evidence
+
+An additional 1,000 source-traceable cases cover the author's actual macros and
+local SAS book samples. Each case was executed through both the Python and Perl
+runners on SAS ODA, with full numerical-table checks. See the
+[test report and remaining limitations](docs/NEW_LIBRARY_AND_SAMPLE_TEST_REPORT.md)
+and [reproduction instructions](tests/NEW_WORKFLOWS.md). These are 50 workflow
+families with varied inputs, rather than 1,000 distinct statistical methods.

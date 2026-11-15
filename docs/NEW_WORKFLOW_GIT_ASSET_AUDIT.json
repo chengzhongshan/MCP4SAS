@@ -1,0 +1,6 @@
+{
+  "frozen_assets": 1152,
+  "byte_exact_in_git_index": true,
+  "failures": [],
+  "note": "The frozen SAS programs, macro snapshots, input fixtures and manifests match the exact locally tested bytes. Snapshot mixed EOLs are preserved by -text attributes."
+}

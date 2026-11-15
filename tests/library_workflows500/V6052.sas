@@ -1,0 +1,37 @@
+/* New workflow V6052; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6052i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c2';expression=-7.8;output;
+gene='gene01';tissue='c3';expression=57.27;output;
+gene='gene01';tissue='c4';expression=66.33999999999999;output;
+gene='gene02';tissue='c1';expression=43.26;output;
+gene='gene02';tissue='c2';expression=39.33;output;
+gene='gene02';tissue='c3';expression=24.400000000000002;output;
+gene='gene03';tissue='c1';expression=-20.61;output;
+gene='gene03';tissue='c2';expression=47.46;output;
+gene='gene03';tissue='c4';expression=33.6;output;
+gene='gene04';tissue='c1';expression=-7.48;output;
+gene='gene04';tissue='c3';expression=6.659999999999999;output;
+gene='gene04';tissue='c4';expression=-6.2700000000000005;output;
+gene='gene05';tissue='c2';expression=55.72;output;
+gene='gene05';tissue='c3';expression=40.79;output;
+gene='gene05';tissue='c4';expression=15.860000000000001;output;
+gene='gene06';tissue='c1';expression=35.78;output;
+gene='gene06';tissue='c2';expression=1.85;output;
+gene='gene06';tissue='c3';expression=15.92;output;
+gene='gene07';tissue='c1';expression=-0.08999999999999997;output;
+gene='gene07';tissue='c2';expression=27.98;output;
+gene='gene07';tissue='c4';expression=58.12;output;
+gene='gene08';tissue='c1';expression=71.04;output;
+gene='gene08';tissue='c3';expression=63.18;output;
+gene='gene08';tissue='c4';expression=4.25;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6052i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=-999,dsdout=v6052o,outdir4matrix=);
+data v6052m(keep=metric value);set v6052o;length metric $120;array measured[*] c1 c2 c3 c4;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6052m;set v6052m;format value best32.;run;
+proc export data=v6052m outfile="%sysfunc(pathname(work))/V6052.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6052;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6052:;quit;

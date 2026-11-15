@@ -1,0 +1,37 @@
+/* New workflow V6017; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6017i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=10.13;output;
+gene='gene01';tissue='c2';expression=61.2;output;
+gene='gene01';tissue='c3';expression=-8.729999999999999;output;
+gene='gene01';tissue='c4';expression=42.34;output;
+gene='gene02';tissue='c1';expression=-12.74;output;
+gene='gene02';tissue='c2';expression=-5.67;output;
+gene='gene02';tissue='c3';expression=-24.599999999999998;output;
+gene='gene02';tissue='c4';expression=36.47;output;
+gene='gene03';tissue='c1';expression=56.39;output;
+gene='gene03';tissue='c2';expression=20.46;output;
+gene='gene03';tissue='c3';expression=18.53;output;
+gene='gene03';tissue='c4';expression=57.6;output;
+gene='gene04';tissue='c1';expression=20.52;output;
+gene='gene04';tissue='c2';expression=-21.41;output;
+gene='gene04';tissue='c3';expression=-9.34;output;
+gene='gene04';tissue='c4';expression=27.73;output;
+gene='gene05';tissue='c1';expression=35.65;output;
+gene='gene05';tissue='c2';expression=-22.28;output;
+gene='gene05';tissue='c3';expression=50.79;output;
+gene='gene05';tissue='c4';expression=66.86;output;
+gene='gene06';tissue='c1';expression=-26.22;output;
+gene='gene06';tissue='c2';expression=-7.1499999999999995;output;
+gene='gene06';tissue='c3';expression=68.92;output;
+gene='gene06';tissue='c4';expression=46.99;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6017i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=0,dsdout=v6017o,outdir4matrix=);
+data v6017m(keep=metric value);set v6017o;length metric $120;array measured[*] c1 c2 c3 c4;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6017m;set v6017m;format value best32.;run;
+proc export data=v6017m outfile="%sysfunc(pathname(work))/V6017.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6017;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6017:;quit;

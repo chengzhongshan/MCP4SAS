@@ -3,6 +3,8 @@
 /sascfg_personal.py
 /tmp*/
 /SAS_Output*/
+/SAS_Output_new1000*.log
+/macro_bootstrap.new1000_*.log.txt
 /sas_submit_worker_*
 /DiffGWASDeps/sas_oda_session_server.log
 /MCPDeps/sas_oda_session_server.log

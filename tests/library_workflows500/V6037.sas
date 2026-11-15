@@ -1,0 +1,31 @@
+/* New workflow V6037; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6037i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=-21.87;output;
+gene='gene01';tissue='c2';expression=26.2;output;
+gene='gene01';tissue='c3';expression=11.270000000000001;output;
+gene='gene02';tissue='c1';expression=-10.74;output;
+gene='gene02';tissue='c2';expression=-0.6699999999999999;output;
+gene='gene02';tissue='c4';expression=16.470000000000002;output;
+gene='gene03';tissue='c1';expression=-26.61;output;
+gene='gene03';tissue='c3';expression=-5.470000000000001;output;
+gene='gene03';tissue='c4';expression=43.6;output;
+gene='gene04';tissue='c2';expression=31.59;output;
+gene='gene04';tissue='c3';expression=34.660000000000004;output;
+gene='gene04';tissue='c4';expression=50.730000000000004;output;
+gene='gene05';tissue='c1';expression=31.65;output;
+gene='gene05';tissue='c2';expression=-9.28;output;
+gene='gene05';tissue='c3';expression=23.79;output;
+gene='gene06';tissue='c1';expression=54.78;output;
+gene='gene06';tissue='c2';expression=69.85;output;
+gene='gene06';tissue='c4';expression=68.99;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6037i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=0,dsdout=v6037o,outdir4matrix=);
+data v6037m(keep=metric value);set v6037o;length metric $120;array measured[*] c1 c2 c3 c4;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6037m;set v6037m;format value best32.;run;
+proc export data=v6037m outfile="%sysfunc(pathname(work))/V6037.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6037;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6037:;quit;

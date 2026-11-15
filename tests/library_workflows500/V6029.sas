@@ -1,0 +1,36 @@
+/* New workflow V6029; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6029i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=-23.87;output;
+gene='gene01';tissue='c2';expression=18.2;output;
+gene='gene01';tissue='c3';expression=43.27;output;
+gene='gene01';tissue='c5';expression=13.41;output;
+gene='gene01';tissue='c6';expression=29.48;output;
+gene='gene02';tissue='c1';expression=-7.74;output;
+gene='gene02';tissue='c2';expression=-21.669999999999998;output;
+gene='gene02';tissue='c4';expression=22.470000000000002;output;
+gene='gene02';tissue='c5';expression=-16.459999999999997;output;
+gene='gene02';tissue='c6';expression=-18.389999999999997;output;
+gene='gene03';tissue='c1';expression=10.39;output;
+gene='gene03';tissue='c3';expression=24.53;output;
+gene='gene03';tissue='c4';expression=-29.4;output;
+gene='gene03';tissue='c5';expression=47.67;output;
+gene='gene04';tissue='c2';expression=-23.41;output;
+gene='gene04';tissue='c3';expression=-18.34;output;
+gene='gene04';tissue='c4';expression=-7.2700000000000005;output;
+gene='gene04';tissue='c6';expression=28.87;output;
+gene='gene05';tissue='c1';expression=33.65;output;
+gene='gene05';tissue='c2';expression=-18.28;output;
+gene='gene05';tissue='c3';expression=10.790000000000001;output;
+gene='gene05';tissue='c5';expression=32.93;output;
+gene='gene05';tissue='c6';expression=34.0;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6029i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=0,dsdout=v6029o,outdir4matrix=);
+data v6029m(keep=metric value);set v6029o;length metric $120;array measured[*] c1 c2 c3 c4 c5 c6;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6029m;set v6029m;format value best32.;run;
+proc export data=v6029m outfile="%sysfunc(pathname(work))/V6029.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6029;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6029:;quit;

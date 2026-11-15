@@ -2,11 +2,18 @@
 
 For local SAS, `--dir4local_sas_home DIR` makes `~` refer to DIR for listing,
 uploads, downloads, file information and deletion. The directory is created if
-needed. Recognized profiles `winlocal`, `winlocal_com`, `linuxlocal`, `local`
-and `stdio` default to the run's HTML output directory. An explicit option or
+needed. In the Perl CLI, recognized profiles `winlocal`, `winlocal_com`,
+`linuxlocal`, `local` and `stdio` default to the run's HTML output directory. An explicit option or
 `SAS_LOCAL_HOME_DIR` also enables this behavior for a custom local profile.
 The `oda` profile keeps its online home; remote IOM/SSH sessions reject the
 local-home setting. For local profiles with custom names, supply the option.
+
+The native Python CLI uses the target SAS session's detected HOME unless
+`--dir4local_sas_home` is supplied. Local Windows detection checks accessible
+SAS directories and the Windows user profile; it does not borrow the ODA
+account's `/home/...` path. If no home directory is available, WORK is the
+temporary fallback. Supply an explicit directory when files must persist
+after that SAS session closes. The explicit option works in both runners.
 
 The runner configures the SAS HOME fileref, HOME environment value, _USERHOME
 and PIPELINE_SAS_HOME macro variables. It expands quoted `~` and `~/...` SAS

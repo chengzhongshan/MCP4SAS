@@ -8,7 +8,7 @@ class ArchiveSession:
         self.sas=sas; self.home=home; self.fallback_fileinfo=fileinfo; self.cache={}
     def fileinfo(self,path):
         return self.cache[path] if path in self.cache else self.fallback_fileinfo(path)
-    def prime_fileinfo(self,paths):
+    def prime_fileinfo(self,paths,details_for_existing=False):
         token='MCPMETA_'+uuid.uuid4().hex
         code=[]
         for i,path in enumerate(paths):
@@ -25,6 +25,13 @@ class ArchiveSession:
                 _,idx,exists,size=line.split('|');found[int(idx)]={'exists':exists.strip()=='1','size':int(size.strip()) if size.strip()!='.' else None,'path':paths[int(idx)]}
         if len(found)!=len(paths):raise IOError('Incomplete batch file metadata')
         self.cache.update({paths[i]:info for i,info in found.items()})
+        if details_for_existing:
+            # Only existing files need the slower timestamp query used by the
+            # unchanged-file policy. New dependencies need one shared probe,
+            # rather than a SAS round trip for every small input file.
+            for path in paths:
+                if self.cache[path].get('exists'):
+                    self.cache[path]=self.fallback_fileinfo(path)
     def submit(self, code): return self.sas.submit(code)
     def symget(self, name): return self.sas.symget(name)
 
@@ -163,6 +170,18 @@ def upload_files_archive(items, session_obj):
     reused_results = []
     remote_names = set()
     try:
+        # Validate the entire list before sending anything. In particular,
+        # duplicate basenames must not overwrite an earlier dependency.
+        candidates=[];checked_names=set()
+        for item in items:
+            local=os.path.abspath(str(item.get('local_path','') or ''))
+            if not os.path.isfile(local):raise FileNotFoundError(f'Upload source does not exist: {local}')
+            name=os.path.basename(local.replace('\\','/'))
+            if name in checked_names:raise ValueError(f'Archive upload has duplicate remote basename: {name}')
+            checked_names.add(name)
+            if bool(item.get('skip_if_same',True)):candidates.append(home+'/'+name)
+        if candidates and hasattr(session,'prime_fileinfo'):
+            session.prime_fileinfo(candidates,details_for_existing=True)
         with zipfile.ZipFile(local_archive, 'w', compression=zipfile.ZIP_DEFLATED, allowZip64=True) as bundle:
             for index, item in enumerate(items):
                 local_path = os.path.abspath(str(item.get('local_path', '') or ''))

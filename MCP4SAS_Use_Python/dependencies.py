@@ -100,7 +100,11 @@ def rewrite_paths(code,mapping):
             for match in re.finditer(re.escape(spelling),visible):
                 before=visible[match.start()-1:match.start()] if match.start() else ''
                 after=visible[match.end():match.end()+1]
-                if (before in ("'",'"',' ') or not before) and (after in ("'",'"',';',')',' ','\n','\r') or not after):
+                # Unquoted macro input parameters use =path, or (path).
+                # Discovery already recognizes zip=/local/file.gz; leaving
+                # that alias unchanged after upload makes SAS use a local
+                # Windows path on its Linux server.
+                if (before in ("'",'"',' ','\t','\n','\r','=',',','(') or not before) and (after in ("'",'"',';',')',',',' ','\t','\n','\r') or not after):
                     replacements.append((match.start(),match.end(),target))
             for quote in ("'",'"'):
                 escaped=spelling.replace(quote,quote*2)

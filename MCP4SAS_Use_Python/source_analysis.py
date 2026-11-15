@@ -5,7 +5,7 @@ advisory source analysis, not a replacement for SAS compilation.
 """
 import re
 
-BUILTINS = set(('let put do to by while until else end if then abort window display str nrstr bquote nrbquote superq sysfunc qsysfunc syscall sysget symexist symdel symglobl symlocal sysmacexist sysmacdelete scan qscan substr qsubstr upcase qupcase lowcase qlowcase length index eval sysevalf quote nrquote unquote cmpres left trim sysprod sysmacroname global local mend macro goto return include inc').split())
+BUILTINS = set(('let put do to by while until else end if then abort window display str nrstr bquote nrbquote superq sysfunc qsysfunc syscall sysexec sysget symexist symdel symglobl symlocal sysmacexist sysmacdelete scan qscan substr qsubstr upcase qupcase lowcase qlowcase length index eval sysevalf quote nrquote unquote cmpres left trim sysprod sysmacroname global local mend macro goto return include inc').split())
 MACRO_QUOTE_HEADER = re.compile(r'%(str|nrstr|quote|nrquote|bquote|nrbquote|superq)\b\s*\(',re.I)
 INLINE_HEADER = re.compile(r'(datalines4?|cards4?|parmcards4?)\s*;',re.I)
 

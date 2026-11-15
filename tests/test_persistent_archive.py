@@ -57,6 +57,22 @@ class Tests(unittest.TestCase):
  def test_incomplete_metadata_rejected(self):
   s=Fake();s.submit=lambda code:{'LOG':''};adapter=a.ArchiveSession(s,'/home/test',lambda p:{})
   with self.assertRaisesRegex(IOError,'Incomplete'):adapter.prime_fileinfo(['/remote/a'])
+ def test_missing_upload_metadata_batched_before_transfer(self):
+  s=Fake()
+  def submit(code):
+   s.code.append(code)
+   markers=re.findall(r'put "(MCPMETA_[^"|]+\|[0-9]+\|)"',code)
+   return {'LOG':'\n'.join(m+'0|.' for m in markers)}
+  s.submit=submit
+  adapter=a.ArchiveSession(s,'/home/test',lambda p:self.fail('new files must not use individual metadata RPCs'))
+  adapter.prime_fileinfo(['/home/test/a','/home/test/b'],details_for_existing=True)
+  self.assertEqual(len(s.code),1);self.assertFalse(adapter.fileinfo('/home/test/a')['exists'])
+ def test_existing_upload_retains_timestamp_validation(self):
+  s=Fake();calls=[]
+  def existing(path):calls.append(path);return {'exists':True,'size':3,'modified_epoch':1234}
+  adapter=a.ArchiveSession(s,'/home/test',existing)
+  adapter.prime_fileinfo(['/home/test/a'],details_for_existing=True)
+  self.assertEqual(calls,['/home/test/a']);self.assertEqual(adapter.fileinfo('/home/test/a')['modified_epoch'],1234)
  def test_explicit_no_archive(self):
   with tempfile.TemporaryDirectory() as td:
    p=pathlib.Path(td)/'x';p.write_bytes(b'abc');s=Fake()

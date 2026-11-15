@@ -1,0 +1,36 @@
+/* New workflow V6049; invented deterministic fixtures, not research results. */
+options notes merror serror;
+data v6049i;
+length gene $80 tissue $80;
+gene='gene01';tissue='c1';expression=55.13;output;
+gene='gene01';tissue='c2';expression=54.2;output;
+gene='gene01';tissue='c3';expression=-11.729999999999999;output;
+gene='gene01';tissue='c5';expression=7.41;output;
+gene='gene01';tissue='c6';expression=-19.52;output;
+gene='gene02';tissue='c1';expression=30.26;output;
+gene='gene02';tissue='c2';expression=53.33;output;
+gene='gene02';tissue='c4';expression=69.47;output;
+gene='gene02';tissue='c5';expression=-5.46;output;
+gene='gene02';tissue='c6';expression=25.610000000000003;output;
+gene='gene03';tissue='c1';expression=64.39;output;
+gene='gene03';tissue='c3';expression=48.53;output;
+gene='gene03';tissue='c4';expression=48.6;output;
+gene='gene03';tissue='c5';expression=38.67;output;
+gene='gene04';tissue='c2';expression=29.59;output;
+gene='gene04';tissue='c3';expression=30.66;output;
+gene='gene04';tissue='c4';expression=13.73;output;
+gene='gene04';tissue='c6';expression=46.870000000000005;output;
+gene='gene05';tissue='c1';expression=25.65;output;
+gene='gene05';tissue='c2';expression=-16.28;output;
+gene='gene05';tissue='c3';expression=-7.21;output;
+gene='gene05';tissue='c5';expression=70.93;output;
+gene='gene05';tissue='c6';expression=-26.0;output;
+run;
+%n26_longdsd2matlabmatrix(dsd=v6049i,var_row=gene,var_col=tissue,data_var=expression,value2asign4missing=-999,dsdout=v6049o,outdir4matrix=);
+data v6049m(keep=metric value);set v6049o;length metric $120;array measured[*] c1 c2 c3 c4 c5 c6;do _measure=1 to dim(measured);metric=catx(':',strip(gene),vname(measured[_measure]));value=measured[_measure];output;end;run;
+
+data v6049m;set v6049m;format value best32.;run;
+proc export data=v6049m outfile="%sysfunc(pathname(work))/V6049.csv" dbms=csv replace;run;
+%put NEW_WORKFLOW_DONE=V6049;
+%put NEW_WORKFLOW_OUT=%sysfunc(pathname(work));
+proc datasets library=work nolist;delete v6049:;quit;
