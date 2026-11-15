@@ -48,7 +48,11 @@ perl run_sas_codes_or_files_in_ODA.pl --file test.sas
 python run_sas_codes_or_files_in_ODA.py --file test.sas
 ```
 
-Use the Python command after [installing and activating its environment](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+After installation and SAS configuration, the direct Python runner finds a
+compatible project SASPy environment automatically. In the installed Windows
+Cygwin terminal, just use `python` as shown above; no activation command is needed.
+See the [Python setup guide](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment)
+for a separate native Python installation.
 The existing VS Code plugin retains its Perl setup; Python is an optional
 connection. See the [workflow explanation](docs/architecture/README.md) and
 [Python validation results](MCP4SAS_Use_Python/VALIDATION.md).

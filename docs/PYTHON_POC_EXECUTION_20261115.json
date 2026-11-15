@@ -1,0 +1,460 @@
+{
+  "date": "2026-11-15",
+  "runtime_commit": "fd1dd0f38fdf4e12d19d602b38f213c14bc0599e",
+  "complete": true,
+  "source_files_unchanged": true,
+  "source_manifest_sha256": "8560faa6dabeb97df9b2ea5be80e574ec2328aff41ae6ce2e8771d66f4141323",
+  "cases": [
+    {
+      "case": "clustergram",
+      "exit_code": 0,
+      "seconds": 41.589,
+      "validation": {
+        "case": "clustergram",
+        "session_id": "poc_suite_python_4072",
+        "checks": 509,
+        "warnings": [
+          "WARNING: A very large output size of (3958, 4375) is in effect. This could make Java VM run out of memory and result in some Java ",
+          "WARNING: A very large output size of (2560, 2840) is in effect. This could make Java VM run out of memory and result in some Java ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java ",
+          "WARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java "
+        ],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    },
+    {
+      "case": "gene_gtf",
+      "exit_code": 0,
+      "seconds": 47.208,
+      "validation": {
+        "case": "gene_gtf",
+        "session_id": "poc_suite_python_4072",
+        "checks": 59,
+        "warnings": [
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: A very large output size of (3420, 2025) is in effect. This could make Java VM run out of memory and result in some Java ",
+          "WARNING: No output destinations active.",
+          "WARNING: A very large output size of (3420, 2025) is in effect. This could make Java VM run out of memory and result in some Java "
+        ],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    },
+    {
+      "case": "oncoprint",
+      "exit_code": 0,
+      "seconds": 28.417,
+      "validation": {
+        "case": "oncoprint",
+        "session_id": "poc_suite_python_4072",
+        "checks": 33,
+        "warnings": [
+          "WARNING: No output destinations active.",
+          "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+        ],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    },
+    {
+      "case": "forest",
+      "exit_code": 0,
+      "seconds": 24.07,
+      "validation": {
+        "case": "forest",
+        "session_id": "poc_suite_python_4072",
+        "checks": 30,
+        "warnings": [],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "exit_code": 0,
+      "seconds": 90.189,
+      "validation": {
+        "case": "multi_gwas_gtf",
+        "session_id": "poc_suite_python_4072",
+        "checks": 11295,
+        "warnings": [
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+          "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity "
+        ],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    },
+    {
+      "case": "hello",
+      "exit_code": 0,
+      "seconds": 9.498,
+      "validation": {
+        "case": "hello",
+        "session_id": "poc_suite_python_4072",
+        "checks": 3,
+        "warnings": [],
+        "scope": "Saved SAS-program execution and numerical checks; no AI trial or token benchmark."
+      }
+    }
+  ],
+  "checks": 11929,
+  "standalone_validator_checks": 11929,
+  "warnings": 23,
+  "close_exit_code": 0,
+  "pngs": [
+    {
+      "case": "clustergram",
+      "file": "cluster40.png",
+      "width": 2560,
+      "height": 2840
+    },
+    {
+      "case": "clustergram",
+      "file": "gene_branch_review.png",
+      "width": 4000,
+      "height": 1920
+    },
+    {
+      "case": "gene_gtf",
+      "file": "isoforms.png",
+      "width": 3420,
+      "height": 2025
+    },
+    {
+      "case": "oncoprint",
+      "file": "mgx_oncoprint.png",
+      "width": 3420,
+      "height": 2430
+    },
+    {
+      "case": "oncoprint",
+      "file": "onco_frequency.png",
+      "width": 3060,
+      "height": 1800
+    },
+    {
+      "case": "forest",
+      "file": "forest_FEMALE.png",
+      "width": 2790,
+      "height": 1013
+    },
+    {
+      "case": "forest",
+      "file": "forest_MALE.png",
+      "width": 2790,
+      "height": 1013
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "multi_gwas_gtf.png",
+      "width": 2280,
+      "height": 2070
+    }
+  ],
+  "outputs": [
+    {
+      "case": "clustergram",
+      "file": "cluster40.png",
+      "bytes": 235525,
+      "sha256": "691ae2e999b298552682a339a668bd397f14a47ebf0221404d067387b6d8b4c5"
+    },
+    {
+      "case": "clustergram",
+      "file": "cluster40.svg",
+      "bytes": 103186,
+      "sha256": "c8cf4f2b41a481e6f022a95c7f9285c8a244d1105556e3a895b2066158ac99b1"
+    },
+    {
+      "case": "clustergram",
+      "file": "gene_branch_review.png",
+      "bytes": 223551,
+      "sha256": "51ffd179d4b5adf986ac2b7466278803efc22fa51d1325be2149627861560237"
+    },
+    {
+      "case": "clustergram",
+      "file": "gene_branch_review.svg",
+      "bytes": 69728,
+      "sha256": "c0b1489f9fdf498d25949b0e4b70ac65d7e592a2cc5408c850d8e9d97086553c"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_0.csv",
+      "bytes": 3596,
+      "sha256": "2643f591b11ee5c71b2d2ed8dcf233374a802bbfac5fa27fd2d739e75356827a"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_1.csv",
+      "bytes": 6708,
+      "sha256": "5506de388cf16f72ca73c05d48ec183faa19140de86b2452ff555af2eca501bf"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_2.csv",
+      "bytes": 7363,
+      "sha256": "049ef1b07f466f923e0d36ea9f3f71bbc470c2cfb38694338b30b132e9e9e413"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_3.csv",
+      "bytes": 15940,
+      "sha256": "c66d0202a964985bbfe9def8acea6c97a28f143c3cb6394f63cd8d0f4e2b448f"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_4.csv",
+      "bytes": 1546,
+      "sha256": "839e2f5b7b5053e5edc3088e1d17973ab6b8a2e4a7f07c03becceaa6b83b5c60"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_5.csv",
+      "bytes": 375,
+      "sha256": "a9bc7d4e0241a58b9a9f0b1b11368f6854ac7f46e6508c1694ef870d0293f097"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_6.csv",
+      "bytes": 3438,
+      "sha256": "68394edbc9e0191dd1697b84b895afc8dfd243f5df8b836a646561b7940ccf87"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_7.csv",
+      "bytes": 800,
+      "sha256": "6d917593953667cb9a692cab66978deb140fd727209aaef7d966a313e9b8e54a"
+    },
+    {
+      "case": "clustergram",
+      "file": "clustergram_8.csv",
+      "bytes": 282,
+      "sha256": "aa2f719fc59feff8dcd2432e5a427966550cc4098d348d7435d4594158699b22"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "isoforms.png",
+      "bytes": 115183,
+      "sha256": "f29cb22a86088e6262f9b7fb255f93770a85d5c9b5b312ab6107d6b495f2257e"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "isoforms.svg",
+      "bytes": 51040,
+      "sha256": "b78605e2ec2decc78b972ad2b8251338cff453f94bc7a99c32f335beda36aec2"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "gene_gtf_0.csv",
+      "bytes": 1073,
+      "sha256": "411783a022a4081cc3d2c258abeb771ee0654f91d56179f541502068feffb020"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "gene_gtf_1.csv",
+      "bytes": 2007,
+      "sha256": "e1a4796215ea4b65d23a194620d43c43104e749239b4f3c42e4f4ffdd347b05f"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "gene_gtf_2.csv",
+      "bytes": 15866,
+      "sha256": "eead184e650481e6423335e9d4a62417173ef535fa96bc1e59f780aa4bc5e071"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "gene_gtf_3.csv",
+      "bytes": 17037,
+      "sha256": "c5bf29e35b59ebf2a737b6e30bf16b2edb2b94993b08b6ad74eb7d0df110f8d1"
+    },
+    {
+      "case": "gene_gtf",
+      "file": "gene_gtf_4.csv",
+      "bytes": 76,
+      "sha256": "c1d69eaf23becaef052aa8f7aa982ac2875c4878fb8f09c9d485e04a80da8395"
+    },
+    {
+      "case": "oncoprint",
+      "file": "mgx_oncoprint.png",
+      "bytes": 165289,
+      "sha256": "16ad8b01a84767af5009cfb285838874ada5b488cd63ab2ff6c112ff1d1cf18a"
+    },
+    {
+      "case": "oncoprint",
+      "file": "mgx_oncoprint.svg",
+      "bytes": 102689,
+      "sha256": "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594"
+    },
+    {
+      "case": "oncoprint",
+      "file": "onco_frequency.png",
+      "bytes": 81554,
+      "sha256": "d87082186ce88f64df1fa479061f88afaf4970e8bf4320bdc640dd27ba4f014a"
+    },
+    {
+      "case": "oncoprint",
+      "file": "onco_frequency.svg",
+      "bytes": 35788,
+      "sha256": "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_0.csv",
+      "bytes": 2954,
+      "sha256": "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_1.csv",
+      "bytes": 309,
+      "sha256": "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_2.csv",
+      "bytes": 215,
+      "sha256": "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_3.csv",
+      "bytes": 3949,
+      "sha256": "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_4.csv",
+      "bytes": 13891,
+      "sha256": "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846"
+    },
+    {
+      "case": "oncoprint",
+      "file": "oncoprint_5.csv",
+      "bytes": 9,
+      "sha256": "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931"
+    },
+    {
+      "case": "forest",
+      "file": "forest_FEMALE.png",
+      "bytes": 69204,
+      "sha256": "1978f713bff429617b47b76d43167961707cae44c1f663d1d31e45c6c2b87e00"
+    },
+    {
+      "case": "forest",
+      "file": "forest_MALE.png",
+      "bytes": 68746,
+      "sha256": "94d1db5e7cbd3537d4370f7b95931c15f2c94ec02544145cb67e0f289f443663"
+    },
+    {
+      "case": "forest",
+      "file": "native/forest_FEMALE.svg",
+      "bytes": 38931,
+      "sha256": "d2e5d1211a53864094a49b7bded01a663ccc1cdc4dbe4599b231bb6a3694b096"
+    },
+    {
+      "case": "forest",
+      "file": "native/forest_MALE.svg",
+      "bytes": 38751,
+      "sha256": "f1393e70c069bf7dc9c73eae0696582d6047dccdbef9d5c726d74a3731c6dd9e"
+    },
+    {
+      "case": "forest",
+      "file": "forest_FEMALE.svg",
+      "bytes": 44094,
+      "sha256": "fbacc72c4c3e7c41758f5e3b4150a0c11c703e9ca1af79de188b332bc16675dc"
+    },
+    {
+      "case": "forest",
+      "file": "forest_MALE.svg",
+      "bytes": 44091,
+      "sha256": "370c00aaed351fdc234ce42bd245c86a22afe155e7361529f8f144e989104d3f"
+    },
+    {
+      "case": "forest",
+      "file": "forest_0.csv",
+      "bytes": 704,
+      "sha256": "c016462bc58d228a6ec5ff950f805b21fb6249788971ddf0ce4af4ee5f7da7a1"
+    },
+    {
+      "case": "forest",
+      "file": "forest_1.csv",
+      "bytes": 570,
+      "sha256": "5b7ea2cf3a3d59078cb6f65c3bb0c3a23b8915de9adbeafe1030e050adb92ba4"
+    },
+    {
+      "case": "forest",
+      "file": "forest_2.csv",
+      "bytes": 559,
+      "sha256": "77693bcd0a757329cd2eef4ab1056d162b2b8eb1a5e79014543105b7448b3c70"
+    },
+    {
+      "case": "forest",
+      "file": "forest_3.csv",
+      "bytes": 644,
+      "sha256": "ea8ea854b2f8d302306be39e7a3526e6a005e0e27d74ef795defa14985353554"
+    },
+    {
+      "case": "forest",
+      "file": "forest_4.csv",
+      "bytes": 633,
+      "sha256": "61a679e6ea7d03bb5aee6c5cada632da9f2a386a55bc62a670eef40843406e4f"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "multi_gwas_gtf.png",
+      "bytes": 159676,
+      "sha256": "0ddb568b0325f9a0b3fed3cc02a8caa0cef3b446611b07a94a1043d71c82d1fc"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "multi_gwas_gtf.svg",
+      "bytes": 1769639,
+      "sha256": "a1beb1162f601702569b0b1b99821c92dfb07001465016720351e078054f2770"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "multi_gwas_template.sas",
+      "bytes": 13735,
+      "sha256": "87360592140c9c472ceceec6c9b9baf617a000c4a84d9b6bb74d8147c990dc8f"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "panel_values.csv",
+      "bytes": 546079,
+      "sha256": "f9e02c63a503240b17f6d2dfa99c2192f03fb63682cc13e65ae46acfddbcc858"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "regional_input.csv",
+      "bytes": 292124,
+      "sha256": "f3b3b0e6bec337819940b12250a2f37d0268f1fa061cfc5ed212bb72a8ddf2b6"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "regional_annotation.csv",
+      "bytes": 237520,
+      "sha256": "1da26d4fcb285a605bc8103b60938b8a268c5b0233ffb512912f42930ae84779"
+    },
+    {
+      "case": "multi_gwas_gtf",
+      "file": "regional_render.csv",
+      "bytes": 3711474,
+      "sha256": "267660c3e960086fcca81c4ddd261d0bdfb267660e686c286362fed964c24e96"
+    },
+    {
+      "case": "hello",
+      "file": "hello.csv",
+      "bytes": 411,
+      "sha256": "c0e438f6d8b010b1cbe632f93b2e07e291e75580b7223d60747f2aa8cae9249f"
+    }
+  ],
+  "evidence_location": "MCP4SAS_Use_Python/test-results/poc-video-20261115-r2 (local; complete code, SAS logs, outputs and console evidence)",
+  "limitations": "Saved-program visualization execution on Windows/ODA. No AI authoring/token/cost benchmark, new platform installation or full scientific validation."
+}

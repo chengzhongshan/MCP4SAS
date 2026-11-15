@@ -61,3 +61,16 @@ shutdown waits were corrected. Native Windows validation passed 64 Python tests,
 in run 43677593186, and all three Perl jobs passed in run 43677287994. The fixes
 are integrated into local/main and GitHub/main. See
 docs/COPILOT_RUNNER_FIX_REVIEW.md at repository root.
+
+## Complete root test review — November 15, 2026
+
+All 80 root Perl test/catalog scripts now have Python counterparts. The final
+combined offline run passed 116 scripts, and the existing Python package suite
+passed 64 tests. Actual ODA execution and independent saved-evidence auditing
+verified 4,550 numerical cases and 590 MCP examples for each runtime after
+explicit, recorded reruns. Runtime fixes cover quoted single-file uploads,
+deferred path escaping, preflight status, raised session-loss classification,
+owned dead-bridge cleanup and runtime-only expected-error validation. Case 240's
+expected note was corrected without changing its SAS body. All 590 example
+bodies remain preserved. See `docs/COMPLETE_TEST_REPORT.md`, its machine-readable
+manifest, and `docs/TEST_SCRIPT_EXECUTION.csv` for complete scope and limitations.

@@ -10,6 +10,20 @@ Linux Python. Native Windows execution does not need Cygwin. SAS ODA still needs
 Java, the three SAS encryption JARs, your private SAS account and network access
 on outbound TCP 8591. Local SAS requires its own licensed installation.
 
+**Already installed through the Windows VS Code extension?** In the Cygwin
+terminal, from your MCP4SAS folder, use the matching Python runner directly:
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --file test.sas
+python examples/poc/run_example.py --case clustergram
+```
+
+After Quick Setup has installed and configured the compatible project SASPy
+environment, the direct runner finds it automatically. You do not need a
+PowerShell activation command. This reuses an installed environment; it does
+not install missing packages or replace your SAS credentials. The Python MCP
+server has separate dependencies and client setup, described below.
+
 ## Install in a separate Python environment
 
 From the repository root, on Windows PowerShell:
@@ -205,10 +219,11 @@ removes only inactive, age-eligible directories with a valid ownership marker.
 
 ## Compatibility and validation scope
 
-- This includes the runtime/utilities port and the developer checks and example
-  generators named on the homepage. See [Python demos](../docs/PYTHON_DEMOS.md)
-  for the matching commands. Other developer harnesses remain deferred in
-  `PORT_INVENTORY.csv`.
+- This includes the runtime/utilities port and Python counterparts for all 80
+  root Perl test/catalog scripts. See [Python demos](../docs/PYTHON_DEMOS.md)
+  for the matching commands and the [complete test report](../docs/COMPLETE_TEST_REPORT.md)
+  for execution evidence. Developer-only corpus builders outside that scope
+  remain identified in `PORT_INVENTORY.csv`.
 - Python retains the public CLI operations, aliases, logs, source artifacts,
   persistent sessions, file operations and guarded directory-cleanup SAS code.
   Its internals are native Python APIs, not a line-for-line translation.

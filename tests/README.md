@@ -82,3 +82,19 @@ fixtures without launching Perl.
 Offline fake-SAS and COM ownership tests do not establish that licensed local SAS
 works on macOS, Linux or Windows. Live ODA results and cross-platform CI results
 must be reported separately.
+
+## Run every Python PoC example
+
+The opt-in `run_python_poc_suite.py` executes all six frozen PoC programs,
+collects their figures/tables, verifies source hashes, invokes numerical checks,
+and closes only its own session, including after a failure. Use a configured
+Python environment with SASPy and a new output directory:
+
+```bash
+python tests/run_python_poc_suite.py --outdir PATH_TO_NEW_RESULTS
+python tests/run_python_poc_suite.py --live --outdir PATH_TO_NEW_RESULTS
+```
+
+Without `--live`, only source checks and the execution plan run. See the
+[15 November execution report](../docs/PYTHON_POC_VALIDATION_20261115.md) for
+actual outcomes, retained warnings and limits of the graphical checks.

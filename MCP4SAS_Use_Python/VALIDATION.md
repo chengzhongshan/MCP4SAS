@@ -1,5 +1,10 @@
 # Python runtime validation
 
+This document records the initial migration validation. The subsequent expanded
+runner review, corrected test expectations and actual execution coverage are in
+[the complete test report](../docs/COMPLETE_TEST_REPORT.md). Its source versions
+and limits are separate from the historical observations below.
+
 Baseline: `796c37b39e5c3017493de227b244413f8e684141`; migration branch:
 `feature/python-port`. Runtime and utilities are in scope; developer corpus builders
 and legacy harnesses remain deferred. Existing Perl sources were not rewritten.
