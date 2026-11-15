@@ -36,3 +36,14 @@ MCPDeps/sas_oda_session_server.py and debug.log were not included.
 
 No claim of complete Perl compatibility or live platform validation is made until
 the corresponding evidence is recorded.
+
+## Homepage demo follow-up
+
+The author subsequently requested Python counterparts for all Perl scripts named
+on the homepage. All 19 scripts in the main and linked README guides now have
+Python counterparts, with 44 paired command blocks. The scope includes 17 newly
+implemented developer/demo sources (32 implemented / 82 deferred in the inventory).
+The 43-test local suite and six selected live SAS ODA cases passed. All 590
+original SAS examples were generated and checked for unchanged source/fixtures;
+this does not mean all 590 were executed. Cross-platform branch CI is pending.
+See HOMEPAGE_DEMO_VALIDATION.md for the exact scope, fixes and evidence limits.

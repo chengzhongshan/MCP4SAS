@@ -15,6 +15,16 @@ def read_source(path):
         return raw.decode('latin-1')
 
 def resolve_local(value,roots):
+    if value.startswith('~/') and Path(value).suffix.lower()=='.sas':
+        # Bundled macro includes use a remote-home spelling. Prefer an exact
+        # local dependency file, without recursively traversing the workspace.
+        name=Path(value).name
+        for root in roots:
+            for directory in ('MCPDeps','DiffGWASDeps'):
+                candidate=Path(root)/directory/name
+                if candidate.is_file():
+                    return candidate.resolve()
+        return None
     if not source.is_local_file_candidate(value) or source.include_target_needs_runtime_resolution(value) or value.startswith(('~/','/home/','http://','https://')):
         return None
     path=Path(value)

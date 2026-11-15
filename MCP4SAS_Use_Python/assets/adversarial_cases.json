@@ -1,0 +1,445 @@
+{
+  "diagnostic_cases": [
+    [
+      "WARNING: plain runtime warning\n",
+      1,
+      0,
+      "plain warning counted"
+    ],
+    [
+      "WARNING 123-456: coded warning\n",
+      1,
+      0,
+      "coded warning counted"
+    ],
+    [
+      "warning: lowercase severity\n",
+      1,
+      0,
+      "warning matching is case-insensitive"
+    ],
+    [
+      " WARNING: trimmed warning \nWARNING: trimmed warning\n",
+      1,
+      0,
+      "trimmed duplicate warnings collapse"
+    ],
+    [
+      "12 WARNING: source listing\n",
+      0,
+      0,
+      "numbered warning source excluded"
+    ],
+    [
+      "MPRINT(X): WARNING: generated source\n",
+      0,
+      0,
+      "MPRINT warning source excluded"
+    ],
+    [
+      "NOTE: Invalid data for age in line 1.\n",
+      0,
+      1,
+      "invalid data note counted"
+    ],
+    [
+      "NOTE: Invalid argument to function INPUT.\n",
+      0,
+      1,
+      "invalid argument note counted"
+    ],
+    [
+      "NOTE: Variable amount is uninitialized.\n",
+      0,
+      1,
+      "uninitialized variable counted"
+    ],
+    [
+      "NOTE: Division by zero detected.\n",
+      0,
+      1,
+      "division by zero counted"
+    ],
+    [
+      "NOTE: Mathematical operations could not be performed.\n",
+      0,
+      1,
+      "math operation failure counted"
+    ],
+    [
+      "NOTE: Missing values were generated as a result.\n",
+      0,
+      1,
+      "generated missing values counted"
+    ],
+    [
+      "NOTE: Character values have been converted to numeric values.\n",
+      0,
+      1,
+      "character conversion counted"
+    ],
+    [
+      "NOTE: Numeric values have been converted to character values.\n",
+      0,
+      1,
+      "numeric conversion counted"
+    ],
+    [
+      "NOTE: SAS went to a new line when INPUT statement reached past the end of a line.\n",
+      0,
+      1,
+      "INPUT flowover counted"
+    ],
+    [
+      "NOTE: No observations in data set WORK.EMPTY.\n",
+      0,
+      1,
+      "empty data set counted"
+    ],
+    [
+      "id=4 amount=. _ERROR_=1 _N_=4\n",
+      0,
+      1,
+      "runtime error flag counted"
+    ],
+    [
+      "24 _ERROR_=1;\n",
+      0,
+      0,
+      "numbered error assignment excluded"
+    ],
+    [
+      "SYMBOLGEN: X resolves to _ERROR_=1\n",
+      0,
+      0,
+      "SYMBOLGEN error text excluded"
+    ],
+    [
+      "NOTE: There were 10 observations read.\n",
+      0,
+      0,
+      "routine observation note excluded"
+    ],
+    [
+      "before\n=== SAS Log ===\nWARNING: inside\n=== Output ===\nWARNING: after\n",
+      1,
+      0,
+      "wrapper isolates SAS log section"
+    ],
+    [
+      "WARNING: crlf\r\nNOTE: Invalid data for x.\r\n",
+      1,
+      1,
+      "CRLF diagnostics supported"
+    ],
+    [
+      "WARNING: A\nWARNING: B\nWARNING: C\nWARNING: D\n",
+      4,
+      0,
+      "distinct warnings retained"
+    ],
+    [
+      "NOTE: Invalid data for x.\nNOTE: Invalid data for x.\n",
+      0,
+      1,
+      "duplicate data diagnostics collapse"
+    ],
+    [
+      "",
+      0,
+      0,
+      "empty diagnostic input"
+    ]
+  ],
+  "fileref_cases": [
+    [
+      "filename ninechars '/tmp/x';",
+      1,
+      "nine-character fileref rejected"
+    ],
+    [
+      "filename eightchr '/tmp/x';",
+      0,
+      "eight-character fileref accepted"
+    ],
+    [
+      "filename under_123 '/tmp/x';",
+      1,
+      "long underscore fileref rejected"
+    ],
+    [
+      "/* filename hiddenref9 '/tmp/x'; */",
+      0,
+      "commented fileref ignored"
+    ],
+    [
+      "data x; text=\"filename hiddenref8 '/tmp/x';\"; run;",
+      0,
+      "quoted fileref ignored"
+    ],
+    [
+      "data x;run;\nfilename line_ref9 '/tmp/x';",
+      2,
+      "fileref issue source line preserved"
+    ],
+    [
+      "filename first_ref '/tmp/a'; filename secondref '/tmp/b';",
+      2,
+      "multiple long filerefs reported"
+    ],
+    [
+      "filename clear_ref clear;",
+      1,
+      "long fileref CLEAR remains advisory"
+    ],
+    [
+      "filename &dynamic '/tmp/x';",
+      0,
+      "dynamic fileref not treated as literal"
+    ],
+    [
+      "FiLeNaMe MixedCase9 '/tmp/x';",
+      1,
+      "fileref parsing is case-insensitive"
+    ]
+  ],
+  "format_cases": [
+    [
+      "proc format; value fmt1 1='x'; run;",
+      1,
+      "VALUE name ending in digit"
+    ],
+    [
+      "proc format; invalue input2 'x'=1; run;",
+      1,
+      "INVALUE name ending in digit"
+    ],
+    [
+      "proc format; picture pic3 low-high='9'; run;",
+      1,
+      "PICTURE name ending in digit"
+    ],
+    [
+      "proc format; value $char4 'x'='y'; run;",
+      1,
+      "character format ending in digit"
+    ],
+    [
+      "proc format; value fmtA 1='x'; run;",
+      0,
+      "format ending in letter accepted"
+    ],
+    [
+      "proc format; value fmt_ 1='x'; run;",
+      0,
+      "format ending in underscore accepted"
+    ],
+    [
+      "/* proc format; value hidden1 1='x'; run; */",
+      0,
+      "commented format ignored"
+    ],
+    [
+      "data x; text=\"proc format; value hidden2 1='x'; run;\"; run;",
+      0,
+      "quoted format source ignored"
+    ],
+    [
+      "data x; value outside3; run;",
+      0,
+      "VALUE outside PROC FORMAT ignored"
+    ],
+    [
+      "proc format; value first1 1='x'; invalue second2 'x'=2; run;",
+      2,
+      "multiple invalid names reported"
+    ],
+    [
+      "data x;run;\nproc format;\nvalue line5 1='x';\nrun;",
+      3,
+      "format issue source line preserved"
+    ],
+    [
+      "proc format; picture quit6 low-high='9'; quit;",
+      1,
+      "QUIT terminates format procedure"
+    ],
+    [
+      "proc format; value inside7 1='x'; run; value outside8;",
+      1,
+      "RUN prevents advisory leakage"
+    ],
+    [
+      "proc format; /* value hidden9 1='x'; */ value shown0 1='y'; run;",
+      1,
+      "comment masking inside format body"
+    ],
+    [
+      "PROC FORMAT; VALUE MIXED1 1='x'; RUN;",
+      1,
+      "format parsing is case-insensitive"
+    ]
+  ],
+  "include_cases": [
+    [
+      "%include \"alpha.sas\";",
+      [
+        "alpha.sas"
+      ],
+      "double-quoted direct include"
+    ],
+    [
+      "%INCLUDE 'upper.sas';",
+      [
+        "upper.sas"
+      ],
+      "case-insensitive include keyword"
+    ],
+    [
+      "%include 'one.sas' \"two.sas\";",
+      [
+        "one.sas",
+        "two.sas"
+      ],
+      "mixed-quote include list"
+    ],
+    [
+      "%include 'one.sas' 'two.sas' / source2;",
+      [
+        "one.sas",
+        "two.sas"
+      ],
+      "include list stops before options"
+    ],
+    [
+      "%include 'author''s second.sas';",
+      [
+        "author's second.sas"
+      ],
+      "doubled apostrophe in direct path"
+    ],
+    [
+      "%include 'semi;colon.sas';",
+      [
+        "semi;colon.sas"
+      ],
+      "semicolon inside quoted path"
+    ],
+    [
+      "%include\n  'line-one.sas'\n  'line-two.sas'\n;",
+      [
+        "line-one.sas",
+        "line-two.sas"
+      ],
+      "multiline include list"
+    ],
+    [
+      "%include 'first.sas'; %include 'second.sas';",
+      [
+        "first.sas",
+        "second.sas"
+      ],
+      "two direct include statements"
+    ],
+    [
+      "/* %include 'blocked.sas'; */",
+      [],
+      "block-comment include ignored"
+    ],
+    [
+      "* %include 'statement-comment.sas';",
+      [],
+      "statement-comment include ignored"
+    ],
+    [
+      "%* %include 'macro-comment.sas';",
+      [],
+      "macro-comment include ignored"
+    ],
+    [
+      "data x; text=\"%include 'string.sas';\"; run;",
+      [],
+      "double-quoted data include ignored"
+    ],
+    [
+      "%include \"&root./macro-path.sas\";",
+      [
+        "&root./macro-path.sas"
+      ],
+      "macro variable retained in include path"
+    ],
+    [
+      "data _null_; rc=DOSUBL('%include ''deferred-upper.sas'';'); run;",
+      [
+        "deferred-upper.sas"
+      ],
+      "uppercase DOSUBL include"
+    ],
+    [
+      "data _null_; CALL EXECUTE('%include ''deferred-call.sas'';'); run;",
+      [
+        "deferred-call.sas"
+      ],
+      "uppercase CALL EXECUTE include"
+    ],
+    [
+      "data _null_; rc=dosubl('data _null_; rc=dosubl(''%include ''''nested.sas'''';''); run;'); run;",
+      [
+        "nested.sas"
+      ],
+      "nested DOSUBL include"
+    ],
+    [
+      "data x; y=dosubl('%let z=1;')||'%include ''outside.sas'';'; run;",
+      [],
+      "literal after closed DOSUBL ignored"
+    ],
+    [
+      "data _null_; rc=dosubl('%let x=%nrstr(%include ''quoted.sas'';);'); run;",
+      [],
+      "NRSTR include remains inactive"
+    ],
+    [
+      "data x; input text $; datalines;\n%include 'raw.sas';\n;\nrun;",
+      [],
+      "DATALINES include text ignored"
+    ],
+    [
+      "data x; input text $; cards4;\n%include 'raw4.sas';\n;;;;\nrun;",
+      [],
+      "CARDS4 include text ignored"
+    ],
+    [
+      "%include 'kept.sas' / source2; data x; text='later.sas'; run;",
+      [
+        "kept.sas"
+      ],
+      "include options do not consume later literals"
+    ],
+    [
+      "%include 'unterminated.sas;",
+      [],
+      "unterminated include path rejected"
+    ],
+    [
+      "%include '';",
+      [],
+      "empty include path ignored"
+    ],
+    [
+      "%include 'literal.sas' dynamic_operand;",
+      [
+        "literal.sas"
+      ],
+      "literal retained before dynamic operand"
+    ],
+    [
+      "data x; input n; datalines;\n1\n;\nrun;\n%include 'after-data.sas';",
+      [
+        "after-data.sas"
+      ],
+      "include after inline data discovered"
+    ]
+  ],
+  "source_sha256": "b0a95a4029f9c4bee506f2064b8344cf515057634bae3f7cc63fa2950d389ff8"
+}

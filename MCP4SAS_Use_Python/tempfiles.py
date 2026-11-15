@@ -47,7 +47,7 @@ def inspect_owned(path,root):
         return None
     try:
         info = json.loads(marker.read_text(encoding='utf-8'))
-        if info.get('root')!=str(root) or not isinstance(info.get('pid'),int) or info['pid']<=0 or not isinstance(info.get('created'),int):
+        if not isinstance(info,dict) or info.get('root')!=str(root) or not isinstance(info.get('pid'),int) or isinstance(info.get('pid'),bool) or info['pid']<=0 or not isinstance(info.get('created'),int) or isinstance(info.get('created'),bool):
             return None
         return path.resolve(),info
     except (OSError,ValueError,TypeError):

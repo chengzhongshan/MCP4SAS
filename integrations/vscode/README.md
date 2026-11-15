@@ -1,5 +1,9 @@
 # MCP4SAS for VS Code
 
+Perl and Python commands below are alternatives. For Python, first
+[install and activate the separate environment](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+Use one runtime consistently for a persistent session.
+
 Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configuration by hand.
 
 [Watch the installation video](https://chengzhongshan.github.io/MCP4SAS/) for Windows setup, separate Copilot and Codex demonstrations, and macOS/Ubuntu instructions.
@@ -30,6 +34,15 @@ From a terminal in that folder:
 ```bash
 perl run_sas_codes_or_files_in_ODA.pl --code 'proc print data=sashelp.class; run;'
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --code 'proc print data=sashelp.class; run;'
+```
+
+</details>
 
 All existing commands, including **Open MCP4SAS Runtime Terminal**, login and
 JAR setup, remain available. Earlier managed installations continue to work.

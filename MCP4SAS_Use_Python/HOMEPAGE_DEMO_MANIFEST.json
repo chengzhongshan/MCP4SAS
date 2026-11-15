@@ -1,0 +1,162 @@
+{
+  "baseline_commit": "bcce7da3eafb8d3bb26ac3fa14e1be952daa8799",
+  "readme_guides": [
+    "README.md",
+    "examples/README.md",
+    "examples/poc/README.md",
+    "docs/poc/README.md",
+    "integrations/vscode/README.md"
+  ],
+  "paired_blocks": 44,
+  "entry_points": [
+    {
+      "perl": "MCPDeps/test_sas_log_and_labels.pl",
+      "python": "MCPDeps/test_sas_log_and_labels.py",
+      "python_sha256": "6321f00d3b7eacf45c41931c35e11da945d07a4e6a6f9688164f0f30a60a8c17"
+    },
+    {
+      "perl": "MCPDeps/test_sas_oda_connection_lifecycle.pl",
+      "python": "MCPDeps/test_sas_oda_connection_lifecycle.py",
+      "python_sha256": "0d33634c5810bb7a9a85b82cb01eff49a4d56ff0b393c9ea51de6ba82ee21777"
+    },
+    {
+      "perl": "MCPDeps/test_sas_oda_debug_macro_guard.pl",
+      "python": "MCPDeps/test_sas_oda_debug_macro_guard.py",
+      "python_sha256": "33d2c05859e50854389680f1049b057a666400098cd82ef44afb17301c9cdf26"
+    },
+    {
+      "perl": "MCPDeps/test_sas_oda_include_lookup.pl",
+      "python": "MCPDeps/test_sas_oda_include_lookup.py",
+      "python_sha256": "5a2887549046b81b5fd68781859fe5cefe0dc71bced3dc6d8d320757c52a8504"
+    },
+    {
+      "perl": "MCPDeps/test_sas_oda_macro_helper_reuse.pl",
+      "python": "MCPDeps/test_sas_oda_macro_helper_reuse.py",
+      "python_sha256": "234a092d034a3578d8286a98473d23dbae7762bd6732b758f3d7152d302b474e"
+    },
+    {
+      "perl": "cleanup_mcp4sas_intermediates.pl",
+      "python": "cleanup_mcp4sas_intermediates.py",
+      "python_sha256": "a24aa27c5a6685bd992384522ab265f0b720690a026e29db6af25c86d6e7a280"
+    },
+    {
+      "perl": "examples/poc/run_example.pl",
+      "python": "examples/poc/run_example.py",
+      "python_sha256": "4e44ac8eb5c200063a153c97151518693af586d4d0bff8841efa641ef644301d"
+    },
+    {
+      "perl": "examples/poc/validate_outputs.pl",
+      "python": "examples/poc/validate_outputs.py",
+      "python_sha256": "6a51e416569b798395455b16298c7b0ecd8a5ae841e23f912314023edaa61d91"
+    },
+    {
+      "perl": "run_sas_codes_or_files_in_ODA.pl",
+      "python": "run_sas_codes_or_files_in_ODA.py",
+      "python_sha256": "16554dd44fbc9332578934b4fa02b462ccd16f1babdfb765bd00e1e38a8533cf"
+    },
+    {
+      "perl": "server.pl",
+      "python": "server.py",
+      "python_sha256": "a588500b21d7bc37f49822639b83dde4f76be67f7973176473a0db709d9bdc98"
+    },
+    {
+      "perl": "tests/covid19_gwas_validation_tasks_001_500.pl",
+      "python": "tests/covid19_gwas_validation_tasks_001_500.py",
+      "python_sha256": "1a09edd452fc9d0d2d3192221d0aa2c5bd9b7e1ef9252d6835ede245414dd236"
+    },
+    {
+      "perl": "tests/new_examples_191_290.pl",
+      "python": "tests/new_examples_191_290.py",
+      "python_sha256": "8d3fbfa7cc3fdc02f7b472af5b2eab91bd80a11dca6c17278b8827e7b303d1ee"
+    },
+    {
+      "perl": "tests/new_examples_31_60.pl",
+      "python": "tests/new_examples_31_60.py",
+      "python_sha256": "66c91b9c629edbd3849d42986891e83abedc6f5a3d21599dc72d9e32c4cae3f3"
+    },
+    {
+      "perl": "tests/new_examples_61_90.pl",
+      "python": "tests/new_examples_61_90.py",
+      "python_sha256": "50ede35b4381fb3749f4e373595762263c8408a16b35998a821372e54dba57da"
+    },
+    {
+      "perl": "tests/new_validation_tasks_001_100.pl",
+      "python": "tests/new_validation_tasks_001_100.py",
+      "python_sha256": "0430d5b639cfc94df4b7ffa97813c2b80fe85fd9bc39b85a85336162dd2f1772"
+    },
+    {
+      "perl": "tests/run_live_examples.pl",
+      "python": "tests/run_live_examples.py",
+      "python_sha256": "38e9fe238a763ab050df333e2fb3992770e6a978ff03567f57a6733ed840a326"
+    },
+    {
+      "perl": "tests/run_live_new_examples_30.pl",
+      "python": "tests/run_live_new_examples_30.py",
+      "python_sha256": "882b601e2b76981f3a041f51a9b494f826a8e628e6c0bce9ef7ecbada736a87a"
+    },
+    {
+      "perl": "tools/build_covid19_validation_corpus.pl",
+      "python": "tools/build_covid19_validation_corpus.py",
+      "python_sha256": "a2b44d36d6f4c4ecfbb5373f7cc71fd824dd636224338d208eb65906baa293c0"
+    },
+    {
+      "perl": "tools/profile_sas_source.pl",
+      "python": "tools/profile_sas_source.py",
+      "python_sha256": "ae35ec9e3c7b61b7fbeca9510116dbadbbfee310649edd16da5506cd1afca413"
+    }
+  ],
+  "offline_tests": 43,
+  "original_corpus_tasks": 500,
+  "adversarial_contracts": 100,
+  "generated_original_sas_cases": 590,
+  "live_cases": [
+    {
+      "id": "01",
+      "name": "sql_join_cardinality",
+      "passed": true,
+      "status": "COMPLETE",
+      "exit_code": 0,
+      "elapsed_seconds": 8.24
+    },
+    {
+      "id": "02",
+      "name": "transpose_duplicate_id",
+      "passed": true,
+      "status": "FAILED",
+      "exit_code": 1,
+      "elapsed_seconds": 2.131
+    },
+    {
+      "id": "491",
+      "name": "include_two_quoted_local_files",
+      "passed": true,
+      "status": "COMPLETE",
+      "exit_code": 0,
+      "elapsed_seconds": 20.412
+    },
+    {
+      "case": "basic_summary",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "macro_control_flow",
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "case": "expected_missing_table",
+      "passed": true,
+      "exit_code": 1
+    }
+  ],
+  "snapshot_sha256": {
+    "MCP4SAS_Use_Python/assets/example_catalogs.json": "a74a2c7e866683f89126f34939b143f9a9484fa7fb5cdaf3249bf7a3947a7f9b",
+    "MCP4SAS_Use_Python/assets/adversarial_cases.json": "7fcbeb9343ba8a1ab1b74e84fff8897e9b715564396136907bff5028e3e73a3e"
+  },
+  "limitations": [
+    "Only six selected SAS programs executed in this follow-up; not all 590.",
+    "No live SAS on macOS/Linux; no GTEx API or legacy HTTP harness trial in this follow-up.",
+    "Python behavioral tests do not claim identical Perl implementation details."
+  ]
+}

@@ -1,5 +1,9 @@
 # SAS ODA examples and failure checks
 
+Perl and Python commands below are alternatives. For Python, first
+[install and activate the separate environment](../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+Use one runtime consistently for a persistent session.
+
 For additional generated examples that exercise the MCP HTTP transport,
 persistent sessions, and archive transfers, see [MCP HTTP examples](mcp_http_examples.md).
 
@@ -15,6 +19,20 @@ SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
 perl tests/run_live_examples.pl --live
 perl MCPDeps/test_sas_log_and_labels.pl
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+SAS_ODA_AUTOLOAD_MACROS=0 OPEN_RESULT=0 \
+  python run_sas_codes_or_files_in_ODA.py --file examples/gtex_eqtl.sas \
+  --output-prefix SAS_Output_gtex --run-timeout-seconds 180
+
+python tests/run_live_examples.py --live
+python MCPDeps/test_sas_log_and_labels.py
+```
+
+</details>
 
 Global macro autoload is disabled for these self-contained examples. This is
 not a recommendation to disable it for programs that use your remote macros.

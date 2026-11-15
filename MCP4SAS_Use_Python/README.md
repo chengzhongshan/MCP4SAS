@@ -170,8 +170,10 @@ removes only inactive, age-eligible directories with a valid ownership marker.
 
 ## Compatibility and validation scope
 
-- This is the **runtime and utilities** port. Developer-only corpus generators
-  and legacy test harnesses remain deferred, as agreed. See `PORT_INVENTORY.csv`.
+- This includes the runtime/utilities port and the developer checks and example
+  generators named on the homepage. See [Python demos](../docs/PYTHON_DEMOS.md)
+  for the matching commands. Other developer harnesses remain deferred in
+  `PORT_INVENTORY.csv`.
 - Python retains the public CLI operations, aliases, logs, source artifacts,
   persistent sessions, file operations and guarded directory-cleanup SAS code.
   Its internals are native Python APIs, not a line-for-line translation.

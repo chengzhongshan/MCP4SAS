@@ -72,6 +72,15 @@ After setup, run a first SAS example without an AI agent:
 perl examples/poc/run_example.pl --case hello
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python examples/poc/run_example.py --case hello
+```
+
+</details>
+
 MCP4SAS automates execution and file handling around reusable SAS expertise.
 The PoC compares saved-program outputs; it does not establish general speed,
 token-cost savings or biological validity. The oncoprint is explicitly synthetic.
@@ -85,11 +94,20 @@ token-cost savings or biological validity. The oncoprint is explicitly synthetic
 | Local Windows SAS | `winlocal` | Installed SAS 9.4; local Java IOM through native Windows Python and SASPy. |
 | Local Windows SAS, COM alternative | `winlocal_com` | Installed SAS 9.4; native Windows Python, SASPy and pywin32. |
 
-The same `run_sas_codes_or_files_in_ODA.pl` runner works with all targets;
-its historical filename does not limit it to ODA. Installers prepare MCP4SAS
+The Perl `run_sas_codes_or_files_in_ODA.pl` and Python
+`run_sas_codes_or_files_in_ODA.py` runners support these targets;
+their historical filenames do not limit them to ODA. Installers prepare MCP4SAS
 and its dependencies; local SAS itself must already be installed and licensed.
 
 ## Quick start
+
+Choose one runtime for each example. The original command is shown first;
+expand **Python alternative** for its matching command. Before using Python,
+[install and activate its Python 3.10+ environment](MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+The Bash examples use Bash syntax; native Windows users can follow the
+[PowerShell setup and local SAS example](docs/PYTHON_DEMOS.md#native-windows-powershell).
+The Python commands do not invoke Perl or need Cygwin. Keep the same runtime
+and session name across submissions when reusing WORK tables.
 
 Run the [platform installer](#manual-installation) first, then use these commands
 from the MCP4SAS directory. Choose one target below in a fresh shell. The
@@ -114,6 +132,20 @@ perl run_sas_codes_or_files_in_ODA.pl \
   --code 'proc print data=sashelp.class(obs=5); run;' \
   --output-prefix SAS_Output_RandID_oda_demo --run-timeout-seconds 120
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+export SASPY_CFGNAME=oda
+export SAS_ODA_AUTOLOAD_MACROS=0
+python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+python run_sas_codes_or_files_in_ODA.py \
+  --code 'proc print data=sashelp.class(obs=5); run;' \
+  --output-prefix SAS_Output_RandID_oda_demo --run-timeout-seconds 120
+```
+
+</details>
 
 See [First SAS ODA Login](#first-sas-oda-login) for account setup. Macro autoload
 is disabled in these SASHELP examples; enable it when using an online collection.
@@ -180,6 +212,20 @@ perl run_sas_codes_or_files_in_ODA.pl --dir4local_sas_home ./local_sas_home \
   --download-file '~/example.csv' --download-local-path ./example.downloaded.csv
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --dir4local_sas_home ./local_sas_home \
+  --dir4listing '~'
+python run_sas_codes_or_files_in_ODA.py --dir4local_sas_home ./local_sas_home \
+  --upload-file example.csv
+python run_sas_codes_or_files_in_ODA.py --dir4local_sas_home ./local_sas_home \
+  --download-file '~/example.csv' --download-local-path ./example.downloaded.csv
+```
+
+</details>
+
 Supply your own `example.csv`. For ODA, Linux STDIO or Windows `winlocal` IOM,
 reuse WORK data by supplying the same session ID on both submissions:
 
@@ -191,6 +237,20 @@ perl run_sas_codes_or_files_in_ODA.pl \
   --code 'proc print data=work.a; run;' \
   --persistent --session-id demo --run-timeout-seconds 120
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --code 'data a; set sashelp.class(obs=5); run;' \
+  --persistent --session-id demo --run-timeout-seconds 120
+python run_sas_codes_or_files_in_ODA.py \
+  --code 'proc print data=work.a; run;' \
+  --persistent --session-id demo --run-timeout-seconds 120
+```
+
+</details>
 
 Keep the same explicit `--dir4local_sas_home` across local runs when output
 prefixes differ and you need the same saved-file location. WORK stays in the
@@ -212,6 +272,15 @@ start the server:
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
+
 Connect your MCP client to `http://127.0.0.1:8080/mcp`. For local file operations
 through the server, set `SAS_LOCAL_HOME_DIR` to your chosen absolute local SAS
 directory in the server environment.
@@ -219,6 +288,9 @@ On Linux use the absolute Linux path; with Cygwin and native Windows Python,
 use `cygpath -am ./local_sas_home` to obtain its Windows path.
 
 ## Included tools
+
+Every Perl script named here has a [Python counterpart and runnable demo](docs/PYTHON_DEMOS.md).
+This includes the offline developer checks and example generators listed below.
 
 - `server.pl`: an HTTP MCP server exposing SASPy-backed SAS tools.
 - `run_sas_codes_or_files_in_ODA.pl`: a command-line SASPy runner. The file
@@ -381,6 +453,18 @@ different file, pass it explicitly:
   --check-sas-oda-login-only
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
+```
+
+</details>
+
 Select a target with `SASPY_CFGNAME` or `--saspy-cfgname`.
 When a target is explicitly selected, MCP4SAS does not silently fall back to
 another SASPy profile if that connection fails.
@@ -391,15 +475,35 @@ SAS ODA:
 SASPY_CFGNAME=oda ./run_sas_codes_or_files_in_ODA.pl --check-sas-oda-login-only
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+SASPY_CFGNAME=oda python run_sas_codes_or_files_in_ODA.py --check-sas-oda-login-only
+```
+
+</details>
+
 Local Linux SAS:
 
 ```bash
 SASPY_CFGNAME=linuxlocal \
-MCP4SAS_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
+SASPY_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
 ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
 ```
 
-`MCP4SAS_LOCAL_SAS_PATH` must point to the local `sas` or `sas_u8` executable.
+<details>
+<summary>Python alternative</summary>
+
+```bash
+SASPY_CFGNAME=linuxlocal \
+SASPY_LOCAL_SAS_PATH=/opt/sasinside/SASHome/SASFoundation/9.4/bin/sas_u8 \
+python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+```
+
+</details>
+
+`SASPY_LOCAL_SAS_PATH` must point to the local `sas` or `sas_u8` executable.
 Linux STDIO configuration is provided and tested offline. A live Linux SAS
 connection has not been verified because no local Linux SAS was available.
 
@@ -430,6 +534,17 @@ SASPY_JAVA_WIN='C:/Program Files/Java/jdk-11/bin/java.exe' \
 perl run_sas_codes_or_files_in_ODA.pl --saspy-cfgfile sascfg_personal.py \
   --check-saspy-connection-only
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+SASPY_JAVA_WIN='C:/Program Files/Java/jdk-11/bin/java.exe' \
+python run_sas_codes_or_files_in_ODA.py --saspy-cfgfile sascfg_personal.py \
+  --check-saspy-connection-only
+```
+
+</details>
 
 See [local IOM/SSPI troubleshooting](docs/WINDOWS_LOCAL_IOM_SSPI.md) for the
 verified reverse-loopback SPN repair and the optional local COM profile.
@@ -462,8 +577,21 @@ Then start MCP4SAS and call `run_local_sas_without_saspy` from the agent:
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
+
 You can also pass `local_sas_exe` and optionally `local_sas_platform` (`linux`
 or `windows`) as MCP tool arguments.
+
+Those are Perl-server argument names. With the Python server, pass
+`sas_executable` as an absolute native path, or set `SASPY_LOCAL_SAS_PATH` in
+its environment. Python selects the current operating system automatically.
 
 Important limitation: this direct batch tool is not persistent. Each tool call
 launches a new SAS process, so `WORK` data sets, macro variables, librefs,
@@ -476,6 +604,16 @@ If you need persistent local SAS state, use the SASPy-backed runner instead:
 SASPY_CFGNAME=linuxlocal ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
 SASPY_CFGNAME=winlocal   ./run_sas_codes_or_files_in_ODA.pl --check-saspy-connection-only
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+SASPY_CFGNAME=linuxlocal python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+SASPY_CFGNAME=winlocal   python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+```
+
+</details>
 
 Feasibility note: persistent local SAS without SASPy is possible only by adding
 a resident session manager that starts SAS once, sends multiple code blocks to
@@ -545,6 +683,15 @@ Interactive credential setup:
 ./run_sas_codes_or_files_in_ODA.pl --prompt-sas-oda-auth --check-sas-oda-login-only
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --prompt-sas-oda-auth --check-sas-oda-login-only
+```
+
+</details>
+
 Noninteractive credential setup:
 
 ```bash
@@ -554,8 +701,20 @@ Noninteractive credential setup:
   --check-sas-oda-login-only
 ```
 
-Credentials are saved in the SASPy authinfo file after validation with
-`proc setinit;run;`.
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --sas-oda-account you@example.com \
+  --sas-oda-password 'your-password' \
+  --check-sas-oda-login-only
+```
+
+</details>
+
+Credentials are saved in the private SASPy authinfo file. The connection check
+then submits `proc setinit;run;` to verify that the selected SAS account works.
 
 ## Run SAS Code From The Command Line
 
@@ -568,6 +727,18 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py \
+  --code "proc print data=sashelp.class(obs=5); run;" \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 Run a `.sas` file:
 
 ```bash
@@ -576,6 +747,18 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --persistent \
   --session-id demo
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py \
+  --file my_program.sas \
+  --persistent \
+  --session-id demo
+```
+
+</details>
 
 Run code from standard input:
 
@@ -595,6 +778,27 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+printf '%s\n' \
+  'data a;' \
+  'input a @@;' \
+  'datalines;' \
+  '10 20' \
+  ';' \
+  'run;' \
+  'proc print data=a;' \
+  'run;' |
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py \
+  --code - \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 Long SAS job:
 
 ```bash
@@ -604,6 +808,19 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --persistent \
   --session-id long_job
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py \
+  --file long_job.sas \
+  --run-timeout-seconds 7200 \
+  --persistent \
+  --session-id long_job
+```
+
+</details>
 
 Disable the wrapper timeout:
 
@@ -615,11 +832,33 @@ OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl \
   --session-id long_job
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py \
+  --file very_long_job.sas \
+  --no-run-timeout \
+  --persistent \
+  --session-id long_job
+```
+
+</details>
+
 Stop wedged local SASPy/SAS ODA helper processes:
 
 ```bash
 ./run_sas_codes_or_files_in_ODA.pl --kill-saspy-sessions
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --kill-saspy-sessions
+```
+
+</details>
 
 ## Upload, Download, Delete, And List ODA Files
 
@@ -645,6 +884,18 @@ Upload:
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --upload-file local.csv \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 List remote files:
 
 ```bash
@@ -654,6 +905,18 @@ List remote files:
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --dir4listing '~/Macros' \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 File info:
 
 ```bash
@@ -662,6 +925,18 @@ File info:
   --persistent \
   --session-id demo
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --file-info '~/myfile.csv' \
+  --persistent \
+  --session-id demo
+```
+
+</details>
 
 Download:
 
@@ -673,6 +948,19 @@ Download:
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --download-file '~/result.csv' \
+  --download-local-path ./result.csv \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 Delete:
 
 ```bash
@@ -682,11 +970,27 @@ Delete:
   --session-id demo
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --delete-file '~/old_result.csv' \
+  --persistent \
+  --session-id demo
+```
+
+</details>
+
 `--delete-file-rgx` matches both regular files and immediate-child
 directories returned by the remote listing. Matching files are bulk-deleted;
 matching directories and all of their contents are deleted recursively through
 the same guarded `Del_Dir_Recursive` workflow described below. Explicit
 `--delete-file` remains a file-only operation.
+
+This describes the Perl behavior. Python `--delete-file-rgx` deliberately skips
+directories and uses Python regular expressions. To preview or remove folders
+with either runtime, use the separate `--delete-directory-rgx` operation below.
 
 ### Delete ODA directories by regular expression
 
@@ -698,6 +1002,17 @@ perl run_sas_codes_or_files_in_ODA.pl \
   --delete-directory-dry-run --persistent --session-id cleanup
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --delete-directory-dry-run --persistent --session-id cleanup
+```
+
+</details>
+
 Delete the matches, including their contents:
 
 ```bash
@@ -705,6 +1020,17 @@ perl run_sas_codes_or_files_in_ODA.pl \
   --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
   --persistent --session-id cleanup
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --delete-dir '~' --delete-directory-rgx '^tmp_.*$' \
+  --persistent --session-id cleanup
+```
+
+</details>
 
 `--delete-dir` defaults to remote `~`; quote remote paths so Bash does not
 expand them locally. Patterns use SAS PRX syntax and match directory
@@ -781,9 +1107,23 @@ Waiting for SAS ODA session server response while reading response header (elaps
 
 ## Run The MCP Server
 
+The Perl HTTP examples use port **8080**. Their Python alternatives use
+**8081**, with endpoint `http://127.0.0.1:8081/mcp`; update your client's URL
+when switching runtimes. Python also supports `python server.py` for stdio,
+where the MCP client starts the server and no HTTP URL is needed.
+
 ```bash
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
 
 The MCP endpoint is:
 
@@ -799,12 +1139,31 @@ nohup perl server.pl daemon -m production -l http://127.0.0.1:8080 \
   > mcp4sas.server.log 2>&1 &
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+nohup python server.py daemon --host 127.0.0.1 --port 8081 \
+  > mcp4sas.python.server.log 2>&1 &
+```
+
+</details>
+
 Stop the server by pressing `Ctrl-C` in the server terminal, or by killing the
 background process:
 
 ```bash
 pkill -f 'server.pl daemon.*127.0.0.1:8080'
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+pkill -f 'server.py daemon.*127.0.0.1.*8081'
+```
+
+</details>
 
 Tools exposed:
 
@@ -850,6 +1209,15 @@ In one terminal:
 ```bash
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
 
 In another terminal:
 
@@ -976,6 +1344,17 @@ ollama pull qwen2.5-coder:7b
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+ollama serve
+ollama pull qwen2.5-coder:7b
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
+
 Then configure your MCP-aware Ollama client with:
 
 ```json
@@ -1024,6 +1403,16 @@ itself should continue running as the HTTP service shown above.
 cd MCP4SAS
 perl server.pl daemon -m production -l http://127.0.0.1:8080
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+cd MCP4SAS
+python server.py daemon --host 127.0.0.1 --port 8081
+```
+
+</details>
 
 2. In the AI agent, call `run_sas_codes_or_files_in_ODA` with SAS code or a
    local `.sas` file.
@@ -1085,6 +1474,11 @@ to retain scratch for debugging. Preview older retained scratch with
 `perl cleanup_mcp4sas_intermediates.pl --directory .`; add `--apply` to remove
 eligible marked directories. See the cleanup examples in the validation report.
 
+Python: `python cleanup_mcp4sas_intermediates.py --directory .` (also previews
+by default). Close a named Python session with
+`python run_sas_codes_or_files_in_ODA.py --session-id NAME --kill-saspy-sessions`;
+it does not terminate unrelated Perl/Java processes.
+
 For the complete Cygwin/Perl commands, reproduced failures, live results, and
 resulting fixes, see [Real Examples for Improving MCP4SAS](RealExamples4ImprovingMCP4SAS.md).
 
@@ -1096,6 +1490,11 @@ include `structuredContent.status`, `exit_code`, `log_path`, and a separate
 warning/data-quality diagnostic summary. A warning or data-quality NOTE does
 not change a successful job into a failure. Use SAS `options notes;` when
 you want SAS to emit those NOTES.
+
+Python: `python tests/run_live_new_examples_30.py --generate-only`. Use
+`--live --only 01,02` to test a successful calculation and an expected SAS error
+through the Python MCP server. See [Python demos](docs/PYTHON_DEMOS.md) for all
+eight batches, HTTP transport and explicit execution requirements.
 
 A second independent batch generates cases 31-60: add `--batch 2` to the
 generator or live command. Its catalog is maintained in
@@ -1186,12 +1585,33 @@ perl MCPDeps/test_sas_oda_macro_helper_reuse.pl
 perl MCPDeps/test_sas_oda_include_lookup.pl
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python MCPDeps/test_sas_oda_debug_macro_guard.py
+python MCPDeps/test_sas_oda_connection_lifecycle.py
+python MCPDeps/test_sas_oda_macro_helper_reuse.py
+python MCPDeps/test_sas_oda_include_lookup.py
+```
+
+</details>
+
 
 Classify a saved SAS log without connecting to ODA:
 
 ```bash
 ./run_sas_codes_or_files_in_ODA.pl --classify-sas-log output.html.info.txt
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --classify-sas-log output.html.info.txt
+```
+
+</details>
 
 Confirmed WORK/quota exhaustion is non-retryable and exits with status `73`.
 A remote SAS-session termination without a definitive SAS log is also treated
@@ -1206,6 +1626,15 @@ If SASPy hangs or a persistent session becomes stale:
 ```bash
 ./run_sas_codes_or_files_in_ODA.pl --kill-saspy-sessions
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --kill-saspy-sessions
+```
+
+</details>
 
 If the log says `No SAS process attached` together with
 `An exception was thrown during the encryption key exchange`, SASPy reached the
@@ -1233,6 +1662,17 @@ Then refresh or validate the saved SAS ODA credentials:
   --check-sas-oda-login-only
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --prompt-sas-oda-auth \
+  --check-sas-oda-login-only
+```
+
+</details>
+
 You can force a specific config file or config name with CLI options or their
 environment-variable equivalents:
 
@@ -1242,6 +1682,18 @@ environment-variable equivalents:
   --saspy-cfgname oda \
   --check-sas-oda-login-only
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py \
+  --saspy-cfgfile ~/sascfg_personal.py \
+  --saspy-cfgname oda \
+  --check-sas-oda-login-only
+```
+
+</details>
 
 If the jars are installed and credentials are correct but the same error
 remains, check that the `iomhost` entries in `sascfg_personal.py` match your SAS
@@ -1253,6 +1705,15 @@ If a command completes but the browser prints noisy errors, suppress auto-open:
 ```bash
 OPEN_RESULT=0 ./run_sas_codes_or_files_in_ODA.pl --code "proc print data=sashelp.class;run;"
 ```
+
+<details>
+<summary>Python alternative</summary>
+
+```bash
+OPEN_RESULT=0 python run_sas_codes_or_files_in_ODA.py --code "proc print data=sashelp.class;run;"
+```
+
+</details>
 
 If Python packages fail on older systems, make sure Python is at least 3.8.
 Current `Pillow` and `saspy` releases require modern Python.

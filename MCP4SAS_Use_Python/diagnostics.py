@@ -60,4 +60,6 @@ def classify(text):
         failure, code = 'sas_oda_remote_session_termination',74
     elif error_lines:
         failure, code = 'sas_program_error',1
+    elif re.search(r'^\s*WARNING:\s+Apparent invocation of macro\b.*not resolved\.',text,re.I|re.M):
+        failure, code = 'sas_macro_resolution_error',1
     return dict(exit_code=code,failure_class=failure,retryable=False,errors=error_lines,**summarize(text))

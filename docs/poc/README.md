@@ -1,5 +1,9 @@
 # Scientific proof of concept and runnable showcases
 
+Perl and Python commands below are alternatives. For Python, first
+[install and activate the separate environment](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
+Use one runtime consistently for a persistent session.
+
 These examples let an AI assistant reuse established SAS programs,
 stage their inputs, submit jobs and collect checked results through
 MCP4SAS. SAS and the supplied macros perform the calculations. The same programs
@@ -53,6 +57,19 @@ perl examples/poc/run_example.pl --case oncoprint
 perl examples/poc/run_example.pl --case multi_gwas_gtf
 ```
 
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+python examples/poc/run_example.py --list
+python examples/poc/run_example.py --case hello
+python examples/poc/run_example.py --case oncoprint
+python examples/poc/run_example.py --case multi_gwas_gtf
+```
+
+</details>
+
 The helper uploads each case's listed inputs, submits its saved SAS program,
 reads the actual SAS log, collects the listed PNG/SVG/CSV files and runs the
 numerical checker. Results go into a new `SAS_Output_PoC_*` directory. The
@@ -70,8 +87,17 @@ Use `--dry-run` to inspect the submission plan without connecting or uploading:
 perl examples/poc/run_example.pl --case gene_gtf --dry-run
 ```
 
-The Perl route needs no AI agent or new model request. It reuses the configured
-SASPy/Java/SAS backend and saved programs.
+<details>
+<summary>Python alternative</summary>
+
+```bash
+python examples/poc/run_example.py --case gene_gtf --dry-run
+```
+
+</details>
+
+Both terminal routes need no AI agent or new model request. Each uses its
+configured SASPy/Java/SAS backend and the same saved programs.
 
 ## Ask an AI agent
 
