@@ -162,7 +162,8 @@ def ensure_saspy_environment(args):
             # Windows CRT execv does not quote space-containing arguments for
             # the new process. subprocess supplies the required quoting once.
             flags=0 if sys.stdin.isatty() else subprocess.CREATE_NO_WINDOW
-            raise SystemExit(subprocess.run(command,check=False,creationflags=flags).returncode)
+            raise SystemExit(subprocess.run(command,check=False,creationflags=flags,
+                stdin=sys.stdin,stdout=sys.stdout,stderr=sys.stderr).returncode)
         os.execv(str(candidate),command)
         return
     if configured:

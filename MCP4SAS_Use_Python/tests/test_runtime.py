@@ -241,7 +241,7 @@ class UtilityTests(unittest.TestCase):
             def run(self,*args,**kwargs):
                 return dict(log='NOTE: SAS completed.',lst=html,diagnostics=diagnostics.classify('NOTE: SAS completed.'))
         with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch('MCP4SAS_Use_Python.cli.open_result_html') as open_html,patch.dict(os.environ,{'OPEN_RESULT':'0'}),contextlib.redirect_stdout(io.StringIO()) as stdout:
-            output=Path(temp)/'result'
+            output=(Path(temp)/'result').resolve()
             self.assertEqual(main(['--code','proc print;run;','--output-prefix',str(output)]),0)
             terminal=stdout.getvalue()
             self.assertNotIn('<html>',terminal)
@@ -258,7 +258,7 @@ class UtilityTests(unittest.TestCase):
                 return dict(log='NOTE: SAS completed.',lst=html,diagnostics=diagnostics.classify('NOTE: SAS completed.'))
         with tempfile.TemporaryDirectory() as temp,patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch('MCP4SAS_Use_Python.cli.open_result_html') as open_html,patch.dict(os.environ,{}),contextlib.redirect_stdout(io.StringIO()):
             os.environ.pop('OPEN_RESULT',None)
-            output=Path(temp)/'result'
+            output=(Path(temp)/'result').resolve()
             self.assertEqual(main(['--code','proc print;run;','--output-prefix',str(output)]),0)
             open_html.assert_called_once_with(output/'output.html')
     def test_cygwin_html_open_uses_cygstart(self):

@@ -56,6 +56,7 @@ class CopilotReviewTests(unittest.TestCase):
             output=str(Path(temp)/'output with spaces')
             result=subprocess.run([sys.executable,'-S',str(root/'run_sas_codes_or_files_in_ODA.py'),'--code',code,'--output-prefix',output],cwd=temp,env=env,capture_output=True,text=True,timeout=30)
             self.assertEqual(result.returncode,0,result.stderr)
+            self.assertTrue(result.stdout.strip(),f'Child stdout missing; stderr={result.stderr!r}')
             self.assertEqual(json.loads(result.stdout),dict(code=code,output=output))
             self.assertIn('restarting with the SASPy environment',result.stderr)
 
