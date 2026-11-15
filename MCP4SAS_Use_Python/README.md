@@ -96,6 +96,19 @@ serialized. A wall-clock timeout terminates that runtime's backend/process tree;
 user code is not automatically replayed. A later request starts a fresh session,
 so WORK contents must be recreated.
 
+For licensed local SAS, skip the ODA configurator and use an existing SASPy
+profile or one of the tracked examples. Local Windows COM requires the SAS COM
+components and `pywin32`, but no ODA account or Java encryption JARs:
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --saspy-cfgname winlocal_com --saspy-cfgfile install/sascfg_windows_local_com.py --dir4local_sas_home ./local_sas_home --code 'proc print data=sashelp.class;run;'
+```
+
+Local Linux SAS can use `--saspy-cfgname linuxlocal --saspy-cfgfile
+install/sascfg_linux_local.py` with `SASPY_LOCAL_SAS_PATH` pointing to its SAS
+executable. These are separate execution targets; an ODA configuration does not
+provide a local SAS license.
+
 ## Use the Python MCP server
 
 ```bash

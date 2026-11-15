@@ -49,8 +49,8 @@ def find_macro(name,roots):
             return found[0].resolve()
     return None
 
-def macro_calls(text):
-    view=source.macro_dependency_view(text)
+def macro_calls(text,analysis=None):
+    view=source.macro_dependency_view(text,analysis)
     definitions={m[1].casefold() for m in re.finditer(r'%macro\s+([A-Za-z_]\w*)\b',view,re.I)}
     names=[]
     for match in re.finditer(r'%([A-Za-z_]\w*)\b',view):
@@ -61,8 +61,8 @@ def macro_calls(text):
             names.append(name)
     return names
 
-def data_paths(text):
-    analysis=source.analyze_source(text)
+def data_paths(text,analysis=None):
+    analysis=analysis if analysis is not None else source.analyze_source(text)
     pattern=r'''\b(datafile\s*=\s*|zip\s*=\s*|infile\s+|filename\s+\S+\s+)(["'])(.*?)\2'''
     for match in re.finditer(pattern,analysis['comments_masked'],re.I|re.S):
         if analysis['masked'][match.start():match.start()+len(match[1])].strip():
@@ -122,7 +122,8 @@ class Plan:
             if not path.is_file():
                 raise ValueError(f'Upload is not a file: {path}')
             self.add(path,str(path))
-        self.scan(code,self.roots)
+        self.analysis=source.analyze_source(code)
+        self.scan(code,self.roots,self.analysis)
 
     def add(self,path,alias):
         path=path.resolve()
@@ -149,20 +150,21 @@ class Plan:
         if macro and path not in self.macros:
             self.macros.append(path)
 
-    def scan(self,text,roots):
-        for alias in source.include_targets(text):
+    def scan(self,text,roots,analysis=None):
+        analysis=analysis if analysis is not None else source.analyze_source(text)
+        for alias in source.include_targets(text,analysis):
             path=resolve_local(alias,roots)
             if path:
                 self.add(path,alias)
                 self.visit(path,roots)
-        for name in macro_calls(text):
+        for name in macro_calls(text,analysis):
             path=find_macro(name,roots)
             if path:
                 self.add(path,str(path))
                 self.visit(path,roots,macro=True)
             elif name.casefold() not in {n.casefold() for n in self.remote_macros}:
                 self.remote_macros.append(name)
-        for alias in data_paths(text):
+        for alias in data_paths(text,analysis):
             path=resolve_local(alias,roots)
             if path:
                 self.add(path,alias)

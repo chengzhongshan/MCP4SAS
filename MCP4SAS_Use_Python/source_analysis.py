@@ -6,6 +6,8 @@ advisory source analysis, not a replacement for SAS compilation.
 import re
 
 BUILTINS = set(('let put do to by while until else end if then abort window display str nrstr bquote nrbquote superq sysfunc qsysfunc syscall sysget symexist symdel symglobl symlocal sysmacexist sysmacdelete scan qscan substr qsubstr upcase qupcase lowcase qlowcase length index eval sysevalf quote nrquote unquote cmpres left trim sysprod sysmacroname global local mend macro goto return include inc').split())
+MACRO_QUOTE_HEADER = re.compile(r'%(str|nrstr|quote|nrquote|bquote|nrbquote|superq)\b\s*\(',re.I)
+INLINE_HEADER = re.compile(r'(datalines4?|cards4?|parmcards4?)\s*;',re.I)
 
 def is_builtin_macro_name(name):
     return not name or name.lower() in BUILTINS
@@ -20,10 +22,10 @@ def blank(text):
     return re.sub(r'[^\r\n]', ' ', text)
 
 def macro_quote_span(text, offset):
-    match = re.match(r'%(str|nrstr|quote|nrquote|bquote|nrbquote|superq)\b\s*\(', text[offset:], re.I)
+    match = MACRO_QUOTE_HEADER.match(text,offset)
     if not match:
         return None
-    body = offset + match.end()
+    body = match.end()
     i, depth, children = body, 1, []
     while i < len(text):
         if text[i] == '%' and text[i+1:i+2] in ('(', ')', "'", '"'):
@@ -129,9 +131,9 @@ def analyze_inline_data(text):
             statement_start = True
             i += 1
             continue
-        match = re.match(r'(datalines4?|cards4?|parmcards4?)\s*;', text[i:], re.I) if statement_start else None
+        match = INLINE_HEADER.match(text,i) if statement_start else None
         if match:
-            header_end = i + match.end()
+            header_end = match.end()
             end = text.find('\n', header_end)
             end = len(text) if end < 0 else end
             if not text[header_end:end].strip():
@@ -294,9 +296,9 @@ def literal_is_executable(analysis, span, macro_evaluation=False):
         cache[key] = contexts
     return cache[key].get(span['start'],0)
 
-def macro_dependency_view(text):
+def macro_dependency_view(text,analysis=None):
     text = text or ''
-    analysis = analyze_source(text)
+    analysis = analysis if analysis is not None else analyze_source(text)
     masked = list(mask_macro_literals(text,analysis))
     for span in analysis['single_quotes']:
         if literal_is_executable(analysis,span,True):
@@ -317,9 +319,9 @@ def macro_dependency_view(text):
             masked[span['start']:span['end']] = blank(''.join(masked[span['start']:span['end']]))
     return ''.join(masked)
 
-def include_targets(text):
+def include_targets(text,analysis=None):
     text = text or ''
-    analysis = analyze_source(text)
+    analysis = analysis if analysis is not None else analyze_source(text)
     located, deferred = [], []
     for span in analysis['single_quotes']+analysis['double_quotes']:
         if literal_is_executable(analysis,span):
@@ -360,8 +362,8 @@ def include_targets(text):
                 located.append((match.start(),len(located),value))
     return [item[2] for item in sorted(located,key=lambda x:x[:2])]
 
-def open_code_macro_issues(text):
-    masked = mask_noncode(text)
+def open_code_macro_issues(text,masked=None):
+    masked = masked if masked is not None else mask_noncode(text)
     findings, groups, depth, pending = [], [], 0, False
     def add(kind,line,message):
         findings.append(dict(type=kind,line=line,message=message,context_ref=list(range(line-2,line+3))))
@@ -413,8 +415,8 @@ def open_code_macro_issues(text):
         add('unclosed_open_code_do',line,'Open-code %DO group is missing a matching %END; finish the conditional before submission')
     return findings
 
-def format_name_issues(text):
-    masked, result = mask_noncode(text), []
+def format_name_issues(text,masked=None):
+    masked, result = masked if masked is not None else mask_noncode(text), []
     for proc in re.finditer(r'\bproc\s+format\b[^;]*;(.*?)\b(?:run|quit)\s*;',masked,re.I|re.S):
         for match in re.finditer(r'\b(value|invalue|picture)\s+\$?([A-Za-z_]\w*)\b',proc[1],re.I):
             kind,name = match[1].lower(),match[2]
@@ -423,8 +425,8 @@ def format_name_issues(text):
                 result.append(dict(type='invalid_literal_format_name',line=line,message=f"Literal {kind} name '{name}' ends in a digit; SAS format/informat names must end in a nondigit. Use a letter suffix.",context_ref=[line]))
     return result
 
-def fileref_name_issues(text):
-    masked, result = mask_noncode(text), []
+def fileref_name_issues(text,masked=None):
+    masked, result = masked if masked is not None else mask_noncode(text), []
     for match in re.finditer(r'\bfilename\s+([A-Za-z_]\w*)\b',masked,re.I):
         if len(match[1])>8:
             line = 1+masked[:match.start(1)].count('\n')

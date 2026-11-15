@@ -16,6 +16,15 @@ class PerlParityTests(unittest.TestCase):
         for text,expected in zip(self.fixture['logs'],self.fixture['expected']['logs']):
             with self.subTest(log=text):
                 self.assertEqual(diagnostics.summarize(text),expected)
+    def test_shared_analysis_preserves_dependency_and_advisory_views(self):
+        for index,(text,expected) in enumerate(zip(self.fixture['cases'],self.fixture['expected']['source'])):
+            analysis=source_analysis.analyze_source(text)
+            for function in ('include_targets','macro_dependency_view'):
+                with self.subTest(case=index,function=function,shared=True):
+                    self.assertEqual(getattr(source_analysis,function)(text,analysis),expected[function])
+            for function in ('open_code_macro_issues','format_name_issues','fileref_name_issues'):
+                with self.subTest(case=index,function=function,shared=True):
+                    self.assertEqual(getattr(source_analysis,function)(text,analysis['masked']),expected[function])
     def test_guarded_sas_cleanup_matches_original(self):
         for args,expected in zip(self.fixture['cleanup'],self.fixture['expected']['cleanup']):
             with self.subTest(args=args):

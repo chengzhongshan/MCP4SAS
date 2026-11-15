@@ -120,8 +120,8 @@ def execute(args):
     if not any((code,args.upload_file,args.download_file,args.delete_file,args.delete_file_rgx,args.dir4listing,args.file_info,args.check_sas_oda_login_only,args.kill_saspy_sessions)):
         raise ValueError('Supply --code, --file, a file operation, or --check-saspy-connection-only')
     plan=Plan(code,args.file,args.macro_dir,args.upload_file)
-    analysis=source_analysis.analyze_source(code)
-    advisories=source_analysis.open_code_macro_issues(code)+source_analysis.format_name_issues(code)+source_analysis.fileref_name_issues(code)
+    analysis=plan.analysis
+    advisories=source_analysis.open_code_macro_issues(code,analysis['masked'])+source_analysis.format_name_issues(code,analysis['masked'])+source_analysis.fileref_name_issues(code,analysis['masked'])
     if args.dry_run:
         print(json.dumps(dict(dry_run=True,persistent=persistent,session_id=session_id,dependencies=plan.as_dict(),preflight=analysis['findings'],advisories=advisories),indent=2))
         return 0

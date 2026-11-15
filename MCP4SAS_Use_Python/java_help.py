@@ -25,6 +25,11 @@ def instructions(text):
         body = 'Install Java or set SASPY_JAVA / SASPY_JAVA_WIN to its executable. Check the selected SASPy profile.'
     elif re.search(r'ClassNotFoundException|NoClassDefFoundError|UnsupportedClassVersionError|UnsatisfiedLinkError',text):
         body = 'Check the Java executable, version and selected SASPy profile classpath; preserve the full exception.'
+    elif re.search(r'authinfo|authkey|credentials.*(?:missing|not configured|not found)',text,re.I):
+        body = ('The selected SASPy profile could not find usable account credentials. '
+                'For SAS ODA, enter them privately with python run_sas_codes_or_files_in_ODA.py '
+                '--prompt-sas-oda-auth --check-saspy-connection-only. '
+                'Keep the same --saspy-cfgfile/--saspy-cfgname; do not put passwords in AI chat.')
     else:
         return ''
     return '\n[MCP4SAS Java setup help]\n'+body+'\n'
