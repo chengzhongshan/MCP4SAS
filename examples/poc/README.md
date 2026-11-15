@@ -1,8 +1,13 @@
 # Run the MCP4SAS proof of concept examples
 
-Perl and Python commands below are alternatives. For Python, first
-[install and activate the separate environment](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
-Use one runtime consistently for a persistent session.
+Perl and Python commands below are alternatives. Complete installation and SAS
+configuration first. In an installed Cygwin project, the Python submission
+runner finds the compatible SASPy environment automatically; no activation is
+needed. A [separate native Python setup](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment)
+is also available. Use one runtime consistently for a persistent session.
+
+[All six Python examples were executed in SAS ODA on 15 November 2026](../../docs/PYTHON_POC_VALIDATION_20261115.md).
+The report distinguishes numerical checks, visual limitations and retained SAS warnings.
 
 Start with the [showcase guide](../../docs/poc/README.md) for the scientifically
 edited PoC, appendix, original figures and interpretation. Configure MCP4SAS's

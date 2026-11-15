@@ -67,6 +67,7 @@ Markdown, supplied SAS programs and small inputs are included.
 - **Proof of concept:** [Read](docs/poc/proof-of-concept.md) · [Word](docs/poc/MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx?raw=1).
 - **Scientific appendix:** [Read](docs/poc/use-case-appendix.md) · [Word](docs/poc/MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx?raw=1).
 - **Try it:** [Runnable examples and agent prompts](examples/poc/README.md).
+- **Python execution evidence:** [All six examples tested in SAS ODA](docs/PYTHON_POC_VALIDATION_20261115.md), with 11,929 checks and the original warnings retained.
 
 <p align="center">
   <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="GTEx expression clustergram" src="docs/poc/figures/appendix-1.png" /></a>

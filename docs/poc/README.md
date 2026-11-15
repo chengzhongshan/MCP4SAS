@@ -1,8 +1,14 @@
 # Scientific proof of concept and runnable showcases
 
-Perl and Python commands below are alternatives. For Python, first
-[install and activate the separate environment](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment).
-Use one runtime consistently for a persistent session.
+Perl and Python commands below are alternatives. Complete installation and SAS
+configuration first. The direct Python runner finds a compatible installed
+project environment automatically, including the Cygwin environment installed
+by Quick Setup. No manual activation is required for submissions. See the
+[Python guide](../../MCP4SAS_Use_Python/README.md#install-in-a-separate-python-environment)
+for a separate native installation. Use one runtime consistently for a persistent session.
+
+[The latest six-case Python execution report](../PYTHON_POC_VALIDATION_20261115.md)
+records all 11,929 checks, retained warnings and limits of the graphical review.
 
 These examples let an AI assistant reuse established SAS programs,
 stage their inputs, submit jobs and collect checked results through
