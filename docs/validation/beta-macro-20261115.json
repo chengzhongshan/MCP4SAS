@@ -1,0 +1,277 @@
+{
+  "date": "2026-11-15",
+  "baseline_revision": "2c1e6b9a0606df01780e9e6b875d09985c5fefda",
+  "source_sha256": {
+    "MCPDeps/SAS_ODA_Runner.pm": "07357271a3f3c15a4d5fd5329eff5b7f8c0f5bd0ba5154fd4fb1bb97ef0e8dc8",
+    "examples/sas_macros/scASE_betabino.sas": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+    "tests/beta_macro_regression.sas": "6bcdf64549e6d93f5a89e983f8657d236959b1d426c018db1ba0b15ad31eab74",
+    "tests/beta_macro_invalid_inputs.sas": "c8f8cf50ef5ea39e2836faaa135ffec7f2e6635692fea50b1fcae9b0712559d7",
+    "tests/test_beta_macros.py": "71b96decbaa0eea521439073764eb7795eae6dd5f7acbc2adf911c3b91acca70",
+    "tests/test_beta_macros.pl": "6e668005a317bedba23653f428df14d9cb2823a05e796c19f9946dc67a5e721e",
+    "tests/test_nested_include_graph.pl": "d443eaab867e722de9d7f653a7353e9c47708da5503022ea81d152fa1951903b",
+    "tests/test_nested_include_graph.py": "f05f629612580fbf7c12a642ea70c19f7d755b11716ab87c8c890324169ba35c"
+  },
+  "original_bug": {
+    "exit_code": 1,
+    "target": "winlocal_com",
+    "diagnostic": "ERROR: The keyword parameter OUTDSD was not defined with the macro.",
+    "original_source_sha256": "1ef0b0078916fe8c63e5d6448098acd24e3aa165d917b73e6911a3089a256789"
+  },
+  "validated_live_cases": [
+    {
+      "runtime": "python",
+      "target": "oda",
+      "exit_code": 0,
+      "seconds": 21.441,
+      "passed": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "expected": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "errors": [],
+      "warnings": [],
+      "success": true,
+      "macro_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+      "source_sha256": "6bcdf64549e6d93f5a89e983f8657d236959b1d426c018db1ba0b15ad31eab74"
+    },
+    {
+      "runtime": "python",
+      "target": "oda",
+      "case": "missing_input",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_MISSING_INPUT",
+      "postcondition_passed": true,
+      "seconds": 22.949,
+      "errors": [
+        "ERROR: SCASE_MISSING_INPUT: input dataset __beta_missing_input__ does not exist."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "python",
+      "target": "oda",
+      "case": "invalid_counts",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_INVALID_COUNTS",
+      "postcondition_passed": true,
+      "seconds": 23.067,
+      "errors": [
+        "ERROR: SCASE_INVALID_COUNTS: require complete rows and integer counts 0<=read_var<=tot_var with tot_var>0."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "python",
+      "target": "oda",
+      "case": "missing_predictor",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_MISSING_VARIABLE",
+      "postcondition_passed": true,
+      "seconds": 23.745,
+      "errors": [
+        "ERROR: SCASE_MISSING_VARIABLE: absent_predictor is not in beta_negative_input"
+      ],
+      "success": true
+    },
+    {
+      "runtime": "python",
+      "target": "oda",
+      "case": "output_overlap",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_OUTPUT_OVERLAPS_INPUT",
+      "postcondition_passed": true,
+      "seconds": 23.111,
+      "errors": [
+        "ERROR: SCASE_OUTPUT_OVERLAPS_INPUT: output datasets must differ from input."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "exit_code": 0,
+      "seconds": 37.753,
+      "passed": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "expected": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "errors": [],
+      "warnings": [],
+      "success": true,
+      "macro_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+      "source_sha256": "6bcdf64549e6d93f5a89e983f8657d236959b1d426c018db1ba0b15ad31eab74"
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "case": "missing_input",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_MISSING_INPUT",
+      "postcondition_passed": true,
+      "seconds": 44.392,
+      "errors": [
+        "ERROR: SCASE_MISSING_INPUT: input dataset __beta_missing_input__ does not exist."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "case": "invalid_counts",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_INVALID_COUNTS",
+      "postcondition_passed": true,
+      "seconds": 43.128,
+      "errors": [
+        "ERROR: SCASE_INVALID_COUNTS: require complete rows and integer counts 0<=read_var<=tot_var with tot_var>0."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "case": "missing_predictor",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_MISSING_VARIABLE",
+      "postcondition_passed": true,
+      "seconds": 42.255,
+      "errors": [
+        "ERROR: SCASE_MISSING_VARIABLE: absent_predictor is not in beta_negative_input"
+      ],
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "case": "output_overlap",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "expected_diagnostic": "SCASE_OUTPUT_OVERLAPS_INPUT",
+      "postcondition_passed": true,
+      "seconds": 43.215,
+      "errors": [
+        "ERROR: SCASE_OUTPUT_OVERLAPS_INPUT: output datasets must differ from input."
+      ],
+      "success": true
+    },
+    {
+      "runtime": "python",
+      "target": "winlocal_com",
+      "exit_code": 0,
+      "seconds": 20.576,
+      "passed": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "expected": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "errors": [],
+      "warnings": [],
+      "success": true,
+      "macro_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+      "source_sha256": "6bcdf64549e6d93f5a89e983f8657d236959b1d426c018db1ba0b15ad31eab74"
+    },
+    {
+      "runtime": "perl",
+      "target": "winlocal_com",
+      "exit_code": 0,
+      "seconds": 54.898,
+      "passed": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "expected": [
+        "custom_output_has_four_parameters",
+        "initializer_macro_variable_preserved",
+        "nlmixed_converged",
+        "one_prediction_per_input_row",
+        "renamed_predictor_compare",
+        "requested_output_preserves_default_table"
+      ],
+      "errors": [],
+      "warnings": [],
+      "success": true,
+      "macro_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+      "source_sha256": "6bcdf64549e6d93f5a89e983f8657d236959b1d426c018db1ba0b15ad31eab74"
+    }
+  ],
+  "positive_submission_count": 4,
+  "fits_per_positive_submission": 2,
+  "expected_failure_case_count": 8,
+  "windows_nested_guard": {
+    "exit_code": 1,
+    "expected_exit": 1,
+    "postcondition_passed": true,
+    "nested_include_source_unchanged": true
+  },
+  "offline_perl_scripts_passed": 60,
+  "nested_include_perl_assertions_passed": 16,
+  "nested_include_python_tests_passed": 2,
+  "beta_perl_contract_checks_passed": 4,
+  "python_package_tests_passed": 79,
+  "local_install": {
+    "path": "H:\\F_Queens\\360yunpan\\SASCodesLibrary\\SAS-Useful-Codes\\Macros\\scASE_betabino.sas",
+    "backup": "SAS_Output_beta_review\\backups\\scASE_betabino.original.sas",
+    "original_sha256": "1ef0b0078916fe8c63e5d6448098acd24e3aa165d917b73e6911a3089a256789",
+    "installed_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5",
+    "generic_source_sha256": "fe5a8e25c34fd3ef820b53f94e1ecfe877f7191e73d5e6522336d1bb634290b5"
+  },
+  "research_data_used": false,
+  "scientific_calibration_validated": false,
+  "preserved_other_macros": [
+    "Beta2OR_forest_plot",
+    "estimate_alpha_beta"
+  ],
+  "local_evidence_directory": "SAS_Output_beta_review",
+  "debugging_history": [
+    "Beta search was successful; long values wrapped across SAS log lines.",
+    "Original scASE missing comma rejected OUTDSD.",
+    "Corrected predictor spelling, hard-coded predictor and output routing.",
+    "Perl nested include guard failures exposed unprocessed child includes.",
+    "Recursive include staging fixed and verified with both ordinary and expected-failure submissions."
+  ]
+}

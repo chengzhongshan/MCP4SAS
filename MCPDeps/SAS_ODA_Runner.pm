@@ -3908,6 +3908,58 @@ sub _replace_dependency_path {
     return $code;
 }
 
+sub _local_include_graph {
+    my ($self,$code)=@_;
+    my (%nodes,%active,%names,@order,@root_edges);
+    my $resolve=sub {
+        my ($target,$base)=@_;
+        return '' unless SAS_Source_Analysis::is_local_file_candidate($target);
+        return '' if SAS_Source_Analysis::include_target_needs_runtime_resolution($target);
+        return '' if $target =~ m{^(?:~/|https?://)};
+        my @paths;
+        my $absolute=File::Spec->file_name_is_absolute($target) || $target =~ m{^[A-Za-z]:[\\/]};
+        push @paths,File::Spec->catfile($base,$target) if !$absolute && defined($base) && length($base);
+        push @paths,$target;
+        push @paths,File::Spec->catfile($self->{local_macro_dir},$target)
+          if !$absolute && defined($self->{local_macro_dir});
+        for my $path (@paths) {return abs_path($path) if -f $path;}
+        return '';
+    };
+    my $visit;
+    $visit=sub {
+        my ($path)=@_;
+        die "Cyclic local SAS include dependency: $path\n" if $active{$path};
+        return if exists $nodes{$path};
+        my $name=basename($path);
+        die "Two dependency uploads have the same remote basename: $name\n"
+          if exists($names{$name}) && $names{$name} ne $path;
+        die "Dependency basename contains SAS macro/control characters: $name\n" if $name =~ /[&%\r\n\x00]/;
+        $names{$name}=$path;
+        $active{$path}=1;
+        open my $fh,'<:raw',$path or die "Cannot read include dependency $path: $!\n";
+        my $text=do {local $/;<$fh>};close $fh;
+        my @edges;
+        for my $target (@{SAS_Source_Analysis::include_targets($text)}) {
+            my $child=$resolve->($target,dirname($path));
+            next unless length $child;
+            $visit->($child);
+            push @edges,[$target,$child];
+        }
+        $nodes{$path}={text=>$text,edges=>\@edges};
+        delete $active{$path};
+        push @order,$path;
+    };
+    for my $target (@{SAS_Source_Analysis::include_targets($code)}) {
+        my $path=$resolve->($target,$self->{_dependency_source_dir});
+        next unless length $path;
+        $visit->($path);
+        push @root_edges,[$target,$path];
+    }
+    return {nodes=>\%nodes,order=>\@order,root_edges=>\@root_edges,
+            nested=>scalar(grep {@{$nodes{$_}{edges}}} @order)
+                    || scalar(grep {!-f $_->[0]} @root_edges)};
+}
+
 sub _process_dependencies {
     my ($self, $code) = @_;
     my @logs;
@@ -3938,12 +3990,50 @@ sub _process_dependencies {
         push @pending_uploads,{local_path=>$path,skip_if_same=>1,%{$options||{}}};
         return $token;
     };
+    # A parent include must carry rewritten paths to its own local includes.
+    # Keep user files untouched and transfer the complete graph in one batch.
+    my $include_graph=$self->_local_include_graph($code);
+    my $include_stage;
+    my %prepared_include_destinations;
+    if ($include_graph->{nested}) {
+        my $home=$self->get_sas_home_path();
+        die "Cannot resolve SAS HOME for nested include dependencies: ".($home//'')."\n"
+          unless defined($home) && length($home) && $home !~ /^PYTHON ERROR:/;
+        $home =~ s{[\\/]+$}{};
+        my %remote=map {$_=>$home.'/'.basename($_)} @{$include_graph->{order}};
+        %prepared_include_destinations=map {$remote{$_}=>1} @{$include_graph->{order}};
+        $include_stage=File::Temp->newdir('sas_include_XXXXXX',DIR=>_runner_temp_dir());
+        for my $path (@{$include_graph->{order}}) {
+            my $node=$include_graph->{nodes}{$path};
+            my $text=$node->{text};
+            for my $edge (@{$node->{edges}}) {
+                $text=_replace_dependency_path($text,$edge->[0],$remote{$edge->[1]});
+            }
+            my $staged=File::Spec->catfile("$include_stage",basename($path));
+            open my $fh,'>:raw',$staged or die "Cannot stage include dependency $path: $!\n";
+            print {$fh} $text;close $fh or die "Cannot finish include dependency $path: $!\n";
+            my $destination=$upload_dependency_file->($staged,{skip_if_same=>0,progress_label=>'nested include: '.basename($path)});
+            die "Cannot upload nested include dependency $path\n" unless $destination && $destination !~ /^PYTHON ERROR/;
+            $uploaded{$path}=1;
+        }
+        for my $edge (@{$include_graph->{root_edges}}) {
+            $code=_replace_dependency_path($code,$edge->[0],$remote{$edge->[1]});
+        }
+        push @logs,'Prepared recursive local include graph: '.scalar(@{$include_graph->{order}}).' source files; original files unchanged.';
+    }
     my $scan_code = _dependency_scan_code($code);
     my $macro_code = SAS_Source_Analysis::macro_dependency_view($code);
     my $macro_autoload_enabled = _autoload_macros_enabled() ? 1 : 0;
     my %defined_in_code = map { lc($_) => 1 } ($macro_code =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
+    if ($include_graph->{nested}) {
+        for my $path (@{$include_graph->{order}}) {
+            my $view=SAS_Source_Analysis::macro_dependency_view($include_graph->{nodes}{$path}{text});
+            $defined_in_code{lc $_}=1 for ($view =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
+        }
+    }
 
     for my $path (@{SAS_Source_Analysis::include_targets($code)}) {
+        next if $prepared_include_destinations{$path};
         if (-e $path && !$uploaded{$path}++) {
             _warn_dependency_upload(kind => '%include target', path => $path);
             my $remote = eval {
@@ -4273,6 +4363,7 @@ sub run_file {
     open my $fh, '<', $sas_file or die "Could not open file: $!";
     my $sas_code = do { local $/; <$fh> };
     close $fh;
+    local $self->{_dependency_source_dir}=dirname(abs_path($sas_file)||File::Spec->rel2abs($sas_file));
     return $self->run_code($sas_code);
 }
 

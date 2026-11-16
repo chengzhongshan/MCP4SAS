@@ -120,3 +120,25 @@ See [the 20-macro catalog, bug history and actual Windows/ODA results](../docs/G
 The portable repair is `examples/sas_macros/macroparas_portable.sas`.
 `test_persistent_archive.py` also guards bounded upload-verification retries;
 these retries never replay submitted user SAS code.
+
+
+## Beta macro parameter wiring and nested includes
+
+`beta_macro_regression.sas` generates 240 synthetic count observations from 60
+subjects. It compares a custom-column fit with a renamed-column fit and checks
+convergence, custom outputs, predictions and preservation of the caller's table.
+`beta_macro_invalid_inputs.sas` checks missing inputs/predictors, invalid counts,
+clearing stale results, and rejection of an output that aliases its input.
+
+```bash
+python tests/test_beta_macros.py
+perl tests/test_beta_macros.pl
+python tests/test_nested_include_graph.py
+perl tests/test_nested_include_graph.pl
+python tests/test_beta_macros.py --live --guards --runner both --perl /path/to/perl --saspy-cfgname oda --saspy-cfgfile /path/to/sascfg_personal.py
+```
+
+The first four commands need no SAS login. Live guard cases intentionally return
+exit 1 with a specific validation diagnostic; the harness verifies that both the
+error and the safe postcondition are correct. Synthetic model fits do not validate
+research conclusions. See [the Beta repair report](../docs/BETA_MACRO_REVIEW.md).

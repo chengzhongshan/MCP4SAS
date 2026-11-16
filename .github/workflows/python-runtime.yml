@@ -2,9 +2,9 @@ name: Python runtime
 on:
   push:
     branches: [main, feature/python-port, fix/copilot-runner-review, test/complete-runner-suite]
-    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'update_github_upload.sh', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'update_github_upload.sh', 'tools/*.py', 'examples/poc/**', 'examples/sas_macros/*.sas', 'tests/*.sas', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   pull_request:
-    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'update_github_upload.sh', 'tools/*.py', 'examples/poc/**', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
+    paths: ['MCP4SAS_Use_Python/**/*.py', 'MCP4SAS_Use_Python/requirements.txt', 'MCP4SAS_Use_Python/assets/**', 'MCP4SAS_Use_Python/tests/fixtures/**', '*.py', 'MCPDeps/*.py', 'tests/*.py', 'update_github_upload.sh', 'tools/*.py', 'examples/poc/**', 'examples/sas_macros/*.sas', 'tests/*.sas', 'README.md', 'examples/README.md', 'docs/poc/README.md', 'docs/PYTHON_DEMOS.md', 'integrations/vscode/README.md', 'install/sascfg_personal.template.py', '.github/workflows/python-runtime.yml']
   workflow_dispatch:
 permissions:
   contents: read
