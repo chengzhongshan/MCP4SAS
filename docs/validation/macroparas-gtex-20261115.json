@@ -1,0 +1,205 @@
+{
+  "date": "2026-11-15",
+  "local_macro_count": 20,
+  "oda_macro_count": 14,
+  "local_macros": [
+    "Boxplots4GenesInGTExV8",
+    "Boxplots4GenesInGTExV8ByAA",
+    "Boxplots4GenesInGTExV8ByGrps",
+    "CaculateMulteQTLs_in_GTEx",
+    "Caculate_eQTL_in_GTEx",
+    "GTEX_SexBasedDiffGeneHeatmap",
+    "GTEx_Hap_eQTL_Analyzer",
+    "GTEx_Sex_Biased_eQTL_Analyzer",
+    "GTEx_eQTL_and_sbExp_Analysis",
+    "GTEx_eQTL_genes_scatterplot",
+    "GetMultQTLs4GenesInGTEx",
+    "GetSexBiasedGenes4SNP_in_GTEx",
+    "Haplotype_Analysis4SNPs_in_GTEx",
+    "QueryGTEx4GeneID",
+    "QueryGTExeQTLs4Genesymbol",
+    "QueryGTExeQTLs4MultEnsemblGenes",
+    "Query_GTEx_SNP_by_rsid",
+    "Query_GTEx_eQTLs4Genesymbol",
+    "Query_GTEx_eQTLs4SNP",
+    "Query_GTEx_sQTLs4SNP"
+  ],
+  "oda_macros": [
+    "Boxplots4GenesInGTExV8",
+    "Boxplots4GenesInGTExV8ByAA",
+    "Boxplots4GenesInGTExV8ByGrps",
+    "CaculateMulteQTLs_in_GTEx",
+    "Caculate_eQTL_in_GTEx",
+    "GTEX_SexBasedDiffGeneHeatmap",
+    "GTEx_Hap_eQTL_Analyzer",
+    "GTEx_eQTL_genes_scatterplot",
+    "GetMultQTLs4GenesInGTEx",
+    "Haplotype_Analysis4SNPs_in_GTEx",
+    "QueryGTEx4GeneID",
+    "QueryGTExeQTLs4Genesymbol",
+    "QueryGTExeQTLs4MultEnsemblGenes",
+    "Query_GTEx_eQTLs4Genesymbol"
+  ],
+  "live_regressions": [
+    {
+      "runtime": "python",
+      "target": "oda",
+      "exit_code": 0,
+      "seconds": 19.743,
+      "expected": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "passed": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "errors": [],
+      "source_sha256": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+      "macro_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "oda",
+      "exit_code": 0,
+      "seconds": 37.603,
+      "expected": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "passed": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "errors": [],
+      "source_sha256": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+      "macro_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+      "success": true
+    },
+    {
+      "runtime": "python",
+      "target": "winlocal_com",
+      "exit_code": 0,
+      "seconds": 25.048,
+      "expected": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "passed": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "errors": [],
+      "source_sha256": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+      "macro_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+      "success": true
+    },
+    {
+      "runtime": "perl",
+      "target": "winlocal_com",
+      "exit_code": 0,
+      "seconds": 48.256,
+      "expected": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "passed": [
+        "compare_expected_names",
+        "complete_signature_beyond_preview",
+        "configured_default_directory",
+        "preserve_caller_macro_variables",
+        "preserve_caller_tables",
+        "preserve_notes_option",
+        "quoted_directory_list_deduplicated",
+        "zero_matches_clear_previous_results"
+      ],
+      "errors": [],
+      "source_sha256": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+      "macro_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+      "success": true
+    }
+  ],
+  "local_install": {
+    "original_path": "H:\\F_Queens\\360yunpan\\SASCodesLibrary\\SAS-Useful-Codes\\Macros\\macroparas.sas",
+    "backup": "SAS_Output_macroparas_gtex\\backups\\macroparas.original.sas",
+    "original_sha256": "f5a0edae59a7d4b36f267cd262faf216996d9b1d620c0deca4cc7ca300c6b594",
+    "installed_sha256": "454078d7d8add1436e968a952d1a63ba6ec1982dfa48ea45b79a76675db93ae4",
+    "generic_source_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+    "local_customization": "Set the local dir parameter inside the macro before SYMGET: existing H: library on Windows, HOME/Macros otherwise. Original byte-for-byte backup retained.",
+    "first_install_sha256": "61de06a3b6be2ae01eacbc568a23ee3b928fbc1a7f1e4e80e5b6a6a9c5c12e04"
+  },
+  "archive_regression_tests_passed": 15,
+  "research_macro_bodies_executed": false,
+  "source_hashes": {
+    "examples\\sas_macros\\macroparas_portable.sas": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+    "tests\\macroparas_gtex_regression.sas": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+    "MCPDeps\\sas_archive_transfer.py": "bbb1d94313a49be256fca40be68f42c5009e26396b2b0143ee7dd68d1e13d3c2"
+  },
+  "local_evidence_directory": "SAS_Output_macroparas_gtex",
+  "failure_history": [
+    "Original Windows UNC error 67 despite 20 matches",
+    "Initial persistent Windows COM request rejected before submission",
+    "Initial test assertion keyword syntax corrected",
+    "Initial quoted-directory concatenation corrected",
+    "One catalog dependency upload size mismatch; bounded staged-copy retry added",
+    "First locally customized default was unresolved through SYMGET; changed to a local parameter assignment and verified by actual MCP call"
+  ],
+  "unverified": [
+    "All GTEx API endpoints and research analyses",
+    "Complete macro language parsing including unmatched macro-quoted punctuation",
+    "Scientific validity of research-model covariates and sample matching"
+  ],
+  "installed_mcp_verification": {
+    "exit_code": 0,
+    "macros_matched": 20,
+    "sas_warnings": 0,
+    "sas_data_quality_diagnostics": 0,
+    "program": "%macroparas(macrorgx=GTex);",
+    "evidence": "SAS_Output_macroparas_gtex/installed-mcp-final.log"
+  },
+  "python_unit_tests_passed": 79,
+  "perl_offline_contract_checks_passed": 5
+}

@@ -101,3 +101,22 @@ python tests/run_python_poc_suite.py --live --outdir PATH_TO_NEW_RESULTS
 Without `--live`, only source checks and the execution plan run. See the
 [15 November execution report](../docs/PYTHON_POC_VALIDATION_20261115.md) for
 actual outcomes, retained warnings and limits of the graphical checks.
+
+
+## Discover GTEx macros and regress macroparas
+
+`test_macroparas_gtex.py` checks the portable source/dependency plan offline.
+`test_macroparas_gtex.pl` checks the Perl-facing utility contract. Their live
+mode executes `macroparas_gtex_regression.sas` through the chosen real runner;
+it creates only WORK fixtures and does not run the inspected GTEx analyses.
+
+```bash
+python tests/test_macroparas_gtex.py
+perl tests/test_macroparas_gtex.pl
+python tests/test_macroparas_gtex.py --live --runner both --perl /path/to/perl --saspy-cfgname oda --saspy-cfgfile /path/to/sascfg_personal.py
+```
+
+See [the 20-macro catalog, bug history and actual Windows/ODA results](../docs/GTEX_MACRO_CATALOG.md).
+The portable repair is `examples/sas_macros/macroparas_portable.sas`.
+`test_persistent_archive.py` also guards bounded upload-verification retries;
+these retries never replay submitted user SAS code.
