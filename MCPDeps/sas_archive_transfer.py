@@ -41,10 +41,28 @@ def run_fileinfo(s,p): return s.fileinfo(p)
 def remote_file_info(p,s): return run_fileinfo(s,p),s
 def upload_file(p,s,label=None,skip_if_same=False):
     remote=s.home.rstrip('/')+'/'+os.path.basename(p)
-    result=s.sas.upload(p,remote,overwrite=True)
-    if not result.get('Success'): raise IOError('SASPy upload failed')
-    if not _remote_upload_size_ok(run_fileinfo(s,remote),os.path.getsize(p)):
-        raise IOError('Uploaded archive size mismatch')
+    expected=os.path.getsize(p)
+    def upload_and_verify(source):
+        result=s.sas.upload(source,remote,overwrite=True)
+        if not result.get('Success'): raise IOError('SASPy upload failed')
+        # Pre-transfer metadata must not validate an overwritten file.
+        cache=getattr(s,'cache',None)
+        if isinstance(cache,dict):cache.pop(remote,None)
+        info=run_fileinfo(s,remote)
+        return info,_remote_upload_size_ok(info,expected)
+    info,verified=upload_and_verify(p)
+    if not verified:
+        # Match the established single-file runner's bounded staged-copy retry.
+        # Only this file transfer is repeated; user SAS is never resubmitted.
+        got=info.get('size') if isinstance(info,dict) else None
+        print(f'Upload verification retry: {remote}: expected {expected} bytes, got {got}; retrying once from a private staged copy.',flush=True)
+        with tempfile.TemporaryDirectory(prefix='mcp4sas-upload-retry-') as directory:
+            staged=os.path.join(directory,os.path.basename(p))
+            shutil.copy2(p,staged)
+            info,verified=upload_and_verify(staged)
+    if not verified:
+        got=info.get('size') if isinstance(info,dict) else None
+        raise IOError(f'Uploaded archive size mismatch for {remote}: expected {expected} bytes, got {got}')
     return remote,s
 def download_file(remote,local,s):
     result=s.sas.download(local,remote,overwrite=True)
