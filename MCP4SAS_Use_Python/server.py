@@ -9,13 +9,25 @@ def create_server(host='127.0.0.1',port=8081,job_root=None):
     app=FastMCP('MCP4SAS-Python',host=host,port=port,json_response=True,log_level='WARNING')
     jobs=Jobs(job_root)
     def outcome(args,direct=False):
-        result=jobs.poll(args['pid']) if args.get('pid') is not None else jobs.submit({key:value for key,value in args.items() if value is not None},direct=direct)
+        seconds=args.pop('wait_seconds',0 if direct else 20)
+        limit=args.pop('max_log_chars',16000)
+        # Validate before creating a worker or submitting SAS.
+        import math
+        if isinstance(seconds,bool) or not isinstance(seconds,(int,float)) or not math.isfinite(seconds) or not 0<=seconds<=30:
+            raise ValueError('wait_seconds must be a number between 0 and 30')
+        if isinstance(limit,bool) or not isinstance(limit,int) or not 0<=limit<=1000000:
+            raise ValueError('max_log_chars must be an integer between 0 and 1000000')
+        result=jobs.wait(args['pid'],seconds,limit) if args.get('pid') is not None else jobs.submit({key:value for key,value in args.items() if value is not None},direct=direct)
+        if result['status']=='RUNNING' and args.get('pid') is None and seconds>0:
+            result=jobs.wait(result['pid'],seconds,limit)
+        if result['status']=='RUNNING':
+            result['poll_after_seconds']=5
         status=result['status']
         text=f"STATUS: {status}\nPID: {result.get('pid')}\n"
         if result.get('log_path'):
             text+='SAS log: '+result['log_path']+'\n'
         if status=='RUNNING':
-            text+='Poll with the returned PID; for long jobs, wait about 30 seconds between polls.\n'
+            text+='Poll with the returned PID after about 5 seconds; use 30 seconds for known long analyses.\n'
         text+=result.get('text',result.get('message',''))
         return CallToolResult(content=[TextContent(type='text',text=text)],isError=status in ('FAILED','UNKNOWN'),structuredContent={key:value for key,value in result.items() if key!='text'})
 
@@ -31,12 +43,14 @@ def create_server(host='127.0.0.1',port=8081,job_root=None):
         saspy_cfgname:str|None=None,saspy_cfgfile:str|None=None,macro_dir:str|None=None,
         dir4local_sas_home:str|None=None,check_saspy_connection_only:bool=False,
         run_timeout_seconds:int=3600,no_run_timeout:bool=False,kill_saspy_sessions:bool=False,
-        pid:int|None=None,
+        pid:int|None=None,wait_seconds:float=20,max_log_chars:int=16000,
     )->CallToolResult:
         """Run SAS with native Python/SASPy, local macro/file discovery and ZIP batching.
 
-        Returns a background PID; poll that PID to get verified completion status
-        and diagnostic counts. Credentials belong in a private terminal/config,
+        Waits up to 20 seconds for verified completion; longer jobs return a PID.
+        Set wait_seconds=0 for immediate background delivery. Full logs are saved;
+        max_log_chars limits the returned excerpt (0 requests the full log).
+        Credentials belong in a private terminal/config,
         never in AI chat. SAS-supplied macro functions do not trigger uploads.
         """
         arguments=locals().copy()

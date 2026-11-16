@@ -142,3 +142,17 @@ The first four commands need no SAS login. Live guard cases intentionally return
 exit 1 with a specific validation diagnostic; the harness verifies that both the
 error and the safe postcondition are correct. Synthetic model fits do not validate
 research conclusions. See [the Beta repair report](../docs/BETA_MACRO_REVIEW.md).
+
+## MCP completion latency and safe fallback
+
+`perl tests/test_mcp_job_reporting.pl` executes short CLI workers offline and
+checks bounded completion, immediate background mode, exit/error preservation,
+full-log retention and excerpting. Native equivalents are in
+`MCP4SAS_Use_Python/tests/test_job_wait.py` and `test_server.py` (actual SDK stdio
+and HTTP). `integrations/vscode/test/relay-recovery.test.js` exercises startup
+failure and an accepted request whose reply times out, requiring no replay.
+
+`benchmark_plugin_routes.py` is an explicitly opt-in live test for the actual
+VS Code relay, direct Perl and direct Python runners. It checks known SASHELP
+results, real SAS errors and asynchronous completion; it never measures model
+tokens. See [instructions and retained timings](../docs/VSCODE_RUNNER_PERFORMANCE.md).

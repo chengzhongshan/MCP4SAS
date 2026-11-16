@@ -1,5 +1,30 @@
 # VS Code integration validation
 
+## Updated 0.1.5 build — short-job completion and safe recovery
+
+15 November 2026. The relay still reuses an owned backend. SASPy MCP tools now
+wait up to 20 seconds for verified completion, with explicit immediate mode
+and retained background jobs for longer analyses. Long response logs are
+excerpted after full-log diagnosis. Relay errors distinguish requests that
+were never forwarded from requests that may already be running; no timeout
+automatically replays SAS through a CLI runner.
+
+Local validation passed all 45 extension tests, 82 Python package tests and
+60 standalone offline Perl test scripts. The isolated real VS Code host passed
+activation, eleven commands, MCP provider registration, Electron Node launching
+and installer-task success/failure reporting. Controlled live Windows SAS/COM
+and ODA/IOM comparisons verified expected SASHELP output, native Python/Perl
+CLI execution, bounded MCP completion, errors and explicit asynchronous mode.
+The native Python MCP server also completed a successful and an intentionally
+failing ODA submission. See the repository's
+[performance report](../../docs/VSCODE_RUNNER_PERFORMANCE.md) and
+[sanitized observations](../../docs/validation/plugin-latency-20261115.json).
+
+This change did not repeat a fresh prerequisite installation or execute live
+macOS/Linux SAS. It does not measure AI model tokens or claim that MCP speeds
+up SAS computation. Version remains 0.1.5; reload VS Code after updating both
+the extension and its configured MCP4SAS source.
+
 ## Updated 0.1.5 build — switching ODA and local SAS
 
 15 November 2026. Added a clickable SAS target in the status bar, **Switch SAS

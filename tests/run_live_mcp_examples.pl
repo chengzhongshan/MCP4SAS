@@ -52,7 +52,7 @@ sub job {
     my ($name, $arguments, $failure) = @_;
     $failure ||= 0;
     my $started = call_tool({persistent => JSON::PP::false,
-        run_timeout_seconds => 180, %$arguments});
+        run_timeout_seconds => 180, wait_seconds => 0, %$arguments});
     my $text = $started->{content}[0]{text};
     my ($pid) = $text =~ /PID: (\d+)/;
     my ($directory) = $text =~ /(?:Results|Temporary) directory: ([^\r\n]+)/;

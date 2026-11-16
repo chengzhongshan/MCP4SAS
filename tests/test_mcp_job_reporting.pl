@@ -4,6 +4,7 @@ use warnings;
 use FindBin qw($Bin);
 use lib "$Bin/../MCPDeps";
 use SAS_Log_Diagnostics;
+use MCP_Job_Options;
 use Cwd qw(abs_path getcwd);
 use File::Temp qw(tempdir);
 use File::Path qw(remove_tree);
@@ -68,7 +69,13 @@ ok(!-e $runner_scratch, 'test removes runner scratch fixture');
 my $dir = tempdir(CLEANUP => 1);
 my $pid_file = "$dir/output.html.info.pid";
 my $direct_out_file = "$dir/output.local_sas_direct.txt";
-sub find_status_for_pid { return ($pid_file, "$dir/output.html.info.txt") }
+sub find_status_for_pid {
+    for my $candidate ($pid_file, glob(File::Spec->catfile(getcwd(), 'SAS_Output_MCP4SAS_*', 'output.html.info.pid'))) {
+        next unless -f $candidate && read_text_file($candidate) =~ /^\s*\Q$_[0]\E\s*$/;
+        return ($candidate, File::Spec->catfile(dirname($candidate), 'output.html.info.txt'));
+    }
+    return;
+}
 sub find_local_direct_sas_status_for_pid { return ($pid_file, $direct_out_file) }
 sub reap_child_if_finished { return 1 }
 sub pid_is_running { return 0 }
@@ -96,6 +103,15 @@ sub write_text_file {
     print {$f} $_[1];
     close $f;
 }
+for my $value (-1, 31, 'nan', 'inf', []) {
+    my $bad = run_sas_oda_tool({wait_seconds => $value});
+    ok($bad->{isError}, 'invalid wait rejected before worker creation');
+}
+is(MCP_Job_Options::wait_seconds(undef), 20, 'bounded wait defaults to twenty seconds');
+is(MCP_Job_Options::wait_seconds(0), 0, 'zero keeps immediate background mode');
+my $checks = 0;
+ok(!MCP_Job_Options::await_completion(sub {$checks++; 0}, 0), 'zero wait checks readiness without sleeping');
+is($checks, 1, 'immediate mode does not poll repeatedly');
 write_text_file("$dir/custom.txt", 'Full SAS log');
 write_text_file("$dir/runner.stdout.txt", 'Worker diagnostics');
 for my $code (0, 1, 73, 74, 127, 143) {
@@ -118,6 +134,21 @@ ok(!$quality_success->{isError}, 'data-quality NOTE preserves successful exit st
 is($quality_success->{structuredContent}{status}, 'COMPLETE', 'structured status matches text');
 is($quality_success->{structuredContent}{diagnostics}{data_quality_count}, 1, 'structured response includes runtime data-quality NOTE');
 like($quality_success->{content}[0]{text}, qr/SAS diagnostics: 0 warning\(s\), 1 data-quality/, 'successful poll surfaces data-quality summary');
+my $large_log = "=== SAS Log ===\nWARNING: retained diagnostic.\n" . ('x' x 40000) . "\nLAST_MARKER\n=== Output ===\n";
+write_text_file("$dir/custom.txt", $large_log);
+write_text_file($pid_file, 123);
+write_text_file("$dir/worker.result.json", encode_json({exit_code => 0, log_path => "$dir/custom.txt"}));
+my $excerpt = run_sas_oda_tool({pid => 123});
+ok($excerpt->{structuredContent}{log_truncated}, 'large default response is excerpted');
+is($excerpt->{structuredContent}{diagnostics}{warning_count}, 1, 'diagnostics examine the full log');
+like($excerpt->{content}[0]{text}, qr/LAST_MARKER/, 'excerpt preserves final output');
+is(read_text_file("$dir/custom.txt"), $large_log, 'full saved log remains byte-identical');
+write_text_file($pid_file, 123);
+write_text_file("$dir/worker.result.json", encode_json({exit_code => 0, log_path => "$dir/custom.txt"}));
+my $full = run_sas_oda_tool({pid => 123, max_log_chars => 0});
+ok(!$full->{structuredContent}{log_truncated}, 'explicit zero returns full output');
+like($full->{content}[0]{text}, qr/\Q$large_log\E/, 'explicit full-log request retains all content');
+write_text_file("$dir/custom.txt", '');
 unlink "$dir/worker.result.json";
 write_text_file($pid_file, 123);
 my $unknown = run_sas_oda_tool({pid => 123});
@@ -143,8 +174,19 @@ ok($direct_failure->{isError}, 'direct SAS failure is an MCP error');
 
 my $classify_log = "$dir/classify.log";
 write_text_file($classify_log, 'NOTE: offline MCP cleanup test');
+# This executes the actual CLI worker without a SAS license or network. The
+# real reaper/liveness helpers are needed for bounded completion delivery.
+{
+    no warnings 'redefine';
+    local *reap_child_if_finished = sub { waitpid($_[0], 1); };
+    local *pid_is_running = sub { kill(0, $_[0]) ? 1 : 0 };
+    my $fast = run_sas_oda_tool({classify_sas_log => $classify_log, wait_seconds => 10});
+    is($fast->{structuredContent}{status}, 'COMPLETE', 'short CLI worker completes in the initial MCP call');
+    ok(!$fast->{isError}, 'short completion preserves success');
+    ok(-f $fast->{structuredContent}{log_path}, 'initial response references retained complete log');
+}
 my %scratch_before = map { $_ => 1 } glob(File::Spec->catfile(getcwd(), 'tmp*'));
-my $started = run_sas_oda_tool({classify_sas_log => $classify_log});
+my $started = run_sas_oda_tool({classify_sas_log => $classify_log, wait_seconds => 0});
 my $started_text = $started->{content}[0]{text};
 like($started_text, qr/Worker scratch is removed automatically/, 'MCP job advertises automatic scratch cleanup');
 my ($result_dir) = $started_text =~ /^Results directory: (.+)$/m;

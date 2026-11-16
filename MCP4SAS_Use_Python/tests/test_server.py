@@ -25,7 +25,12 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(missing.structuredContent['status'],'UNKNOWN')
         log=Path(directory)/'source.log'
         log.write_text('NOTE: completed\n',encoding='utf-8')
-        result=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(classify_sas_log=str(log),persistent=False))
+        short=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(classify_sas_log=str(log),persistent=False))
+        self.assertEqual(short.structuredContent['status'],'COMPLETE',short)
+        self.assertFalse(short.isError)
+        invalid=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(wait_seconds=31,classify_sas_log=str(log)))
+        self.assertTrue(invalid.isError)
+        result=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(classify_sas_log=str(log),persistent=False,wait_seconds=0))
         self.assertFalse(result.isError,result)
         pid=result.structuredContent['pid']
         for _ in range(100):
@@ -36,7 +41,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(done.structuredContent['status'],'COMPLETE',done)
         self.assertFalse(done.isError)
         self.assertIn('"exit_code": 0',done.content[0].text)
-        failed=await session.call_tool('run_sas_codes_or_script_in_ODA',dict(sas_codes_or_file="data _null_; x='unclosed;",persistent=False))
+        failed=await session.call_tool('run_sas_codes_or_script_in_ODA',dict(sas_codes_or_file="data _null_; x='unclosed;",persistent=False,wait_seconds=0))
         pid=failed.structuredContent['pid']
         for _ in range(100):
             done=await session.call_tool('run_sas_codes_or_script_in_ODA',dict(pid=pid))

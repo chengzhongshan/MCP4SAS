@@ -356,6 +356,10 @@ Download [mcp4sas-0.1.5.vsix](https://github.com/chengzhongshan/MCP4SAS/releases
 
 On Windows, setup offers Cygwin **before** the MCP4SAS installer and helps locate/install Windows Java. macOS and Ubuntu/Debian use the existing platform installers. The extension registers Copilot through VS Code's MCP provider API and adds a backed-up, marked Codex configuration entry. It starts an owned loopback backend automatically; a separate server terminal is unnecessary.
 
+Short SASPy jobs return verified results in one MCP call; longer jobs retain
+background status checks. Direct Python and Perl runners remain available.
+See [measured plugin-versus-runner timings and safe fallback](docs/VSCODE_RUNNER_PERFORMANCE.md).
+
 Run **MCP4SAS: Check Connection**, then use the offered test prompt to verify an actual SAS result. SAS account registration and private SASPy authentication are still required; discovery alone does not test them. Local desktop folders are supported; remote SSH/WSL/containers need separate configuration. See the [extension guide and validation scope](integrations/vscode/README.md).
 
 Runnable alternatives from a checkout: double-click `install/install_vscode_extension.cmd` on Windows, or run `bash install/install_vscode_extension.sh` on macOS/Linux. They download the published VSIX, check its release SHA-256, and invoke `code --install-extension`. You can always use the Extensions menu if the `code` command is unavailable. This is a GitHub-distributed extension, not a Marketplace listing.

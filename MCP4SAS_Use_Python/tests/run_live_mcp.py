@@ -26,11 +26,12 @@ async def run(out):
             ]:
                 start=time.perf_counter()
                 initial=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(sas_codes_or_file=code,persistent=False,saspy_cfgname='oda',run_timeout_seconds=120))
-                if initial.isError:
+                if initial.isError and initial.structuredContent.get('status')!='FAILED':
                     raise AssertionError(initial)
                 pid=initial.structuredContent['pid']
                 deadline=time.monotonic()+180
-                while True:
+                done=initial
+                while done.structuredContent['status']=='RUNNING':
                     done=await session.call_tool('run_sas_codes_or_files_in_ODA',dict(pid=pid))
                     if done.structuredContent['status']!='RUNNING':
                         break

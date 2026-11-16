@@ -6,6 +6,8 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
+import math
+import time
 from .cli import atomic_json
 from .diagnostics import summarize,format_summary
 from .source_analysis import is_local_file_candidate
@@ -26,6 +28,21 @@ class Jobs:
         self.index=Path(os.environ.get('MCP4SAS_PYTHON_STATE_DIR') or Path.home()/'.cache/mcp4sas-python')/'jobs'/key
         self.index.mkdir(parents=True,exist_ok=True,mode=0o700)
         self.processes={}
+
+    def wait(self,pid,seconds=20,max_log_chars=16000):
+        if isinstance(seconds,bool) or not isinstance(seconds,(int,float)) or not math.isfinite(seconds) or not 0<=seconds<=30:
+            raise ValueError('wait_seconds must be a number between 0 and 30')
+        if isinstance(max_log_chars,bool) or not isinstance(max_log_chars,int) or not 0<=max_log_chars<=1000000:
+            raise ValueError('max_log_chars must be an integer between 0 and 1000000')
+        deadline=time.monotonic()+seconds
+        while True:
+            result=self.poll(pid,max_log_chars=max_log_chars)
+            if result['status']!='RUNNING':
+                return result
+            left=deadline-time.monotonic()
+            if left<=0:
+                return dict(result,poll_after_seconds=5)
+            time.sleep(min(.1,left))
 
     def submit(self,arguments,direct=False):
         directory=self.root/('SAS_Output_MCP4SAS_Python_'+secrets.token_hex(8))
@@ -90,7 +107,10 @@ class Jobs:
         log=Path(result['log_path'])
         text=log.read_text(encoding='utf-8',errors='replace') if log.is_file() else ''
         diag=summarize(text)
-        if len(text)>max_log_chars:
-            text=text[-max_log_chars:]+f'\n[Earlier output omitted; complete log: {log}]'
-        result.update(pid=pid,status='COMPLETE' if result['exit_code']==0 else 'FAILED',diagnostics=diag,text=format_summary(diag)+text)
+        chars=len(text)
+        truncated=bool(max_log_chars and chars>max_log_chars)
+        if truncated:
+            head=max_log_chars//4
+            text=text[:head]+f'\n[Middle output omitted; complete log: {log}]\n'+text[-(max_log_chars-head):]
+        result.update(pid=pid,status='COMPLETE' if result['exit_code']==0 else 'FAILED',diagnostics=diag,text=format_summary(diag)+text,log_chars=chars,log_truncated=truncated)
         return result

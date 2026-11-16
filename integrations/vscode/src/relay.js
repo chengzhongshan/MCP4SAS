@@ -36,6 +36,19 @@ async function freePort() {
     socket.listen(0, '127.0.0.1', () => { const port = socket.address().port; socket.close(() => resolve(port)); });
   });
 }
+function failureDetails(request, forwarded) {
+  const submission = request.method === 'tools/call' &&
+    ['run_sas_codes_or_files_in_ODA','run_sas_codes_or_script_in_ODA',
+      'run_local_sas_without_saspy','run_sas_codes_or_script_on_local_Windows'].includes(request.params?.name) &&
+    !request.params?.arguments?.pid;
+  return {
+    request_forwarded: forwarded,
+    safe_to_retry_via_runner: submission && !forwarded,
+    recovery: !forwarded
+      ? 'No tool request was sent to the backend. After checking the SAS target, the Perl or Python runner can be used directly.'
+      : 'The backend may have accepted this request. Inspect the existing job PID, status and retained logs before retrying; do not automatically resubmit through a runner.'
+  };
+}
 async function start(config) {
   core.assertRepo(config.repo);
   if (!fs.statSync(config.cwd).isDirectory()) throw new Error('Project folder is not a directory.');
@@ -74,13 +87,15 @@ async function main() {
     if(!backend||backend.child.exitCode!==null) { backend=await start(config);backends.set(key,backend); }
     return backend;
   }
-  await selectedBackend(readConfig());
+  // Start lazily inside the request error boundary, so setup failures produce
+  // a recoverable JSON-RPC error rather than silently terminating the relay.
   // Processing is serialized because the original HTTP server owns ordered sessions.
   for await (const line of { [Symbol.asyncIterator]: () => iterator }) {
     let request;
     try { request = JSON.parse(line); if (!request || Array.isArray(request) || request.jsonrpc !== '2.0' || typeof request.method !== 'string') throw new Error(); }
     catch { process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Invalid JSON-RPC request' } }) + '\n'); continue; }
     const hasId = Object.hasOwn(request, 'id');
+    let forwarded = false;
     try {
       const config = readConfig();
       // Poll running jobs on their original target even after the UI changes.
@@ -88,6 +103,7 @@ async function main() {
       const job = routing.jobId(request);
       const backend = (job && jobs.get(job)) || await selectedBackend(config);
       const routed = job ? request : routing.submission(request,config);
+      forwarded = true; // A lost reply cannot prove that SAS was not submitted.
       let response = await post(backend.port, routed);
       routing.rememberJob(routed,response,backend,jobs);
       if(request.method==='tools/list')response=routing.describe(response,config);
@@ -95,10 +111,10 @@ async function main() {
       if (response.id !== request.id) throw new Error('MCP response ID mismatch');
       process.stdout.write(JSON.stringify(response) + '\n');
     } catch (e) {
-      if (hasId) process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, error: { code: -32603, message: e.message } }) + '\n');
+      if (hasId) process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: request.id, error: { code: -32603, message: e.message, data: failureDetails(request,forwarded) } }) + '\n');
       else process.stderr.write('MCP4SAS notification failed.\n');
     }
   }
 }
 if (require.main === module) main().then(() => process.exit(0)).catch(e => { process.stderr.write(`MCP4SAS: ${e.message}\n`); process.exit(1); });
-module.exports = { post, freePort };
+module.exports = { post, freePort, failureDetails };

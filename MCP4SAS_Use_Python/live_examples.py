@@ -50,6 +50,8 @@ async def client(out,url=None,legacy_http=False):
 async def completed(call,arguments,deadline_seconds):
     started=await call(arguments)
     info=started.get('structuredContent',{})
+    if info.get('status') in ('COMPLETE','FAILED','UNKNOWN'):
+        return started,started
     text='\n'.join(c.get('text','') for c in started.get('content',[]))
     pid=info.get('pid')
     if not pid:

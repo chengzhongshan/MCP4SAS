@@ -62,6 +62,7 @@ use Mojo::Util qw(md5_sum);
 use POSIX qw(WNOHANG);
 use SAS_Log_Diagnostics;
 use SAS_Source_Analysis;
+use MCP_Job_Options;
 use Mojolicious::Lite -signatures;
 
 $ENV{MOJO_LOG_LEVEL} //= 'error';
@@ -264,6 +265,14 @@ sub mcp4sas_tool_schema {
     return {
         type => 'object',
         properties => {
+            wait_seconds => {
+                type => 'number', minimum => 0, maximum => 30, default => 20,
+                description => 'Wait up to this many seconds for a verified result on submission or poll. Short jobs finish in one call; 0 returns immediately. Long jobs still return a PID. This does not limit SAS execution.',
+            },
+            max_log_chars => {
+                type => 'integer', minimum => 0, maximum => 1000000, default => 16000,
+                description => 'Returned log excerpt limit; 0 requests the full log. Full logs are always saved and diagnosed before excerpting.',
+            },
             sas_codes_or_file => {
                 type => 'string',
                 description => 'Raw SAS code or a local .sas file path. Preserve newlines and semicolons exactly.',
@@ -404,22 +413,42 @@ sub mcp4sas_tool_schema {
 sub run_sas_oda_tool {
     my ($args) = @_;
     $args ||= {};
+    my ($wait_seconds, $max_log_chars);
+    eval {
+        $wait_seconds = MCP_Job_Options::wait_seconds($args->{wait_seconds});
+        $max_log_chars = MCP_Job_Options::log_limit($args->{max_log_chars});
+        1;
+    } or do {
+        my $response = text_result("ERROR: $@");
+        $response->{isError} = JSON::PP::true;
+        return $response;
+    };
 
     if (defined $args->{pid}) {
         my ($pid_file, $out_file) = find_status_for_pid($args->{pid});
         return text_result("ERROR: PID $args->{pid} not found or already completed.")
           unless $pid_file;
 
-        reap_child_if_finished($args->{pid});
-        if (pid_is_running($args->{pid})) {
-            return text_result(
+        my $completion_file = File::Spec->catfile(dirname($pid_file), 'worker.result.json');
+        MCP_Job_Options::await_completion(sub {
+            reap_child_if_finished($args->{pid});
+            return -f $completion_file || !pid_is_running($args->{pid});
+        }, $wait_seconds);
+        if (!-f $completion_file && pid_is_running($args->{pid})) {
+            my $response = text_result(
                 "STATUS: RUNNING (PID $args->{pid})\n"
+              . "PID: $args->{pid}\n"
               . "Output file: $out_file\n"
-              . "Ask the AI agent to check status again in a moment."
+              . "Poll again after about 5 seconds; use 30 seconds for known long analyses."
             );
+            $response->{structuredContent} = {
+                status => 'RUNNING', pid => 0 + $args->{pid},
+                results_directory => dirname($pid_file), log_path => $out_file,
+                poll_after_seconds => 5,
+            };
+            return $response;
         }
 
-        my $completion_file = File::Spec->catfile(dirname($pid_file), 'worker.result.json');
         my $completion = eval { decode_json(read_text_file($completion_file)) };
         $completion = {} unless ref($completion) eq 'HASH';
         my $log_path = $completion->{log_path} || $out_file;
@@ -445,7 +474,7 @@ sub run_sas_oda_tool {
             "STATUS: $label (PID $args->{pid})\n$exit_detail\n"
           . SAS_Log_Diagnostics::format_summary($diagnostics)
           . "SAS log for debugging saved to: $log_path\n\n"
-          . ($content // '')
+          . MCP_Job_Options::log_excerpt($content, $max_log_chars, $log_path)
           . (length($cleanup_error) ? "\nWARNING: $cleanup_error\n" : '')
           . (length($worker_error) ? "\nERROR: $worker_error\n" : '')
         );
@@ -453,6 +482,10 @@ sub run_sas_oda_tool {
         $response->{structuredContent} = {
             status => $label, exit_code => $completion->{exit_code},
             log_path => $log_path, diagnostics => $diagnostics,
+            pid => 0 + $args->{pid}, results_directory => dirname($pid_file),
+            log_chars => length($content // ''),
+            log_truncated => ($max_log_chars && length($content // '') > $max_log_chars)
+                ? JSON::PP::true : JSON::PP::false,
         };
         return $response;
     }
@@ -581,15 +614,24 @@ sub run_sas_oda_tool {
     }
 
     write_pid_file($pid_file, $pid);
-    return text_result(
+    if ($wait_seconds > 0) {
+        return run_sas_oda_tool({pid => $pid, wait_seconds => $wait_seconds,
+            max_log_chars => $max_log_chars});
+    }
+    my $response = text_result(
         "QUERYING: SAS ODA worker started\n"
       . "PID: $pid\n"
       . "Output file: $out_file\n"
       . "Results directory: $result_dir\n"
       . "Worker scratch is removed automatically when the job finishes.\n"
       . "Ask the AI agent to check status with: {\"pid\": $pid}\n"
-      . "For long SAS jobs, check no more than every 30 seconds."
+      . "Poll again after about 5 seconds; use 30 seconds for known long analyses."
     );
+    $response->{structuredContent} = {
+        status => 'RUNNING', pid => 0 + $pid, results_directory => $result_dir,
+        log_path => $out_file, poll_after_seconds => 5,
+    };
+    return $response;
 }
 
 sub run_local_direct_sas_tool {
@@ -741,7 +783,9 @@ my $SERVER_INSTRUCTIONS =
   . "Use run_sas_codes_or_files_in_ODA for SAS code, .sas files, uploads, downloads, deletes, listings, and file metadata. "
   . "Use saspy_cfgname=oda for SAS ODA, saspy_cfgname=linuxlocal/local/default for local Linux SAS, or saspy_cfgname=winlocal for local Windows SAS. "
   . "Use run_local_sas_without_saspy only for direct one-shot local Linux/Windows SAS batch jobs without SASPy; it cannot keep a persistent SAS session. "
-  . "Long jobs return a PID; poll with {\"pid\": PID} no more than about every 30 seconds. "
+  . "SASPy submissions wait up to 20 seconds for verified completion (wait_seconds: 0 opts out). "
+  . "Long jobs return a PID; poll with {\"pid\": PID} after the recommended poll_after_seconds; use 30 seconds for known long analyses. "
+  . "Full logs are saved; long returned logs are excerpted unless max_log_chars: 0 is requested. "
   . "Do not expose this local server to untrusted networks, and avoid placing SAS ODA passwords in prompts unless intentionally bootstrapping credentials.";
 
 if (@ARGV == 0) {

@@ -399,7 +399,7 @@ for my $case (@cases) {
     eval {
         my $started = call_tool({sas_codes_or_file=>$case->{path},
             persistent=>exists($case->{persistent}) && !$case->{persistent} ? JSON::PP::false : JSON::PP::true,
-            session_id=>$session, run_timeout_seconds=>180});
+            session_id=>$session, run_timeout_seconds=>180, wait_seconds=>0});
         save("$out/$case->{id}_started.json", $json->encode($started));
         my $message = join("\n", map { $_->{text}//'' } @{$started->{content}||[]});
         my ($pid) = $message =~ /PID: (\d+)/;

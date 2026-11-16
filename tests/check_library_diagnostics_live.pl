@@ -25,7 +25,7 @@ my @probes=(
     {name=>'format_name',sas=>"options notes;\nproc format; value bad1 1='one'; run;",status=>'FAILED'},
 );
 for my $probe (@probes) {
-    my $start=tool({sas_codes_or_file=>$probe->{sas},persistent=>JSON::PP::false,run_timeout_seconds=>180});
+    my $start=tool({sas_codes_or_file=>$probe->{sas},persistent=>JSON::PP::false,run_timeout_seconds=>180,wait_seconds=>0});
     my ($pid)=$start->{content}[0]{text}=~/PID: (\d+)/;
     die 'No PID' unless $pid;
     my $deadline=time+300;

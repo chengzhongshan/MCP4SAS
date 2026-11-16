@@ -90,6 +90,19 @@ For Copilot the extension uses VS Code's MCP definition-provider API. It does no
 
 ## SAS access is still yours
 
+### Fast completion and direct runner recovery
+
+Short SASPy jobs now return their verified result in the initial MCP call,
+waiting up to 20 seconds. Longer jobs return a PID; `wait_seconds: 0` retains
+immediate background delivery. The relay reuses its backend between calls.
+Full logs remain saved even when the response contains a shorter excerpt.
+
+Direct Python and Perl runners remain available in the project terminal.
+Use them for saved programs or when the server cannot start. If a request was
+already forwarded, inspect its existing job before retrying through a runner:
+a timeout may leave SAS running. The relay's recovery metadata distinguishes
+these cases. See [measured timings, settings and safe recovery](../../docs/VSCODE_RUNNER_PERFORMANCE.md).
+
 ### Switch between ODA and local SAS
 
 Click **SAS ODA**, **Windows SAS**, or **Linux SAS** in the status bar, or run
