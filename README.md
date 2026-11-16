@@ -29,6 +29,15 @@ Windows network-path errors, see the [reviewed runner fixes](docs/COPILOT_RUNNER
 An independent [Python runtime and utilities edition](MCP4SAS_Use_Python/README.md)
 is available alongside the Perl implementation. Its `.py` runners sit beside
 their Perl counterparts; the implementation is kept in `MCP4SAS_Use_Python`.
+Both runners document their public parameters with `--help`. The Python CLI
+accepts all 39 public option groups (54 names/aliases) explicitly declared by
+the Perl CLI, including transfers, sessions, SAS target selection and timeouts.
+See [parameter parity and HTML-opening troubleshooting](docs/RUNNER_CLI_PARITY.md)
+for intentional behavior differences. Use `--open-html` to request opening a
+saved result, or `--no-open-html` to keep it without opening. Firefox is not
+required. `python MCPDeps/result_browser.py --check` diagnoses launchers without
+a SAS connection.
+
 Native Windows Python does not require Cygwin. Existing Perl and VS Code setups
 remain available; see the Python edition's validation notes and compatibility details.
 

@@ -81,10 +81,32 @@ python run_sas_codes_or_files_in_ODA.py --file analysis.sas
 python run_sas_codes_or_files_in_ODA.py --file analysis.sas --macro-dir /path/to/my/Macros
 ```
 
-For direct CLI runs, the HTML result opens in the default browser automatically.
-Set `OPEN_RESULT=0` (or `false`) to disable this; background MCP jobs and explicit
-`--json` calls suppress browser opening. HTML is saved separately; the text
-report contains the SAS log and an output path instead of a page of HTML markup.
+For direct CLI runs, the runner requests opening saved HTML in the system's
+associated application. Firefox is not required. Windows uses its file
+association; Cygwin first tries `cygstart`, then a checked Windows PowerShell
+fallback with a converted Windows path. macOS uses `/usr/bin/open`; Linux tries
+`xdg-open`. The same standard-library helper is used by the Perl runner.
+
+Use `--no-open-html` to keep the HTML without opening it, or `--open-html` to
+request opening even when `OPEN_RESULT=0`. Without either flag, `OPEN_RESULT=0`,
+`false`, `no`, or `off` disables opening. Background MCP jobs and explicit
+`--json` calls remain noninteractive. `--no-html-info` suppresses saving the
+returned HTML, which is different from keeping the HTML with `--no-open-html`.
+The text report contains the SAS log and an output path instead of HTML markup.
+
+```bash
+python run_sas_codes_or_files_in_ODA.py --code 'proc print data=sashelp.class; run;' --open-html
+python run_sas_codes_or_files_in_ODA.py --file analysis.sas --no-open-html
+python MCPDeps/result_browser.py --check
+```
+
+The diagnostic reports launcher availability without submitting SAS or opening
+a window. A successful launch request does not verify a visible window. If
+opening fails, the HTML stays available and the runner prints a warning with
+its path. Check the default application for `.html` files and run from a local
+interactive desktop. A remote SSH/container/agent session cannot be assumed to
+open a browser on your own computer. See the [parameter comparison and browser
+investigation](../docs/RUNNER_CLI_PARITY.md).
 
 Local `%include` files, called local macros and their dependencies are inspected
 recursively. The runtime uploads required source/data files, rewrites their

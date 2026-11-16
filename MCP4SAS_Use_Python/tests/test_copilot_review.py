@@ -61,9 +61,12 @@ class CopilotReviewTests(unittest.TestCase):
             self.assertIn('restarting with the SASPy environment',result.stderr)
 
     def test_browser_failure_is_advisory(self):
-        with patch.object(cli.os,'startfile',side_effect=OSError('unavailable'),create=True),patch.object(cli.webbrowser,'open',side_effect=OSError('unavailable')),contextlib.redirect_stderr(io.StringIO()) as messages:
-            self.assertFalse(cli.open_result_html(Path.cwd()/'output.html'))
-            self.assertIn('Could not auto-open',messages.getvalue())
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'output.html'
+            path.write_text('<html>result</html>',encoding='utf-8')
+            with patch.object(cli.os,'startfile',side_effect=OSError('unavailable'),create=True),patch.object(cli.subprocess,'run',side_effect=OSError('unavailable')),patch.object(cli.webbrowser,'open',side_effect=OSError('unavailable')),contextlib.redirect_stderr(io.StringIO()) as messages:
+                self.assertFalse(cli.open_result_html(path))
+                self.assertIn('Could not auto-open',messages.getvalue())
 
     def test_json_does_not_open_a_browser(self):
         class FakeRunner:

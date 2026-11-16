@@ -16,6 +16,7 @@ import webbrowser
 from . import diagnostics,source_analysis
 from .dependencies import Plan,read_source
 from .java_help import instructions
+from MCPDeps.result_browser import open_result_html,auto_open_enabled
 
 def atomic_json(path,value):
     path=Path(path)
@@ -27,35 +28,6 @@ def atomic_json(path,value):
         os.replace(temp,path)
     finally:
         temp.unlink(missing_ok=True)
-
-def open_result_html(path):
-    detail=''
-    if sys.platform.startswith('cygwin'):
-        cygstart=shutil.which('cygstart')
-        if cygstart:
-            try:
-                subprocess.Popen([cygstart,str(path)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
-                return True
-            except OSError as exc:
-                detail=str(exc)
-    if os.name=='nt':
-        startfile=getattr(os,'startfile',None)
-        if startfile:
-            try:
-                startfile(str(path))
-                return True
-            except OSError as exc:
-                detail=str(exc)
-    try:
-        if webbrowser.open(path.as_uri()):
-            return True
-    except (OSError,webbrowser.Error) as exc:
-        detail=str(exc)
-    warning=f'WARNING: Could not auto-open {path} with the system default browser. Set OPEN_RESULT=0 to suppress this attempt.'
-    if detail:
-        warning+=' '+detail
-    print(warning,file=sys.stderr)
-    return False
 
 def normalize_cli_code_text(text):
     return (text.replace('\\r\\n','\n').replace('\\n','\n')
@@ -176,14 +148,30 @@ def ensure_saspy_environment(args):
         'described in MCP4SAS_Use_Python/README.md.'
     )
 
+class RunnerHelpFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
+    pass
+
+
 def parser():
     p=argparse.ArgumentParser(
         description='Run SAS through a native Python MCP4SAS runtime; no Perl required.',
         allow_abbrev=False,
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        epilog='Environment: SAS_ODA_RUN_TIMEOUT_SECONDS, SAS_ODA_RUN_TIMEOUT_GRACE_SECONDS, '
-               'SASPY_CFGNAME, SASPY_CFGFILE, OPEN_RESULT. Use --prompt-sas-oda-auth '
-               'instead of passing a password on the command line.',
+        formatter_class=RunnerHelpFormatter,
+        epilog="""Examples (run from your MCP4SAS folder):
+  python run_sas_codes_or_files_in_ODA.py --code 'proc print data=sashelp.class; run;'
+  python run_sas_codes_or_files_in_ODA.py --file analysis.sas --macro-dir ./Macros
+  python run_sas_codes_or_files_in_ODA.py --code - --persistent --session-id lesson
+  python run_sas_codes_or_files_in_ODA.py --file analysis.sas --no-open-html
+  python run_sas_codes_or_files_in_ODA.py --upload-file a.csv --upload-file b.csv
+  python run_sas_codes_or_files_in_ODA.py --check-saspy-connection-only
+  python MCPDeps/result_browser.py --check
+
+Environment: SAS_ODA_RUN_TIMEOUT_SECONDS, SAS_ODA_RUN_TIMEOUT_GRACE_SECONDS,
+SASPY_CFGNAME, SASPY_CFGFILE, OPEN_RESULT. Use --prompt-sas-oda-auth instead
+of passing a password on the command line. Opening HTML uses the OS default
+application; Firefox is not required. --no-open-html keeps the HTML file.
+See docs/RUNNER_CLI_PARITY.md for deliberate differences from Perl.
+""",
     )
     group=p.add_mutually_exclusive_group()
     group.add_argument('--code','--codes','-c',help="SAS code to execute; use '-' for stdin. Backslashes are preserved unless --decode-code-escapes is explicitly selected.")
@@ -219,7 +207,8 @@ def parser():
     p.add_argument('--classify-sas-log',help='Classify an existing SAS log without connecting.')
     p.add_argument('--run-timeout-seconds',type=int,default=int(os.environ.get('SAS_ODA_RUN_TIMEOUT_SECONDS','3600')),help='Timeout for each SASPy backend operation; 0 disables it. Startup, multiple transfers and shutdown can add elapsed time.')
     p.add_argument('--run-timeout-grace-seconds',type=int,default=int(os.environ.get('SAS_ODA_RUN_TIMEOUT_GRACE_SECONDS','15')),help='Wait after requesting backend termination before forcing it.')
-    p.add_argument('--no-run-timeout',action='store_true',help='Disable the overall run timeout.')
+    p.add_argument('--no-run-timeout',action='store_true',help='Disable backend-operation timeouts for this run.')
+    p.add_argument('--open-html',action=argparse.BooleanOptionalAction,default=None,help='Request opening saved HTML in the default browser; --no-open-html saves it without opening. Overrides OPEN_RESULT; --json remains noninteractive.')
     p.add_argument('--no-html-info','--no-html_info',action='store_true',help='Do not save the returned HTML file.')
     p.add_argument('--dry-run',action='store_true',help='Print dependency/preflight information without connecting to SAS.')
     p.add_argument('--submission-preflight',action=argparse.BooleanOptionalAction,
@@ -396,7 +385,7 @@ def execute(args):
             html_path=outdir/'output.html'
             html_path.write_text(result['lst'],encoding='utf-8')
             output_summary='HTML output saved to: '+str(html_path)
-            if os.environ.get('OPEN_RESULT','1').lower() in ('1','true','yes','on') and not args.json:
+            if (args.open_html if args.open_html is not None else auto_open_enabled()) and not args.json:
                 open_result_html(html_path)
     preflight=json.dumps(advisories)
     if plan.macro_dir_warning:

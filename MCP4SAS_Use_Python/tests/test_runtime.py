@@ -263,10 +263,13 @@ class UtilityTests(unittest.TestCase):
             open_html.assert_called_once_with(output/'output.html')
     def test_cygwin_html_open_uses_cygstart(self):
         from MCP4SAS_Use_Python.cli import open_result_html
-        path=Path('result/output.html')
-        with patch('MCP4SAS_Use_Python.cli.sys.platform','cygwin'),patch('MCP4SAS_Use_Python.cli.shutil.which',return_value='/usr/bin/cygstart'),patch('MCP4SAS_Use_Python.cli.subprocess.Popen') as popen:
-            self.assertTrue(open_result_html(path))
-        popen.assert_called_once_with(['/usr/bin/cygstart',str(path)],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+        with tempfile.TemporaryDirectory() as temp:
+            path=Path(temp)/'output.html'
+            path.write_text('<html>result</html>',encoding='utf-8')
+            with patch('MCP4SAS_Use_Python.cli.sys.platform','cygwin'),patch('MCP4SAS_Use_Python.cli.shutil.which',return_value='/usr/bin/cygstart'),patch('MCP4SAS_Use_Python.cli.subprocess.run',return_value=subprocess.CompletedProcess([],0,'','')) as run:
+                self.assertTrue(open_result_html(path))
+            self.assertEqual(run.call_args.args[0],['/usr/bin/cygstart',str(path.resolve())])
+            self.assertEqual(run.call_args.kwargs['timeout'],15)
     def test_bad_input_never_constructs_backend(self):
         with patch('MCP4SAS_Use_Python.runner.Backend',side_effect=AssertionError('must not connect')):
             with contextlib.redirect_stderr(io.StringIO()):

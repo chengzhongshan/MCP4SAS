@@ -1,0 +1,273 @@
+{
+  "date": "2026-11-15",
+  "source_base_revision": "72a7899e389dd3a960885e2681ff95a4dcbd632b",
+  "source_sha256": {
+    "run_sas_codes_or_files_in_ODA.pl": "0210d896431db1316811b8eb8f782c0b26233880c491a2c23514678090936104",
+    "run_sas_codes_or_script_in_ODA.pl": "0210d896431db1316811b8eb8f782c0b26233880c491a2c23514678090936104",
+    "MCP4SAS_Use_Python/cli.py": "9cf855a0299ebc02208d182f9296733ddf1a2e9236fe185109ba7daf3b2a833c",
+    "MCPDeps/result_browser.py": "a4e11f8ab9d6ab8d1f3cef2a801a49f565197025839d87a0ef7bfd757e711ae8",
+    "MCP4SAS_Use_Python/tests/test_runner_cli_browser.py": "1b9b2a164b22f65f7d9a64fe3d0dfa4894ef770296772e3e238c934ac46405fa"
+  },
+  "public_option_groups": 39,
+  "explicit_public_names_and_aliases": 54,
+  "all_public_options_in_python": true,
+  "python_tests_passed": 79,
+  "cygwin_option_browser_tests_passed": 15,
+  "perl_compatibility_tests_passed": 4,
+  "live_sas_target": "SAS OnDemand for Academics",
+  "live_cases": [
+    {
+      "language": "python",
+      "exit_code": 0,
+      "seconds": 11.037,
+      "count19": true,
+      "html_bytes": 36491,
+      "launch_request_accepted": true,
+      "html_files": [
+        "SAS_Output_browser_parity/live-final-python/output.html"
+      ]
+    },
+    {
+      "language": "perl",
+      "exit_code": 0,
+      "seconds": 13.865,
+      "count19": true,
+      "html_bytes": 35205,
+      "launch_request_accepted": true,
+      "html_files": [
+        "SAS_Output_browser_parity/live-final-perl/sas_res_H5UGc.html"
+      ]
+    }
+  ],
+  "actual_cygwin_windows_fallback_without_cygstart": "passed: launch request accepted",
+  "visible_window_independently_inspected": false,
+  "remote_mac_and_windows11_machine_inspected": false,
+  "firefox_required": false,
+  "initial_sandbox_shutdown_test_failure": "Owned test-process termination blocked in sandbox; complete suite passed outside sandbox. No shutdown implementation changed.",
+  "preserved_local_logs": "SAS_Output_browser_parity/",
+  "options": [
+    {
+      "option": "--code",
+      "aliases": [
+        "--codes",
+        "-c"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--file",
+      "aliases": [
+        "-f"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--macro-dir",
+      "aliases": [
+        "-m"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--no-html-info",
+      "aliases": [
+        "--no-html_info"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--open-html",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--output-prefix",
+      "aliases": [
+        "-p"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--persistent",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--session-id",
+      "aliases": [
+        "-s"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--upload-file",
+      "aliases": [
+        "-u"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--skip-upload-if-same",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--archive-transfers",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--download-file",
+      "aliases": [
+        "-d"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--download-local-path",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--delete-file",
+      "aliases": [
+        "-k"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--delete-file-rgx",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--delete-directory-rgx",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--delete-directory-dry-run",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--delete-dir",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--dir4listing",
+      "aliases": [
+        "-l"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--file-info",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--cleanup-empty-output-dir",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--keep-intermediate-files",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--sas-oda-account",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--sas-oda-password",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--prompt-sas-oda-auth",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--skip-sas-oda-auth-bootstrap",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--check-sas-oda-login-only",
+      "aliases": [
+        "--check-saspy-connection-only"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--saspy-cfgname",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--saspy-cfgfile",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--dir4local_sas_home",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--classify-sas-log",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--monitor-status-file",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--monitor-interval-seconds",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--kill-saspy-sessions",
+      "aliases": [
+        "--kill-sas-oda-sessions",
+        "--kill-saspy-session-server"
+      ],
+      "python_supported": true
+    },
+    {
+      "option": "--run-timeout-seconds",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--run-timeout-grace-seconds",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--no-run-timeout",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--dry-run",
+      "aliases": [],
+      "python_supported": true
+    },
+    {
+      "option": "--help",
+      "aliases": [
+        "-h"
+      ],
+      "python_supported": true
+    }
+  ]
+}

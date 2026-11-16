@@ -137,7 +137,7 @@ use Scalar::Util qw(blessed);
 
 my ($code, $file, $macro_dir, $no_html, $output_prefix, $help, $persistent, $session_id,
     $dry_run, $dir4listing, $monitor_status_file, $monitor_interval_seconds,
-    $kill_saspy_sessions);
+    $kill_saspy_sessions, $open_html);
 my $macro_dir_warning = '';
 my ($internal_runner_result_json, $internal_execution_file, $internal_execution_code_file,
     $internal_macro_dir, $internal_open_html, $internal_persistent, $internal_session_id);
@@ -326,83 +326,20 @@ sub detect_desktop_open_env {
     return \%open_env;
 }
 
-sub launch_command_detached {
-    my ($cmd, $open_env) = @_;
-    return 0 unless ref($cmd) eq 'ARRAY' && @{$cmd};
-    my $pid = fork();
-    return 0 unless defined $pid;
-    return 1 if $pid;
-
-    eval { POSIX::setsid(); };
-    if (ref($open_env) eq 'HASH') {
-        for my $key (qw(DISPLAY XAUTHORITY)) {
-            next unless defined($open_env->{$key}) && length($open_env->{$key});
-            $ENV{$key} = $open_env->{$key};
-        }
-    }
-    open STDIN,  '<', File::Spec->devnull();
-    open STDOUT, '>', File::Spec->devnull();
-    open STDERR, '>', File::Spec->devnull();
-    exec { $cmd->[0] } @{$cmd};
-    exit 127;
-}
-
 sub auto_open_local_file {
     my ($path) = @_;
     return 0 unless defined $path && length $path && -f $path;
-
-    my @commands;
+    my $helper = SAS_ODA_Runner::_normalize_local_path_for_python("$Bin/MCPDeps/result_browser.py", $python_bin);
+    my $local_path = SAS_ODA_Runner::_normalize_local_path_for_python(abs_path($path), $python_bin);
     my $open_env = detect_desktop_open_env();
-    if ($^O eq 'cygwin' || $^O eq 'MSWin32') {
-        push @commands, ['cygstart', $path] if find_executable_in_path('cygstart');
-    } elsif ($^O eq 'darwin') {
-        push @commands, ['open', $path] if find_executable_in_path('open');
-    } else {
-        my $uri = local_file_uri($path);
-        my @browser_candidates;
-        push @browser_candidates, $ENV{OPEN_RESULT_BROWSER}
-          if defined($ENV{OPEN_RESULT_BROWSER}) && length($ENV{OPEN_RESULT_BROWSER});
-        push @browser_candidates, qw(
-          google-chrome-stable
-          google-chrome
-          chromium
-          chromium-browser
-          firefox
-          brave-browser
-          opera
-        );
-        my %seen_browser;
-        for my $browser (@browser_candidates) {
-            next if $seen_browser{$browser}++;
-            my $browser_path = find_executable_in_path($browser);
-            next unless $browser_path;
-            push @commands, [$browser_path, $uri];
-        }
-        push @commands, ['xdg-open', $path] if find_executable_in_path('xdg-open');
-        push @commands, ['open', $path] if find_executable_in_path('open');
+    local %ENV = %ENV;
+    if (ref($open_env) eq 'HASH') {
+        $ENV{$_} = $open_env->{$_} for keys %{$open_env};
     }
-
-    if ($python_bin) {
-        push @commands, [
-            $python_bin,
-            '-c',
-            'import pathlib, sys, webbrowser; webbrowser.open(pathlib.Path(sys.argv[1]).resolve().as_uri())',
-            $path,
-        ];
-    }
-
-    for my $cmd (@commands) {
-        if (launch_command_detached($cmd, $open_env)) {
-            my $display_note = (ref($open_env) eq 'HASH' && $open_env->{DISPLAY})
-              ? " on DISPLAY=$open_env->{DISPLAY}"
-              : '';
-            print "Requested browser open$display_note: $path\n";
-            return 1;
-        }
-    }
-
-    warn "WARNING: Could not auto-open $path with the system default browser. Set OPEN_RESULT=0 to suppress this attempt.\n";
-    return 0;
+    # The shared helper checks launcher exits and converts Cygwin paths before
+    # a Windows fallback. A successful fork alone did not prove launch success.
+    my $status = system {$python_bin} $python_bin, $helper, $local_path;
+    return $status == 0 ? 1 : 0;
 }
 
 sub status_timestamp {
@@ -448,6 +385,7 @@ GetOptions(
     'file|f=s' => \$file,
     'macro-dir|m=s' => \$macro_dir,
     'no-html-info|no-html_info' => \$no_html,
+    'open-html!' => \$open_html,
     'output-prefix|p=s' => \$output_prefix,
     'persistent!' => \$persistent,
     'session-id|s=s' => \$session_id,
@@ -490,6 +428,8 @@ GetOptions(
     '_internal-persistent!' => \$internal_persistent,
     '_internal-session-id=s' => \$internal_session_id,
 ) or die "Error in command line arguments\n";
+
+$ENV{OPEN_RESULT} = $open_html ? '1' : '0' if defined $open_html;
 
 if (defined $macro_dir) {
     ($macro_dir, $macro_dir_warning) =
@@ -1016,8 +956,10 @@ Options:
                              direct --code string are expanded before submit.
   -f, --file <file>          SAS script file to execute
   -m, --macro-dir <dir>      Directory containing macro files; unreachable paths fall back to the current working directory (default: ./)
-  --no-html-info             output a plain text file containing the random html filename
+  --no-html-info             Do not save or open the returned HTML output.
   --no-html_info             Legacy alias for --no-html-info
+  --open-html                Request opening saved HTML (default); overrides OPEN_RESULT.
+  --no-open-html             Save HTML without opening it. Firefox is not required.
   -p, --output-prefix <prefix> Prefix for output files (default: output)
     --persistent             Keep SAS session alive for multiple runs, only working with --session-id. If not specified, a new session is created and destroyed for each run.
                              As the intial starting of saspy server and sas oda session takes time, using persistent session can save time for multiple runs. So please try to
@@ -1093,6 +1035,9 @@ Options:
   -h, --help                 Show this help message
 
 Environment:
+  OPEN_RESULT                       Set 0, false, no or off to save HTML without opening it.
+                                     --open-html / --no-open-html override this setting.
+                                     Browser diagnostic: $python_bin MCPDeps/result_browser.py --check
   SAS_ODA_RUN_TIMEOUT_SECONDS        Overall timeout for submit and file-transfer helper actions
                                      in this wrapper (default: ${default_sas_run_timeout_seconds}s; set to 0 to disable)
   SAS_ODA_RUN_TIMEOUT_GRACE_SECONDS  Extra wait after TERM before forcible kill (default: ${sas_run_timeout_grace_seconds}s)
@@ -3577,7 +3522,7 @@ if (!$no_html and (($execution_code && $execution_code!~/^\s*$/) || $execution_f
         move($htmlfilename, $final_html_path)
           or warn "WARNING: Could not move HTML artifact from $htmlfilename to $final_html_path: $!\n";
     }
-    my $allow_auto_open = (!defined($ENV{OPEN_RESULT}) || $ENV{OPEN_RESULT} ne '0') ? 1 : 0;
+    my $allow_auto_open = (!defined($ENV{OPEN_RESULT}) || $ENV{OPEN_RESULT} !~ /^\s*(?:0|false|no|off)\s*$/i) ? 1 : 0;
     auto_open_local_file($final_html_path) if ($allow_auto_open && $final_html_path && -f $final_html_path);
     my $html_file = "$output_prefix_path.html.info.txt";
     my $final_status = read_status_file($status_file);
