@@ -106,4 +106,10 @@ exports.run = async () => {
   const result = cp.spawnSync(process.execPath, ['-e', 'process.stdout.write("electron-node-ok")'], { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true, encoding: 'utf8' });
   assert.equal(result.status, 0); assert.equal(result.stdout, 'electron-node-ok');
   console.log('PASS: real VS Code activation, eleven commands, empty/configured MCP provider, Copilot connection, Electron Node launcher');
+  const guide=api.showSetupGuide();
+  assert.match(guide.webview.html,/Select downloaded ZIP or folder/);
+  assert.match(guide.webview.html,/sas\.rutil\.nls\.jar/);
+  assert.match(guide.webview.html,/more than five minutes/);
+  console.log('PASS: real VS Code setup guide webview, SAS download controls and progress explanation');
+  if(process.env.MCP4SAS_GUIDE_PREVIEW_SECONDS)await new Promise(resolve=>setTimeout(resolve,Math.min(180,Number(process.env.MCP4SAS_GUIDE_PREVIEW_SECONDS))*1000));
 };

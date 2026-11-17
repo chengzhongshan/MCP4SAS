@@ -19,7 +19,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
   }
   fs.mkdirSync(project);
-  const commands = new Map(), states = new Map(), errors = [], tasks = [], terminals = [];
+  const commands = new Map(), states = new Map(), errors = [], tasks = [], terminals = [], jarsCalls=[];
   const settings = new Map([['profiles.windows', { 'My existing shell': { path: 'original.exe' } }]]);
   let configureTerminal = true, sasCheckFailure = false;
   const statusBar={show(){},dispose(){}};
@@ -59,6 +59,12 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
     async run(command, args, options = {}) {
+      if(args.some(value=>String(value).endsWith('sas_jars.py'))) {
+        jarsCalls.push({command,args,options});
+        const source=args[args.indexOf('--source')+1];
+        if(['sas.rutil.jar','sas.rutil.nls.jar','sastpj.rutil.jar'].some(name=>!fs.existsSync(path.join(source,name))))throw Error('SAS JAR setup: Missing sas.rutil.jar');
+        return 'MCP4SAS_JARS_JSON={"verified":true}';
+      }
       if(command===path.join(path.dirname(portable),'bash.exe')&&args.includes('-c')) {
         if(args.at(-1).includes('MCP4SAS_PROBE_PID='))return 'MCP4SAS_PROBE_PID=100\n 100 1 100 1000 ?\n'+(busyPrerequisites?' 200 1 200 2000 ?\n':'');
         return missingPrerequisites;
@@ -158,6 +164,7 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.ok(tasks.at(-1).execution.args.includes('--prompt-sas-oda-auth'));
     assert.ok(!tasks.at(-1).execution.args.includes('--sas-oda-password'));
     const jars = path.join(root, 'SAS JAR files'); fs.mkdirSync(jars);
+    choices.push('Select extracted SAS folder');
     dialogs.push(jars);
     const beforeTasks = tasks.length;
     await commands.get('mcp4sas.configureJars')();
@@ -165,11 +172,13 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     assert.match(errors.at(-1), /sas\.rutil\.jar/);
     assert.match(errors.at(-1), /pid=2494/);
     for (const name of ['sas.rutil.jar', 'sas.rutil.nls.jar', 'sastpj.rutil.jar']) fs.writeFileSync(path.join(jars, name), 'fixture');
+    choices.push('Select extracted SAS folder');
     dialogs.push(jars);
     await commands.get('mcp4sas.configureJars')();
-    assert.equal(tasks.length, beforeTasks + 1);
-    assert.equal(tasks.at(-1).execution.options.env.MCP4SAS_SASPY_IOM_DIR, jars);
-    assert.match(tasks.at(-1).execution.args.at(-1), /install_saspy_iom_jars\.sh$/);
+    assert.equal(tasks.length, beforeTasks, 'JAR helper uses the selected Python directly');
+    assert.equal(jarsCalls.length,2);
+    assert.equal(jarsCalls.at(-1).args.at(-1),jars);
+    assert.ok(jarsCalls.at(-1).args.includes('/selected/python'),'selected SASPy environment receives the JARs');
     assert.equal(commands.has('mcp4sas.selectConnection'), false, 'complex manual selector is removed');
     const python = path.join(root,'native-python.exe'); fs.writeFileSync(python,'fixture');
     detected={...detected,sas:path.join(root,'sas.exe'),local:{candidate:python,saspy:true,com:true,platform:'win32'}};

@@ -27,6 +27,11 @@ jobs:
           cache-dependency-path: integrations/vscode/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm test
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check SAS ZIP and extracted-folder setup without proprietary JARs
+        run: python -m unittest discover -s test -p test_sas_jars.py -v
       - run: xvfb-run -a npm run test:host
         if: runner.os == 'Linux'
       - run: npm run test:host

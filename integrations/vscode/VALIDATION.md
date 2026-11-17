@@ -1,5 +1,29 @@
 # VS Code integration validation
 
+## Updated 0.1.5 build — first-run setup guide
+
+16 November 2026. Added a persistent setup checklist, ten-second elapsed-time
+feedback, a visible official Cygwin progress window, folder-first continuation
+after opening/trusting a project, and duplicate-click protection. The guided
+SAS download accepts a ZIP or extracted parent folder and installs validated
+files into the selected Python's SASPy. Recognized installer-managed static
+classpaths are repaired with backups; custom configurations are preserved.
+
+All 52 Node extension tests, six JAR-helper Python tests, 82 existing Python
+runtime tests and 38 Java-guidance assertions passed locally. The isolated
+real VS Code host passed command/provider/task checks and guide content
+assertions. Native capture returned timeout errors; a separately rendered
+browser preview was inspected and is not represented as an installation
+screenshot. The six-minute progress test uses a simulated clock. See
+[the first-run report](../../docs/FIRST_RUN_SETUP_REVIEW.md) and
+[the validation record](validation/onboarding-20261116.json).
+
+The video player page describes updated controls alongside the original MP4;
+the MP4 itself was not regenerated. There was no fresh full Cygwin installation
+or authenticated SAS download during these local UI checks. The existing
+platform installation smoke check now includes the six JAR-helper tests.
+Version remains 0.1.5.
+
 ## Updated 0.1.5 build — short-job completion and safe recovery
 
 15 November 2026. The relay still reuses an owned backend. SASPy MCP tools now

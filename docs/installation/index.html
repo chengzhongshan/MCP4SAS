@@ -28,6 +28,11 @@
     </button>
   </div>
   <p id="player-status" role="status" aria-live="polite">12 minutes 57 seconds. English narration and captions are included.</p>
+  <section class="tips" aria-label="Updated Quick Setup controls">
+    <div><h2>Forgot to open a folder?</h2><p>The current 0.1.5 build offers <strong>Choose Project Folder</strong> before installation. Open your folder and confirm VS Code's trust prompt if shown; setup continues automatically. You can also follow the video's File &gt; Open Folder step.</p></div>
+    <div><h2>Cygwin can take five minutes or longer</h2><p>Keep its visible progress window and VS Code open. The new <strong>MCP4SAS Setup</strong> checklist shows elapsed time and a <strong>Show installation log</strong> button. Repeated setup clicks do not start duplicate installers.</p></div>
+    <div><h2>Select the SAS download directly</h2><p>The setup page opens the <a href="https://support.sas.com/downloads/package.htm?pid=2494">official SAS download</a>. Sign in there, download the archive, then choose <strong>Select downloaded ZIP or folder</strong>. Inner folders are searched automatically. The existing video shows the earlier manual extraction screen; this newer control replaces that step.</p></div>
+  </section>
   <div class="actions">
     <a class="button" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/mcp4sas-0.1.5.vsix">Download VS Code extension 0.1.5</a>
     <a class="button secondary" href="https://github.com/chengzhongshan/MCP4SAS/releases/download/vscode-v0.1.5/MCP4SAS_Install_Perl_Python_AutoEnv_20261115.mp4">Download MP4</a>
@@ -60,7 +65,7 @@
   </section>
   <section class="tips" aria-label="Before you connect">
     <div><h2>Open a working folder</h2><p>Choose <strong>File &gt; Open Folder</strong> in VS Code before Quick Setup. This is where MCP4SAS installs its scripts and where you can save your SAS programs.</p></div>
-    <div><h2>Get the SAS files</h2><p>Download the three encryption JARs from <a href="https://support.sas.com/downloads/package.htm?pid=2494">SAS</a>, sign in if requested, and extract them. Java alone does not provide these files.</p></div>
+    <div><h2>Get the SAS files</h2><p>Download the three encryption JARs from <a href="https://support.sas.com/downloads/package.htm?pid=2494">SAS</a>, signing in if requested. The setup guide accepts the downloaded ZIP or an extracted parent folder. Java alone does not provide these files.</p></div>
     <div><h2>On a company network?</h2><p>SAS ODA uses outbound TCP <strong>8591</strong>. If blocked, ask IT/IS to allow access to your account's SAS ODA home-region servers. See <a href="https://support.sas.com/ondemand/saspy.html">SAS configuration guidance</a>.</p></div>
   </section>
   <p><strong>Prefer Python?</strong> The video now includes a dedicated Python section. Follow the <a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/MCP4SAS_Use_Python/README.md">Python setup guide</a> or browse the <a href="https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/PYTHON_DEMOS.md">paired Perl/Python demos</a>. The current plugin keeps its Perl connection; Python is optional.</p>

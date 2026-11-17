@@ -5,8 +5,9 @@ use warnings;
 sub encryption_instructions {
     return <<'HELP';
 SAS IOM encryption JAR setup:
-  VS Code users: run MCP4SAS: Configure SAS Encryption JARs after downloading
-  and extracting the three SAS files below. Select their containing directory.
+  VS Code users: open MCP4SAS: Open Setup Guide for the official download link.
+  Configure SAS Encryption JARs accepts the SAS ZIP or extracted parent folder
+  and finds the three files automatically. The terminal alternative follows.
   1. Open the official SAS download page and sign in with your SAS Profile:
      https://support.sas.com/downloads/package.htm?pid=2494
   2. Download and extract the SAS IOM client encryption package. Locate:

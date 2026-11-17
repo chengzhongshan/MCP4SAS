@@ -12,10 +12,19 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 ## Three steps
 
 1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix`.
-2. Open a **local project folder** you trust. Run **MCP4SAS: Quick Setup** from the Command Palette. Choose an existing MCP4SAS installation or let setup install it. Select your SAS project folder, then Copilot, Codex, or both.
+2. Run **MCP4SAS: Quick Setup** from the Command Palette. If no project is open, setup offers **Choose Project Folder** before installing anything. Open a folder you own and confirm VS Code's trust prompt if shown. Setup resumes in that folder; no manual restart is needed. Choose an existing MCP4SAS installation or let setup install it, then select Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
 An interactive **Connect SAS to your AI assistant** walkthrough is also available on VS Code's Getting Started page. **MCP4SAS: Open Setup Guide** reopens this guide.
+
+The **MCP4SAS Setup** page stays open with a checklist for the folder, Cygwin,
+Java, GitHub source, libraries, SAS access and assistant connection. Long steps
+show elapsed time every ten seconds; **Show installation log** opens the
+detailed output. Cygwin can take more than five minutes. Its official progress
+window is now visible too; keep it and VS Code open. Elapsed time means setup
+is still being monitored, rather than an estimate of download completion.
+Repeated Quick Setup clicks reuse the running flow. A failed step stays visible
+with its error so you can fix the cause and continue.
 
 ## What setup does
 
@@ -25,7 +34,9 @@ An interactive **Connect SAS to your AI assistant** walkthrough is also availabl
 the scripts directly into the folder currently open in VS Code. With multiple
 open folders, select the destination when asked. The same folder becomes the
 SAS project and runtime, so you can run the Perl scripts in its Cygwin terminal.
-Open a folder before running Quick Setup. Existing complete MCP4SAS checkouts
+You can open the folder yourself as shown in the video, or let Quick Setup
+guide you through it. Installation starts only after a folder is open and
+trusted. Existing complete MCP4SAS checkouts
 are reused; Git history and unrelated files are preserved. Conflicting files
 are reported before copying, rather than overwritten. The download does not
 create a second Git repository inside an existing project.
@@ -193,13 +204,22 @@ Open Ctrl+Shift+P (Cmd+Shift+P on macOS):
   there, never in AI chat. The runner validates the login before saving it.
   A fresh Cygwin installation has its own home and may not find credentials
   from your Windows home. Missing-credential errors identify the file checked.
-- **MCP4SAS: Configure SAS Encryption JARs** asks for the folder directly
-  containing `sas.rutil.jar`, `sas.rutil.nls.jar`, and `sastpj.rutil.jar`.
-  Obtain and extract them from the
+- **MCP4SAS: Configure SAS Encryption JARs** offers a downloaded ZIP or an
+  extracted parent folder containing `sas.rutil.jar`, `sas.rutil.nls.jar`, and
+  `sastpj.rutil.jar`. The setup page has **Open official SAS download** and
+  **Select downloaded ZIP or folder** buttons. Obtain the files from the
   [official SAS download](https://support.sas.com/downloads/package.htm?pid=2494)
-  using your own SAS Profile. Detection can find a complete extracted folder in Downloads/SAS-ODA-JarFiles or Downloads/SAS-ODA-Jars and run the helper automatically. The manual action remains available; it refuses missing/empty files and runs
-  the existing JAR helper for the installer environment. Custom Python/profile
-  classpaths must be updated separately. Restart the assistant connection and
+  using your own SAS Profile. After signing in, return to the download page if
+  needed and follow SAS's download prompts and license terms. Select the ZIP
+  in Downloads, or extract another archive format and select its folder.
+  Inner folders are searched automatically. No manual Python activation or
+  environment-variable command is needed for the guided ZIP/folder route.
+  The helper validates all three JAR archives before copying them into the
+  **selected** Python's SASPy environment, preserves changed originals, and
+  refreshes an installer-managed static classpath when necessary. A custom
+  profile is preserved; an explicit custom classpath may need updating.
+  Detection also finds complete folders in Downloads/SAS-ODA-JarFiles or
+  Downloads/SAS-ODA-Jars. Restart the assistant connection and
   old SAS sessions after changing the classpath, then retry a real SAS test.
 
 **Check Connection** offers both setup actions after tool discovery. Discovery
@@ -232,7 +252,7 @@ The launcher uses VS Code's bundled Node/Electron runtime, so a separate Node in
 - **No tools:** trust your own local folder, refresh the chosen assistant, check enabled MCP tools, and inspect **Output → MCP4SAS** / the client's MCP output. Update VS Code if its MCP provider API is missing.
 - **Portable Cygwin not detected:** use the existing-installation route and select its `bin/perl.exe`. Do not select Windows Strawberry Perl.
 - **Tools discovered, SAS fails:** repair SASPy target, Java/IOM configuration and authentication. Discovery does not validate those.
-- **Missing SAS Java classes or IOM JARs:** the extension does not bundle SAS proprietary JARs. Download the SAS-provided archive from the [official SAS download page](https://support.sas.com/downloads/package.htm?pid=2494), signing in with your own SAS Profile if requested. Extract it outside the repository. Locate `sas.rutil.jar`, `sas.rutil.nls.jar` and `sastpj.rutil.jar`, then set `MCP4SAS_SASPY_IOM_DIR` to their containing directory before running the MCP4SAS installer/configuration helper. Follow the [Java setup and troubleshooting guide](https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/JAVA_SETUP_TROUBLESHOOTING.md) for the exact commands and configuration checks. Restart VS Code from the configured environment so its MCP subprocesses inherit your settings. Installing Java alone does not supply these SAS libraries.
+- **Missing SAS Java classes or IOM JARs:** open the setup guide, use the official SAS download button, then select the downloaded SAS ZIP or its extracted folder. The guided helper finds the three files and uses the selected SASPy environment. The [Java troubleshooting guide](https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/JAVA_SETUP_TROUBLESHOOTING.md) also retains the separate terminal instructions. Installing Java alone does not supply these SAS libraries.
 - **Wrong relative path:** rerun Quick Setup and choose the actual project folder. The active editor file does not change the saved server folder automatically.
 - **Restricted network:** installers need access to official Cygwin, GitHub,
   CPAN and Python/package mirrors. On Windows, Quick Setup combines Cygwin's

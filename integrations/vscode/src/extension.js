@@ -5,9 +5,66 @@ const path = require('node:path');
 const os = require('node:os');
 const core = require('./core');
 const discovery = require('./detect');
+const guide = require('./setup-guide');
+const timers = require('node:timers');
 const VERSION = require('../package.json').version;
 const { spawn } = require('node:child_process');
 let context, output, emitter, targetStatus;
+let setupPromise, setupPanel;
+const setupStates = {};
+let setupMessage = '';
+function renderSetup(message = setupMessage) {
+  setupMessage = message;
+  if (setupPanel) setupPanel.webview.html = guide.page(setupStates, message, require('node:crypto').randomBytes(18).toString('hex'));
+}
+function showSetupGuide() {
+  if (!vscode.window.createWebviewPanel) return; // Minimal/offline API fixtures.
+  if (setupPanel) { setupPanel.reveal(); return setupPanel; }
+  setupPanel = vscode.window.createWebviewPanel('mcp4sas.setupGuide','MCP4SAS Setup',vscode.ViewColumn.One,{enableScripts:true,retainContextWhenHidden:true});
+  setupPanel.onDidDispose(()=>{setupPanel=undefined;});
+  setupPanel.webview.onDidReceiveMessage(async message=>{
+    try {
+      if (message.action==='logs') return output.show(true);
+      if (message.action==='watchVideo') return vscode.env.openExternal(vscode.Uri.parse(guide.VIDEO));
+      if (message.action==='readGuide') return vscode.env.openExternal(vscode.Uri.parse('https://github.com/chengzhongshan/MCP4SAS/blob/main/integrations/vscode/README.md'));
+      if (message.action==='downloadJars') return vscode.env.openExternal(vscode.Uri.parse(guide.SAS_DOWNLOAD));
+      if (!['selectJars','login','test','continue'].includes(message.action)) return;
+      trusted();
+      if (setupPromise) return vscode.window.showInformationMessage('Setup is still running. Follow the progress checklist; do not start another installation.');
+      const action={selectJars:configureJars,login:configureLogin,test:testSelectedSas,continue:setup}[message.action];
+      await action();
+    } catch(error) {renderSetup(error.message);vscode.window.showErrorMessage('MCP4SAS: '+error.message);}
+  });
+  renderSetup();
+  return setupPanel;
+}
+async function setupStep(id,title,work) {
+  const started=Date.now();
+  setupStates[id]={status:'running',detail:title};renderSetup(title);
+  return vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'MCP4SAS: '+title,cancellable:false},async progress=>{
+    const pulse=()=>{
+      const message=`${guide.elapsed(started)} elapsed. ${id==='cygwin'?'Cygwin downloads can take more than five minutes. Keep the installer and VS Code open.':'Setup is still being monitored. Open the installation log for details.'}`;
+      setupStates[id].detail=title+' — '+message;renderSetup(message);progress?.report({message});
+    };
+    pulse();const interval=timers.setInterval(pulse,10000);
+    try {const result=await work();setupStates[id]={status:'complete',detail:title+' — finished in '+guide.elapsed(started)};renderSetup('Completed: '+title);return result;}
+    catch(error){setupStates[id]={status:'failed',detail:error.message};renderSetup('Setup stopped at '+title+'. Fix the reported issue, then Continue Quick Setup.');throw error;}
+    finally{timers.clearInterval(interval);}
+  });
+}
+async function ensureSetupWorkspace() {
+  if (vscode.env.remoteName) {trusted();return false;}
+  if (vscode.workspace.workspaceFolders?.length) {
+    trusted();setupStates.folder={status:'complete',detail:'Project folder is open and trusted.'};renderSetup();return true;
+  }
+  const choice=await vscode.window.showInformationMessage('First open the project folder where MCP4SAS scripts and your SAS programs will be saved. Select a folder you own. VS Code may ask you to trust it; setup continues after it opens.',{modal:true},'Choose Project Folder');
+  if (choice!=='Choose Project Folder') return false;
+  const directory=await folder('Choose your MCP4SAS project folder');if(!directory)return false;
+  await core.assertWritableProject(directory,undefined,{platform:'native'});
+  await context.globalState.update('pendingSetup',{folder:directory,created:Date.now()});
+  await vscode.commands.executeCommand('vscode.openFolder',vscode.Uri.file(directory),false);
+  return false; // Opening a folder reloads the window. Activation resumes safely.
+}
 const configFile = () => path.join(context.globalStorageUri.fsPath, 'runtime.json');
 const readConfig = () => fs.existsSync(configFile()) ? JSON.parse(fs.readFileSync(configFile(), 'utf8')) : null;
 function trusted() {
@@ -66,17 +123,19 @@ async function bootstrapCygwin(existingPerl, packages = 'bash,git,curl,perl,ca-c
   const cache = path.join(context.globalStorageUri.fsPath, 'downloads');
   fs.mkdirSync(cache, { recursive: true });
   const setup = path.join(cache, 'setup-x86_64.exe');
-  await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Downloading official Cygwin setup' }, async () => {
-    const response = await fetch('https://cygwin.com/setup-x86_64.exe');
+  await setupStep('cygwin','Prepare Cygwin — downloading the official installer',async () => {
+    const response = await fetch('https://cygwin.com/setup-x86_64.exe',{signal:AbortSignal.timeout(120000)});
     if (!response.ok) throw new Error(`Cygwin download failed: HTTP ${response.status}`);
     fs.writeFileSync(setup, Buffer.from(await response.arrayBuffer()));
-  });
   output.appendLine('Installing a per-user Cygwin environment. Package downloads may take several minutes.'); output.show(true);
-  // setup runs hidden; progress is reported here. No shell-built command or elevation.
+  renderSetup('Cygwin is installing. Its progress window and the elapsed-time notification may remain open for more than five minutes.');
+  // User-facing setup: retain the official progress window as well as VS Code
+  // feedback. No shell-built command, hidden GUI, or elevation is required.
   await new Promise((resolve, reject) => {
-    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', packages], { windowsHide: true, env: core.cygwinEnvironment(path.join(root, 'bin', 'perl.exe')) });
+    const p = spawn(setup, ['-q', '-B', '-n', '-N', '-d', '--no-write-registry', '-R', root, '-l', path.join(cache, 'packages'), '-s', 'https://mirrors.kernel.org/sourceware/cygwin/', '-P', packages], { windowsHide: false, env: core.cygwinEnvironment(path.join(root, 'bin', 'perl.exe')) });
     p.on('error', reject); p.stdout?.on('data', b => output.append(b.toString())); p.stderr?.on('data', b => output.append(b.toString()));
     p.on('close', code => code === 0 ? resolve() : reject(new Error(`Cygwin setup returned ${code}. Inspect ${root}/var/log/setup.log, then retry.`)));
+  });
   });
   return path.join(root, 'bin', 'perl.exe');
 }
@@ -84,7 +143,7 @@ async function ensureCygwinPrerequisites(perl) {
   const bash=path.join(path.dirname(perl),'bash.exe'),env=core.cygwinEnvironment(perl);
   const probe=fs.readFileSync(path.join(__dirname,'cygwin_prerequisites.sh'),'utf8')+'\ncygwin_missing_prerequisites\n';
   const missing=[...new Set((await core.run(bash,['--noprofile','--norc','-c',probe],{env,timeout:30000})).split(/\s+/).filter(Boolean))];
-  if(!missing.length){output.appendLine('Cygwin prerequisites already work; keeping installed packages and active sessions.');return;}
+  if(!missing.length){output.appendLine('Cygwin prerequisites already work; keeping installed packages and active sessions.');setupStates.cygwin={status:'complete',detail:'Reusing the working Cygwin installation; no package upgrades.'};renderSetup();return;}
   const state=await core.run(bash,['--noprofile','--norc','-c','printf "MCP4SAS_PROBE_PID=%s\\n" "$$"; /usr/bin/ps -l'],{env});
   const probePid=Number(state.match(/MCP4SAS_PROBE_PID=(\d+)/)?.[1]);
   const busy=state.split(/\r?\n/).map(line=>line.match(/^\s*(?:[A-Z]\s+)?(\d+)\s+(\d+)\s+\d+\s+\d+\s/)).filter(m=>m&&Number(m[1])!==probePid&&Number(m[2])!==probePid);
@@ -147,6 +206,7 @@ async function installNew() {
   const workspace = workspaces.length === 1 ? workspaces[0] : await vscode.window.showWorkspaceFolderPick({ placeHolder: 'Choose the open folder for MCP4SAS scripts' });
   if (!workspace) return;
   const repo = workspace.uri.fsPath;
+  if(process.platform!=='win32'){setupStates.cygwin={status:'not needed',detail:'Cygwin is only used on Windows.'};setupStates.java={status:'pending',detail:'The platform installer checks Java.'};renderSetup();}
   await core.assertWritableProject(repo, undefined, { platform: 'native' });
   let perl = await findPerl();
   if (process.platform === 'win32' && !perl) {
@@ -156,7 +216,7 @@ async function installNew() {
     if (!perl) return;
   }
   await core.assertWritableProject(repo, perl);
-  const java = process.platform === 'win32' ? await ensureWindowsJava() : undefined;
+  const java = process.platform === 'win32' ? await setupStep('java','Find or install Windows Java',ensureWindowsJava) : undefined;
   if(process.platform === 'win32')await ensureCygwinPrerequisites(perl);
   const cygwinEnv = process.platform === 'win32' ? await prepareCygwinTrust(perl) : undefined;
   const install = core.platformInstaller(process.platform);
@@ -164,6 +224,7 @@ async function installNew() {
   if (fs.existsSync(path.join(repo, 'server.pl'))) {
     core.assertRepo(repo); // Never reset/pull an existing checkout silently.
     output.appendLine(`Using existing MCP4SAS source: ${repo}`);
+    setupStates.source={status:'complete',detail:'Reusing the MCP4SAS source in this folder.'};renderSetup();
   } else {
     const git = process.platform === 'win32' ? path.join(path.dirname(perl), 'git.exe') : 'git';
     if (process.platform === 'linux') {
@@ -173,8 +234,10 @@ async function installNew() {
     const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp4sas-source-'));
     try {
       const source = path.join(staging, 'source');
-      await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `Downloading MCP4SAS scripts into ${repo}` }, () => core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: cygwinEnv } : {}) }));
-      core.installSourceFiles(source, repo);
+      await setupStep('source',`Download MCP4SAS scripts into ${repo}`,async()=>{
+        await core.run(git, ['clone', '--depth', '1', 'https://github.com/chengzhongshan/MCP4SAS.git', source], { timeout: 300000, ...(process.platform === 'win32' ? { env: cygwinEnv } : {}) });
+        core.installSourceFiles(source, repo);
+      });
       output.appendLine(`MCP4SAS source copy completed: ${repo}`);
     } finally {
       await core.cleanupStaging(staging, message => output.appendLine(message));
@@ -187,7 +250,8 @@ async function installNew() {
   const logfile=path.join(repo,'local','install-logs','vscode-'+Date.now()+'.log');
   const wrapper=path.join(__dirname,'installer-task.sh');
   const [wrapperPath,logPath]=process.platform==='win32' ? await Promise.all([core.toPosix(wrapper,perl),core.toPosix(logfile,perl)]) : [wrapper,logfile];
-  await task(bash, ['--noprofile', '--norc', wrapperPath,logPath,script], repo, { ...(process.platform === 'win32' ? {...cygwinEnv,MCP4SAS_SKIP_CYGWIN_SETUP:'1'} : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) },{logFile:logfile});
+  await setupStep('libraries','Install MCP4SAS libraries — keep the installer terminal open',()=>task(bash, ['--noprofile', '--norc', wrapperPath,logPath,script], repo, { ...(process.platform === 'win32' ? {...cygwinEnv,MCP4SAS_SKIP_CYGWIN_SETUP:'1'} : {}), ...(java ? { SASPY_JAVA_WIN: java } : {}) },{logFile:logfile}));
+  if(process.platform!=='win32'){setupStates.java={status:'complete',detail:'Java checked by the platform installer.'};renderSetup();}
   // macOS installer may install Homebrew Perl for the first time.
   perl = core.installedPerl(await findPerl(), perl);
   return { repo, perl, java, cwd: repo };
@@ -274,7 +338,13 @@ function refreshLauncher() {
   for (const name of ['relay.js', 'core.js', 'routing.js']) core.writePrivate(path.join(context.globalStorageUri.fsPath, name), fs.readFileSync(path.join(context.extensionPath, 'src', name)));
 }
 async function setup() {
-  trusted();
+  if(setupPromise){showSetupGuide();return setupPromise;}
+  setupPromise=runSetup();
+  try{return await setupPromise;}finally{setupPromise=undefined;}
+}
+async function runSetup() {
+  showSetupGuide();
+  if(!await ensureSetupWorkspace())return;
   const route = await vscode.window.showQuickPick(['Use my existing MCP4SAS installation', 'Install MCP4SAS for this computer'], { title: 'MCP4SAS Quick Setup' });
   if (!route) return;
   let runtime;
@@ -285,7 +355,9 @@ async function setup() {
     runtime = { repo, perl };
   } else runtime = await installNew();
   if (!runtime || !await saveRuntime(runtime)) return;
-  await connect();
+  const connected=await connect();
+  setupStates.assistant=connected?{status:'complete',detail:'Connection choices saved. Refresh the selected assistant to use its tools.'}:{status:'action needed',detail:'Run Connect Copilot and/or Codex to choose your assistant.'};
+  renderSetup('Runtime setup finished. Use the SAS access steps below for any missing JARs or credentials, then Test selected SAS.');
 }
 function launchSettings() {
   return core.launcher(configFile(), path.join(context.globalStorageUri.fsPath, 'relay.js'), process.execPath);
@@ -305,6 +377,7 @@ async function connect() {
   await context.globalState.update('copilotEnabled', targets.some(t => t.label === 'GitHub Copilot'));
   emitter.fire();
   vscode.window.showInformationMessage('MCP4SAS is configured. Refresh/restart the selected assistant, allow its MCP server when prompted, then run MCP4SAS: Check Connection. SAS login still requires your private SASPy setup.');
+  return true;
 }
 async function check() {
   trusted(); const config = readConfig(); if (!config) return setup();
@@ -347,7 +420,7 @@ async function check() {
     if (action === 'Open setup guide') await help();
   } finally { clearTimeout(timer); rl.close(); p.stdin.end(); }
 }
-async function help() { await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
+async function help() { if(!showSetupGuide())await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
 async function installLocalSupport(config, found) {
   let python=found.native?.candidate;
   if(!python && process.platform==='win32') {
@@ -396,9 +469,17 @@ async function detectSetup(choose=false,forceChoice=false) {
   updateTargetStatus();
   output.appendLine('Detected Python: '+(updated.python||'installer environment')+'; SASPy target: '+(updated.saspyCfgname||'oda'));
   if(kind==='oda'&&found.oda?.missing_jars?.length&&found.jarDirectory)await configureJars(found.jarDirectory);
-  else if(kind==='oda'&&found.oda?.missing_jars?.length)output.appendLine('SAS encryption files are missing. Download them from https://support.sas.com/downloads/package.htm?pid=2494, extract them into Downloads/SAS-ODA-JarFiles, and rerun Detect SAS Setup, or use Configure SAS Encryption JARs.');
+  else if(kind==='oda'&&found.oda?.missing_jars?.length) {
+    output.appendLine('SAS encryption files are missing. The setup guide has the official SAS download and a ZIP/folder selector.');
+    showSetupGuide();setupStates.sas={status:'action needed',detail:'Get the three SAS encryption JARs using the download instructions below, then configure your private ODA login.'};renderSetup('ODA is selected; SAS execution is not verified yet.');
+  } else {setupStates.sas={status:'ready to test',detail:'SAS environment detected. Test selected SAS to verify actual execution.'};renderSetup();}
   if(choose) {
-    const action=await vscode.window.showInformationMessage('SAS target saved. The next assistant submission uses this target. Existing terminals keep their previous environment; open a new runtime terminal for manual commands.','Test SAS Now','Open Runtime Terminal');
+    const needsJars=kind==='oda'&&found.oda?.missing_jars?.length&&!found.jarDirectory;
+    const action=needsJars
+      ? await vscode.window.showInformationMessage('SAS OnDemand is selected, but its encryption files are missing. Complete the SAS download and private login steps in the setup guide before testing.','Open Setup Guide','Configure SAS JARs')
+      : await vscode.window.showInformationMessage('SAS target saved. The next assistant submission uses this target. Existing terminals keep their previous environment; open a new runtime terminal for manual commands.','Test SAS Now','Open Runtime Terminal');
+    if(action==='Open Setup Guide')showSetupGuide();
+    if(action==='Configure SAS JARs')await configureJars();
     if(action==='Test SAS Now')await testSelectedSas();
     if(action==='Open Runtime Terminal')await openRuntimeTerminal();
   }
@@ -432,6 +513,7 @@ async function testSelectedSas() {
     if(!/^MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\s*$/m.test(log)||/^\s*ERROR(?:\s+\d+-\d+)?:/m.test(log))throw new Error('SAS check did not return the expected observed values. Inspect Output > MCP4SAS and '+directory);
   });
   output.appendLine('Verified SAS target '+(config.saspyCfgname||'oda')+'. Log and output: '+directory);
+  setupStates.sas={status:'complete',detail:'Actual SAS execution verified: 19 ages, 0 missing, minimum 11, maximum 16.'};renderSetup('SAS test passed. You can now use your selected assistant or the project runners.');
   await vscode.window.showInformationMessage('SAS execution verified: 19 ages, 0 missing, minimum 11, maximum 16. Target: '+(config.saspyCfgname||'oda'));
   return directory;
 }
@@ -447,18 +529,31 @@ async function configureLogin() {
 }
 async function configureJars(detectedDirectory) {
   trusted(); const config = readConfig(); if (!config) return setup();
-  const directory = typeof detectedDirectory === 'string' ? detectedDirectory : await folder('Select folder containing sas.rutil.jar, sas.rutil.nls.jar and sastpj.rutil.jar (download from SAS first)');
-  if (!directory) return;
-  const missing = ['sas.rutil.jar', 'sas.rutil.nls.jar', 'sastpj.rutil.jar'].filter(name => {
-    try { const st = fs.statSync(path.join(directory, name)); return !st.isFile() || !st.size; } catch { return true; }
-  });
-  if (missing.length) throw new Error(`Missing SAS encryption files: ${missing.join(', ')}. Download from https://support.sas.com/downloads/package.htm?pid=2494 using your SAS Profile, extract the archive, and select the directory directly containing all three files. Then rerun MCP4SAS: Configure SAS Encryption JARs.`);
+  if(/^(winlocal_com|linuxlocal|local|stdio)$/.test(config.saspyCfgname||''))throw new Error('SAS encryption JARs are for an ODA/IOM connection. Local SAS COM/STDIO does not require them. Switch to your ODA/IOM target before configuring its JARs.');
+  showSetupGuide();
+  let source=typeof detectedDirectory==='string'?detectedDirectory:undefined;
+  if(!source) {
+    const choice=await vscode.window.showQuickPick(['Select downloaded SAS ZIP','Select extracted SAS folder','Open official SAS download page'],{title:'SAS encryption files — from SAS, not a third-party download'});
+    if(!choice)return;
+    if(choice.startsWith('Open')){await vscode.env.openExternal(vscode.Uri.parse(guide.SAS_DOWNLOAD));renderSetup('Sign in on the SAS website, download the archive, then Select downloaded ZIP or folder here.');return;}
+    if(choice.includes('ZIP'))source=(await vscode.window.showOpenDialog({title:'Select the SAS-provided ZIP archive in Downloads',canSelectFiles:true,canSelectFolders:false,canSelectMany:false,filters:{'ZIP archives':['zip']},defaultUri:vscode.Uri.file(path.join(os.homedir(),'Downloads'))}))?.[0].fsPath;
+    else source=await folder('Select the extracted SAS download folder (inner subfolders are searched)',path.join(os.homedir(),'Downloads'));
+  }
+  if(!source)return;
+  if(!config.python)throw new Error('Finish Quick Setup so MCP4SAS can find your SASPy Python, then select the SAS download.');
   const env = await core.runtimeEnvironment(config);
-  const script = await core.toPosix(path.join(config.repo, 'install', 'install_saspy_iom_jars.sh'), config.perl);
-  const bash = process.platform === 'win32' ? path.join(path.dirname(config.perl), 'bash.exe') : '/bin/bash';
-  const jarDirectory = await core.toPosix(directory, config.perl);
-  await task(bash, ['--noprofile', '--norc', script], config.repo, { ...env, MCP4SAS_SASPY_IOM_DIR: jarDirectory });
-  vscode.window.showInformationMessage('SAS JAR helper completed for the installer environment. Custom SASPy configurations must reference these files too. Restart the assistant connection and use a fresh SAS session before retrying.');
+  let command=config.python,args=[path.join(__dirname,'sas_jars.py'),'--source',source];
+  if(process.platform==='win32'&&!/^[A-Za-z]:[\\/].*\.exe$/i.test(config.python)) {
+    command=path.join(path.dirname(config.perl),'bash.exe');
+    args=['--noprofile','--norc','-c','exec "$@"','mcp4sas-jars',config.python,await core.toPosix(path.join(__dirname,'sas_jars.py'),config.perl),'--source',await core.toPosix(source,config.perl)];
+  }
+  let result;
+  try {result=await setupStep('sas','Install the SAS encryption files into the selected SASPy environment',()=>core.run(command,args,{cwd:config.repo,env,timeout:120000}));}
+  catch(error){throw new Error(`${error.message}\nDownload all three files (sas.rutil.jar, sas.rutil.nls.jar, sastpj.rutil.jar) from ${guide.SAS_DOWNLOAD} using your SAS Profile. Select the SAS ZIP or extracted folder in the setup guide.`);}
+  if(!result.includes('MCP4SAS_JARS_JSON='))throw new Error('SAS JAR installation did not return its verification record. Inspect the MCP4SAS output.');
+  output.appendLine(result);
+  setupStates.sas={status:'ready to test',detail:'Three SAS encryption files installed in the selected SASPy. Configure ODA login and test a fresh SAS session; custom explicit classpaths must include these files.'};renderSetup();
+  vscode.window.showInformationMessage('SAS encryption files installed. Configure ODA login, then Test Selected SAS. If your custom SASPy configuration explicitly sets a classpath, ensure it includes these three files; existing SAS sessions need restarting.','OK');
 }
 async function activate(ctx) {
   context = ctx; output = vscode.window.createOutputChannel('MCP4SAS'); emitter = new vscode.EventEmitter();
@@ -484,6 +579,11 @@ async function activate(ctx) {
       if (perl) await configureCygwinTerminal(perl);
     } catch (e) { output.appendLine(`Cygwin terminal setup: ${e.message}`); }
   }
-  return { provider, configFile, launchSettings, configureCygwinTerminal, openRuntimeTerminal, detectSetup, testSelectedSas, updateTargetStatus, task }; // Also exercised by extension-host tests.
+  const pending=context.globalState.get('pendingSetup');
+  if(vscode.workspace.isTrusted&&!vscode.env.remoteName&&guide.pendingMatches(pending,vscode.workspace.workspaceFolders||[])) {
+    await context.globalState.update('pendingSetup',undefined);
+    Promise.resolve().then(()=>setup()).catch(error=>{output.appendLine(error.message);showSetupGuide();renderSetup(error.message);vscode.window.showErrorMessage('MCP4SAS: '+error.message);});
+  }
+  return { provider, configFile, launchSettings, configureCygwinTerminal, openRuntimeTerminal, detectSetup, testSelectedSas, updateTargetStatus, task, ensureSetupWorkspace, setupStep, bootstrapCygwin, showSetupGuide }; // Also exercised by extension-host tests.
 }
 module.exports = { activate };

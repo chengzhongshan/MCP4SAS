@@ -7,6 +7,15 @@ configuration and Python interpreter for the connection you intend to use.
 
 ## Missing SAS encryption JARs or encryption key exchange failure
 
+**VS Code users:** open **MCP4SAS: Open Setup Guide**, click **Open official SAS
+download**, and sign in on SAS's website if asked. Download the SAS archive,
+then click **Select downloaded ZIP or folder**. The extension searches inside
+ZIPs and extracted parent folders, validates the three files, and installs
+them into your selected SASPy environment. It repairs installer-managed static
+classpaths and preserves custom configurations. Finish with **Test selected
+SAS** in a fresh session. The terminal instructions below are an alternative;
+their directory variable still requires the folder directly containing the JARs.
+
 SASPy documents the encryption files required by SAS ODA. An encryption key
 exchange error can indicate missing files or an incomplete IOM classpath;
 preserve the complete exception if the problem continues after configuration.

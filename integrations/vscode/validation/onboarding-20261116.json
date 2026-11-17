@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-16",
+  "version": "0.1.5",
+  "baseline_commit": "dd718da0627a24be62064ac68c0a7d692222432a",
+  "tests": {
+    "node_tests": 52,
+    "jar_helper_tests": 6,
+    "existing_python_tests": 82,
+    "perl_java_guidance_assertions": 38,
+    "real_vscode_host": "PASS: activation, eleven commands, provider, process tasks, guide webview content",
+    "six_minute_cygwin_progress": "Simulated clock; visible-window spawn arguments checked",
+    "rendered_guide_preview": "PASS: inspected standalone browser preview, no horizontal overflow, fixed JAR action",
+    "native_window_capture": "Not completed: FrameArrived timed out / window capture timed out after recovery",
+    "actual_cygwin_helper": "PASS: Bash, Cygwin Python, ZIP path with spaces and isolated fake SASPy package; no real JARs changed"
+  },
+  "fresh_end_to_end_installation": false,
+  "proprietary_jars_downloaded": false,
+  "sas_credentials_changed": false,
+  "mp4_changed": false,
+  "video_companion_page_updated": true,
+  "source_hashes": {
+    "extension.js": "8bd7d5fd69c23e87c7b66d99a4de78c6c1a1658b32020df3072a991517ddbd8b",
+    "setup-guide.js": "f0736ca626f1a1565d4b410f71f6ec095ee9e828e9af910a43c1f1bbd0ecc087",
+    "sas_jars.py": "5bb948c880f27e5859d30d514b854db5ce4fa0f3a877ec7d8e906bcf30d688a2"
+  }
+}

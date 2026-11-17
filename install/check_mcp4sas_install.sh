@@ -77,5 +77,6 @@ perl tests/test_sas_supplied_autocall.pl
 perl tests/test_literal_execution_contexts.pl
 PIPELINE_PYTHON_BIN="${python_bin}" perl tests/test_python_path_boundary.pl
 "${python_bin}" tests/test_persistent_archive.py
+"${python_bin}" -m unittest discover -s integrations/vscode/test -p test_sas_jars.py
 
 printf 'MCP4SAS installation smoke check: PASS\n'
