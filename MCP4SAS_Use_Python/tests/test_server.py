@@ -88,12 +88,12 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                     async with ClientSession(read,write) as session:
                         await self.check_session(session,temp)
             finally:
-                process.terminate()
-                try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait()
+                # On Windows a venv launcher can have a separate Python child.
+                # Terminating just the launcher leaves the HTTP server holding
+                # http.log open and breaks TemporaryDirectory cleanup.
+                from MCP4SAS_Use_Python.transport import stop_owned_pid
+                stop_owned_pid(process.pid,grace_seconds=.1,process=process)
+                process.wait(timeout=10)
 
 if __name__=='__main__':
     unittest.main()
