@@ -21,7 +21,7 @@ class TerminalOutputTests(unittest.TestCase):
             def run(self, *args, **kwargs):
                 return dict(log=log,lst=html,diagnostics=diagnostics.classify(log))
         with tempfile.TemporaryDirectory() as temp:
-            output=Path(temp)/'result'
+            output=(Path(temp)/'result').resolve()
             with patch('MCP4SAS_Use_Python.runner.Runner',FakeRunner),patch.dict(os.environ,{'OPEN_RESULT':'0'}),contextlib.redirect_stdout(io.StringIO()) as terminal:
                 status=main(['--code','%macroparas(macrorgx=GTEx);proc print;run;','--skip-sas-oda-auth-bootstrap','--output-prefix',str(output),*extra])
             return status,terminal.getvalue(),(output/'output.html.info.txt').read_text(),str(output)
