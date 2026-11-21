@@ -18,6 +18,13 @@ python run_sas_codes_or_files_in_ODA.py --file test.sas
 python examples/poc/run_example.py --case clustergram
 ```
 
+Normal terminal output matches the Perl runner's compact result messages.
+For example, `python run_sas_codes_or_files_in_ODA.py --code
+"%macroparas(macrorgx=GTEx);proc print;run;"` reports the saved HTML and full SAS
+log paths and completion status. The original macro's styled HTML is retained.
+Add `--print-sas-log` to print the complete report in the terminal; `--json`
+continues to return the structured result.
+
 After Quick Setup has installed and configured the compatible project SASPy
 environment, the direct runner finds it automatically. You do not need a
 PowerShell activation command. This reuses an installed environment; it does

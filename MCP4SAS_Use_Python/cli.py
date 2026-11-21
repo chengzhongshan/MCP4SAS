@@ -33,6 +33,28 @@ def normalize_cli_code_text(text):
     return (text.replace('\\r\\n','\n').replace('\\n','\n')
             .replace('\\r','\r').replace('\\t','\t'))
 
+
+def terminal_summary(result, log_path, html_path=None, submitted=False, listing=''):
+    """Use the Perl CLI's compact result messages; keep the full SAS log on disk."""
+    lines=[]
+    if listing:
+        lines.append(listing.rstrip('\n'))
+    failed=bool(result.get('exit_code'))
+    if html_path and not failed:
+        lines.append('HTML output saved to: '+str(html_path))
+    lines.append('SAS log for debug saved to: '+str(log_path))
+    if result.get('error'):
+        lines.append('ERROR: '+result['error'])
+    elif failed:
+        errors=result.get('diagnostics',{}).get('errors',[])
+        lines.append('SAS execution failed: '+('; '.join(line.strip() for line in errors[:3]) or 'see the retained SAS log.'))
+    if submitted and not failed:
+        if html_path:
+            lines.append("\nSAS job is completed!\n\nif using AI agent gemini CLI, please press the keyboard 'ESCAPE' key to exit and type 'Check results' !")
+        else:
+            lines.append('\nSAS job completed without a downloadable HTML artifact. Programs that only calculate values or write to the SAS log may produce no HTML. See the SAS log above for results.')
+    return '\n'.join(lines)+'\n'
+
 def _python_candidates():
     configured=os.environ.get('PIPELINE_PYTHON_BIN')
     if configured:
@@ -179,6 +201,7 @@ See docs/RUNNER_CLI_PARITY.md for deliberate differences from Perl.
     group.add_argument('--file','-file','-f',help='SAS program file to execute.')
     p.add_argument('--macro-dir','-m',help='Local directory containing SAS macros; an unreachable directory falls back to the current working directory.')
     p.add_argument('--output-prefix','-p',help='Output directory/prefix for run artifacts.')
+    p.add_argument('--print-sas-log',action='store_true',help='Print the full retained SAS report in the terminal. By default, show the same compact result messages as the Perl runner.')
     p.add_argument('--session-id','-s',help='Reuse a persistent SAS session with this ID.')
     p.add_argument('--persistent',action=argparse.BooleanOptionalAction,default=None,help='Keep a SAS session alive; --session-id is required to reuse it.')
     p.add_argument('--skip-upload-if-same',action=argparse.BooleanOptionalAction,default=True,help='Reuse an unchanged remote upload with the same basename.')
@@ -391,6 +414,13 @@ def execute(args):
     if plan.macro_dir_warning:
         preflight+='\n'+plan.macro_dir_warning
     report='=== Submission Preflight ===\n'+preflight+'\n=== SAS Log ===\n'+result.get('log','')+'\n=== Output ===\n'+output_summary
+    listing=''
+    if args.dir4listing and 'files' in result:
+        listing+='Listing files in the remote SAS ODA dir: '+args.dir4listing+'...\n'
+        if session_id:
+            listing+="Using persistent SAS ODA session '"+session_id+"' for remote dir listing...\n"
+        listing+='Files in the directory: '+args.dir4listing+'\n'+'\n'.join(result['files'])+'\n'
+        report+='\n'+listing
     if result.get('error'):
         report+='\nERROR: '+result['error']+'\n'
     log_path=outdir/'output.html.info.txt'
@@ -401,7 +431,11 @@ def execute(args):
     atomic_json(outdir/'result.json',result)
     status.update(state='completed' if code_exit==0 else 'timeout' if code_exit==124 else 'failed',complete=True,success=code_exit==0,exit_code=code_exit,finished_at=datetime.now(timezone.utc).isoformat(),log_path=str(log_path),failure_class=result['diagnostics']['failure_class'] or ('timeout' if code_exit==124 else 'runtime_error' if result.get('error') else ''))
     atomic_json(status_path,status)
-    print(json.dumps(result,ensure_ascii=False) if args.json else report+'\nSAS log for debugging saved to: '+str(log_path)+'\n'+diagnostics.format_summary(result['diagnostics']))
+    if args.json:
+        print(json.dumps(result,ensure_ascii=False))
+    else:
+        terminal=(report+'\nSAS log for debug saved to: '+str(log_path)+'\n') if args.print_sas_log else terminal_summary(result,log_path,html_path,bool(code or args.check_sas_oda_login_only),listing)
+        print(terminal+diagnostics.format_summary(result['diagnostics']),end='')
     return code_exit
 
 def main(argv=None):

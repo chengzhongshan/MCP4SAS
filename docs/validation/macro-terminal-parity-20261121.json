@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-21",
+  "command": "python ./run_sas_codes_or_files_in_ODA.py --code \"%macroparas(macrorgx=GTEx);proc print;run;\"",
+  "comparison_runner": "perl ./run_sas_codes_or_files_in_ODA.pl",
+  "environment": "same Cygwin project environment and configured SAS ODA target",
+  "python_exit_code": 0,
+  "perl_exit_code": 0,
+  "completion_section_matches_after_generated_path_normalization": true,
+  "same_macro_source_sections": 14,
+  "original_styled_html_preserved": true,
+  "original_macro_source_replaced": false,
+  "python_terminal_lines_before_fix": 1632,
+  "python_terminal_lines_after_fix": 6,
+  "perl_terminal_lines_including_connection_lifecycle_diagnostics": 32,
+  "full_report_saved": true,
+  "full_report_terminal_option": "--print-sas-log",
+  "json_mode_preserved": true,
+  "scope": "The actionable completion section matches; runtime-specific connection/startup diagnostics are not fabricated to make full transcripts byte-identical. The inspected research macros were not executed."
+}

@@ -1,6 +1,6 @@
 # Perl/Python runner parameters and HTML opening
 
-Reviewed 15 November 2026. Both entry points run SAS through SASPy:
+Reviewed 21 November 2026. Both entry points run SAS through SASPy:
 
 ```bash
 perl run_sas_codes_or_files_in_ODA.pl --help
@@ -47,7 +47,13 @@ remote files by position.
 * **Output/preflight:** Python adds `--json` and `--submission-preflight` /
   `--no-submission-preflight`. Its dry-run reports a dependency plan as JSON;
   Perl's CLI dry-run prints session settings. Output filenames and status/log
-  formats differ. Both preserve the SAS log and output artifacts.
+  formats differ. Both preserve the SAS log and output artifacts. Normal Python
+  submissions now use the same compact terminal completion messages as Perl:
+  HTML path, retained SAS-log path, and completion/no-HTML status. Python does
+  not dump the complete SAS source/log into the terminal by default. Use
+  `--print-sas-log` to explicitly print the retained report, or `--json` for
+  structured output. Directory listings are visible in the terminal and saved
+  text log as well as `result.json`.
 * **Timeout scope:** the Perl wrapper has an overall watchdog. Python bounds
   individual backend operations, so startup, several transfers and shutdown can
   add elapsed time beyond one operation's limit. The same option name does not
