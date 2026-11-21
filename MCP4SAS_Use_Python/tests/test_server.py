@@ -72,7 +72,7 @@ class MCPServerTests(unittest.IsolatedAsyncioTestCase):
                 port=probe.getsockname()[1]
             env=dict(os.environ,MCP4SAS_PYTHON_STATE_DIR=str(Path(temp)/'state'))
             with (Path(temp)/'http.log').open('wb') as log:
-                process=subprocess.Popen([sys.executable,str(ROOT/'server.py'),'daemon','--port',str(port)],cwd=temp,env=env,stdout=log,stderr=log)
+                process=subprocess.Popen([sys.executable,str(ROOT/'server.py'),'daemon','--port',str(port)],cwd=temp,env=env,stdout=log,stderr=log,start_new_session=os.name!='nt',creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
             try:
                 url=f'http://127.0.0.1:{port}/mcp'
                 async with httpx.AsyncClient() as client:
