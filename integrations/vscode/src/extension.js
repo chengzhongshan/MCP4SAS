@@ -462,7 +462,7 @@ async function detectSetup(choose=false,forceChoice=false) {
   const generatedLocalFile=path.join(context.globalStorageUri.fsPath,'detected-local-sas.py');
   if(kind==='local'&&(!updated.saspyCfgfile||updated.saspyCfgfile===generatedLocalFile)) {
     const file=path.join(context.globalStorageUri.fsPath,'detected-local-sas.py');
-    const text=localProfile.source(updated);
+    const text=localProfile.source(updated,process.platform);
     core.writePrivate(file,text);updated.saspyCfgfile=file;
   }
   if(kind==='oda'&&!updated.saspyCfgfile&&fs.existsSync(path.join(config.repo,'sascfg_personal.py')))updated.saspyCfgfile=path.join(config.repo,'sascfg_personal.py');

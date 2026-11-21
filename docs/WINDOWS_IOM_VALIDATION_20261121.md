@@ -19,6 +19,7 @@ version number. Tests were completed before updating GitHub.
   by executing Python, retained as backups, and rebuilt.
 - The connection-only probe converts a Windows executable path before launching
   it through Cygwin `sh`. Python script arguments keep the native path convention.
+  Both compatibility runner files contain the same fix and remain byte-identical.
 - Direct batch tools are hidden from MCP discovery by default. They remain an
   explicit `MCP4SAS_ENABLE_DIRECT_SAS_TOOLS=1` option.
 
@@ -47,6 +48,11 @@ version number. Tests were completed before updating GitHub.
 The standard SASHELP.CLASS fixture returned 19 known ages, 0 missing, minimum
 11 and maximum 16. Expected negative checks were deliberate and were followed by
 successful recovery checks.
+
+Publication CI additionally checks the byte-identical Perl aliases and runs the
+Windows setup simulation on Linux and macOS. The profile generator receives the
+selected platform explicitly so those simulations exercise Windows IOM instead
+of inheriting the test runner's host OS.
 
 ## Original macroparas preserved
 

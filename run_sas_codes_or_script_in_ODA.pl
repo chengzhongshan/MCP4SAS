@@ -743,7 +743,21 @@ PY
 
     local $ENV{PYTHONPATH} = resolve_pythonpath() unless defined $ENV{PYTHONPATH} && length $ENV{PYTHONPATH};
     my $script_path_for_python = SAS_ODA_Runner::_normalize_local_path_for_python($script_path, $python_bin);
-    my $cmd = join(' ', sh_quote($python_bin), sh_quote($script_path_for_python), '2>&1');
+    # Perl's list-form exec accepts Windows paths under Cygwin, but sh does
+    # not. Convert only the executable; native Python still needs its script
+    # argument in Windows form. Use this Perl's Cygwin mount table.
+    my $shell_python = $python_bin;
+    if ($^O eq 'cygwin' && $shell_python =~ m{^(?:[A-Za-z]:[\\/]|\\\\)}) {
+        my $cygpath = File::Spec->catfile(dirname($^X), 'cygpath.exe');
+        $cygpath = 'cygpath' unless -x $cygpath;
+        open my $convert, '-|', $cygpath, '-au', $shell_python
+          or die "Cannot convert Python executable for Cygwin shell: $!\n";
+        $shell_python = <$convert> // '';
+        close $convert or die "cygpath failed for Python executable $python_bin\n";
+        $shell_python =~ s/[\r\n]+\z//;
+        die "Empty Cygwin path for Python executable $python_bin\n" unless length $shell_python;
+    }
+    my $cmd = join(' ', sh_quote($shell_python), sh_quote($script_path_for_python), '2>&1');
     my $raw = qx{$cmd};
     my $status = $? >> 8;
     my $parsed;

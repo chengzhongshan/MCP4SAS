@@ -21,8 +21,8 @@
   "html_source_compilation": "PASS",
   "artifact": {
     "file": "mcp4sas-0.1.5.vsix",
-    "sha256": "cddb6bbcec6d6633fd610332327775cf1a45a441f4b6814fc60b51a642e7b872",
-    "bytes": 113520
+    "sha256": "587a2c1d5183dd8148fe731d2433471577d66545b0519d3c4c90bd7df9f64db8",
+    "bytes": 113525
   },
   "evidence": {
     "native_setup": [
@@ -223,9 +223,10 @@
   "source_sha256": {
     "server.pl": "601d7cff5b32c6a70f23f0da008e2dfed1b43c7b240316e612f77494e35b5458",
     "run_sas_codes_or_files_in_ODA.pl": "befff0be47ce87515e88744d97a65784ba6bf59996699b125009ee82da5f12f2",
+    "run_sas_codes_or_script_in_ODA.pl": "befff0be47ce87515e88744d97a65784ba6bf59996699b125009ee82da5f12f2",
     "integrations/vscode/src/core.js": "0f1995618ab6e2693cf2554c31bb0c728e716b1fd9b272fcf34b11b6d041cc24",
     "integrations/vscode/src/detect.js": "a3bc08eec2e0dedb03d7322b83a82252132f5be9b32666c799cb458faa9a8c02",
-    "integrations/vscode/src/extension.js": "a55339285913157b3e9eaac147e8f677808c90d94164f6864873af12e8d54f27",
+    "integrations/vscode/src/extension.js": "64df550bb543824054e47844184008f75266547f2f86e96ed6fbfb4fdf701397",
     "integrations/vscode/src/relay.js": "b4616b0f9b73f108101b123b56a762072c7633b75ef50cfaca5345f6956d4605",
     "integrations/vscode/src/native-python.js": "f743843071ff88b55fcf8238c2bc1d1678928aaf0bfc09746bdc859f24537a6d",
     "integrations/vscode/src/install-native-python.ps1": "d5496cecbf2a11755680295e2e0480723337c6c00a4d558a5cf62366709fbfa9",
@@ -241,7 +242,7 @@
     "integrations/vscode/VALIDATION.md": "49af50025868ef3709c8b19be5d7235a3e5ff142c3de563ee29fdc3a9bbb30c5",
     "tests/run_native_windows_setup_live.cjs": "7f8ab1b0f4521af5dbda4b53290c4b1d93934d556255a9f582a4d49ef6b645b0",
     "tests/run_windows_iom_live.cjs": "986c7de28a3745a971e2673feb8a05cd6a9f43db8548651774304f14d4c50766",
-    "docs/WINDOWS_IOM_VALIDATION_20261121.md": "4ab8f4b01fcc0aa62d9cc53bd6d41cadff3f7e41d2b23753a3fa0ea851e24460"
+    "docs/WINDOWS_IOM_VALIDATION_20261121.md": "d0e8b5d9c00e60cd7881c74ea299c97e38248d38e97a5e3f21f70eb088ab3260"
   },
   "scope": "Real Windows x64 SAS 9.4, VS Code 1.147.0, SASPy 5.110.0. Standalone Python installed and used with empty Python discovery; not a clean OS VM. Research macros inspected/compiled, not executed."
 }
