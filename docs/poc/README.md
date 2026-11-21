@@ -10,6 +10,10 @@ for a separate native installation. Use one runtime consistently for a persisten
 [The latest six-case Python execution report](../PYTHON_POC_VALIDATION_20261115.md)
 records all 11,929 checks, retained warnings and limits of the graphical review.
 
+[The newer Perl/Python paired execution report](../POC_BOTH_RUNNERS_20261121.md)
+records 12 successful runs, independent numerical checks, eight identical
+decoded PNGs, the large-file preflight correction and remaining limitations.
+
 These examples let an AI assistant reuse established SAS programs,
 stage their inputs, submit jobs and collect checked results through
 MCP4SAS. SAS and the supplied macros perform the calculations. The same programs

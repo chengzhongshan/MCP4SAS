@@ -2040,8 +2040,9 @@ sub scan_sas_text_for_macro_invocation_spans {
     my $len = length($masked // '');
 
     while ($i < $len) {
-        my $rest = substr($masked, $i);
-        if ($rest =~ /^%([A-Za-z_]\w*)([ \t\r\n]*)\(/) {
+        my $ch = substr($masked, $i, 1);
+        pos($masked) = $i;
+        if ($ch eq '%' && $masked =~ /\G%([A-Za-z_]\w*)([ \t\r\n]*)\(/gc) {
             my $name = $1;
             my $ws = $2 // '';
             $stack[-1]{paren_depth}++ if @stack;
@@ -2052,11 +2053,10 @@ sub scan_sas_text_for_macro_invocation_spans {
                 paren_depth  => 1,
             };
             $line_no += _count_newlines($ws);
-            $i += length($&);
+            $i = pos($masked);
             next;
         }
 
-        my $ch = substr($masked, $i, 1);
         if ($ch eq "\n") {
             $line_no++;
             $i++;

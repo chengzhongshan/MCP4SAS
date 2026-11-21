@@ -9,6 +9,11 @@ is also available. Use one runtime consistently for a persistent session.
 [All six Python examples were executed in SAS ODA on 15 November 2026](../../docs/PYTHON_POC_VALIDATION_20261115.md).
 The report distinguishes numerical checks, visual limitations and retained SAS warnings.
 
+[The 21 November paired rerun](../../docs/POC_BOTH_RUNNERS_20261121.md) repeats
+all six cases with both Perl and Python: 12 successful executions, matching
+numerical tables and identical decoded pixels in all eight PNG figures.
+It also records retained warnings and the macro-heavy Perl preflight correction.
+
 Start with the [showcase guide](../../docs/poc/README.md) for the scientifically
 edited PoC, appendix, original figures and interpretation. Configure MCP4SAS's
 SAS connection before executing these examples.

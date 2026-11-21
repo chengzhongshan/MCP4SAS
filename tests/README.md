@@ -145,6 +145,11 @@ research conclusions. See [the Beta repair report](../docs/BETA_MACRO_REVIEW.md)
 
 ## MCP completion latency and safe fallback
 
+`test_macro_span_scaling.pl` exercises a large SAS preamble, nested and
+multiline macro invocations, inert strings/comments and missing parentheses
+against both Perl aliases. It protects the position-based macro scanner that
+replaced repeated copying of the remaining source during preflight.
+
 `perl tests/test_mcp_job_reporting.pl` executes short CLI workers offline and
 checks bounded completion, immediate background mode, exit/error preservation,
 full-log retention and excerpting. Native equivalents are in
