@@ -1,0 +1,40 @@
+{
+  "width": 3449,
+  "height": 1000,
+  "gap": 20,
+  "panels": [
+    {
+      "source": "figures/appendix-1.png",
+      "title": "GTEx expression clustergram",
+      "sha256": "691ae2e999b298552682a339a668bd397f14a47ebf0221404d067387b6d8b4c5",
+      "original_width": 2560,
+      "original_height": 2840,
+      "x": 0,
+      "y": 0,
+      "width": 901,
+      "height": 1000
+    },
+    {
+      "source": "figures/appendix-3.png",
+      "title": "Synthetic mutation oncoprint",
+      "sha256": "16ad8b01a84767af5009cfb285838874ada5b488cd63ab2ff6c112ff1d1cf18a",
+      "original_width": 3420,
+      "original_height": 2430,
+      "x": 921,
+      "y": 0,
+      "width": 1407,
+      "height": 1000
+    },
+    {
+      "source": "figures/appendix-5.png",
+      "title": "Three regional GWAS panels and gene annotations",
+      "sha256": "0ddb568b0325f9a0b3fed3cc02a8caa0cef3b446611b07a94a1043d71c82d1fc",
+      "original_width": 2280,
+      "original_height": 2070,
+      "x": 2348,
+      "y": 0,
+      "width": 1101,
+      "height": 1000
+    }
+  ]
+}

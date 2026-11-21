@@ -79,10 +79,10 @@ Markdown, supplied SAS programs and small inputs are included.
 - **Python execution evidence:** [All six examples tested in SAS ODA](docs/PYTHON_POC_VALIDATION_20261115.md), with 11,929 checks and the original warnings retained.
 
 <p align="center">
-  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="GTEx expression clustergram" src="docs/poc/figures/appendix-1.png" /></a>
-  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="Synthetic mutation oncoprint" src="docs/poc/figures/appendix-3.png" /></a>
-  <a href="docs/poc/use-case-appendix.md"><img width="31%" alt="Three regional GWAS panels and gene annotations" src="docs/poc/figures/appendix-5.png" /></a>
+  <a href="docs/poc/use-case-appendix.md"><img width="100%" alt="Three equal-height SAS figure previews: GTEx expression clustergram, synthetic mutation oncoprint, and three regional GWAS panels with gene annotations" src="docs/poc/previews/homepage-figures.png" /></a>
 </p>
+
+[Clustergram](docs/poc/figures/appendix-1.png) · [Synthetic oncoprint](docs/poc/figures/appendix-3.png) · [Regional GWAS](docs/poc/figures/appendix-5.png) · [Editable preview SVG](docs/poc/previews/homepage-figures.svg)
 
 After setup, run a first SAS example without an AI agent:
 
