@@ -76,7 +76,7 @@ async function main() {
   const i = process.argv.indexOf('--config');
   if (i < 0 || !process.argv[i + 1]) throw new Error('Usage: relay.js --config /absolute/runtime.json');
   const configFile = process.argv[i + 1];
-  const readConfig = () => JSON.parse(fs.readFileSync(configFile, 'utf8'));
+  const readConfig = () => JSON.parse(fs.readFileSync(configFile, 'utf8').replace(/^\uFEFF/, ''));
   // Subscribe before startup so a client's EOF cannot leave a stray backend.
   const lines = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   const iterator = lines[Symbol.asyncIterator]();

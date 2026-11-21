@@ -5,6 +5,8 @@ const path = require('node:path');
 const os = require('node:os');
 const core = require('./core');
 const discovery = require('./detect');
+const nativePython = require('./native-python');
+const localProfile = require('./local-profile');
 const guide = require('./setup-guide');
 const timers = require('node:timers');
 const VERSION = require('../package.json').version;
@@ -66,7 +68,18 @@ async function ensureSetupWorkspace() {
   return false; // Opening a folder reloads the window. Activation resumes safely.
 }
 const configFile = () => path.join(context.globalStorageUri.fsPath, 'runtime.json');
-const readConfig = () => fs.existsSync(configFile()) ? JSON.parse(fs.readFileSync(configFile(), 'utf8')) : null;
+let configReadError;
+const readConfig = () => {
+  if (!fs.existsSync(configFile())) return null;
+  try {
+    const config=JSON.parse(fs.readFileSync(configFile(),'utf8').replace(/^\uFEFF/,''));
+    if(!config||typeof config!=='object'||Array.isArray(config))throw Error('Expected a runtime configuration object');
+    configReadError=undefined;return config;
+  } catch(error) {
+    if(configReadError!==error.message)output?.appendLine('Cannot read saved runtime: '+error.message+'. Run MCP4SAS: Quick Setup to repair it.');
+    configReadError=error.message;return null;
+  }
+};
 function trusted() {
   if (!vscode.workspace.isTrusted) throw new Error('Trust your own project before configuring SAS tools.');
   if (vscode.env.remoteName) throw new Error('Quick Setup currently supports local desktop folders. Open a local folder; SSH/WSL/container setup is separate.');
@@ -422,21 +435,12 @@ async function check() {
 }
 async function help() { if(!showSetupGuide())await vscode.commands.executeCommand('markdown.showPreview', vscode.Uri.file(path.join(context.extensionPath, 'README.md'))); }
 async function installLocalSupport(config, found) {
-  let python=found.native?.candidate;
-  if(!python && process.platform==='win32') {
-    output.appendLine('Installing native Windows Python for local SAS support.');
-    await task('winget',['install','--id','Python.Python.3.12','--exact','--silent','--accept-package-agreements','--accept-source-agreements'],config.repo);
-    found=await discovery.detect(config);python=found.native?.candidate;
-  }
-  if(!python)throw new Error('No usable Python was found for local SAS. Run Quick Setup to complete the platform prerequisites, then retry Detect SAS Setup.');
-  const envDir=path.join(context.globalStorageUri.fsPath,'native-saspy');
-  const executable=path.join(envDir,process.platform==='win32'?'Scripts/python.exe':'bin/python');
-  if(!fs.existsSync(executable))await task(python,['-m','venv',envDir],config.repo);
-  await task(executable,['-m','pip','install','saspy',...(process.platform==='win32'?['pywin32']:[])],config.repo);
-  return discovery.detect({...config,python:executable});
+  return nativePython.ensure({storage:context.globalStorageUri.fsPath,config,found,
+    platform:process.platform,run:core.run,task,detect:discovery.detect,log:line=>output.appendLine(line)});
 }
 async function detectSetup(choose=false,forceChoice=false) {
   trusted();const saved=readConfig();if(!saved)return setup();const config={...saved,saspyCfgname:saved.saspyCfgname||process.env.SASPY_CFGNAME};
+  core.assertRepo(config.repo);
   if(!config.saspyCfgfile&&process.env.SASPY_CFGFILE&&process.env.SASPY_CFGNAME===config.saspyCfgname)config.saspyCfgfile=process.env.SASPY_CFGFILE;
   output.appendLine('Detecting Python, SASPy, local SAS and SAS encryption files. No SAS code or login is submitted.');
   let found=await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Finding your SAS software'},()=>discovery.detect(config));
@@ -449,15 +453,16 @@ async function detectSetup(choose=false,forceChoice=false) {
     if(custom)options.unshift({label:'Keep my configured SAS connection',kind:'custom'});
     const selected=await vscode.window.showQuickPick(options,{title:'Where would you like to run SAS?'});if(!selected)return false;kind=selected.kind;
   }
-  if(kind==='local'&&!found.local)found=await installLocalSupport(config,found);
+  const managedPython=path.join(context.globalStorageUri.fsPath,'native-saspy',process.platform==='win32'?'Scripts/python.exe':'bin/python');
+  const savedLocalPython=config.targets?.local?.python||(kind==='local'?config.python:undefined);
+  const brokenManaged=savedLocalPython&&path.resolve(savedLocalPython)===path.resolve(managedPython)&&!found.python.some(p=>p.candidate===savedLocalPython&&p.saspy&&p.native_compatible!==false);
+  if(kind==='local'&&(!found.local||brokenManaged))found=await installLocalSupport(config,found);
   let updated=kind==='custom'?{...config}:discovery.configuredTarget(config,found,kind);
   if(kind==='custom'&&config.python&&!found.python.some(x=>x.saspy&&(x.candidate===config.python||x.python===config.python)))throw new Error('The Python saved for your custom SAS connection is unavailable or cannot import SASPy. Restore that environment or rerun Quick Setup. Your custom connection was preserved.');
   const generatedLocalFile=path.join(context.globalStorageUri.fsPath,'detected-local-sas.py');
-  if(kind==='local'&&(!updated.saspyCfgfile||updated.saspyCfgfile===generatedLocalFile)&&updated.saspyCfgname!=='winlocal') {
+  if(kind==='local'&&(!updated.saspyCfgfile||updated.saspyCfgfile===generatedLocalFile)) {
     const file=path.join(context.globalStorageUri.fsPath,'detected-local-sas.py');
-    const text=process.platform==='win32'
-      ? "SAS_config_names = ['winlocal_com']\nSAS_config_options = {'lock_down': False, 'prompt': False}\nwinlocal_com = {'provider': 'sas.iomprovider', 'encoding': 'windows-1252'}\n"
-      : "SAS_config_names = ['linuxlocal']\nSAS_config_options = {'lock_down': False, 'prompt': False}\nlinuxlocal = {'saspath': "+JSON.stringify(found.sas)+", 'encoding': 'utf-8'}\n";
+    const text=localProfile.source(updated);
     core.writePrivate(file,text);updated.saspyCfgfile=file;
   }
   if(kind==='oda'&&!updated.saspyCfgfile&&fs.existsSync(path.join(config.repo,'sascfg_personal.py')))updated.saspyCfgfile=path.join(config.repo,'sascfg_personal.py');
@@ -490,6 +495,8 @@ function updateTargetStatus() {
   const config=readConfig();
   if(!config){targetStatus.text='$(database) Set Up SAS';targetStatus.tooltip='Configure MCP4SAS for this computer';targetStatus.command='mcp4sas.setup';targetStatus.show();return;}
   const profile=config.saspyCfgname||'oda';
+  try {core.assertRepo(config.repo);if(!fs.statSync(config.cwd).isDirectory())throw Error('Saved project folder is unavailable.');}
+  catch(error){targetStatus.text='$(warning) Repair SAS Setup';targetStatus.tooltip=error.message;targetStatus.command='mcp4sas.setup';targetStatus.show();return;}
   const label=profile==='oda'?'SAS ODA':profile.startsWith('win')?'Windows SAS':/^(linuxlocal|local|stdio)$/.test(profile)?'Linux SAS':profile;
   targetStatus.text='$(database) '+label;
   targetStatus.tooltip='MCP4SAS selected target: '+profile+'. Click to switch. Software detection does not verify SAS execution.';
@@ -565,6 +572,8 @@ async function activate(ctx) {
     onDidChangeMcpServerDefinitions: emitter.event,
     provideMcpServerDefinitions() {
       if (!vscode.workspace.isTrusted || vscode.env.remoteName || !context.globalState.get('copilotEnabled') || !readConfig()) return [];
+      try {const config=readConfig();core.assertRepo(config.repo);if(!fs.statSync(config.cwd).isDirectory())throw Error('Saved project folder is unavailable. Run MCP4SAS: Quick Setup.');}
+      catch(error){output.appendLine(error.message);return [];}
       const launch = launchSettings();
       const server = new vscode.McpStdioServerDefinition('MCP4SAS', launch.command, launch.args, launch.env, VERSION);
       server.cwd = vscode.Uri.file(readConfig().cwd);

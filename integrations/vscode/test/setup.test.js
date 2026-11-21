@@ -59,6 +59,11 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     async assertWritableProject(directory) { return core.assertWritableProject(directory, undefined, { platform: 'native' }); },
     async runtimeEnvironment(config) { return { HOME: '/selected/private-home', PIPELINE_PYTHON_BIN: 'selected-python', SASPY_CFGNAME: config.saspyCfgname }; },
     async run(command, args, options = {}) {
+      if(args.includes(require('../src/native-python').PROBE)) {
+        if(!fs.existsSync(command))throw Error('Python not installed');
+        return JSON.stringify({platform:'win32',version:[3,13],bits:64});
+      }
+      if(args.includes('import saspy, win32com.client'))return '';
       if(args.some(value=>String(value).endsWith('sas_jars.py'))) {
         jarsCalls.push({command,args,options});
         const source=args[args.indexOf('--source')+1];
@@ -186,10 +191,11 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
     const dialogsBefore=dialogs.length;
     await commands.get('mcp4sas.detectSetup')();
     const local=JSON.parse(fs.readFileSync(path.join(storage,'runtime.json'),'utf8'));
-    assert.equal(local.saspyCfgname,'winlocal_com');assert.equal(local.python,python);
+    assert.equal(local.saspyCfgname,'winlocal');assert.equal(local.python,python);
     assert.match(statusBar.text,/Windows SAS/);
     assert.equal(dialogs.length,dialogsBefore,'no Python or config file picker is needed');
-    assert.match(fs.readFileSync(local.saspyCfgfile,'utf8'),/sas.iomprovider/);
+    assert.match(fs.readFileSync(local.saspyCfgfile,'utf8'),/java.library.path/);
+    assert.ok(!fs.readFileSync(local.saspyCfgfile,'utf8').includes('sas.iomprovider'));
     assert.ok(Number(local.sessionPort)>0);
     await commands.get('mcp4sas.configureLogin')();assert.match(errors.at(-1),/ODA login applies only/);
     choices.push({label:'SAS installed on this computer',kind:'local'});

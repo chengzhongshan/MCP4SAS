@@ -31,7 +31,7 @@ function discoveryPaths(config, options = {}) {
   // installer-owned location through the selected Bash instead.
   return {python:unique(python).filter(x=>!/[\\/]Microsoft[\\/]WindowsApps[\\/]/i.test(x)&&(exists(x)||(platform==='win32'&&x===managed&&io.existsSync(p.dirname(x))))).slice(0,24),sas:platform==='darwin'?[]:unique(sas).filter(exists),jarDirs:unique(jarDirs).filter(d=>JARS.every(n=>exists(p.join(d,n))))};
 }
-const PROBE = String.raw`import sys, os, json, importlib.util
+const PROBE = String.raw`import sys, os, json, importlib.util, struct
 try:
  import saspy
  ready = True
@@ -40,7 +40,8 @@ except Exception:
 spec = importlib.util.find_spec('saspy')
 base = os.path.dirname(spec.origin) if spec and spec.origin else ''
 jars = os.path.join(base, 'java', 'iomclient') if base else ''
-print('MCP4SAS_DETECT_JSON=' + json.dumps({'python':sys.executable,'platform':sys.platform,'saspy':ready,'com':importlib.util.find_spec('win32com') is not None,'jar_directory':jars,'missing_jars':[n for n in ['sas.rutil.jar','sas.rutil.nls.jar','sastpj.rutil.jar'] if not os.path.isfile(os.path.join(jars,n))]}))
+compatible = (3,10) <= sys.version_info[:2] <= (3,13) and (sys.platform != 'win32' or struct.calcsize('P') == 8) and importlib.util.find_spec('venv') is not None and importlib.util.find_spec('ensurepip') is not None
+print('MCP4SAS_DETECT_JSON=' + json.dumps({'python':sys.executable,'platform':sys.platform,'native_compatible':compatible,'saspy':ready,'com':importlib.util.find_spec('win32com') is not None,'jar_directory':jars,'missing_jars':[n for n in ['sas.rutil.jar','sas.rutil.nls.jar','sastpj.rutil.jar'] if not os.path.isfile(os.path.join(jars,n))]}))
 `;
 function parseProbe(text) {
   const line = text.split(/\r?\n/).findLast(x=>x.startsWith('MCP4SAS_DETECT_JSON='));
@@ -66,12 +67,14 @@ async function detect(config, options = {}) {
     const text=await run(command,args,{timeout:5000,env:platform==='win32'?core.cygwinEnvironment(config.perl,env):env});python.push({candidate,...parseProbe(text)});
   }catch{/* broken/stale interpreter is not advertised */}}}));
   python.sort((a,b)=>paths.python.indexOf(a.candidate)-paths.python.indexOf(b.candidate));
-  const ready=python.filter(x=>x.saspy), native=python.filter(x=>platform==='win32'?x.platform==='win32':x.platform===platform);
+  const ready=python.filter(x=>x.saspy), native=python.filter(x=>x.native_compatible!==false&&(platform==='win32'?x.platform==='win32':x.platform===platform));
   // A local COM environment can import SASPy without being configured for ODA.
   // Prefer the remembered ODA interpreter when switching back.
   const odaPython=config.saspyCfgname==='oda'?config.python:config.targets?.oda?.python;
   const oda=ready.find(x=>x.candidate===odaPython||x.python===odaPython)||ready.find(x=>x.platform==='cygwin')||ready[0];
-  const local=paths.sas.length ? native.find(x=>x.saspy&&(platform!=='win32'||x.com||config.saspyCfgname==='winlocal')) : undefined;
+  const localPython=targetKind(config.saspyCfgname)==='local'?config.python:config.targets?.local?.python;
+  const localReady=native.filter(x=>x.saspy&&(platform!=='win32'||config.saspyCfgname!=='winlocal_com'||x.com));
+  const local=paths.sas.length ? localReady.find(x=>x.candidate===localPython||x.python===localPython)||localReady[0] : undefined;
   return {platform,python,oda,local,native:native[0],sas:paths.sas[0],jarDirectory:paths.jarDirs[0],needsLocalSupport:!!paths.sas.length&&!local};
 }
 function configuredTarget(config, found, kind) {
@@ -84,7 +87,7 @@ function configuredTarget(config, found, kind) {
     if(!found.local||!found.sas)throw Error('Local SAS support was not detected. Run Quick Setup to install the required Python support.');
     r.python=found.local.candidate;
     if(!/^(winlocal|winlocal_com|linuxlocal|local|stdio)$/.test(r.saspyCfgname||''))delete r.saspyCfgfile;
-    r.saspyCfgname=found.platform==='win32'?(r.saspyCfgname==='winlocal'?'winlocal':'winlocal_com'):'linuxlocal';
+    r.saspyCfgname=found.platform==='win32'?(r.saspyCfgname==='winlocal_com'?'winlocal_com':'winlocal'):'linuxlocal';
     r.sasExecutable=found.sas;
   } else {
     if(!found.oda)throw Error('SASPy was not found. Run MCP4SAS: Quick Setup and choose Install MCP4SAS for this computer to install the required environment.');

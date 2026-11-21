@@ -1,0 +1,247 @@
+{
+  "date": "2026-11-21",
+  "plugin_version": "0.1.5",
+  "unit_tests": {
+    "passed": 63,
+    "failed": 0
+  },
+  "sas_jar_tests": {
+    "passed": 6,
+    "failed": 0
+  },
+  "packaged_extension_host": "PASS",
+  "packaged_live_oda_local_oda_commands": "PASS",
+  "python_installer": {
+    "version": "3.13.17",
+    "sha256": "5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190",
+    "authenticode": "Valid Python Software Foundation"
+  },
+  "original_macroparas_sha256": "f5a0edae59a7d4b36f267cd262faf216996d9b1d620c0deca4cc7ca300c6b594",
+  "original_macroparas_unchanged": true,
+  "html_source_compilation": "PASS",
+  "artifact": {
+    "file": "mcp4sas-0.1.5.vsix",
+    "sha256": "cddb6bbcec6d6633fd610332327775cf1a45a441f4b6814fc60b51a642e7b872",
+    "bytes": 113520
+  },
+  "evidence": {
+    "native_setup": [
+      "real CPython install with no discovered Python or winget",
+      "native isolated Python, SASPy and pywin32 imports",
+      "existing python.exe with broken base detected",
+      "broken venv retained and rebuilt without Conda or a second Python install"
+    ],
+    "anaconda_iom": [
+      {
+        "name": "real MCP initialization, BOM config and SASPy-only discovery",
+        "status": "PASS"
+      },
+      {
+        "name": "connection-only probe",
+        "status": "PASS"
+      },
+      {
+        "name": "create-state",
+        "status": "PASS"
+      },
+      {
+        "name": "retained-work-macro-variable-libref-option",
+        "status": "PASS"
+      },
+      {
+        "name": "independent-session",
+        "status": "PASS"
+      },
+      {
+        "name": "intentional-SAS-error",
+        "status": "PASS"
+      },
+      {
+        "name": "same-session-error-recovery",
+        "status": "PASS"
+      },
+      {
+        "name": "background-submit",
+        "status": "PASS"
+      },
+      {
+        "name": "state-after-relay-restart",
+        "status": "PASS"
+      },
+      {
+        "name": "original-macroparas-html",
+        "status": "PASS"
+      },
+      {
+        "name": "original macro source unchanged; full source and original HTML styles retained",
+        "status": "PASS"
+      }
+    ],
+    "standalone_iom": [
+      {
+        "name": "real MCP initialization, BOM config and SASPy-only discovery",
+        "status": "PASS"
+      },
+      {
+        "name": "connection-only probe",
+        "status": "PASS"
+      },
+      {
+        "name": "create-state",
+        "status": "PASS"
+      },
+      {
+        "name": "retained-work-macro-variable-libref-option",
+        "status": "PASS"
+      },
+      {
+        "name": "independent-session",
+        "status": "PASS"
+      },
+      {
+        "name": "intentional-SAS-error",
+        "status": "PASS"
+      },
+      {
+        "name": "same-session-error-recovery",
+        "status": "PASS"
+      },
+      {
+        "name": "background-submit",
+        "status": "PASS"
+      },
+      {
+        "name": "state-after-relay-restart",
+        "status": "PASS"
+      },
+      {
+        "name": "original-macroparas-html",
+        "status": "PASS"
+      },
+      {
+        "name": "original macro source unchanged; full source and original HTML styles retained",
+        "status": "PASS"
+      }
+    ],
+    "packaged_iom": [
+      {
+        "name": "real MCP initialization, BOM config and SASPy-only discovery",
+        "status": "PASS"
+      },
+      {
+        "name": "connection-only probe",
+        "status": "PASS"
+      },
+      {
+        "name": "create-state",
+        "status": "PASS"
+      },
+      {
+        "name": "retained-work-macro-variable-libref-option",
+        "status": "PASS"
+      },
+      {
+        "name": "independent-session",
+        "status": "PASS"
+      },
+      {
+        "name": "intentional-SAS-error",
+        "status": "PASS"
+      },
+      {
+        "name": "same-session-error-recovery",
+        "status": "PASS"
+      },
+      {
+        "name": "background-submit",
+        "status": "PASS"
+      },
+      {
+        "name": "state-after-relay-restart",
+        "status": "PASS"
+      },
+      {
+        "name": "original-macroparas-html",
+        "status": "PASS"
+      },
+      {
+        "name": "compile-source-copied-from-original-html",
+        "status": "PASS"
+      },
+      {
+        "name": "original macro source unchanged; full source and original HTML styles retained",
+        "status": "PASS"
+      }
+    ],
+    "switching": [
+      {
+        "name": "local-positive",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-job-polled-after-local-switch",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "local-negative",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-positive-after-switch-back",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-negative",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "stale-target-rejected-before-submission",
+        "status": "PASS"
+      },
+      {
+        "name": "oda-after-negative-recovery",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "windows-iom-positive",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "windows-iom-persistent-work",
+        "status": "PASS",
+        "warnings": 0
+      }
+    ]
+  },
+  "source_sha256": {
+    "server.pl": "601d7cff5b32c6a70f23f0da008e2dfed1b43c7b240316e612f77494e35b5458",
+    "run_sas_codes_or_files_in_ODA.pl": "befff0be47ce87515e88744d97a65784ba6bf59996699b125009ee82da5f12f2",
+    "integrations/vscode/src/core.js": "0f1995618ab6e2693cf2554c31bb0c728e716b1fd9b272fcf34b11b6d041cc24",
+    "integrations/vscode/src/detect.js": "a3bc08eec2e0dedb03d7322b83a82252132f5be9b32666c799cb458faa9a8c02",
+    "integrations/vscode/src/extension.js": "a55339285913157b3e9eaac147e8f677808c90d94164f6864873af12e8d54f27",
+    "integrations/vscode/src/relay.js": "b4616b0f9b73f108101b123b56a762072c7633b75ef50cfaca5345f6956d4605",
+    "integrations/vscode/src/native-python.js": "f743843071ff88b55fcf8238c2bc1d1678928aaf0bfc09746bdc859f24537a6d",
+    "integrations/vscode/src/install-native-python.ps1": "d5496cecbf2a11755680295e2e0480723337c6c00a4d558a5cf62366709fbfa9",
+    "integrations/vscode/src/local-profile.js": "c22ce968a3d3f5b4449524c2a3b7c17cd6d0073e180f034669762764feebaee8",
+    "integrations/vscode/test/native-python.test.js": "26031107fe29f8cdd2e5cf486a5bfbe7fc884351c28426f579569c259cc277ea",
+    "integrations/vscode/test/local-profile.test.js": "5b06a7375e49ffef7238e5140d18449473c08e500ffce21dbb5f7261f617e3b0",
+    "integrations/vscode/test/detect.test.js": "bffafec5e66bc6cfe53190289c654f59b73cd6402688e5a15fa2d8ba9f72c0d2",
+    "integrations/vscode/test/setup.test.js": "65ecd0051ac72cf62db3c440692a0f7937378b167668286d64472746f91f9a74",
+    "integrations/vscode/test/targets.test.js": "642855be01c5742ce67543eda4c11c3e90e6e742a8dfc334aca6bfdb049b729b",
+    "integrations/vscode/test/host.cjs": "0cf5dbc75b188922c74d182c000d3188e4774c120c07ea63c0d2b7f582f9d5b6",
+    "integrations/vscode/test/run-host.cjs": "ce6588eb3f223d4750eb880c00826039b6999d18b474bd905c615574fe3afb12",
+    "integrations/vscode/README.md": "39b098f8756752c930efc6828b8ffc4256c9d85781ad86c968c1cce5aaca2d78",
+    "integrations/vscode/VALIDATION.md": "49af50025868ef3709c8b19be5d7235a3e5ff142c3de563ee29fdc3a9bbb30c5",
+    "tests/run_native_windows_setup_live.cjs": "7f8ab1b0f4521af5dbda4b53290c4b1d93934d556255a9f582a4d49ef6b645b0",
+    "tests/run_windows_iom_live.cjs": "986c7de28a3745a971e2673feb8a05cd6a9f43db8548651774304f14d4c50766",
+    "docs/WINDOWS_IOM_VALIDATION_20261121.md": "4ab8f4b01fcc0aa62d9cc53bd6d41cadff3f7e41d2b23753a3fa0ea851e24460"
+  },
+  "scope": "Real Windows x64 SAS 9.4, VS Code 1.147.0, SASPy 5.110.0. Standalone Python installed and used with empty Python discovery; not a clean OS VM. Research macros inspected/compiled, not executed."
+}

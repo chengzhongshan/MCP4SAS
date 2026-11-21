@@ -39,3 +39,10 @@ test('existing IOM profile is retained; an absent local dependency never silentl
  const r=d.configuredTarget(old,{platform:'win32',local:{candidate:'python.exe'},sas:'sas.exe'},'local');assert.equal(r.saspyCfgname,'winlocal');assert.equal(r.saspyCfgfile,'my-config.py');assert.throws(()=>d.configuredTarget(old,{oda:{candidate:'oda-python'}},'local'),/Local SAS support/);
 });
 test('malformed probe output is rejected',()=>{assert.throws(()=>d.parseProbe('not-json'));assert.throws(()=>d.parseProbe('MCP4SAS_DETECT_JSON={}'));});
+
+test('switching from ODA prefers the remembered local IOM interpreter without requiring COM',async()=>{
+ const paths=['C:/oda/python.exe','C:/local/python.exe','C:/SAS/sas.exe'].map(p=>require('node:path').win32.normalize(p));
+ const config={repo:'C:/project',perl:'C:/cygwin/bin/perl.exe',saspyCfgname:'oda',python:paths[0],sasExecutable:paths[2],targets:{local:{python:paths[1],saspyCfgname:'winlocal'}}};
+ const result=await d.detect(config,{platform:'win32',home:'C:/reader',env:{},skipLauncher:true,fs:fakeFs(paths),async run(command){return 'MCP4SAS_DETECT_JSON='+JSON.stringify({python:command,platform:'win32',saspy:true,com:false,native_compatible:true,missing_jars:[]});}});
+ assert.equal(result.oda.candidate,paths[0]);assert.equal(result.local.candidate,paths[1]);
+});

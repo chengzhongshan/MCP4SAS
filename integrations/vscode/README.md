@@ -11,7 +11,7 @@ Connect **GitHub Copilot or OpenAI Codex** to SAS without copying MCP configurat
 
 ## Three steps
 
-1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix`.
+1. Download `mcp4sas-0.1.5.vsix` from the [MCP4SAS GitHub release](https://github.com/chengzhongshan/MCP4SAS/releases/tag/vscode-v0.1.5). In VS Code, open **Extensions → … → Install from VSIX…** and select it. Alternatively, run `code --install-extension mcp4sas-0.1.5.vsix --force` to replace an earlier build of the same version.
 2. Run **MCP4SAS: Quick Setup** from the Command Palette. If no project is open, setup offers **Choose Project Folder** before installing anything. Open a folder you own and confirm VS Code's trust prompt if shown. Setup resumes in that folder; no manual restart is needed. Choose an existing MCP4SAS installation or let setup install it, then select Copilot, Codex, or both.
 3. Refresh your assistant, allow its MCP server when prompted, and run **MCP4SAS: Check Connection**. Copy the offered SAS test prompt into the assistant to check actual SAS execution.
 
@@ -27,6 +27,29 @@ Repeated Quick Setup clicks reuse the running flow. A failed step stays visible
 with its error so you can fix the cause and continue.
 
 ## What setup does
+
+### Native Windows Python for local SAS
+
+Anaconda/Conda is optional. When local SAS needs Python support, setup reuses
+a working 64-bit native Python 3.10–3.13 with `venv` and `ensurepip`, including
+Conda installations. Cygwin Python is not used for native Windows SAS.
+If none is available, setup installs CPython 3.13.17 for the current user
+under the extension's `python-runtime` storage directory. This uses the full
+Python.org installer, verifies its pinned SHA-256 and Python Software Foundation
+signature, and requires neither winget nor administrator rights. It leaves PATH
+and VS Code's default Python interpreter unchanged.
+
+Setup creates `native-saspy` separately, installs SASPy and Windows COM support
+there, and verifies the executable and imports before saving the target. If a
+managed environment's underlying Python was removed, **Detect SAS Setup**
+retains the broken environment as `native-saspy.backup-<timestamp>` and rebuilds
+it. A network or package-install failure stops setup without claiming success.
+The fallback version and checksum are pinned in `src/install-native-python.ps1`
+and must be updated together when adopting a newer Python release.
+
+Python installation does not install or license SAS. IOM also needs Java and
+the SAS integration libraries. Run **Test Selected SAS** to verify execution;
+use the same persistent session ID across calls to retain WORK data and macros.
 
 ### Where the scripts are installed
 
@@ -139,10 +162,11 @@ after switching for manual commands on the selected target. Existing SAS WORK
 tables remain with the session/target that created them; switching does not
 transfer those tables to another SAS environment.
 
-Windows automatically configured COM uses **one-shot** submissions. Submit a
-complete program in each call; WORK does not carry between calls. The relay
-sets `persistent=false` for COM and rejects unsupported persistent requests.
-An existing Windows IOM profile is preserved for persistent SAS work. On a
+New Windows targets use **Java IOM (`winlocal`)** with named persistent
+sessions. Reuse the same `session_id` and `persistent=true` to retain WORK
+datasets, macros, macro variables, librefs and options. Existing explicit COM
+profiles remain available as one-shot connections; the relay sets
+`persistent=false` for COM and rejects unsupported persistent requests. On a
 Linux desktop with licensed SAS installed, the same switch generates a local
 STDIO profile using the detected SAS executable and supports named persistent
 sessions. This does not install SAS or turn Windows WSL/SSH into a supported
@@ -150,6 +174,21 @@ local extension host.
 
 Reusable checks and the debugging record are documented in
 [tests/VSCODE_SAS_SWITCHING.md](../../tests/VSCODE_SAS_SWITCHING.md).
+
+Direct `sas.exe` batch tools are hidden from discovery by default to keep
+assistant submissions on SASPy. Set `MCP4SAS_ENABLE_DIRECT_SAS_TOOLS=1` when
+starting the server to expose the optional one-shot batch tools.
+
+The runner uses your configured macro library. It does not replace your
+`macroparas.sas` with `examples/sas_macros/macroparas_portable.sas`. That example
+is an explicitly included alternative. Your original `%macroparas` retains
+its source display and styled HTML output. Use an explicit `%include` or your
+configured SASAUTOS library when choosing a particular implementation.
+
+If a saved runtime/project folder was moved or deleted, the status bar offers
+**Repair SAS Setup**. Run **Quick Setup** and select the existing runtime and
+project. Invalid settings no longer crash the MCP provider; UTF-8 settings
+written with a byte-order mark are accepted.
 
 ### Automatic SAS setup
 

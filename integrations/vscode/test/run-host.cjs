@@ -11,5 +11,5 @@ delete process.env.ELECTRON_RUN_AS_NODE; // Agent shells may inherit this; the t
   const executable = process.env.VSCODE_EXECUTABLE || await downloadAndUnzipVSCode();
   // test-electron launches through cmd.exe on Windows; keep this controlled test path together.
   const workspaceArg = process.platform === 'win32' ? `"${workspace}"` : workspace;
-  await runTests({ vscodeExecutablePath: hostExecutable(executable), extensionDevelopmentPath: path.resolve(__dirname, '..'), extensionTestsPath: path.join(__dirname, 'host.cjs'), launchArgs: [workspaceArg, '--user-data-dir', profile, '--extensions-dir', path.join(profile, 'extensions'), '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes'] });
+  await runTests({ vscodeExecutablePath: hostExecutable(executable), extensionDevelopmentPath: process.env.MCP4SAS_TEST_EXTENSION_PATH || path.resolve(__dirname, '..'), extensionTestsPath: process.env.MCP4SAS_TEST_HOST_PATH || path.join(__dirname, 'host.cjs'), launchArgs: [workspaceArg, '--user-data-dir', profile, '--extensions-dir', path.join(profile, 'extensions'), '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes'] });
 })().catch(e => { console.error(e); process.exitCode = 1; });

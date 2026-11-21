@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const discovery=require('../src/detect'),core=require('../src/core'),routing=require('../src/routing');
-for(const [platform,profile,python,sas] of [['win32','winlocal_com','C:/python.exe','C:/SAS/sas.exe'],['linux','linuxlocal','/usr/bin/python3','/licensed/sas']]) {
+for(const [platform,profile,python,sas] of [['win32','winlocal','C:/python.exe','C:/SAS/sas.exe'],['linux','linuxlocal','/usr/bin/python3','/licensed/sas']]) {
   test(`${platform}: ODA/local/ODA keeps independent interpreter, configuration and session port`,()=>{
     const oda={repo:'/repo',python:'/oda/python',saspyCfgname:'oda',saspyCfgfile:'/private/oda.py',sessionPort:41001};
     const found={platform,local:{candidate:python},oda:{candidate:'/oda/python',platform:'linux'},sas};

@@ -264,3 +264,13 @@ registration, and built-in installer task success/failure reporting.
 The rebuilt VSIX includes the PowerShell certificate helper and retains
 version 0.1.5. These are installation and extension-host checks, not a new
 authenticated live SAS ODA submission.
+# Windows persistence revalidation — 2026-11-21
+
+The replacement **0.1.5** build passed 63 Node tests, 6 SAS JAR tests, real packaged
+VS Code activation and ODA/local/ODA commands. Real Windows IOM checks retained
+WORK, macros, macro variables, librefs and options across calls and a relay
+restart, including error recovery and isolated sessions. A real standalone
+CPython install and broken-venv rebuild passed without using Conda or winget.
+The original macroparas HTML was visually inspected and its copied source
+compiled in a separate SAS session. See the [full validation record](../../docs/WINDOWS_IOM_VALIDATION_20261121.md)
+for evidence, reproduction steps and scope. Plugin metadata remains 0.1.5.

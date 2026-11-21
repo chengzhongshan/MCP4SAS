@@ -4,6 +4,7 @@ const cp = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
+const runtimeRepo = process.env.MCP4SAS_TEST_RUNTIME_REPO || path.resolve(__dirname, '../../..');
 exports.run = async () => {
   const extension = vscode.extensions.getExtension('chengzhongshan.mcp4sas');
   assert.ok(extension);
@@ -37,7 +38,7 @@ exports.run = async () => {
         await new Promise(resolve => setTimeout(resolve, 3000));
         const project = vscode.workspace.workspaceFolders[0].uri.fsPath;
         fs.mkdirSync(path.dirname(api.configFile()), { recursive: true });
-        fs.writeFileSync(api.configFile(), JSON.stringify({ repo: path.resolve(__dirname, '../../..'), perl, cwd: scratch }));
+        fs.writeFileSync(api.configFile(), JSON.stringify({ repo: runtimeRepo, perl, cwd: scratch }));
         const savedFile = path.join(project, 'editor-saved.sas');
         await vscode.workspace.fs.writeFile(vscode.Uri.file(savedFile), Buffer.from('/* saved by VS Code */\n'));
         terminal = await api.openRuntimeTerminal();
@@ -86,7 +87,7 @@ exports.run = async () => {
       console.log('PASS: real VS Code ODA/local/ODA commands and observed SAS values');
     }
     fs.mkdirSync(path.dirname(api.configFile()), { recursive: true });
-    fs.writeFileSync(api.configFile(), JSON.stringify({ repo: path.resolve(__dirname, '../../..'), perl: 'test-only-perl', cwd: __dirname }));
+    fs.writeFileSync(api.configFile(), JSON.stringify({ repo: runtimeRepo, perl: 'test-only-perl', cwd: __dirname }));
     vscode.window.showQuickPick = async () => [{ label: 'GitHub Copilot' }];
     vscode.window.showInformationMessage = async () => undefined;
     await vscode.commands.executeCommand('mcp4sas.connect');
@@ -98,6 +99,17 @@ exports.run = async () => {
     assert.equal(servers[0].env.ELECTRON_RUN_AS_NODE, '1');
     assert.equal(servers[0].cwd.fsPath, __dirname);
     assert.equal(servers[0].version, require('../package.json').version);
+    const goodRuntime=fs.readFileSync(api.configFile(),'utf8');
+    fs.writeFileSync(api.configFile(),'\uFEFF'+goodRuntime);
+    assert.equal(api.provider.provideMcpServerDefinitions().length,1,'PowerShell UTF-8 BOM is accepted');
+    fs.writeFileSync(api.configFile(),'{broken');
+    assert.deepEqual(api.provider.provideMcpServerDefinitions(),[],'corrupt settings do not crash the provider');
+    api.updateTargetStatus();
+    fs.writeFileSync(api.configFile(),JSON.stringify({repo:path.join(os.tmpdir(),'mcp4sas_missing_runtime'),cwd:__dirname}));
+    assert.deepEqual(api.provider.provideMcpServerDefinitions(),[],'missing runtime does not advertise a broken process');
+    api.updateTargetStatus();
+    fs.writeFileSync(api.configFile(),goodRuntime);
+    console.log('PASS: BOM, corrupt settings and missing runtime are recoverable without activation failure');
   } finally {
     vscode.window.showQuickPick = pick;
     vscode.window.showInformationMessage = info;

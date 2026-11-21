@@ -119,7 +119,7 @@ function discoveryReply(message) {
 }
 function assertRepo(repo) {
   for (const file of ['server.pl', 'run_sas_codes_or_files_in_ODA.pl', 'MCPDeps/SAS_ODA_Runner.pm', 'install/common.sh']) {
-    if (!fs.existsSync(path.join(repo, file))) throw new Error(`Not an MCP4SAS installation: missing ${file}`);
+    if (typeof repo !== 'string' || !fs.existsSync(path.join(repo, file))) throw new Error(`MCP4SAS runtime folder is unavailable or incomplete: ${repo || '(not configured)'}; missing ${file}. Run MCP4SAS: Quick Setup and choose an existing installation or install into your open project folder.`);
   }
 }
 function shellQuote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }

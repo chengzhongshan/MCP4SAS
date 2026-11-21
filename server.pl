@@ -778,11 +778,16 @@ my @TOOLS = (
     },
 );
 
+my $expose_direct_sas = ($ENV{MCP4SAS_ENABLE_DIRECT_SAS_TOOLS} // '') =~ /^(?:1|true|yes|on)$/i;
+my @DISCOVERABLE_TOOLS = grep {
+    $expose_direct_sas || $_->{name} !~ /^(?:run_local_sas_without_saspy|run_sas_codes_or_script_on_local_Windows)$/
+} @TOOLS;
+
 my $SERVER_INSTRUCTIONS =
   "MCP4SAS runs SAS code through SASPy using SAS OnDemand for Academics or a local SAS config. "
   . "Use run_sas_codes_or_files_in_ODA for SAS code, .sas files, uploads, downloads, deletes, listings, and file metadata. "
   . "Use saspy_cfgname=oda for SAS ODA, saspy_cfgname=linuxlocal/local/default for local Linux SAS, or saspy_cfgname=winlocal for local Windows SAS. "
-  . "Use run_local_sas_without_saspy only for direct one-shot local Linux/Windows SAS batch jobs without SASPy; it cannot keep a persistent SAS session. "
+  . ($expose_direct_sas ? "Use run_local_sas_without_saspy only for direct one-shot local Linux/Windows SAS batch jobs without SASPy; it cannot keep a persistent SAS session. " : "Direct SAS batch tools are hidden by default. Use the SASPy tool for local and ODA sessions. ")
   . "SASPy submissions wait up to 20 seconds for verified completion (wait_seconds: 0 opts out). "
   . "Long jobs return a PID; poll with {\"pid\": PID} after the recommended poll_after_seconds; use 30 seconds for known long analyses. "
   . "Full logs are saved; long returned logs are excerpted unless max_log_chars: 0 is requested. "
@@ -833,7 +838,7 @@ any '/mcp' => sub ($c) {
                             description => $_->{description},
                             inputSchema => $_->{inputSchema},
                         }
-                    } @TOOLS
+                    } @DISCOVERABLE_TOOLS
                 ],
             },
         });
