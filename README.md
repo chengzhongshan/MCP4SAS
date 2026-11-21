@@ -77,6 +77,7 @@ Markdown, supplied SAS programs and small inputs are included.
 - **Scientific appendix:** [Read](docs/poc/use-case-appendix.md) · [Word](docs/poc/MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx?raw=1).
 - **Try it:** [Runnable examples and agent prompts](examples/poc/README.md).
 - **Python execution evidence:** [All six examples tested in SAS ODA](docs/PYTHON_POC_VALIDATION_20261115.md), with 11,929 checks and the original warnings retained.
+- **MCP server execution evidence:** [Four figure families through both Perl and Python servers](docs/MCP_SERVER_POC_VALIDATION_20261121.md), with matching tables and PNG figures.
 
 <p align="center">
   <a href="docs/poc/use-case-appendix.md"><img width="100%" alt="Three equal-height SAS figure previews: GTEx expression clustergram, synthetic mutation oncoprint, and three regional GWAS panels with gene annotations" src="docs/poc/previews/homepage-figures.png" /></a>

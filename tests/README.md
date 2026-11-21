@@ -161,3 +161,25 @@ failure and an accepted request whose reply times out, requiring no replay.
 VS Code relay, direct Perl and direct Python runners. It checks known SASHELP
 results, real SAS errors and asynchronous completion; it never measures model
 tokens. See [instructions and retained timings](../docs/VSCODE_RUNNER_PERFORMANCE.md).
+
+## Four scientific PoC cases through both actual MCP servers
+
+`run_mcp_poc_suite.py` is an opt-in live test of the Perl HTTP MCP endpoint and
+the Python MCP SDK stdio server. It runs the frozen clustergram, gene/GTF,
+oncoprint and forest programs, transfers their required inputs and outputs,
+checks saved full logs and numerical results, and retains each MCP response.
+It creates its own session names and server resources without switching the
+VS Code SAS target. Run with Python containing the MCP SDK and SASPy, Perl
+with the server dependencies installed, and a private ODA configuration:
+
+```bash
+python tests/run_mcp_poc_suite.py --live \
+  --outdir SAS_Output_mcp_poc_review \
+  --saspy-cfgfile /path/to/private/sascfg_personal.py \
+  --perl /path/to/perl
+```
+
+Use a new output directory for each run. The test needs network access and
+working ODA credentials; it is not an offline CI test. Successful numerical
+checks do not establish scientific validity or publication quality. The
+oncoprint is synthetic, and the original SAS warnings remain in the logs.
