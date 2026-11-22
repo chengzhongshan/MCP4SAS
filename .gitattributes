@@ -13,6 +13,10 @@ integrations/vscode/validation/*.log whitespace=-blank-at-eol,-blank-at-eof
 examples/poc/programs/** -text -whitespace
 examples/poc/inputs/** -text -whitespace
 
+# Source-derived reader hashes must remain identical on Windows and Unix.
+docs/poc/proof-of-concept.md text eol=lf
+docs/poc/use-case-appendix.md text eol=lf
+
 # Retain upstream formatting in the explicitly traced macro test snapshots.
 tests/library_workflows500/macros/*.sas -text -whitespace
 tests/online_samples500/macros/*.sas -text -whitespace
