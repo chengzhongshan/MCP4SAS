@@ -1,10 +1,10 @@
 name: Runner regression checks
 on:
   push:
-    branches: [main, fix/copilot-runner-review]
-    paths: ['server.pl', 'tests/test_mcp_job_reporting.pl', 'tests/test_macro_span_scaling.pl', 'run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', 'tests/test_nested_include_graph.pl', 'tests/test_beta_macros.pl', 'examples/sas_macros/scASE_betabino.sas', '.github/workflows/runner-review.yml']
+    branches: [main, fix/copilot-runner-review, fix/saspy-python-discovery]
+    paths: ['tests/test_saspy_python_discovery.pl', 'server.pl', 'tests/test_mcp_job_reporting.pl', 'tests/test_macro_span_scaling.pl', 'run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', 'tests/test_nested_include_graph.pl', 'tests/test_beta_macros.pl', 'examples/sas_macros/scASE_betabino.sas', '.github/workflows/runner-review.yml']
   pull_request:
-    paths: ['server.pl', 'tests/test_mcp_job_reporting.pl', 'tests/test_macro_span_scaling.pl', 'run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', 'tests/test_nested_include_graph.pl', 'tests/test_beta_macros.pl', 'examples/sas_macros/scASE_betabino.sas', '.github/workflows/runner-review.yml']
+    paths: ['tests/test_saspy_python_discovery.pl', 'server.pl', 'tests/test_mcp_job_reporting.pl', 'tests/test_macro_span_scaling.pl', 'run_sas_codes_or*.pl', 'MCPDeps/*.pm', 'MCPDeps/test_sas_oda_macro_dir_fallback.pl', 'tests/test_copilot_runner_review.pl', 'tests/test_expected_failure_evaluation.pl', 'tests/test_sas_log_diagnostics.pl', 'tests/test_nested_include_graph.pl', 'tests/test_beta_macros.pl', 'examples/sas_macros/scASE_betabino.sas', '.github/workflows/runner-review.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,3 +34,4 @@ jobs:
           perl tests/test_beta_macros.pl
           perl tests/test_mcp_job_reporting.pl
           perl tests/test_macro_span_scaling.pl
+          perl tests/test_saspy_python_discovery.pl

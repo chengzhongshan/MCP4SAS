@@ -180,12 +180,14 @@ sub resolve_python_bin {
                 my $line = <$fh>;
                 close $fh;
                 if (defined $line) {
-                    chomp $line;
+                    $line =~ s/[\r\n]+\z//;
                     push @cands, $line if length $line;
                 }
             }
         }
         push @cands,
+          File::Spec->catfile($root, 'MCP4SAS_Use_Python', '.venv', 'Scripts', 'python.exe'),
+          File::Spec->catfile($root, 'MCP4SAS_Use_Python', '.venv', 'bin', 'python'),
           File::Spec->catfile($root, '.venv-pipeline', 'bin', 'python'),
           File::Spec->catfile($root, '.venv-pipeline', 'bin', 'python3'),
           File::Spec->catfile($root, '.venv-pipeline', 'Scripts', 'python.exe'),

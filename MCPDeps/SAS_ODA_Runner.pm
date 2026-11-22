@@ -29,9 +29,10 @@ BEGIN {
         my $pid = open my $fh, '-|', $python_bin, '-c', $probe;
         return '' unless $pid;
         my $site = <$fh>;
-        close $fh;
-        return '' unless defined $site;
-        chomp $site;
+        my $ok = close $fh;
+        return '' unless $ok && defined $site;
+        $site =~ s/[\r\n]+\z//;
+        $site =~ s{\\}{/}g;
         return -d $site ? $site : '';
     };
     my $append_fallback_python_bins = sub {
@@ -57,7 +58,7 @@ BEGIN {
                     my $line = <$fh>;
                     close $fh;
                     if (defined $line) {
-                        chomp $line;
+                        $line =~ s/[\r\n]+\z//;
                         if (length($line) && -x $line) {
                             push @python_candidates, $line;
                         }
@@ -65,6 +66,8 @@ BEGIN {
                 }
             }
             for my $cand (
+                File::Spec->catfile($root, 'MCP4SAS_Use_Python', '.venv', 'Scripts', 'python.exe'),
+                File::Spec->catfile($root, 'MCP4SAS_Use_Python', '.venv', 'bin', 'python'),
                 File::Spec->catfile($root, '.venv-pipeline', 'bin', 'python'),
                 File::Spec->catfile($root, '.venv-pipeline', 'bin', 'python3'),
                 File::Spec->catfile($root, '.venv-pipeline', 'Scripts', 'python.exe'),
@@ -2746,7 +2749,8 @@ sub _repo_python_env_for_session_server {
     );
     if (!length($python_bin) && -f File::Spec->catfile($venv_dir, '.python-bin')) {
         if (open(my $py_fh, '<', File::Spec->catfile($venv_dir, '.python-bin'))) {
-            chomp($python_bin = <$py_fh> // '');
+            $python_bin = <$py_fh> // '';
+            $python_bin =~ s/[\r\n]+\z//;
             close $py_fh;
         }
     }
