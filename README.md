@@ -1526,6 +1526,10 @@ Follow the printed recovery instructions before rerunning.
 
 ## Troubleshooting
 
+See [Windows/Cygwin SASPy discovery troubleshooting](docs/SASPY_DISCOVERY_20261122.md) if a runner reports `No module named saspy` even though SASPy is installed.
+
+
+
 Standalone CLI calls automatically remove their owned intermediate directory
 on exit while preserving final logs and results. Use `--keep-intermediate-files`
 to retain scratch for debugging. Preview older retained scratch with

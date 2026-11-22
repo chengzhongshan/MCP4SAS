@@ -51,3 +51,5 @@ Use the literal `'~'`, without a backslash inside the quotes. A working SASPy
 installation and SAS connection configuration are still required. If no
 SASPy environment is installed, use the supplied installer rather than
 installing a second unrelated Python environment.
+
+The native Python counterpart, `tests/test_saspy_python_discovery.py`, passed three tests for CRLF records/probes and rejection of missing SASPy. Unavailable mapped-drive entries in the host PATH were excluded only from test subprocess environments; the system PATH was preserved.
