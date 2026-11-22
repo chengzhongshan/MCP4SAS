@@ -18,7 +18,7 @@ class ArchiveSession:
                 "e=fexist('mbmeta'); n=.; f=fopen('mbmeta','I',1,'B');",
                 "if f>0 then do; n=input(compress(finfo(f,'File Size (bytes)')),best32.); if missing(n) then n=input(compress(finfo(f,'File Size')),best32.);r=fclose(f);end;",
                 f'put "{token}|{i}|" e 1. "|" n best32.;', 'run;', 'filename mbmeta clear;']
-        log=self.sas.submit('\n'.join(code)).get('LOG','')
+        log=self.submit('\n'.join(code)).get('LOG','')
         found={}
         for line in log.splitlines():
             if line.startswith(token+'|'):
@@ -32,7 +32,8 @@ class ArchiveSession:
             for path in paths:
                 if self.cache[path].get('exists'):
                     self.cache[path]=self.fallback_fileinfo(path)
-    def submit(self, code): return self.sas.submit(code)
+    # Archive creation, metadata and cleanup have no graphical output.
+    def submit(self, code): return self.sas.submit(code, results='text')
     def symget(self, name): return self.sas.symget(name)
 
 def get_session(s): return s,s

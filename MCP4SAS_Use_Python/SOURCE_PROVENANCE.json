@@ -12,5 +12,27 @@
     "Limit RPC frame size",
     "Close a named SAS session explicitly",
     "Serial RPC execution and same-thread COM submit"
-  ]
+  ],
+  "runtime_optimization_20261122": {
+    "base_commit": "32e38e0744da0d3deb87d48e523abaf0a88f2502",
+    "changes": [
+      "Text-only internal setup and file actions",
+      "Single-response detailed file metadata",
+      "Writable local WORK template store",
+      "Staged large-source execution in the same SAS session",
+      "Detected local HOME expansion in native Runner",
+      "Exact UTF-8 LF submitted-source artifacts"
+    ],
+    "perl_sources_sha256": {
+      "MCPDeps/SAS_Local_Home.pm": "b4cb3e097ff4664ae34053ecfa4137e1e92c677a31d69346fee4e66ea3e2263f",
+      "MCPDeps/SAS_Submit.pm": "8c397f03f73512c46c63d9d89d9788f7ff72f1cbf36bea30218b475a0443c5e5",
+      "MCPDeps/SAS_ODA_Runner.pm": "0d697df256fd7dc04d30163356a5ea9f3ee5c22701406a850060612f17abeb94",
+      "MCPDeps/sas_archive_transfer.py": "477799f9cffb11edacb9d4526e0ed2f8890acbefc4d44e4505bb2a66b7686197"
+    },
+    "native_targets": [
+      "runner.py",
+      "backend/session_backend.py",
+      "backend/sas_archive_transfer.py"
+    ]
+  }
 }

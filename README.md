@@ -22,6 +22,10 @@ For slow submissions or file transfers, see the
 [performance debugging guide](docs/PERFORMANCE_DEBUGGING.md). It records the
 measured fixes and provides a local source profiler for investigating similar
 delays.
+The [22 November persistent-session investigation](docs/PERSISTENT_PERFORMANCE_20261122.md)
+covers stable local HOME folders, writable graphics templates, single-response
+file metadata and staged execution of large macro programs. Both runners retain
+their normal HTML output and dependency checks.
 
 For environment selection, compact Python output, inaccessible macro folders and
 Windows network-path errors, see the [reviewed runner fixes](docs/COPILOT_RUNNER_FIX_REVIEW.md).

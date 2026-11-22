@@ -204,6 +204,7 @@ def write_text_artifact(path, text):
 def create_session(session_id):
     log_event(f"create_session start session_id={session_id}")
     sess = open_session_with_diagnostics(open_sas_session)
+    configure_local_templates(sess)
     session_macros_loaded[session_id] = False
     session_macro_bootstrap_warning[session_id] = False
     session_macro_bootstrap_meta[session_id] = {}
@@ -350,14 +351,14 @@ def send_framed_json(conn, payload):
 def submit_with_heartbeat(sess, sas_code, session_id, label=None, timeout_seconds=None, progress_callback=None):
     display_label = f"{label or 'SAS ODA job'} [{session_id}]"
     if SUBMIT_HEARTBEAT_SECONDS <= 0:
-        return sess.submit(sas_code)
+        return submit_user_code(sess, sas_code)
 
     holder = {}
     done = threading.Event()
 
     def _worker():
         try:
-            holder['res'] = sess.submit(sas_code)
+            holder['res'] = submit_user_code(sess, sas_code)
         except BaseException as exc:
             holder['err'] = exc
             holder['tb'] = traceback.format_exc()
@@ -410,6 +411,8 @@ def ensure_session(session_id):
 def session_home(sess):
     if getattr(sess, '_pipeline_local_home', ''):
         return sess._pipeline_local_home
+    if getattr(sess, '_pipeline_detected_home', ''):
+        return sess._pipeline_detected_home
     cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
     hosts = getattr(cfg, 'iomhost', ()) or ()
     hosts = [hosts] if isinstance(hosts, str) else hosts
@@ -446,10 +449,11 @@ data _null_;
   end;
   _mg_rc=filename('mghome');
 run;
-""")
+""", results='text')
         detected = str(sess.symget('_mg_homepath') or '').strip()
         if not detected:
             raise RuntimeError('SAS did not provide an accessible HOME directory; configure dir4local_sas_home explicitly.')
+        sess._pipeline_detected_home = detected
         return detected
     userid = str(getattr(cfg, 'omruser', '') or '').strip()
     authkey = str(getattr(cfg, 'authkey', '') or '').strip()
@@ -473,7 +477,7 @@ run;
 %if %symexist(_USERHOME) %then %let _mg_homepath=%superq(_USERHOME);
 %if %superq(_mg_homepath)= %then %let _mg_homepath=%sysget(HOME);
 %if %superq(_mg_homepath)= %then %let _mg_homepath=%sysfunc(pathname(HOME));
-''')
+''', results='text')
     userid = str(sess.symget('SYSUSERID') or '').strip()
     home_user = userid.split('@', 1)[0]
     if home_user and home_user.lower() not in ('admin', 'root') and all(c.isalnum() or c in '._-' for c in home_user):
@@ -511,6 +515,7 @@ def normalize_delete_target(remote_file, remote_dir, sess):
     return remote_file, remote_dir
 
 def run_fileinfo(sess, remote_path):
+    import re
     remote_path = resolve_remote_path(remote_path, sess)
     safe_path = remote_path.replace('"', '""')
     sas_code = f"""
@@ -544,11 +549,18 @@ def run_fileinfo(sess, remote_path):
         end;
     run;
     """
-    sess.submit(sas_code)
-    exists = sess.symget('_remote_exists')
-    size = sess.symget('_remote_size')
-    created = sess.symget('_remote_created')
-    modified = sess.symget('_remote_modified')
+    # Return all metadata in the same text response: symget would submit
+    # four additional SAS programs, particularly costly over IOM/ODA.
+    for key in ('exists', 'size', 'created', 'modified'):
+        sas_code += f'\n%put MCP4SAS_META_{key.upper()}=%superq(_remote_{key});'
+    result = sess.submit(sas_code, results='text')
+    log = str((result or {}).get('LOG', '') or '')
+    if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
+        raise RuntimeError('SAS file metadata query failed:\n' + log)
+    metadata = dict(re.findall(r'^MCP4SAS_META_(EXISTS|SIZE|CREATED|MODIFIED)=([^\r\n]*)', log, re.M))
+    if set(metadata) != {'EXISTS', 'SIZE', 'CREATED', 'MODIFIED'}:
+        raise RuntimeError('Incomplete SAS file metadata response')
+    exists, size, created, modified = (metadata[k].strip() for k in ('EXISTS', 'SIZE', 'CREATED', 'MODIFIED'))
     exists_text = str(exists).strip() if exists is not None else ''
     size_text = str(size).strip() if size is not None else ''
     size_val = int(size_text) if size_text.isdigit() else None
@@ -580,7 +592,7 @@ def run_delete(sess, remote_file, remote_dir):
         rc = fdelete("myfile");
     run;
     """
-    return sess.submit(sas_code)
+    return sess.submit(sas_code, results='text')
 
 def print_upload_progress(label, transferred, total, done=False):
     total = max(int(total or 0), 1)
@@ -653,7 +665,7 @@ def submit_result_has_visible_content(res):
 
 def probe_session_after_empty_submit(sess):
     try:
-        probe = sess.submit("%put PIPELINE_POST_SUBMIT_PING;")
+        probe = sess.submit("%put PIPELINE_POST_SUBMIT_PING;", results='text')
         probe_log = str((probe or {}).get('LOG', '') or '')
         if 'PIPELINE_POST_SUBMIT_PING' in probe_log:
             return True, ''
@@ -684,6 +696,25 @@ def with_retry(session_id, fn, retry_session_loss=True):
 
 
 
+
+
+
+
+def configure_local_templates(sess):
+    import re
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    if getattr(cfg, 'iomhost', None) or getattr(cfg, 'ssh', None):
+        return
+    if getattr(sess, '_pipeline_local_templates_ready', False):
+        return
+    # SASUSER may be locked by another SAS instance or live in OneDrive.
+    # Keep existing read paths, but write new GTL/style templates into WORK.
+    result = sess.submit('ods path (prepend) work.templat(update);', results='text')
+    log = str((result or {}).get('LOG', '') or '')
+    if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
+        raise RuntimeError('Cannot configure local SAS template store:\n' + log)
+    sess._pipeline_local_templates_ready = True
+
 def configure_local_home(sess, home):
     import re
     home = str(home or '').replace('\\', '/')
@@ -698,11 +729,63 @@ def configure_local_home(sess, home):
     setup = ('filename HOME ' + literal + '; options set=HOME ' + literal + ';\n'
              'data _null_; call symputx("_USERHOME",' + literal + ',"G"); '
              'call symputx("PIPELINE_SAS_HOME",' + literal + ',"G"); run;')
-    result = sess.submit(setup)
+    # This setup produces no table. Avoid a complete ODS HTML round trip.
+    result = sess.submit(setup, results='text')
     log = str((result or {}).get('LOG', '') or '')
     if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
         raise RuntimeError('Cannot configure local SAS home:\n' + log)
     sess._pipeline_local_home = home
+
+
+def submit_user_code(sess, code):
+    import hashlib
+    import os
+    import tempfile
+    import uuid
+    raw = code.encode('utf-8')
+    threshold = int(os.environ.get('MCP4SAS_STAGE_SOURCE_BYTES', '32768'))
+    work = str(getattr(sess, 'workpath', '') or '')
+    if threshold <= 0 or len(raw) < threshold or not work:
+        return sess.submit(code)
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    local = cfg is not None and not (getattr(cfg, 'iomhost', None) or getattr(cfg, 'ssh', None))
+    token = uuid.uuid4().hex
+    ref = 'm' + token[:7]
+    digest = hashlib.sha256(raw).hexdigest()
+    with tempfile.TemporaryDirectory(prefix='mcp4sas-submit-') as directory:
+        source = os.path.join(directory, 'submitted.sas')
+        with open(source, 'wb') as handle:
+            handle.write(raw)
+        if local:
+            target = source.replace('\\', '/')
+        else:
+            target = work.rstrip('/\\') + '/mcp4sas_source_' + token + '.sas'
+            uploaded = sess.upload(source, target, overwrite=True)
+            if not uploaded or not uploaded.get('Success'):
+                raise IOError('Cannot stage large SAS source; user code was not submitted')
+        quoted = "'" + target.replace("'", "''") + "'"
+        # A short command avoids sending/echoing an entire macro library through
+        # IOM's interactive submission channel. Execute once in the same WORK.
+        stub = f'''filename {ref} {quoted} encoding='utf-8';
+data _null_;
+  f=fopen('{ref}','I',1,'B');
+  if f<=0 then do; put 'ERROR: MCP4SAS staged source cannot be opened.'; abort cancel; end;
+  n=input(compress(finfo(f,'File Size (bytes)'),' ,'),best32.);
+  if missing(n) then n=input(compress(finfo(f,'File Size'),' ,'),best32.);
+  r=fclose(f);
+  if n ne {len(raw)} then do; put 'ERROR: MCP4SAS staged source size mismatch.'; abort cancel; end;
+run;
+%include {ref};
+'''
+        if not local:
+            stub += f"filename {ref} {quoted}; data _null_; r=fdelete('{ref}'); run;\n"
+        stub += f'filename {ref} clear;\n'
+        result = sess.submit(stub)
+        result = dict(result or {})
+        result['LOG'] = ('NOTE: MCP4SAS staged source bytes=' + str(len(raw)) +
+                         ' sha256=' + digest + ' transport=' + ('local-file' if local else 'SASPy-upload') +
+                         '\n' + str(result.get('LOG', '') or ''))
+        return result
 
 
 def open_session_with_diagnostics(factory):
@@ -739,16 +822,19 @@ def handle_client(conn, addr):
         req = json.loads(data.decode('utf-8'))
         cmd = req.get('cmd')
         session_id = req.get('session_id')
+        log_event(f"request cmd={cmd} session_id={session_id} from={addr[0]}:{addr[1]}")
         if session_id and req.get('local_home'):
             # The root belongs to this request/session, not the server process
             # environment inherited from whichever CLI launched it first.
             with lock:
                 if session_id not in sessions:
                     sessions[session_id] = create_session(session_id)
+                setup_started = time.monotonic()
+                home_changed = getattr(sessions[session_id], '_pipeline_local_home', '') != str(req['local_home']).replace('\\', '/')
                 configure_local_home(sessions[session_id], req['local_home'])
-        log_event(f"request cmd={cmd} session_id={session_id} from={addr[0]}:{addr[1]}")
+                log_event(f"local_home session_id={session_id} changed={home_changed} elapsed_seconds={time.monotonic() - setup_started:.3f}")
         if cmd == 'ping':
-            resp = {'status':'ok', 'server_api_version': SERVER_API_VERSION, 'pid': os.getpid()}
+            resp = {'status':'ok', 'server_api_version': SERVER_API_VERSION, 'pid': os.getpid(), 'runtime_revision':'2026-11-22-efficient-submit'}
         elif cmd == 'shutdown':
             resp = {'status':'ok', 'msg':'shutting_down', 'server_api_version': SERVER_API_VERSION, 'pid': os.getpid()}
             out = json.dumps(resp).encode('utf-8')
@@ -1009,7 +1095,9 @@ def handle_client(conn, addr):
             try:
                 log_event(f"gethome start session_id={session_id}")
                 home = with_retry(session_id, session_home)
-                resp = {'status':'ok','home':home}
+                cfg = getattr(getattr(sessions.get(session_id), '_io', None), 'sascfg', None)
+                local = cfg is not None and not (getattr(cfg, 'iomhost', None) or getattr(cfg, 'ssh', None))
+                resp = {'status':'ok','home':home,'local':bool(local)}
             except Exception as e:
                 resp = {'status':'error','error':str(e)}
                 log_event(f"gethome error session_id={session_id} err={e}")

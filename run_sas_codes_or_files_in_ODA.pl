@@ -1555,7 +1555,9 @@ my $local_profile = $ENV{SASPY_CFGNAME} || $ENV{SASPY_CONFIG_NAME} || 'oda';
 if (defined($dir4local_sas_home) || length($ENV{SAS_LOCAL_HOME_DIR} // '') ||
     $local_profile =~ /^(?:winlocal(?:_com)?|linuxlocal|local|stdio)$/i) {
     die "--dir4local_sas_home is for local SAS, not the oda profile\n" if lc($local_profile) eq 'oda';
-    my $home = defined($dir4local_sas_home) ? $dir4local_sas_home : ($ENV{SAS_LOCAL_HOME_DIR} || $output_dir);
+    my $home = defined($dir4local_sas_home) ? $dir4local_sas_home : ($ENV{SAS_LOCAL_HOME_DIR} ||
+        SAS_Local_Home::default_home(output_dir => $output_dir, persistent => $persistent,
+            session_id => $session_id, profile => $local_profile, cfgfile => $ENV{SASPY_CFGFILE}));
     die "Local SAS home must be nonempty and contain no control characters\n" if !length($home) || $home =~ /[\x00-\x1f]/;
     $home = File::Spec->rel2abs($home);
     make_path($home) unless -d $home;

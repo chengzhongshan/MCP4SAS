@@ -33,7 +33,16 @@ class Runner:
         self.local_home=local_home
 
     def home(self):
-        return self.backend.call('gethome')['home']
+        response=self.backend.call('gethome')
+        home=response['home']
+        if response.get('local'):
+            home=home.replace('\\','/')
+            # Resolve quoted ~/ input paths for local SAS even without an
+            # explicit HOME option. The next request configures the matching
+            # SAS fileref and PIPELINE_SAS_HOME once, in this same session.
+            self.local_home=home
+            self.backend.local_home=home
+        return home
 
     def transfer(self,uploads=(),downloads=()):
         return self.backend.call('bulk_transfer',payload=dict(uploads=list(uploads),downloads=list(downloads),archive_transfers=self.archive_transfers))['value']
@@ -45,7 +54,7 @@ class Runner:
             transferred=self.transfer(uploads=manifest) if manifest else dict(uploads=[],downloads=[])
             processed=guard_printto(expand_code_paths(processed,self.local_home))
             if submitted_path:
-                Path(submitted_path).write_text(processed,encoding='utf-8')
+                Path(submitted_path).write_text(processed,encoding='utf-8',newline='\n')
             response=self.backend.call('submit',code=processed,load_macros=os.environ.get('SAS_ODA_AUTOLOAD_MACROS','0').lower() in ('1','true','yes','on'))
         log=response.get('log','')
         return dict(log=log,lst=response.get('lst',''),processed_code=processed,dependencies=plan.as_dict(),transfers=transferred,diagnostics=diagnostics.classify(log),macro_bootstrap_meta=response.get('macro_bootstrap_meta',{}))

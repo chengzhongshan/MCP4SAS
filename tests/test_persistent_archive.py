@@ -4,7 +4,8 @@ sys.path.insert(0,str(pathlib.Path(__file__).resolve().parents[1]/'MCPDeps'))
 import sas_archive_transfer as a
 class Fake:
  def __init__(self):self.code=[];self.downloads=0;self.uploads=0
- def submit(self,c):
+ def submit(self,c,**kwargs):
+  assert kwargs == {'results':'text'}, 'internal archive operations must not open ODS HTML'
   self.code.append(c)
   markers=re.findall(r'put "(MCPMETA_[^"|]+\|[0-9]+\|)"',c)
   return {'LOG':'\n'.join(m+'1|3' for m in markers)}
@@ -81,11 +82,12 @@ class Tests(unittest.TestCase):
   adapter.prime_fileinfo(['/remote/a','/remote/b'])
   self.assertEqual(len(s.code),1);self.assertEqual(adapter.fileinfo('/remote/a')['size'],3);self.assertEqual(adapter.fileinfo('/remote/b')['size'],3)
  def test_incomplete_metadata_rejected(self):
-  s=Fake();s.submit=lambda code:{'LOG':''};adapter=a.ArchiveSession(s,'/home/test',lambda p:{})
+  s=Fake();s.submit=lambda code,**kwargs:{'LOG':''};adapter=a.ArchiveSession(s,'/home/test',lambda p:{})
   with self.assertRaisesRegex(IOError,'Incomplete'):adapter.prime_fileinfo(['/remote/a'])
  def test_missing_upload_metadata_batched_before_transfer(self):
   s=Fake()
-  def submit(code):
+  def submit(code,**kwargs):
+   self.assertEqual(kwargs,{'results':'text'})
    s.code.append(code)
    markers=re.findall(r'put "(MCPMETA_[^"|]+\|[0-9]+\|)"',code)
    return {'LOG':'\n'.join(m+'0|.' for m in markers)}

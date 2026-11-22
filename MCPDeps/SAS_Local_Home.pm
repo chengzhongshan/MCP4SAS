@@ -2,9 +2,39 @@ package SAS_Local_Home;
 use strict;
 use warnings;
 use SAS_Source_Analysis;
+use File::Spec;
+use Digest::SHA qw(sha256_hex);
+
+# A persistent SAS session keeps one HOME even when each CLI run writes its
+# results into a new directory. Explicit --dir4local_sas_home/ENV still wins.
+sub default_home {
+    my (%args) = @_;
+    return $args{output_dir} unless $args{persistent} && length($args{session_id} // '');
+    my $session = $args{session_id};
+    my $slug = substr($session, 0, 24);
+    $slug =~ s/[^A-Za-z0-9_-]/_/g;
+    my $key = sha256_hex(join("\0", map { $_ // '' }
+        ($args{profile}, $args{cfgfile}, $session)));
+    return File::Spec->catdir('local', 'sas-home', $slug . '-' . substr($key, 0, 12));
+}
 
 sub python_setup {
     return <<'PY';
+
+def configure_local_templates(sess):
+    import re
+    cfg = getattr(getattr(sess, '_io', None), 'sascfg', None)
+    if getattr(cfg, 'iomhost', None) or getattr(cfg, 'ssh', None):
+        return
+    if getattr(sess, '_pipeline_local_templates_ready', False):
+        return
+    # SASUSER may be locked by another SAS instance or live in OneDrive.
+    # Keep existing read paths, but write new GTL/style templates into WORK.
+    result = sess.submit('ods path (prepend) work.templat(update);', results='text')
+    log = str((result or {}).get('LOG', '') or '')
+    if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
+        raise RuntimeError('Cannot configure local SAS template store:\n' + log)
+    sess._pipeline_local_templates_ready = True
 
 def configure_local_home(sess, home):
     import re
@@ -20,7 +50,8 @@ def configure_local_home(sess, home):
     setup = ('filename HOME ' + literal + '; options set=HOME ' + literal + ';\n'
              'data _null_; call symputx("_USERHOME",' + literal + ',"G"); '
              'call symputx("PIPELINE_SAS_HOME",' + literal + ',"G"); run;')
-    result = sess.submit(setup)
+    # This setup produces no table. Avoid a complete ODS HTML round trip.
+    result = sess.submit(setup, results='text')
     log = str((result or {}).get('LOG', '') or '')
     if re.search(r'^\s*ERROR(?:\s+\d+[-:]|:)', log, re.M):
         raise RuntimeError('Cannot configure local SAS home:\n' + log)

@@ -6,6 +6,12 @@ seconds even though their session-server `submit` calls returned in about 5–6
 seconds. The largest remaining delay was local source inspection, not the plot.
 This guide records the investigation, the fixes, and the checks that protect them.
 
+See also the [22 November local/ODA investigation](PERSISTENT_PERFORMANCE_20261122.md).
+It separates cold startup from warm submissions and covers repeated HOME setup,
+ODS template failures, metadata round trips and large-source transport. Use its
+retained execution results rather than treating the older measurements below
+as current benchmark results.
+
 ## What changed
 
 | Symptom | Evidence and cause | Correction and regression protection |

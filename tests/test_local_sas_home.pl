@@ -10,6 +10,17 @@ use File::Temp qw(tempdir);
 use File::Spec;
 use JSON::PP qw(encode_json);
 
+my %persistent_home=(persistent=>1, session_id=>'mc', profile=>'winlocal',cfgfile=>'config.py');
+my $stable=SAS_Local_Home::default_home(%persistent_home,output_dir=>'SAS_Output_RandID_1');
+is(SAS_Local_Home::default_home(%persistent_home,output_dir=>'SAS_Output_RandID_2'),$stable,
+   'persistent HOME does not change with output directory');
+isnt(SAS_Local_Home::default_home(%persistent_home,session_id=>'other'),$stable,'different sessions use different default HOME');
+isnt(SAS_Local_Home::default_home(%persistent_home,profile=>'linuxlocal'),$stable,'different profiles use different default HOME');
+isnt(SAS_Local_Home::default_home(%persistent_home,cfgfile=>'other.py'),$stable,'different config files use different default HOME');
+is(SAS_Local_Home::default_home(%persistent_home,persistent=>0,output_dir=>'one-shot'),'one-shot','one-shot default is unchanged');
+is(SAS_Local_Home::default_home(persistent=>1,output_dir=>'without-session'),'without-session','no session keeps output-directory default');
+unlike(SAS_Local_Home::default_home(%persistent_home,session_id=>'../../bad name'),qr/\.\.|bad name/,'session cannot introduce traversal into default HOME');
+
 my $home='E:/SAS files';
 is(SAS_Local_Home::expand_code_paths(q{libname x '~'; filename f "~/a.txt";},$home),
    q{libname x 'E:/SAS files'; filename f "%superq(PIPELINE_SAS_HOME)/a.txt";},
@@ -34,7 +45,8 @@ class Session:
     def __init__(self, host=None):
         self._io=type('IO',(),{'sascfg':type('Config',(),{'iomhost':host})()})()
         self.calls=[]
-    def submit(self, code):
+    def submit(self, code, **kwargs):
+        assert kwargs == {'results':'text'}, 'setup must not generate HTML'
         self.calls.append(code)
         return {'LOG':'NOTE: configured'}
 s=Session()

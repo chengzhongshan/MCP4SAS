@@ -3,7 +3,11 @@
 For local SAS, `--dir4local_sas_home DIR` makes `~` refer to DIR for listing,
 uploads, downloads, file information and deletion. The directory is created if
 needed. In the Perl CLI, recognized profiles `winlocal`, `winlocal_com`,
-`linuxlocal`, `local` and `stdio` default to the run's HTML output directory. An explicit option or
+`linuxlocal`, `local` and `stdio` default to the run's HTML output directory for
+one-shot runs. Persistent sessions instead use a stable directory beneath
+`local/sas-home/` in the working project, keyed by session ID, profile and
+configuration-file path. A new output prefix therefore does not reconfigure
+SAS HOME or move files between successive commands. An explicit option or
 `SAS_LOCAL_HOME_DIR` also enables this behavior for a custom local profile.
 The `oda` profile keeps its online home; remote IOM/SSH sessions reject the
 local-home setting. For local profiles with custom names, supply the option.
@@ -14,6 +18,13 @@ SAS directories and the Windows user profile; it does not borrow the ODA
 account's `/home/...` path. If no home directory is available, WORK is the
 temporary fallback. Supply an explicit directory when files must persist
 after that SAS session closes. The explicit option works in both runners.
+
+The detected native Python HOME is cached for the session. An explicit
+`--dir4local_sas_home` takes precedence over that cached value. HOME setup uses
+text results, and unchanged HOME settings do not submit another SAS program.
+Local sessions also prepend `WORK.TEMPLAT(UPDATE)` to the ODS search path, so
+new styles and GTL templates compile into a writable session store rather than
+a locked SASUSER catalog. The existing template read paths remain available.
 
 The runner configures the SAS HOME fileref, HOME environment value, _USERHOME
 and PIPELINE_SAS_HOME macro variables. It expands quoted `~` and `~/...` SAS
