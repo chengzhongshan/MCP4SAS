@@ -1,16 +1,16 @@
 {
     "source_documents":  [
-                             {
-                                 "policy":  "Unmodified author-supplied scientifically edited Word document",
-                                 "sha256":  "92232755bc192353274bf4f0a1421b2c2e3633c37dea14a3c517173846338951",
-                                 "file":  "MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx"
-                             },
-                             {
-                                 "policy":  "Unmodified author-supplied scientifically edited Word document",
-                                 "sha256":  "2c5ac8faf0310fe3ec6c94dfb3c5c48d48c225cb80650d83da43532ed5ab75ba",
-                                 "file":  "MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx"
-                             }
-                         ],
+    {
+        "policy": "Unmodified author-supplied document updated 20 November 2026",
+        "sha256": "54c80a9f7db7033924f9768d8fad36f327ab27a60919815251746ac1fa5edd69",
+        "file": "MCP4SAS_Proof_of_Concept_Nove_20_2026.docx"
+    },
+    {
+        "policy": "Unmodified author-supplied document updated 20 November 2026",
+        "sha256": "c6050856aebcb674fbb34d338df3c75295c1132671d5b87f91d535c62a42cc6e",
+        "file": "MCP4SAS_Use_Case_Appendix_Nov_20_2026.docx"
+    }
+],
     "source_runtime_commit":  "fdc6d0f1fcd840d6a87174a5ec6ce36c89e5fa82",
     "scope":  "Five frozen saved-program demonstrations with retained execution evidence, plus a beginner SASHELP.CLASS example. Synthetic oncoprint; prepared GTEx/PGC summaries in other scientific cases. Not an AI authoring/token benchmark or full research pipeline.",
     "cases":  [

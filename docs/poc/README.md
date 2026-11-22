@@ -19,14 +19,20 @@ stage their inputs, submit jobs and collect checked results through
 MCP4SAS. SAS and the supplied macros perform the calculations. The same programs
 can also run through a direct SASPy client.
 
-The author's **scientifically edited** documents are the source for this
+The author's documents **updated 20 November 2026** are the source for this
 showcase. The Word files are preserved byte for byte; the reader versions below
 retain their scientific wording, tables and embedded figures.
 
 | Document | Read on GitHub | Original Word download |
 | --- | --- | --- |
-| Proof of concept | [Read the PoC](proof-of-concept.md) | [DOCX](MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx?raw=1) |
-| Five scientific use cases | [Read the appendix](use-case-appendix.md) | [DOCX](MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx?raw=1) |
+| Proof of concept | [Read the PoC](proof-of-concept.md) | [DOCX](MCP4SAS_Proof_of_Concept_Nove_20_2026.docx?raw=1) |
+| Five scientific use cases | [Read the appendix](use-case-appendix.md) | [DOCX](MCP4SAS_Use_Case_Appendix_Nov_20_2026.docx?raw=1) |
+
+The [document update record](DOCUMENT_UPDATE_20261121.md) records source hashes,
+the changed workflow diagram, and an assembly-label discrepancy between the
+updated appendix and the frozen examples. Resolve that discrepancy before
+reusing genomic coordinates. The five appendix figures and their equal-height
+homepage preview are unchanged.
 
 ## Choose an example
 

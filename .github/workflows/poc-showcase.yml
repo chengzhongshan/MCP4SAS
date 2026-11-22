@@ -3,9 +3,9 @@ name: PoC showcase
 on:
   push:
     branches: [main]
-    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', 'tests/test_homepage_figure_preview.py', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
+    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', 'tests/test_poc_documents.py', 'tests/test_homepage_figure_preview.py', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
   pull_request:
-    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', 'tests/test_homepage_figure_preview.py', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
+    paths: ['examples/poc/**', 'docs/poc/**', 'tests/test_poc_showcase.pl', 'tests/test_poc_documents.py', 'tests/test_homepage_figure_preview.py', '.github/workflows/poc-showcase.yml', 'README.md', '.gitattributes']
   workflow_dispatch:
 
 permissions:
@@ -29,3 +29,5 @@ jobs:
           python-version: '3.13'
       - name: Check equal-height homepage previews and original source hashes
         run: python -m unittest discover -s tests -p test_homepage_figure_preview.py -v
+      - name: Verify author Word originals and reader transcriptions
+        run: python -m unittest discover -s tests -p test_poc_documents.py -v

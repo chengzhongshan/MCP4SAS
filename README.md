@@ -68,13 +68,13 @@ connection. See the [workflow explanation](docs/architecture/README.md) and
 
 ## Scientific proof of concept and runnable examples
 
-Explore the [scientifically edited PoC and five illustrated use cases](docs/poc/README.md):
+Explore the [author’s updated PoC and five illustrated use cases](docs/poc/README.md), revised **20 November 2026**:
 expression clustergrams, transcript tracks, mutation oncoprints, forest plots
 and three-panel regional GWAS figures. The original Word documents, readable
 Markdown, supplied SAS programs and small inputs are included.
 
-- **Proof of concept:** [Read](docs/poc/proof-of-concept.md) · [Word](docs/poc/MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx?raw=1).
-- **Scientific appendix:** [Read](docs/poc/use-case-appendix.md) · [Word](docs/poc/MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx?raw=1).
+- **Proof of concept:** [Read](docs/poc/proof-of-concept.md) · [Word](docs/poc/MCP4SAS_Proof_of_Concept_Nove_20_2026.docx?raw=1).
+- **Scientific appendix:** [Read](docs/poc/use-case-appendix.md) · [Word](docs/poc/MCP4SAS_Use_Case_Appendix_Nov_20_2026.docx?raw=1).
 - **Try it:** [Runnable examples and agent prompts](examples/poc/README.md).
 - **Python execution evidence:** [All six examples tested in SAS ODA](docs/PYTHON_POC_VALIDATION_20261115.md), with 11,929 checks and the original warnings retained.
 - **MCP server execution evidence:** [Four figure families through both Perl and Python servers](docs/MCP_SERVER_POC_VALIDATION_20261121.md), with matching tables and PNG figures.

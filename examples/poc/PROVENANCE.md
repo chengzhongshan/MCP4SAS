@@ -1,9 +1,9 @@
 # Source and evidence provenance
 
 The source documents are the author's
-`MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx` and
-`MCP4SAS_Use_Case_Appendix_Scientifically_Edited.docx`, supplied on 13 November
-2026. Their evaluation date remains 12 November 2026. Unchanged copies are in
+`MCP4SAS_Proof_of_Concept_Nove_20_2026.docx` and
+`MCP4SAS_Use_Case_Appendix_Nov_20_2026.docx`, revised on 20 November
+2026 and published here on 21 November 2026. Unchanged copies are in
 [docs/poc](../../docs/poc/README.md); their SHA-256 hashes are recorded in
 [manifest.json](manifest.json). Reader Markdown is a transcription with links
 and code-block formatting. All six embedded PNGs were extracted without
@@ -23,7 +23,10 @@ the actual versions used here; they should not be inferred from either
 repository's current main branch. Original source comments and attributions
 remain in the programs.
 
-The regional transcript inputs retain GENCODE v49lift37 coordinates on GRCh37.
+The regional transcript inputs retain GENCODE v49lift37 coordinates on GRCh37
+according to the existing source records. The updated author appendix labels
+the regional examples GRCh38; that conflict remains unresolved. See the
+[assembly provenance discrepancy](../../docs/poc/DOCUMENT_UPDATE_20261121.md#assembly-provenance-discrepancy).
 The expression input is the retained GTEx v8 tissue-median panel. PGC examples
 use selected prepared summary statistics and annotations. The oncoprint's
 events, clinical group assignments and assessable states are synthetic. These

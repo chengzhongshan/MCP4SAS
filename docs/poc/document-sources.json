@@ -1,0 +1,59 @@
+{
+  "update_date": "2026-11-21",
+  "author_revision_date": "2026-11-20",
+  "policy": "Byte-identical Word originals; reader transcription only. Frozen SAS programs, inputs and execution reports are unchanged.",
+  "documents": [
+    {
+      "file": "MCP4SAS_Proof_of_Concept_Nove_20_2026.docx",
+      "sha256": "54c80a9f7db7033924f9768d8fad36f327ab27a60919815251746ac1fa5edd69",
+      "reader": "proof-of-concept.md",
+      "reader_sha256": "ad6631b678316d5b8fa57a4a30d5037ce31e04ecc39fbef691ded53a757d75bc",
+      "images": [
+        {
+          "file": "figures/poc-1.png",
+          "sha256": "af5fe63184bbaa7b5184853f80602c8acf694ff1b97d218622c060d0c95cd0e5",
+          "zip_member": "word/media/image1.png"
+        }
+      ],
+      "nonempty_body_paragraphs": 16,
+      "tables": 2,
+      "source_text_sha256": "c82d2ccbc277e295fd0948229a8c4f8e0be2086e3c1795ae5e3fdba044d1032b"
+    },
+    {
+      "file": "MCP4SAS_Use_Case_Appendix_Nov_20_2026.docx",
+      "sha256": "c6050856aebcb674fbb34d338df3c75295c1132671d5b87f91d535c62a42cc6e",
+      "reader": "use-case-appendix.md",
+      "reader_sha256": "1cecc6d923f6c45d41f7dfe1dd56cfb8fa60b40077d3b95563d0ed2a3e3fa6e3",
+      "images": [
+        {
+          "file": "figures/appendix-1.png",
+          "sha256": "691ae2e999b298552682a339a668bd397f14a47ebf0221404d067387b6d8b4c5",
+          "zip_member": "word/media/image1.png"
+        },
+        {
+          "file": "figures/appendix-2.png",
+          "sha256": "f29cb22a86088e6262f9b7fb255f93770a85d5c9b5b312ab6107d6b495f2257e",
+          "zip_member": "word/media/image2.png"
+        },
+        {
+          "file": "figures/appendix-3.png",
+          "sha256": "16ad8b01a84767af5009cfb285838874ada5b488cd63ab2ff6c112ff1d1cf18a",
+          "zip_member": "word/media/image3.png"
+        },
+        {
+          "file": "figures/appendix-4.png",
+          "sha256": "1978f713bff429617b47b76d43167961707cae44c1f663d1d31e45c6c2b87e00",
+          "zip_member": "word/media/image4.png"
+        },
+        {
+          "file": "figures/appendix-5.png",
+          "sha256": "0ddb568b0325f9a0b3fed3cc02a8caa0cef3b446611b07a94a1043d71c82d1fc",
+          "zip_member": "word/media/image5.png"
+        }
+      ],
+      "nonempty_body_paragraphs": 58,
+      "tables": 1,
+      "source_text_sha256": "81eaf67add663096817aa3cd3e6deeb1721467a0a9b0570b2f250dd96cfe5f37"
+    }
+  ]
+}

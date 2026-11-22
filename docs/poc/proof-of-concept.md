@@ -1,16 +1,16 @@
-# MCP4SAS: proof of concept
+Reader transcription of the [author-supplied Word document](MCP4SAS_Proof_of_Concept_Nove_20_2026.docx), updated 20 November 2026. Scientific wording, tables and embedded figures are retained. See the [showcase guide](README.md) for runnable examples and evidence scope.
 
-Reader transcription of the [author-supplied Word document](MCP4SAS_Proof_of_Concept_Scientifically_Edited.docx). Scientific wording, tables and embedded figures are retained. See the [showcase guide](README.md) for runnable examples and evidence scope.
+# MCP4SAS: proof of concept
 
 AI-assisted SAS execution and reusable genomic visualization workflows
 
-Zhongshan Cheng  |  Evaluation date 12 November 2026
+Zhongshan Cheng  |  Evaluation date 20 November 2026
 
 ## Objective
 
-Evaluate whether MCP4SAS provides a practical agent-facing interface to existing SAS analyses without changing their numerical results or scientific figures. The comparison uses identical SAS programs and inputs executed through (1) a direct SASPy client and (2) MCP4SAS. The distinctive use case is reuse of established genomic-analysis macros through an AI assistant, not a claim that MCP4SAS performs statistical methods unavailable through SASPy.
+Evaluate whether MCP4SAS provides a practical agent-facing interface to existing SAS analyses without changing their numerical results or scientific figures. The comparison uses identical SAS programs and inputs executed through (1) a direct SASPy client and (2) MCP4SAS. The distinctive use case is reuse of established genomic-analysis macros through an AI assistant, such as Codex, to run the analyses through MCP4SAS or directly calling SASPy to connect SAS OnDemand for Academics (SAS ODA).
 
-![Workflow diagram from the scientifically edited proof of concept](figures/poc-1.png)
+![Figure 1 from the updated author poc document](figures/poc-1.png)
 
 ## Deployment and execution model
 
@@ -32,9 +32,9 @@ The most valuable demonstration is a user-maintained macro library. The supplied
 
 The direct SASPy baseline can run the same programs and load the same macros. The comparison therefore measures interface and workflow differences, not new statistical functionality.
 
-## Observed results and limitations
+## Observed results
 
-Four retained example programs were run against SAS OnDemand for Academics using SASPy 5.104.0 and SAS 9.4 M8. The direct client used SASPy session, upload, submit, download and shutdown methods; MCP4SAS submitted the same program bytes and inputs through its tool interface. The table reports recorded submission durations in seconds. Smaller values indicate faster completion of the measured submission, not a more accurate analysis.
+Four retained example programs were run against SAS ODA using SASPy 5.104.0 and SAS 9.4 M8. The direct client used SASPy session, upload, submit, download and shutdown methods; MCP4SAS submitted the same program bytes and inputs through its tool interface. The table reports recorded submission durations in seconds. Smaller values indicate faster completion of the measured submission, not a more accurate analysis.
 
 | Program / figure | Direct SASPy (s) | MCP4SAS (s) |
 | --- | --- | --- |
