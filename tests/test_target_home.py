@@ -17,7 +17,10 @@ class Session:
     def __init__(self,host,home):
         cfg=type('Config',(),{'iomhost':host,'omruser':'oda.account','authkey':''})()
         self._io=type('IO',(),{'sascfg':cfg})();self.home=home;self.code=[]
-    def submit(self,code):self.code.append(code);return {'LOG':'NOTE: test fixture'}
+    def submit(self,code,**kwargs):
+        if kwargs!={'results':'text'}:
+            raise AssertionError('HOME detection must avoid generating ODS HTML')
+        self.code.append(code);return {'LOG':'NOTE: test fixture'}
     def symget(self,name):
         if name=='_mg_homepath':return self.home
         raise AssertionError('Local HOME must not be inferred from a SAS username')
@@ -31,6 +34,8 @@ class TargetHome(unittest.TestCase):
                 with self.subTest(source=filename,host=host):
                     s=Session(host,path);self.assertEqual(home(s),path)
                     self.assertIn('USERPROFILE',s.code[0]);self.assertIn("filename('HOME'",s.code[0])
+                    self.assertEqual(home(s),path)
+                    self.assertEqual(len(s.code),1,'detected HOME is reused without another SAS query')
             s=Session(['odaws01-usw2.oda.sas.com'],'unused')
             self.assertEqual(home(s),'/home/oda.account');self.assertEqual(s.code,[])
             s=Session('localhost','unused');s._pipeline_local_home='C:/explicit'

@@ -117,6 +117,12 @@ experimental metadata patch also omitted a local `re` import; the live PoC
 caught it, the import and test namespace were corrected, and that failed
 experiment is excluded from the successful comparison. Logs remain retained.
 
+GitHub's full root-suite run also found an older HOME fixture that accepted
+only `submit(code)`. It now checks the real `submit(code, results='text')`
+interface and verifies that a second HOME resolution makes no additional SAS
+query. This was a fixture correction; production behavior was not rolled back
+to satisfy the test.
+
 To repeat the persistent-session check after configuring SASPy:
 
 ```bash
