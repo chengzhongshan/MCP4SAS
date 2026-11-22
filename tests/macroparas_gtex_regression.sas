@@ -90,4 +90,22 @@ proc sql noprint;
 quit;
 %_mp_assert(condition=&_mp_default_count=2,label=configured_default_directory);
 %symdel MCP4SAS_MACRO_DIR;
+/* SASAUTOS often contains fileref names, not literal directory paths. */
+%let _mp_saved_autos=%sysfunc(getoption(sasautos));
+filename mptauto ("&_mp_test_dir");
+options sasautos=(mptauto);
+/* Discovery must not execute the inspected source file. */
+filename mptsrc "&_mp_test_dir/macroparas.sas";
+data _null_; file mptsrc; put '%put ERROR: DO_NOT_EXECUTE_DISCOVERY_FILE;'; run;
+filename mptsrc clear;
+%macroparas(macrorgx=GTEx,numlines2print=0,output_macropara_dsd=mp_actual);
+%let _mp_last=%sysfunc(getoption(_last_));
+proc print;run;
+proc sql noprint;
+ select count(*) into :_mp_auto_count trimmed from mp_actual;
+quit;
+options sasautos=&_mp_saved_autos;
+filename mptauto clear;
+%_mp_assert(condition=&_mp_auto_count=2,label=sasautos_fileref_directory);
+%_mp_assert(condition=%upcase(&_mp_last)=WORK.MP_ACTUAL,label=implicit_print_result_table);
 %put MACROPARAS_REGRESSION_COMPLETE;

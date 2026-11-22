@@ -21,7 +21,8 @@ from MCP4SAS_Use_Python.dependencies import Plan
 EXPECTED = {'compare_expected_names', 'complete_signature_beyond_preview',
             'preserve_caller_tables', 'preserve_caller_macro_variables',
             'preserve_notes_option', 'zero_matches_clear_previous_results',
-            'quoted_directory_list_deduplicated', 'configured_default_directory'}
+            'quoted_directory_list_deduplicated', 'configured_default_directory',
+            'sasautos_fileref_directory', 'implicit_print_result_table'}
 
 
 def main(argv=None):

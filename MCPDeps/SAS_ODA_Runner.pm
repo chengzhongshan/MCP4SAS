@@ -3667,8 +3667,6 @@ sub _find_local_macro_file {
     my @bases;
     for my $extra (
         $ENV{SAS_ODA_VALIDATED_MACRO_DIR},
-        '\\\\rs1.stjude.org\\clusterhome\\zcheng\\SAS-Useful-Codes\\Macros',
-        '\\\\rs1.stjude.org\\clusterhome\\zcheng\\SAS-Useful-Codes\\Macros\\SAS_ondemand_scripts',
     ) {
         push @bases, $extra if defined $extra && length $extra && -d $extra;
     }
@@ -3759,6 +3757,20 @@ SAS
 
     for my $name (@names) {
         next unless $name =~ /^[A-Za-z_]\w*$/;
+        if (lc($name) eq 'macroparas') {
+            # Automatic fallback only: explicit includes/local macros have
+            # already been resolved. Recompile in-place, including in older
+            # persistent helpers, without restarting SAS or clearing WORK.
+            my $module_file = abs_path(__FILE__) || File::Spec->rel2abs(__FILE__);
+            my $portable = File::Spec->catfile(dirname($module_file), '..',
+                'examples', 'sas_macros', 'macroparas_portable.sas');
+            open my $fh, '<:raw', $portable
+              or die "Cannot read bundled portable macroparas: $portable: $!\n";
+            my $source = do { local $/; <$fh> }; close $fh;
+            print STDERR "Using bundled portable %macroparas fallback; original macro files remain unchanged.\n";
+            $code .= "\n/* MCP4SAS portable macroparas fallback */\n" . $source . "\n";
+            next;
+        }
         my ($primary_dir, $fallback_dir) = lc($name) eq 'del_dir_recursive'
           ? ('&_macro_home', '&_home') : ('&_home', '&_macro_home');
         my ($primary, $fallback) = ("$primary_dir/$name.sas", "$fallback_dir/$name.sas");
@@ -3849,9 +3861,7 @@ sub _expanded_targeted_remote_macro_names {
     my ($macro_names_ref) = @_;
     return () unless ref($macro_names_ref) eq 'ARRAY' && @$macro_names_ref;
 
-    my %targeted_macro_dependencies = (
-        macroparas => [ 'FileOrDirExist', 'del_file_with_fullpath', 'list_files', 'list_files4dsd', 'listfiles2dsdInUE' ],
-    );
+    my %targeted_macro_dependencies;
     my %seen;
     my @names;
     for my $requested (@$macro_names_ref) {
@@ -4070,7 +4080,9 @@ sub _process_dependencies {
     my $macro_code = SAS_Source_Analysis::macro_dependency_view($code);
     my $macro_autoload_enabled = _autoload_macros_enabled() ? 1 : 0;
     my %defined_in_code = map { lc($_) => 1 } ($macro_code =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
-    if ($include_graph->{nested}) {
+    {
+        # Definitions in a flat explicit %include also take precedence over
+        # automatic fallback macros. No need to upload/replace them again.
         for my $path (@{$include_graph->{order}}) {
             my $view=SAS_Source_Analysis::macro_dependency_view($include_graph->{nodes}{$path}{text});
             $defined_in_code{lc $_}=1 for ($view =~ /%macro\s+([A-Za-z_]\w*)\b/ig);
@@ -4162,13 +4174,13 @@ sub _process_dependencies {
             push @logs, "Injected targeted remote macro loader for: " . join(', ', @expanded_targeted_names);
         }
     } elsif (@unresolved_macro_names) {
-        my @explicit_remote = grep {lc($_) eq 'del_dir_recursive'} @unresolved_macro_names;
+        my @explicit_remote = grep {lc($_) eq 'del_dir_recursive' || lc($_) eq 'macroparas'} @unresolved_macro_names;
         if (@explicit_remote) {
             $header_includes = $self->_build_targeted_remote_macro_loader(
                 \@explicit_remote,
                 {only_if_missing => 1},
             ) . "\n" . $header_includes;
-            push @logs, 'Injected targeted remote macro loader for: Del_Dir_Recursive';
+            push @logs, 'Injected targeted remote macro loader for: ' . join(', ', @explicit_remote);
         }
         my %seen;
         my @unique = grep { defined($_) && length($_) && !$seen{lc $_}++ } @unresolved_macro_names;

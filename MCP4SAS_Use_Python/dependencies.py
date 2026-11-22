@@ -121,8 +121,6 @@ def rewrite_paths(code,mapping):
 def targeted_loader(names):
     expanded=[]
     for name in names:
-        if name.casefold()=='macroparas':
-            expanded.extend(['FileOrDirExist','del_file_with_fullpath','list_files','list_files4dsd','listfiles2dsdInUE'])
         expanded.append('Del_Dir_Recursive' if name.casefold()=='del_dir_recursive' else name)
     template=(Path(__file__).parent/'assets/targeted_macro.sas').read_text(encoding='utf-8')
     code,seen=[],set()
@@ -130,6 +128,10 @@ def targeted_loader(names):
         if source.is_builtin_macro_name(name) or name.casefold() in seen or not re.fullmatch(r'[A-Za-z_]\w*',name):
             continue
         seen.add(name.casefold())
+        if name.casefold()=='macroparas':
+            portable=Path(__file__).resolve().parent.parent/'examples/sas_macros/macroparas_portable.sas'
+            code.append('/* MCP4SAS portable macroparas fallback */\n'+read_source(portable))
+            continue
         primary,fallback=('&_macro_home','&_home') if name.casefold()=='del_dir_recursive' else ('&_home','&_macro_home')
         replacements=dict(PRIMARY_DIR=primary,FALLBACK_DIR=fallback,MACRO_NAME=name,INCLUDE_STATEMENT='%include "%superq(_pipeline_targeted_macro_path)";',REQUIRED_CHECK='%if not %sysmacexist(Del_Dir_Recursive) %then %put ERROR: Remote Del_Dir_Recursive macro could not be loaded;\n' if name.casefold()=='del_dir_recursive' else '')
         code.append(re.sub(r'__([A-Z_]+)__',lambda m:replacements[m[1]],template))
@@ -162,6 +164,7 @@ class Plan:
         self.remote_macros=[]
         self.visiting=set()
         self.visited=set()
+        self.definitions=set()
         for path in uploads:
             path=Path(path).resolve(strict=True)
             if not path.is_file():
@@ -169,6 +172,7 @@ class Plan:
             self.add(path,str(path))
         self.analysis=source.analyze_source(code)
         self.scan(code,self.roots,self.analysis)
+        self.remote_macros=[name for name in self.remote_macros if name.casefold() not in self.definitions]
 
     def add(self,path,alias):
         path=path.resolve()
@@ -197,12 +201,17 @@ class Plan:
 
     def scan(self,text,roots,analysis=None):
         analysis=analysis if analysis is not None else source.analyze_source(text)
+        self.definitions.update(name.casefold() for name in re.findall(r'%macro\s+([A-Za-z_]\w*)\b',source.macro_dependency_view(text,analysis),re.I))
         for alias in source.include_targets(text,analysis):
             path=resolve_local(alias,roots)
             if path:
                 self.add(path,alias)
                 self.visit(path,roots)
         for name in macro_calls(text,analysis):
+            # An explicitly included definition is authoritative, including a
+            # user's original macroparas. Do not insert a replacement for it.
+            if name.casefold() in self.definitions:
+                continue
             path=find_macro(name,roots)
             if path:
                 self.add(path,str(path))

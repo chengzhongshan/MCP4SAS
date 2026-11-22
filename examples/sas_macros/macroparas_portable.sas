@@ -35,16 +35,35 @@ data &output_macropara_dsd;
 run;
 
 data work.&_mpfiles(keep=path);
- length directories raw directory firstdir path home $4096 entry $256
+ length directories raw expanded physical rawentry directory firstdir path home $4096 entry $256
         dirref fileref $8 expression $32767;
  call missing(of _character_);
  directories=symget('dir');
  if missing(directories) and symexist('MCP4SAS_MACRO_DIR') then directories=symget('MCP4SAS_MACRO_DIR');
- if missing(directories) then directories=sysget('MCP4SAS_MACRO_DIR');
+ if missing(directories) and sysexist('MCP4SAS_MACRO_DIR') then directories=sysget('MCP4SAS_MACRO_DIR');
  if missing(directories) then do;
    /* SASAUTOS reflects the caller's configured macro library, not another PC. */
    raw=strip(getoption('sasautos'));
    if substr(raw,1,1)='(' then raw=substr(raw,2,max(1,lengthn(raw)-2));
+   /* SASAUTOS can name a fileref containing a concatenated path list, rather
+      than a literal directory. Expand it before looking for macroparas.sas. */
+   expanded='';
+   do token=1 to countw(raw,' ','q');
+     rawentry=scan(raw,token,' ','q');
+     directory=dequote(rawentry);
+     physical='';
+     if lengthn(directory)<=8 and nvalid(directory,'V7') then do;
+       if fileref(directory)=0 then physical=strip(pathname(directory));
+     end;
+     if not missing(physical) then do;
+       if substr(physical,1,1)='(' then physical=substr(physical,2,max(1,lengthn(physical)-2));
+       /* A single physical path may contain spaces without enclosing quotes. */
+       else if substr(physical,1,1) not in ("'",'"') then physical=quote(trim(physical));
+       expanded=catx(' ',expanded,physical);
+     end;
+     else expanded=catx(' ',expanded,rawentry);
+   end;
+   raw=expanded;
    do token=1 to countw(raw,' ','q');
      directory=dequote(scan(raw,token,' ','q'));
      if missing(directory) or substr(directory,1,2)='\\' or substr(directory,1,2)='//' then continue;
@@ -215,7 +234,7 @@ run;
 proc sql noprint;
  select count(*) into :_mpcount trimmed from &output_macropara_dsd;
 quit;
-%put NOTE: MACROPARAS_MATCH_COUNT=&_mpcount;
+%put MACROPARAS_MATCH_COUNT=&_mpcount;
 %if &numlines2print>0 %then %do;
  proc print data=work.&_mppreview noobs; var path line_no Macro_Info; run;
 %end;
@@ -229,4 +248,7 @@ proc datasets library=work nolist;
  delete &_mppreview;
  %end;
 quit;
+/* PROC PRINT without DATA= must read the requested result, not a deleted
+   temporary preview table. _LAST_= is a documented SAS system option. */
+options _last_=&output_macropara_dsd;
 %mend macroparas;

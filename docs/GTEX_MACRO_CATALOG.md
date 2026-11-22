@@ -1,5 +1,11 @@
 # GTEx macro catalog and macroparas regression
 
+**22 November update:** ordinary unresolved `%macroparas` calls now select the
+portable utility automatically in both runners. Explicit user definitions still
+take precedence. See the [HTML and loading repair](MACROPARAS_HTML_REPAIR_20261122.md)
+for the changed fallback policy, Windows HOME fix and new execution evidence.
+The results below describe the earlier, explicitly included implementation.
+
 15 November 2026. The requested `%macroparas(macrorgx=GTex);` was executed in actual SAS. The installed Windows library contains **20 matched macro definitions**; SAS ODA contains **14**. The difference is library content/version, not a case-sensitive search failure. No GTEx API analysis, new scientific result or complete genomic pipeline was executed by inspecting these signatures.
 
 GTEx supplies gene-expression and genetic-association resources across tissues. An eQTL associates genetic variation with expression; an sQTL concerns splicing. The catalog below describes what the inspected programs attempt to do, not evidence that every analysis is scientifically validated.

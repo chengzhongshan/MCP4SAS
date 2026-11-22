@@ -1,0 +1,676 @@
+{
+  "date": "2026-11-22",
+  "base_commit": "45bb29ac937c2e3df198b1c61c3cdf3b79a2e6d3",
+  "sources_sha256": {
+    "MCPDeps/SAS_ODA_Runner.pm": "52ed56fee2bb82e71be69fb6c470436c9ef098bf1939dfa921920f8fc5e2e57c",
+    "MCP4SAS_Use_Python/dependencies.py": "3555ee41d3f061c043098763319415afba5468c4cb722a3d6ec8f8e836b0b8ff",
+    "examples/sas_macros/macroparas_portable.sas": "d9af854783394c14e2b0461a6a296b77a9f1dd097f5f6aaad794be417d6a7e06",
+    "run_sas_codes_or_files_in_ODA.pl": "2889b04fac403f61f5db1012c5be7d107f09daab20cc49ac408a6afd2c228f53",
+    "run_sas_codes_or_script_in_ODA.pl": "2889b04fac403f61f5db1012c5be7d107f09daab20cc49ac408a6afd2c228f53",
+    "tests/macroparas_gtex_regression.sas": "be4c06faba9dea76dd62dcc6bc9c6ecc64f55d66d0535168b741b7e4239a5d0d",
+    "tests/macroparas_autoload_regression.sas": "6454a67dbe1a90b8c514550f2db85598f4781d97e9e5bad83ba0a0e8a3541b3c",
+    "tests/run_live_macroparas_autoload.py": "4bab19e742307ebbd5d8125865ca25715d5828ea0dcf0d2c904cd68090ec7266",
+    "tests/test_macroparas_autoload.py": "9e4138f2995767203c14410ac405dd8d03ca615cc7f92d167402ac50099a8a4a",
+    "tests/test_macroparas_autoload.pl": "74ba7006d80c638fd23a7ec83a0869141ffb42f8e3e5f999505256cc3a944e78",
+    "tests/test_macroparas_gtex.py": "6da7389689b9077ea8943d9fa76ee205f67a529c57d9fecc55fe0e535a1c74e9"
+  },
+  "original_library_macro_unchanged_sha256": "f5a0edae59a7d4b36f267cd262faf216996d9b1d620c0deca4cc7ca300c6b594",
+  "live": [
+    {
+      "target": "local",
+      "language": "perl",
+      "case": "legacy",
+      "exit_code": 0,
+      "seconds": 25.071,
+      "html": [],
+      "markers": [],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 2946,
+          "sha256": "44a4b29ece7e6c8d13f9ca7fa9d44d08148bbf4dc5b447b7e813ba73419440ec"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 615,
+          "sha256": "6454a67dbe1a90b8c514550f2db85598f4781d97e9e5bad83ba0a0e8a3541b3c"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "case": "gtex",
+      "exit_code": 0,
+      "seconds": 45.946,
+      "html": [
+        "sas_res_cflg2.html",
+        "sas_res_M5E84.html",
+        "sas_res_UlRd6.html"
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=20"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 17117,
+          "sha256": "05c451c3678883929697a3f53163e55c7c7ea0d4c03eaab9a85c8f5564cf4b00"
+        },
+        {
+          "file": "sas_res_M5E84.html",
+          "bytes": 1228593,
+          "sha256": "a3abcec72a2bc743fefe7900fcc4e1b86baa3025cbf0cafd35d3fa7c904598f8"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 10465,
+          "sha256": "12bdf0400711062f6e57b2025a51543803e7868b53f152320a2a90c2558de21d"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "case": "verify",
+      "exit_code": 0,
+      "seconds": 2.18,
+      "html": [],
+      "markers": [
+        "PASS: SENTINEL_RETAINED",
+        "PASS: MACROPARAS_ROWS=20"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 2499,
+          "sha256": "7d6c05c40b80e8491837774239b9e42d496e264d428542e49b3f14533747ebb7"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 354,
+          "sha256": "855e84f8d85b0bea6e8c6bf61ebd85f9f453c2fe4eb79b3fbb72021fb21baa28"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "case": "regression",
+      "exit_code": 0,
+      "seconds": 8.779,
+      "html": [
+        "sas_res_9ISg0.html",
+        "sas_res_b4fK_.html"
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=compare_expected_names",
+        "MACROPARAS_TEST_PASS=complete_signature_beyond_preview",
+        "MACROPARAS_TEST_PASS=preserve_caller_tables",
+        "MACROPARAS_TEST_PASS=preserve_caller_macro_variables",
+        "MACROPARAS_TEST_PASS=preserve_notes_option",
+        "MACROPARAS_MATCH_COUNT=0",
+        "MACROPARAS_TEST_PASS=zero_matches_clear_previous_results",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=quoted_directory_list_deduplicated",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=configured_default_directory",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=sasautos_fileref_directory",
+        "MACROPARAS_TEST_PASS=implicit_print_result_table"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 125825,
+          "sha256": "4446406c126b171eeddefc6fdeb89722b1240cbe78a901603a2b93b999a2b553"
+        },
+        {
+          "file": "sas_res_9ISg0.html",
+          "bytes": 35189,
+          "sha256": "7f1520a55152c45bd6f31e49e8b11dba903400522794daabc3c97422c3cee8dc"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 5559,
+          "sha256": "ca3aead09320916d2609291ec27575b1ab1522e1f3dbe2f40470179d2e94958e"
+        }
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "case": "legacy",
+      "seconds": 15.095,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 2525,
+          "sha256": "8cc0ba7ce780e56ecc986a34b9380f1173109eaa41c63547558fcd0017155f08"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 615,
+          "sha256": "6454a67dbe1a90b8c514550f2db85598f4781d97e9e5bad83ba0a0e8a3541b3c"
+        }
+      ],
+      "markers": []
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "case": "gtex",
+      "seconds": 8.712,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 14615,
+          "sha256": "0510f9ca18a4ae45e06250b6d4783040b1d6ba92914a8d263309740970ad6c56"
+        },
+        {
+          "file": "sas_res_MuaeR.html",
+          "bytes": 781801,
+          "sha256": "02a5e4ba6bf73fadb38683e86f22c58f2988076f578320b64084978ce2826a53"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 10465,
+          "sha256": "12bdf0400711062f6e57b2025a51543803e7868b53f152320a2a90c2558de21d"
+        }
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=14"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "case": "verify",
+      "seconds": 2.091,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 1821,
+          "sha256": "99555c6846c092b383783c4f9191f601e450a65193d212e8c7f783019647012b"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 307,
+          "sha256": "dcc84d6c41fb60f4e4c919d8fd1a00942f80e7e7a3e27677cd4efcbf4a67173d"
+        }
+      ],
+      "markers": [
+        "PASS: SENTINEL_RETAINED",
+        "PASS: MACROPARAS_ROWS=14"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "case": "regression",
+      "seconds": 13.623,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 9087,
+          "sha256": "a872d62f817a63d77497f6e25ec9a57fec5e98c5980e060cbb5b3cb7d04a2955"
+        },
+        {
+          "file": "sas_res_Kxlhd.html",
+          "bytes": 34600,
+          "sha256": "09eff2dbca2b1697d0bbc98f22ecc62e5fdc98e8e2b172496454a71a7188e1fb"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 4685,
+          "sha256": "9f4809eb0ed32e8c5d491f1864ef307f62a29465d25e62794d42ced122fafb17"
+        }
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=compare_expected_names",
+        "MACROPARAS_TEST_PASS=complete_signature_beyond_preview",
+        "MACROPARAS_TEST_PASS=preserve_caller_tables",
+        "MACROPARAS_TEST_PASS=preserve_caller_macro_variables",
+        "MACROPARAS_TEST_PASS=preserve_notes_option",
+        "MACROPARAS_MATCH_COUNT=0",
+        "MACROPARAS_TEST_PASS=zero_matches_clear_previous_results",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=quoted_directory_list_deduplicated",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=configured_default_directory",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=sasautos_fileref_directory",
+        "MACROPARAS_TEST_PASS=implicit_print_result_table"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "case": "legacy",
+      "exit_code": 0,
+      "seconds": 21.73,
+      "html": [],
+      "markers": [],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 1751,
+          "sha256": "8f563a30406e4a09f756a43a7573ccecc109aeafc0c4ff97d05c7b4f45266ddc"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 630,
+          "sha256": "cb587a9ab8574da8f8e7fc10f09600fddd16d339cf6d6505c05aedff7d8e1168"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "case": "gtex",
+      "exit_code": 0,
+      "seconds": 137.991,
+      "html": [
+        "output.html"
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=20"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html",
+          "bytes": 1257552,
+          "sha256": "f307ea33e494517e82d0eecbc0430cad9592d6ba9697b50db1bf7b8dd24b7842"
+        },
+        {
+          "file": "output.html.info.txt",
+          "bytes": 16663,
+          "sha256": "57f67b65775cdac58927eef0198aabd51c0e8df47547cb626af8f80b6bf2476a"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 10721,
+          "sha256": "4614788a44304c5f6b8afb39bbf08c58dc41799e1c90bc5ba08126f04c547ae8"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "case": "verify",
+      "exit_code": 0,
+      "seconds": 4.598,
+      "html": [],
+      "markers": [
+        "PASS: SENTINEL_RETAINED",
+        "PASS: MACROPARAS_ROWS=20"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 1564,
+          "sha256": "c0be3ca09020be0aa3577d79f80f89066d95dd069d6c60a3bc4a85d959104850"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 357,
+          "sha256": "456bf2564943c6e3f19f55c4e289fd2fa97180f82c61ee4f4b81887f6054e82a"
+        }
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "case": "regression",
+      "exit_code": 0,
+      "seconds": 6.766,
+      "html": [
+        "output.html"
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=compare_expected_names",
+        "MACROPARAS_TEST_PASS=complete_signature_beyond_preview",
+        "MACROPARAS_TEST_PASS=preserve_caller_tables",
+        "MACROPARAS_TEST_PASS=preserve_caller_macro_variables",
+        "MACROPARAS_TEST_PASS=preserve_notes_option",
+        "MACROPARAS_MATCH_COUNT=0",
+        "MACROPARAS_TEST_PASS=zero_matches_clear_previous_results",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=quoted_directory_list_deduplicated",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=configured_default_directory",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=sasautos_fileref_directory",
+        "MACROPARAS_TEST_PASS=implicit_print_result_table"
+      ],
+      "artifacts": [
+        {
+          "file": "output.html",
+          "bytes": 36388,
+          "sha256": "3006ad6ab45a202d2fcda87bf7c9be67e2436e2d468f5025be9f6b1934ecc0bc"
+        },
+        {
+          "file": "output.html.info.txt",
+          "bytes": 18952,
+          "sha256": "7f179ae47e6ab9289facc5d02b4776a048375794173f4538ec2fcd7a8cf72d1c"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 4679,
+          "sha256": "0f1fa1e7838e3ab8cb1dca7f13210643d1949f847aad1c2b58297d0949232749"
+        }
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "case": "legacy",
+      "seconds": 12.286,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 1468,
+          "sha256": "85d8cc3be2b9feda5df252194b0a845925d8a129cf0b1f81d078b8376f9bf66c"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 630,
+          "sha256": "cb587a9ab8574da8f8e7fc10f09600fddd16d339cf6d6505c05aedff7d8e1168"
+        }
+      ],
+      "markers": []
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "case": "gtex",
+      "seconds": 4.25,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html",
+          "bytes": 804278,
+          "sha256": "f71c288ac5eefa9a67d2d30871d56d98f160370b5e94c0c3b14be4fc14a27cfe"
+        },
+        {
+          "file": "output.html.info.txt",
+          "bytes": 14474,
+          "sha256": "b53b9a480e33c501ca78f421dac6e1c44c7498d9c45ed2576e28bd7e7e15d0c9"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 10721,
+          "sha256": "4614788a44304c5f6b8afb39bbf08c58dc41799e1c90bc5ba08126f04c547ae8"
+        }
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=14"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "case": "verify",
+      "seconds": 1.444,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html.info.txt",
+          "bytes": 1103,
+          "sha256": "09d1f0c27daf18a145b1acb80a415fc0eeefa8f36a1dfc9d08909dd06afcd43b"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 313,
+          "sha256": "9c552a6ecea5348ed6201c552429e0d242ac1b2deb76181603b2e508c2257312"
+        }
+      ],
+      "markers": [
+        "PASS: SENTINEL_RETAINED",
+        "PASS: MACROPARAS_ROWS=14"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "case": "regression",
+      "seconds": 5.66,
+      "exit_code": 0,
+      "artifacts": [
+        {
+          "file": "output.html",
+          "bytes": 35808,
+          "sha256": "806e6a25f6edac7b0c9f7623bb2c739a22f62d4231ac3fbbf6f0a27fe0010d9a"
+        },
+        {
+          "file": "output.html.info.txt",
+          "bytes": 7484,
+          "sha256": "e54e7d068710a62106ebb7f3c918196d33d93861955d9676f57661469daa9173"
+        },
+        {
+          "file": "submitted.sas",
+          "bytes": 4798,
+          "sha256": "b817de0917f0812ab7999f0fc7a36287285aca44d1efaa0a2f6460c65ad61f29"
+        }
+      ],
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=compare_expected_names",
+        "MACROPARAS_TEST_PASS=complete_signature_beyond_preview",
+        "MACROPARAS_TEST_PASS=preserve_caller_tables",
+        "MACROPARAS_TEST_PASS=preserve_caller_macro_variables",
+        "MACROPARAS_TEST_PASS=preserve_notes_option",
+        "MACROPARAS_MATCH_COUNT=0",
+        "MACROPARAS_TEST_PASS=zero_matches_clear_previous_results",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=quoted_directory_list_deduplicated",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=configured_default_directory",
+        "MACROPARAS_MATCH_COUNT=2",
+        "MACROPARAS_TEST_PASS=sasautos_fileref_directory",
+        "MACROPARAS_TEST_PASS=implicit_print_result_table"
+      ]
+    }
+  ],
+  "offline_scripts": [
+    {
+      "name": "test_macroparas_autoload.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_macroparas_autoload.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_macroparas_gtex.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_macroparas_gtex.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_case_insensitive_macro_lookup.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_case_insensitive_macro_lookup.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_macro_quoting_preflight.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_macro_quoting_preflight.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_transitive_dependency_batch.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_transitive_dependency_batch.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_resolve_macro_dependencies.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_resolve_macro_dependencies.py",
+      "exit_code": 0
+    },
+    {
+      "name": "test_unquote_macro_dependencies.pl",
+      "exit_code": 0
+    },
+    {
+      "name": "test_unquote_macro_dependencies.py",
+      "exit_code": 0
+    },
+    {
+      "name": "native-suite",
+      "exit_code": 0
+    }
+  ],
+  "root_python_scripts_passed": 75,
+  "native_python_tests_passed": 93,
+  "installed_files": [
+    {
+      "path": "run_sas_codes_or_files_in_ODA.pl",
+      "before_sha256": "6e6d9095708633c99e08f0cee892b4411348dbc242490c947f06033c9cd7c178",
+      "after_sha256": "2889b04fac403f61f5db1012c5be7d107f09daab20cc49ac408a6afd2c228f53"
+    },
+    {
+      "path": "run_sas_codes_or_script_in_ODA.pl",
+      "before_sha256": "6e6d9095708633c99e08f0cee892b4411348dbc242490c947f06033c9cd7c178",
+      "after_sha256": "2889b04fac403f61f5db1012c5be7d107f09daab20cc49ac408a6afd2c228f53"
+    },
+    {
+      "path": "MCPDeps/SAS_ODA_Runner.pm",
+      "before_sha256": "0d697df256fd7dc04d30163356a5ea9f3ee5c22701406a850060612f17abeb94",
+      "after_sha256": "52ed56fee2bb82e71be69fb6c470436c9ef098bf1939dfa921920f8fc5e2e57c"
+    },
+    {
+      "path": "MCP4SAS_Use_Python/dependencies.py",
+      "before_sha256": "fef96baefa098b8e6c60ae21374baae63a4da0e2fb4484b68a7bb7014ca25cd8",
+      "after_sha256": "3555ee41d3f061c043098763319415afba5468c4cb722a3d6ec8f8e836b0b8ff"
+    },
+    {
+      "path": "examples/sas_macros/macroparas_portable.sas",
+      "before_sha256": "a6340093030291f2f9de00ffc3d3ced2848b02c08770feb92ebb2ef602964145",
+      "after_sha256": "d9af854783394c14e2b0461a6a296b77a9f1dd097f5f6aaad794be417d6a7e06"
+    },
+    {
+      "path": "tests/test_macroparas_gtex.py",
+      "before_sha256": "0f0777be7daace60129c08f6ed1bd570be8900920dd22ae4e6cec0470b244da1",
+      "after_sha256": "6da7389689b9077ea8943d9fa76ee205f67a529c57d9fecc55fe0e535a1c74e9"
+    },
+    {
+      "path": "tests/macroparas_gtex_regression.sas",
+      "before_sha256": "a52eaaf1a6a21ee5eb0f8e3e48ca0b60eb243b63ea589b0d44d743f2a7454655",
+      "after_sha256": "be4c06faba9dea76dd62dcc6bc9c6ecc64f55d66d0535168b741b7e4239a5d0d"
+    },
+    {
+      "path": "tests/test_macroparas_autoload.py",
+      "before_sha256": null,
+      "after_sha256": "9e4138f2995767203c14410ac405dd8d03ca615cc7f92d167402ac50099a8a4a"
+    },
+    {
+      "path": "tests/test_macroparas_autoload.pl",
+      "before_sha256": null,
+      "after_sha256": "74ba7006d80c638fd23a7ec83a0869141ffb42f8e3e5f999505256cc3a944e78"
+    },
+    {
+      "path": "tests/macroparas_autoload_regression.sas",
+      "before_sha256": null,
+      "after_sha256": "6454a67dbe1a90b8c514550f2db85598f4781d97e9e5bad83ba0a0e8a3541b3c"
+    },
+    {
+      "path": "tests/run_live_macroparas_autoload.py",
+      "before_sha256": null,
+      "after_sha256": "4bab19e742307ebbd5d8125865ca25715d5828ea0dcf0d2c904cd68090ec7266"
+    }
+  ],
+  "installed_full_preview": {
+    "exit_code": 0,
+    "seconds": 134.294,
+    "directory": "Test_MCP4SAS/SAS_Output_RandID_macroparas_repaired_1795377719183919000",
+    "html": [
+      "sas_res_YFyDk.html"
+    ],
+    "count": [
+      "20"
+    ],
+    "browser_request": true,
+    "browser_window_title": "SAS Output \u2014 Mozilla Firefox",
+    "artifacts": [
+      {
+        "file": "output.html.info.txt",
+        "bytes": 17077,
+        "sha256": "466b9af20246b2e31347e6bc4288556b2f9bbb9c438a969da50c15aa98fd46e4"
+      },
+      {
+        "file": "sas_res_YFyDk.html",
+        "bytes": 1228319,
+        "sha256": "939e6887bb9cee4d3ffdd9506241034e8afec25264ef04d09b877dff4a11aeb9"
+      },
+      {
+        "file": "submitted.sas",
+        "bytes": 10465,
+        "sha256": "12bdf0400711062f6e57b2025a51543803e7868b53f152320a2a90c2558de21d"
+      }
+    ]
+  },
+  "installed_compact_catalog": {
+    "exit_code": 0,
+    "seconds": 3.896,
+    "directory": "Test_MCP4SAS/SAS_Output_RandID_macroparas_repaired_1795378137304940200",
+    "html": [
+      "sas_res_tGlvK.html"
+    ],
+    "count": [
+      "20"
+    ],
+    "browser_request": true,
+    "artifacts": [
+      {
+        "file": "output.html.info.txt",
+        "bytes": 16897,
+        "sha256": "069870a9b90cafa0d9c3b5c329f4021c19f838d1b6c34e587b7de306c4d3f6ee"
+      },
+      {
+        "file": "sas_res_tGlvK.html",
+        "bytes": 40789,
+        "sha256": "a712785b96584dd275b26622625507961ccd5c50318836f0c669e0f77ba4b705"
+      },
+      {
+        "file": "submitted.sas",
+        "bytes": 10482,
+        "sha256": "5ad24c22257ca418c7a4dbc78b7f04ef5aedb7716d19413dce497ea716478f36"
+      }
+    ]
+  },
+  "browser_observation": {
+    "launcher_accepted": true,
+    "window_title_observed": "SAS Output \u2014 Mozilla Firefox",
+    "page_screenshot_verified": false,
+    "reason": "UI snapshot failed; no page-layout claim."
+  },
+  "scope": "Macro source inspection, not execution of GTEx analyses. Timings are observations with concurrent test activity, not a controlled performance comparison.",
+  "preserved_user_session": {
+    "port": 65055,
+    "session": "mc",
+    "restarted": false,
+    "closed": false
+  }
+}
