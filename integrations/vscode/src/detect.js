@@ -95,7 +95,11 @@ function configuredTarget(config, found, kind) {
   }
   return r;
 }
-const CONNECTION_KEYS=['python','saspyCfgname','saspyCfgfile','sasExecutable','sessionPort'];
+const CONNECTION_KEYS=['python','saspyCfgname','saspyCfgfile','sasExecutable','sessionPort','sessionBinding'];
+function sessionBinding(config) {
+  return JSON.stringify(['target-bound-v1',...['repo','perl','python','java','saspyCfgname','saspyCfgfile','sasExecutable'].map(k=>config[k]||'')]);
+}
+function needsSessionPort(config) {return !config.sessionPort||config.sessionBinding!==sessionBinding(config);}
 function targetKind(profile) { return /^(winlocal|winlocal_com|linuxlocal|local|stdio)$/.test(profile||'')?'local':!profile||profile==='oda'?'oda':'custom'; }
 function rememberTargets(config) {
   const targets={...config.targets};
@@ -103,4 +107,4 @@ function rememberTargets(config) {
   targets[kind]=Object.fromEntries(CONNECTION_KEYS.filter(k=>config[k]!==undefined).map(k=>[k,config[k]]));
   return targets;
 }
-module.exports={discoveryPaths,detect,parseProbe,configuredTarget,rememberTargets,targetKind,CONNECTION_KEYS,JARS};
+module.exports={discoveryPaths,detect,parseProbe,configuredTarget,rememberTargets,targetKind,CONNECTION_KEYS,sessionBinding,needsSessionPort,JARS};

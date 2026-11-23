@@ -30,6 +30,21 @@ test('target selection clears an inherited incompatible SASPy file but retains u
   const env=core.connectionEnvironment({saspyCfgname:'oda'},base);
   assert.equal(env.SASPY_CFGFILE,undefined);assert.equal(env.HTTPS_PROXY,base.HTTPS_PROXY);assert.equal(base.SASPY_CFGFILE,'/old/local.py');
 });
+test('legacy or changed connections get a fresh helper port without reusing another target',()=>{
+ const oda={repo:'/repo',perl:'/perl',python:'/python',saspyCfgname:'oda',saspyCfgfile:'/oda.py',sessionPort:65055};
+ assert.equal(discovery.needsSessionPort(oda),true,'a legacy shared port has no verified binding');
+ oda.sessionBinding=discovery.sessionBinding(oda);
+ assert.equal(discovery.needsSessionPort(oda),false);
+ const found={platform:'win32',local:{candidate:'C:/python.exe'},oda:{candidate:'/python'},sas:'C:/SAS/sas.exe'};
+ let local=discovery.configuredTarget(oda,found,'local');
+ assert.equal(discovery.needsSessionPort(local),true);
+ local={...local,saspyCfgfile:'C:/local.py',sessionPort:41002};local.sessionBinding=discovery.sessionBinding(local);
+ assert.equal(discovery.needsSessionPort(local),false);
+ const back=discovery.configuredTarget(local,found,'oda');
+ assert.equal(back.sessionPort,65055);assert.equal(discovery.needsSessionPort(back),false,'a bound unchanged target keeps its own session');
+ assert.equal(discovery.needsSessionPort({...local,saspyCfgfile:'C:/different.py'}),true);
+ assert.equal(discovery.needsSessionPort({...local,python:'C:/different/python.exe'}),true);
+});
 test('polling a job ignores the new target and keeps the backend that owns its PID',()=>{
   const jobs=new Map(),backend={port:1234};
   const call={method:'tools/call',params:{name:'run_sas_codes_or_files_in_ODA',arguments:{}}};

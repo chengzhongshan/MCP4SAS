@@ -1,0 +1,21 @@
+'use strict';
+const {test}=require('node:test'),assert=require('node:assert/strict'),check=require('../src/target-check');
+const values='MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\n';
+const oda=values+'MCP4SAS_PLATFORM LIN X64 9.4\nMCP4SAS_WORK=/saswork/SAS_work123_odaws01-usw2.oda.sas.com/SAS_work1\n';
+const win=values+'MCP4SAS_PLATFORM WIN 9.4\nMCP4SAS_WORK=C:\\Temp\\SAS_work123\\_TD1\n';
+const linux=values+'MCP4SAS_PLATFORM LIN X64 9.4\nMCP4SAS_WORK=/tmp/SAS_work123\n';
+test('observed host and values verify the intended SAS, not only successful code',()=>{
+ assert.match(check.verify(oda,'oda').platform,/LIN/);
+ for(const name of ['winlocal','winlocal_com'])assert.match(check.verify(win,name).platform,/WIN/);
+ for(const name of ['linuxlocal','local','stdio'])assert.match(check.verify(linux,name).platform,/LIN/);
+ assert.throws(()=>check.verify(oda,'winlocal'),/local Windows SAS/);
+ assert.throws(()=>check.verify(oda,'linuxlocal'),/local Linux SAS/);
+ assert.throws(()=>check.verify(win,'oda'),/SAS ODA/);
+ assert.throws(()=>check.verify(linux,'oda'),/SAS ODA/);
+ assert.throws(()=>check.verify(values,'oda'),/platform/);
+ assert.throws(()=>check.verify('43 '+oda.replace(/\n/g,'\n43 '),'oda'),/expected observed/,'source echoes are not execution evidence');
+ assert.throws(()=>check.verify(oda+'ERROR: intentionally broken\n','oda'),/expected observed/);
+ assert.throws(()=>check.verify(oda.replace('n=19','n=18'),'oda'),/expected observed/);
+ assert.match(check.CODE,/proc print data=sashelp.class\(obs=5\)/);
+ assert.match(check.CODE,/MCP4SAS_WORK=/);
+});

@@ -1,0 +1,59 @@
+{
+  "version": "0.1.5",
+  "date": "2026-11-23",
+  "installation": {
+    "installed": true,
+    "version": "0.1.5",
+    "all_source_files_verified": true,
+    "vsix_sha256": "3ecaea4b2717d31a6305e8f636a0b6b42aa1afb98f1dcfc863b943471eec6308",
+    "path": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\dist\\mcp4sas-0.1.5.vsix"
+  },
+  "packaged_extension_host": {
+    "results": [
+      {
+        "kind": "oda",
+        "profile": "oda",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-aplTg0\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795468158189",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      },
+      {
+        "kind": "local",
+        "profile": "winlocal",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-aplTg0\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795468176257",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      },
+      {
+        "kind": "oda",
+        "profile": "oda",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-aplTg0\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795468204734",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      }
+    ],
+    "installed_config_unchanged": true,
+    "scope": "Real VS Code command handlers and actual Windows SAS/ODA; picker selection automated, no AI model turn."
+  },
+  "logs": [
+    {
+      "profile": "oda",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795468136230\\packaged-0-oda\\output.html.info.txt",
+      "log_sha256": "857fb238c652c32f107601c01a1d08b962663b3d78c4bfd6df40b5b268428013"
+    },
+    {
+      "profile": "winlocal",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795468136230\\packaged-1-winlocal\\output.html.info.txt",
+      "log_sha256": "404daed3ecc59abc54e7bfd0f672cc55693efbc2618fb32573d9db524154b06d"
+    },
+    {
+      "profile": "oda",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795468136230\\packaged-2-oda\\output.html.info.txt",
+      "log_sha256": "89120612f60dfccc7e62e223c15d12db9fd9f125ac043d2f644b6602ca48e9ae"
+    }
+  ],
+  "host_console": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795468136230\\host.console.log",
+  "test_harness_sha256": "6fb76cb452303e50e3aef8997df7023cbf7d4f206b9fce78e4213269d4f716df",
+  "package_test_harness_note": "The first installed-package attempt ran its UI-stubbing harness outside the extension root and received a different VS Code API object. The corrected harness stages unchanged installed files and the test script under one isolated extension root; ODA/local/ODA and all three new terminal environment checks then passed.",
+  "installed_config_unchanged": true
+}

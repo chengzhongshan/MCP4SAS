@@ -7,6 +7,8 @@ const core = require('./core');
 const discovery = require('./detect');
 const nativePython = require('./native-python');
 const localProfile = require('./local-profile');
+const terminalTarget = require('./terminal-target');
+const targetCheck = require('./target-check');
 const guide = require('./setup-guide');
 const timers = require('node:timers');
 const VERSION = require('../package.json').version;
@@ -468,7 +470,12 @@ async function detectSetup(choose=false,forceChoice=false) {
   if(kind==='oda'&&!updated.saspyCfgfile&&fs.existsSync(path.join(config.repo,'sascfg_personal.py')))updated.saspyCfgfile=path.join(config.repo,'sascfg_personal.py');
   const remembered=updated.targets?.[kind]||config;
   const before=JSON.stringify([remembered.python,remembered.saspyCfgname,remembered.saspyCfgfile,remembered.sasExecutable]),after=JSON.stringify([updated.python,updated.saspyCfgname,updated.saspyCfgfile,updated.sasExecutable]);
-  if(before!==after||!updated.sessionPort)updated.sessionPort=await core.allocateSessionPort();
+  if(before!==after||discovery.needsSessionPort(updated)) {
+    const previousPort=updated.sessionPort;
+    updated.sessionPort=await core.allocateSessionPort();
+    if(previousPort)output.appendLine('Using a fresh helper port for '+updated.saspyCfgname+'. Existing SAS sessions on the previous port are preserved; they have not been stopped.');
+  }
+  updated.sessionBinding=discovery.sessionBinding(updated);
   updated.targets=discovery.rememberTargets(updated);
   core.writePrivate(configFile(),JSON.stringify(updated,null,2)+'\n');emitter.fire();
   updateTargetStatus();
@@ -482,7 +489,7 @@ async function detectSetup(choose=false,forceChoice=false) {
     const needsJars=kind==='oda'&&found.oda?.missing_jars?.length&&!found.jarDirectory;
     const action=needsJars
       ? await vscode.window.showInformationMessage('SAS OnDemand is selected, but its encryption files are missing. Complete the SAS download and private login steps in the setup guide before testing.','Open Setup Guide','Configure SAS JARs')
-      : await vscode.window.showInformationMessage('SAS target saved. The next assistant submission uses this target. Existing terminals keep their previous environment; open a new runtime terminal for manual commands.','Test SAS Now','Open Runtime Terminal');
+      : await vscode.window.showInformationMessage('SAS target saved: '+(updated.saspyCfgname==='oda'?'SAS ODA':kind==='local'?'Local SAS':'Configured SAS')+'. New assistant submissions and new project terminals use this selection. Existing terminals keep their old environment; open a new terminal before running manual commands.','Test SAS Now','Open Runtime Terminal');
     if(action==='Open Setup Guide')showSetupGuide();
     if(action==='Configure SAS JARs')await configureJars();
     if(action==='Test SAS Now')await testSelectedSas();
@@ -491,18 +498,18 @@ async function detectSetup(choose=false,forceChoice=false) {
   return true;
 }
 function updateTargetStatus() {
-  if(!targetStatus)return;
   const config=readConfig();
-  if(!config){targetStatus.text='$(database) Set Up SAS';targetStatus.tooltip='Configure MCP4SAS for this computer';targetStatus.command='mcp4sas.setup';targetStatus.show();return;}
+  if(!config){terminalTarget.apply(context,vscode,null);if(targetStatus){targetStatus.text='$(database) Set Up SAS';targetStatus.tooltip='Configure MCP4SAS for this computer';targetStatus.command='mcp4sas.setup';targetStatus.show();}return;}
   const profile=config.saspyCfgname||'oda';
   try {core.assertRepo(config.repo);if(!fs.statSync(config.cwd).isDirectory())throw Error('Saved project folder is unavailable.');}
-  catch(error){targetStatus.text='$(warning) Repair SAS Setup';targetStatus.tooltip=error.message;targetStatus.command='mcp4sas.setup';targetStatus.show();return;}
+  catch(error){terminalTarget.apply(context,vscode,null);if(targetStatus){targetStatus.text='$(warning) Repair SAS Setup';targetStatus.tooltip=error.message;targetStatus.command='mcp4sas.setup';targetStatus.show();}return;}
+  terminalTarget.apply(context,vscode,config);
+  if(!targetStatus)return;
   const label=profile==='oda'?'SAS ODA':profile.startsWith('win')?'Windows SAS':/^(linuxlocal|local|stdio)$/.test(profile)?'Linux SAS':profile;
   targetStatus.text='$(database) '+label;
   targetStatus.tooltip='MCP4SAS selected target: '+profile+'. Click to switch. Software detection does not verify SAS execution.';
   targetStatus.command='mcp4sas.switchSas';targetStatus.show();
 }
-const TARGET_CHECK_CODE='proc means data=sashelp.class noprint;var Age;output out=work.mcp4sas_target_check n=n nmiss=missing min=minimum max=maximum;run;data _null_;set work.mcp4sas_target_check;put "MCP4SAS_TARGET_CHECK " n= missing= minimum= maximum=;put "MCP4SAS_PLATFORM &sysscp &sysvlong";run;';
 async function testSelectedSas() {
   trusted();const config=readConfig();if(!config)return setup();
   const directory=path.join(context.globalStorageUri.fsPath,'connection-checks',String(Date.now()));
@@ -511,13 +518,14 @@ async function testSelectedSas() {
   const destination=await core.toPosix(directory,config.perl);
   output.show(true);output.appendLine('Testing selected SAS target '+(config.saspyCfgname||'oda')+'; actual submission of SASHELP.CLASS.');
   await vscode.window.withProgress({location:vscode.ProgressLocation.Notification,title:'Testing '+(config.saspyCfgname||'oda')},async()=>{
-    const result=await core.run(config.perl,[runner,'--code',TARGET_CHECK_CODE,'--output-prefix',destination,'--run-timeout-seconds','120'],{cwd:config.cwd,env,timeout:180000});
+    const result=await core.run(config.perl,[runner,'--code',targetCheck.CODE,'--output-prefix',destination,'--run-timeout-seconds','120'],{cwd:config.cwd,env,timeout:180000});
     output.appendLine(result);
     // The CLI may return a compact path-only summary. Check the saved SAS log,
     // not stdout or the submitted program's echoed source.
     const log=fs.readFileSync(path.join(directory,'output.html.info.txt'),'utf8');
     output.appendLine(log);
-    if(!/^MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\s*$/m.test(log)||/^\s*ERROR(?:\s+\d+-\d+)?:/m.test(log))throw new Error('SAS check did not return the expected observed values. Inspect Output > MCP4SAS and '+directory);
+    try {targetCheck.verify(log,config.saspyCfgname||'oda');}
+    catch(error){throw new Error(error.message+' Inspect Output > MCP4SAS and '+directory);}
   });
   output.appendLine('Verified SAS target '+(config.saspyCfgname||'oda')+'. Log and output: '+directory);
   setupStates.sas={status:'complete',detail:'Actual SAS execution verified: 19 ages, 0 missing, minimum 11, maximum 16.'};renderSetup('SAS test passed. You can now use your selected assistant or the project runners.');

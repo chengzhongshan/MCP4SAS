@@ -85,7 +85,9 @@ test('Quick Setup saves a portable Cygwin runtime and connects Copilot after ins
       }
       if(args.includes('--code')) {
         const directory=args[args.indexOf('--output-prefix')+1];fs.mkdirSync(directory,{recursive:true});
-        fs.writeFileSync(path.join(directory,'output.html.info.txt'),(sasCheckFailure?'ERROR: test failure\n':'')+'MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\n');
+        const oda=options.env.SASPY_CFGNAME==='oda';
+        fs.writeFileSync(path.join(directory,'output.html.info.txt'),(sasCheckFailure?'ERROR: test failure\n':'')+'MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\n'+
+          'MCP4SAS_PLATFORM '+(oda?'LIN X64':'WIN')+' 9.4\nMCP4SAS_WORK='+(oda?'/saswork/SAS_work1_odaws01.oda.sas.com/SAS_work2':'C:/Temp/SAS_work1')+'\n');
         return 'SAS log saved to: '+directory;
       }
       assert.equal(command, path.join(path.dirname(portable), 'git.exe'));

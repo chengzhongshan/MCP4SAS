@@ -51,6 +51,7 @@ async function checked(name,result,platform,negative=false) {
  const oda={...detect.configuredTarget(saved,found,'oda'),cwd:out,sessionPort:await core.allocateSessionPort()};
  ownedTargets.push(oda);
  const local={...detect.configuredTarget(oda,found,'local'),repo:oda.repo,cwd:out,sessionPort:await core.allocateSessionPort()};
+ ownedTargets.push(local);
  if(!local.saspyCfgfile){
    local.saspyCfgfile=path.join(out,'local-sas.py');
    fs.writeFileSync(local.saspyCfgfile,found.platform==='win32'?"SAS_config_names=['winlocal_com']\nSAS_config_options={'lock_down':False,'prompt':False}\nwinlocal_com={'provider':'sas.iomprovider','encoding':'windows-1252'}\n":`SAS_config_names=['linuxlocal']\nSAS_config_options={'lock_down':False,'prompt':False}\nlinuxlocal={'saspath':${JSON.stringify(found.sas)},'encoding':'utf-8'}\n`);
@@ -92,8 +93,22 @@ async function checked(name,result,platform,negative=false) {
  for(const p of pending.values())clearTimeout(p.timer);
  if(child&&child.exitCode===null)child.kill();
  for(const config of ownedTargets)try {
-   const env=await core.runtimeEnvironment(config),runner=await core.toPosix(path.join(config.repo,'run_sas_codes_or_files_in_ODA.pl'),config.perl);
-   await core.run(config.perl,[runner,'--persistent','--session-id',session,'--kill-saspy-sessions','--output-prefix',await core.toPosix(path.join(out,'close-'+config.saspyCfgname),config.perl)],{cwd:out,env,timeout:30000});
+   // The legacy Perl kill switch can stop unrelated sessions. Never use it
+   // from a test: address only a fresh helper allocated above, then its PID.
+   assert.notEqual(config.sessionPort,65055,'never stop the user shared helper');
+   const net=require('node:net');
+   const owner=await new Promise((resolve,reject)=>{
+     const socket=net.createConnection({host:'127.0.0.1',port:config.sessionPort});let buffer=Buffer.alloc(0);
+     socket.setTimeout(10000,()=>socket.destroy(Error('helper ping timeout')));
+     socket.on('error',e=>e.code==='ECONNREFUSED'?resolve(null):reject(e));
+     socket.on('connect',()=>{const body=Buffer.from(JSON.stringify({cmd:'ping'})),header=Buffer.alloc(8);header.writeBigUInt64BE(BigInt(body.length));socket.write(Buffer.concat([header,body]));});
+     socket.on('data',data=>{buffer=Buffer.concat([buffer,data]);if(buffer.length>=8){const size=Number(buffer.readBigUInt64BE());if(buffer.length>=8+size){socket.end();resolve(JSON.parse(buffer.subarray(8,8+size)));}}});
+   });
+   if(owner?.status==='ok'&&Number.isInteger(owner.pid)) {
+     if(process.platform==='win32')await core.run(path.join(process.env.SystemRoot||'C:/Windows','System32/taskkill.exe'),['/PID',String(owner.pid),'/T','/F'],{timeout:30000});
+     else process.kill(owner.pid,'SIGTERM');
+     checks.push({name:'owned-helper-cleanup-'+config.saspyCfgname,status:'PASS',port:config.sessionPort,pid:owner.pid});
+   }
  }catch(e){checks.push({name:'session-cleanup-'+config.saspyCfgname,status:'FAILED',error:e.message});process.exitCode=1;}
  if(ownsOutput){
   fs.writeFileSync(path.join(out,'mcp-records.json'),JSON.stringify(records,null,2));fs.writeFileSync(path.join(out,'relay-stderr.txt'),diagnostics);

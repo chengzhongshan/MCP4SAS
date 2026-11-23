@@ -76,11 +76,26 @@ exports.run = async () => {
         await vscode.commands.executeCommand('mcp4sas.switchSas');
         const selected=JSON.parse(fs.readFileSync(api.configFile(),'utf8'));
         assert.equal(selected.saspyCfgname==='oda',kind==='oda');
+        // A normal new terminal must follow the switch too, without calling
+        // Open Runtime Terminal or entering exports/paths by hand.
+        const terminalProject=vscode.workspace.workspaceFolders[0].uri.fsPath;
+        const terminalMarker=path.join(terminalProject,'selected-'+kind+'-'+results.length+'.txt');
+        const selectedTerminal=vscode.window.createTerminal({name:'Selected SAS terminal check',cwd:terminalProject});
+        selectedTerminal.show();
+        try {
+          selectedTerminal.sendText(`printf '%s\\n' "$SASPY_CFGNAME" "$PIPELINE_PYTHON_BIN" "$SASPY_CFGFILE" > ${require('../src/core').shellQuote(terminalMarker.replace(/\\/g,'/'))}`);
+          const until=Date.now()+20000;
+          while((!fs.existsSync(terminalMarker)||fs.readFileSync(terminalMarker,'utf8').split(/\r?\n/).length<3)&&Date.now()<until)await new Promise(resolve=>setTimeout(resolve,100));
+          const terminalValues=fs.readFileSync(terminalMarker,'utf8').trim().split(/\r?\n/);
+          assert.equal(terminalValues[0],selected.saspyCfgname);
+          assert.equal(terminalValues[1],selected.python);
+          assert.equal(terminalValues[2],selected.saspyCfgfile);
+        } finally {selectedTerminal.dispose();}
         const directory=await api.testSelectedSas();
         const log=fs.readFileSync(path.join(directory,'output.html.info.txt'),'utf8');
         assert.match(log,/^MCP4SAS_TARGET_CHECK n=19 missing=0 minimum=11 maximum=16\s*$/m);
         assert.match(log,new RegExp('^MCP4SAS_PLATFORM '+(kind==='oda'?'LIN':'WIN'),'m'));
-        results.push({kind,profile:selected.saspyCfgname,directory,verified:true});
+        results.push({kind,profile:selected.saspyCfgname,directory,verified:true,new_standard_terminal_follows_target:true});
       }
       assert.deepEqual(fs.readFileSync(file),original,'real user target configuration is unchanged');
       if(process.env.MCP4SAS_LIVE_SWITCH_OUT)fs.writeFileSync(process.env.MCP4SAS_LIVE_SWITCH_OUT,JSON.stringify({results,installed_config_unchanged:true,scope:'Real VS Code command handlers and actual Windows SAS/ODA; picker selection automated, no AI model turn.'},null,2));

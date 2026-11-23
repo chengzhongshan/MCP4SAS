@@ -1,0 +1,178 @@
+{
+  "date": "2026-11-23",
+  "version": "0.1.5",
+  "unit_tests": {
+    "passed": 66,
+    "failed": 0,
+    "skipped": 0
+  },
+  "real_extension_host": {
+    "results": [
+      {
+        "kind": "oda",
+        "profile": "oda",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-EK3wE9\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795465185803",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      },
+      {
+        "kind": "local",
+        "profile": "winlocal",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-EK3wE9\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795465203919",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      },
+      {
+        "kind": "oda",
+        "profile": "oda",
+        "directory": "c:\\Users\\cheng\\AppData\\Local\\Temp\\mcp4sas-vscode-test-EK3wE9\\User\\globalStorage\\chengzhongshan.mcp4sas\\connection-checks\\1795465230337",
+        "verified": true,
+        "new_standard_terminal_follows_target": true
+      }
+    ],
+    "installed_config_unchanged": true,
+    "scope": "Real VS Code command handlers and actual Windows SAS/ODA; picker selection automated, no AI model turn."
+  },
+  "real_mcp_relay": {
+    "checks": [
+      {
+        "name": "local-positive",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-job-polled-after-local-switch",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "local-negative",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-positive-after-switch-back",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "oda-negative",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "stale-target-rejected-before-submission",
+        "status": "PASS"
+      },
+      {
+        "name": "oda-after-negative-recovery",
+        "status": "PASS",
+        "warnings": 0
+      },
+      {
+        "name": "owned-helper-cleanup-oda",
+        "status": "PASS",
+        "port": 50998,
+        "pid": 13944
+      },
+      {
+        "name": "owned-helper-cleanup-winlocal",
+        "status": "PASS",
+        "port": 50999,
+        "pid": 21880
+      }
+    ],
+    "platform": "win32",
+    "profile_local": "winlocal",
+    "complete": true,
+    "installed_config_unchanged": true,
+    "scope": "Real stdio/HTTP MCP relay and installed SAS runtime. No interactive AI turn. Linux execution requires running this harness on a licensed Linux SAS host."
+  },
+  "execution_evidence": [
+    {
+      "kind": "oda",
+      "profile": "oda",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795465165065\\verified-0-oda\\output.html.info.txt",
+      "log_sha256": "f994584dad577bb2424fae71fd17614d4e39b5ef00e3bc3a29648f281f5e62c1",
+      "html": [
+        {
+          "file": "sas_res_MFcwP.html",
+          "sha256": "e3b72ff0e67b73b14a5b6a30bbd37998dac346e1b00622ddcbcebf57e5052516"
+        }
+      ]
+    },
+    {
+      "kind": "local",
+      "profile": "winlocal",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795465165065\\verified-1-winlocal\\output.html.info.txt",
+      "log_sha256": "f01608f0ba82ae76050f399ac6cb24db171e9e42dd27f76847ff0e4d3def35ba",
+      "html": [
+        {
+          "file": "sas_res_o_VHy.html",
+          "sha256": "719d9cefd47a8424461b40eb32660dc28d519d29a9602f43e69f92dc0de76f71"
+        }
+      ]
+    },
+    {
+      "kind": "oda",
+      "profile": "oda",
+      "log": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795465165065\\verified-2-oda\\output.html.info.txt",
+      "log_sha256": "fba956b0b9d90d4d6ef7fb929a2e937395ea15cbb60e270d920bb6a757e2a355",
+      "html": [
+        {
+          "file": "sas_res_vXcGc.html",
+          "sha256": "e3b72ff0e67b73b14a5b6a30bbd37998dac346e1b00622ddcbcebf57e5052516"
+        }
+      ]
+    }
+  ],
+  "raw_evidence_directories": [
+    "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795465165065",
+    "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_vscode_switch_20261123_1795465165094"
+  ],
+  "sources": [
+    {
+      "file": "integrations/vscode/src/extension.js",
+      "sha256": "f4f80e7bfc2b04b62a1e48dae0850a13f764838e1780f75a7a15cd8c4a3f4dcf"
+    },
+    {
+      "file": "integrations/vscode/src/detect.js",
+      "sha256": "20af57d8ef5635ac7c97e312eebb446e886aeff908a66ff7f709be28d15fe1fe"
+    },
+    {
+      "file": "integrations/vscode/src/terminal-target.js",
+      "sha256": "2b7ee456bea12d227f7d41b4df22e559a0e23ebdee8c077de2f995c2fa02af15"
+    },
+    {
+      "file": "integrations/vscode/src/target-check.js",
+      "sha256": "4dbd2336d88d59887fef59543f5d18674904a6486f2ca16c1b3fb3dd71b3a0bd"
+    },
+    {
+      "file": "integrations/vscode/test/host.cjs",
+      "sha256": "02c1237609378540433f92eccd0636dfa377aae4f576499c7897d5534d92ed8c"
+    },
+    {
+      "file": "integrations/vscode/test/setup.test.js",
+      "sha256": "a8d460c211fb0cbfcd7b36a5b245c038795809c5dde060395681bf822ecd51af"
+    },
+    {
+      "file": "integrations/vscode/test/targets.test.js",
+      "sha256": "e8a42c45e2d8c27c373ec61e5f55a18ad21d52b67aaabd3254267d67f6e3ff1f"
+    },
+    {
+      "file": "integrations/vscode/test/terminal-target.test.js",
+      "sha256": "67e1b622471a5a5ec6faf27b9ef2b7b6768714d4050fbd3089b5627d07429164"
+    },
+    {
+      "file": "integrations/vscode/test/target-check.test.js",
+      "sha256": "a81a8ffe28ae32109f79c2df1b7d389ef13459d4e185fbdf2be800f6083b9651"
+    }
+  ],
+  "scope": "Real Windows VS Code, installed Desktop Test_MCP4SAS scripts, native Windows IOM SAS and remote ODA. Automated picker choices; no interactive Copilot/Codex model turn.",
+  "limitations": [
+    "Licensed Linux SAS execution was not available; Linux target discovery/routing/configuration has offline coverage.",
+    "Existing terminals retain their prior environment; new terminals use the selection.",
+    "Original user failure lacked an exact error message, so it is not attributed to a single proven cause. Independent terminal propagation and legacy port-binding gaps were corrected."
+  ],
+  "initial_harness_failure": "The first isolated test PATH omitted the Windows PowerShell directory. Its task did not start. Adding the actual system PowerShell directory to the test launcher resolved that harness-only failure; the failed log is retained."
+}

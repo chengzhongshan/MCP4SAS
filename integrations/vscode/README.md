@@ -155,12 +155,25 @@ from silently sending code to the wrong system.
 Select **Test SAS Now**, or run **MCP4SAS: Test Selected SAS**, to submit a
 small SASHELP.CLASS check without an AI assistant. A verified result has 19
 known ages, zero missing ages, minimum 11 and maximum 16. Read the saved SAS
-log; finding software and discovering MCP tools are separate checks.
+log; finding software and discovering MCP tools are separate checks. The test
+also prints five CLASS rows as HTML and checks the returned SAS platform and
+WORK directory, so a working connection to the wrong SAS is not reported as a
+successful switch.
 
-Existing terminals keep their old environment. Use **Open Runtime Terminal**
-after switching for manual commands on the selected target. Existing SAS WORK
+New terminals opened in your project inherit the selected connection,
+including its Python, SASPy profile and configuration. Existing terminals keep
+their old environment: use **Terminal > New Terminal** or **MCP4SAS: Open
+MCP4SAS Runtime Terminal** after switching. No manual environment exports are
+required. The extension does not copy login credentials into terminal settings.
+Existing SAS WORK
 tables remain with the session/target that created them; switching does not
 transfer those tables to another SAS environment.
+
+When an older installation has a shared helper port without a target binding,
+the first switch assigns a fresh port to that target. This avoids reusing a
+helper started for another SAS connection. The old helper and its WORK tables
+are preserved; an unchanged, already bound target keeps its own port on later
+switches.
 
 New Windows targets use **Java IOM (`winlocal`)** with named persistent
 sessions. Reuse the same `session_id` and `persistent=true` to retain WORK
@@ -291,6 +304,7 @@ The launcher uses VS Code's bundled Node/Electron runtime, so a separate Node in
 - **No tools:** trust your own local folder, refresh the chosen assistant, check enabled MCP tools, and inspect **Output → MCP4SAS** / the client's MCP output. Update VS Code if its MCP provider API is missing.
 - **Portable Cygwin not detected:** use the existing-installation route and select its `bin/perl.exe`. Do not select Windows Strawberry Perl.
 - **Tools discovered, SAS fails:** repair SASPy target, Java/IOM configuration and authentication. Discovery does not validate those.
+- **A manual command still uses the old SAS after switching:** reload VS Code once after updating the extension, choose **Switch SAS Target**, run **Test Selected SAS**, then open a new project terminal. Do not reuse a terminal opened before the switch. In an assistant request, omit `saspy_cfgname` to follow the selection; an explicit conflicting profile is rejected rather than silently redirected.
 - **Missing SAS Java classes or IOM JARs:** open the setup guide, use the official SAS download button, then select the downloaded SAS ZIP or its extracted folder. The guided helper finds the three files and uses the selected SASPy environment. The [Java troubleshooting guide](https://github.com/chengzhongshan/MCP4SAS/blob/main/docs/JAVA_SETUP_TROUBLESHOOTING.md) also retains the separate terminal instructions. Installing Java alone does not supply these SAS libraries.
 - **Wrong relative path:** rerun Quick Setup and choose the actual project folder. The active editor file does not change the saved server folder automatically.
 - **Restricted network:** installers need access to official Cygwin, GitHub,

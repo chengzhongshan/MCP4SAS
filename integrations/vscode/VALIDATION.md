@@ -1,5 +1,22 @@
 # VS Code integration validation
 
+## Updated 0.1.5 build — target switching and project terminals
+
+23 November 2026. Ordinary new project terminals now inherit the selected
+SAS target, Python and configuration. Connection-specific helper-port bindings
+avoid attaching legacy targets to an old shared helper. Existing user sessions
+are preserved. Test Selected SAS verifies returned host/platform and WORK,
+prints CLASS HTML, and checks the expected age statistics.
+
+All 66 Node extension tests passed. Real VS Code command handlers completed
+ODA → Windows IOM SAS → ODA, including a fresh ordinary Cygwin terminal for
+each selection. A connected MCP relay also passed original-job polling after
+a switch, local/ODA successes and deliberate errors, stale-target rejection,
+and recovery. The installed user selection was unchanged by the tests.
+See the [full report](../../reports/VSCODE_SAS_SWITCHING_20261123.md) and
+[machine-readable evidence](validation/switching-20261123.json). Linux local
+SAS retains offline coverage; a live licensed Linux host was not tested.
+
 ## Updated 0.1.5 build — first-run setup guide
 
 16 November 2026. Added a persistent setup checklist, ten-second elapsed-time

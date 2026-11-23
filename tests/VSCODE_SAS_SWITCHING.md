@@ -45,7 +45,8 @@ node tests/run_vscode_sas_switch_live.cjs --runtime PATH_TO_RUNTIME_JSON --out N
 
 The first command discovers software and prints a plan. `--live` submits real
 SAS through the current relay and your installed MCP4SAS backend. Both ODA and
-local SAS must already be configured. A Windows host exercises local COM; a
+local SAS must already be configured. A Windows host exercises its remembered
+local IOM profile (or an explicitly configured one-shot COM profile); a
 licensed Linux host exercises Linux STDIO. Local SAS is not supplied by this
 test. Use a new output directory to retain earlier attempts.
 
@@ -76,6 +77,11 @@ automated; it is not an interactive AI model turn. The ordinary user profile,
 credentials and selected SAS target are preserved. Omit `--vscode` to use the
 test framework's downloaded VS Code. Linux CI needs a display such as Xvfb.
 
+The live host test also opens an ordinary new Cygwin terminal after each switch
+and verifies its selected profile, Python and configuration, without manually
+exporting environment variables. A positive SAS check now includes HTML plus
+the observed execution platform and WORK directory.
+
 ## Problems found and retained regression cases
 
 1. The original relay captured the target at startup. It now rereads the saved
@@ -95,6 +101,26 @@ test framework's downloaded VS Code. Linux CI needs a display such as Xvfb.
    the backend. The live harness uses the configured installed runtime instead
    of silently treating every source checkout as installed. The first failed
    attempt is retained separately from the successful rerun.
+7. Ordinary new terminals did not inherit the extension's selected connection;
+   only the dedicated Runtime Terminal did. Scoped terminal environment
+   mutations now set six connection selectors in the opened project, without
+   copying credentials, HOME or PATH. Terminals opened before switching remain
+   unchanged. `terminal-target.test.js` covers restoration and clearing; the
+   real host verifies the actual new Bash environment for ODA/local/ODA.
+8. Legacy saved helper ports had no binding to a specific connection. The first
+   selection now assigns a fresh helper port and remembers its connection
+   binding. Unchanged bound targets reuse their own port; existing old helper
+   processes and WORK tables are not killed.
+9. Identical CLASS statistics alone cannot distinguish ODA from local SAS.
+   `target-check.test.js` requires the correct platform and WORK host as well
+   as the expected values and rejects echoed source, SAS errors and wrong hosts.
+10. The live relay harness formerly used a broad Perl session-kill switch in
+    cleanup and did not retain the local helper in its ownership list. It now
+    stops only the PID tree returned by a ping to each newly allocated helper
+    port, never the user's shared port 65055.
+
+The [23 November 2026 revalidation](../reports/VSCODE_SAS_SWITCHING_20261123.md)
+records actual Windows IOM/ODA relay and real VS Code command/terminal results.
 
 Raw local evidence for the 15 November 2026 Windows/ODA trials is in
 `SAS_Output_vscode_switch_20261115_r3/`. The first uninstalled-checkout attempt
