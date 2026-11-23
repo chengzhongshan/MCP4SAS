@@ -157,7 +157,12 @@ data &output_macropara_dsd(keep=macro macro_paras path)
  do while(fread(fid)=0);
    line=''; rc=fget(fid,line,32767); line_no+1;
    if line_no<=input(symget('numlines2print'),best32.) then do;
-     Macro_Info=line; output work.&_mppreview;
+     Macro_Info=line;
+     /* ODS replaces an empty character cell with NBSP, which SAS does not
+        accept as a blank program line when pasted. A tab is real SAS
+        whitespace and keeps an empty source line visually empty. */
+     if missing(Macro_Info) then Macro_Info='09'x;
+     output work.&_mppreview;
    end;
    if found then do;
      if line_no>=input(symget('numlines2print'),best32.) then leave;
@@ -236,10 +241,28 @@ proc sql noprint;
 quit;
 %put MACROPARAS_MATCH_COUNT=&_mpcount;
 %if &numlines2print>0 %then %do;
- proc print data=work.&_mppreview noobs; var path line_no Macro_Info; run;
+ /* Keep the original dark-blue source on a light-blue background. A single
+    source column is copyable without stripping paths or line numbers. Hidden
+    ordering columns retain every source line, including duplicates and demos. */
+ proc report data=work.&_mppreview nowd missing noheader nocenter
+   style(report)=[just=left frame=box rules=none cellspacing=0 cellpadding=3];
+   column path line_no Macro_Info;
+   define path / order order=data noprint;
+   define line_no / order order=internal noprint;
+   define Macro_Info / display
+     /* ASIS=ON rewrites ordinary spaces as NBSP, including inside quoted SAS
+        values. Match the original's left alignment and keep normal spaces. */
+     style(column)=[just=left asis=off htmlstyle="white-space: pre" protectspecialchars=on
+       font_face=arial font_weight=bold foreground=darkblue
+       background=cxedf2f9 font_size=10pt];
+   compute before path / style=[just=left foreground=darkblue
+       background=white font_face=arial font_weight=bold font_size=10pt];
+     line path $4096.;
+   endcomp;
+ run;
 %end;
 %if &print_outdsd=1 %then %do;
- proc print data=&output_macropara_dsd noobs; var macro macro_paras path; run;
+ proc print data=&output_macropara_dsd noobs; var macro macro_paras; run;
 %end;
 %finish:
 proc datasets library=work nolist;

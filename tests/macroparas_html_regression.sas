@@ -1,0 +1,46 @@
+/* Source-inspection fixtures only; the demos must not run during inspection. */
+/* The automatically uploaded, self-contained loader supplies %macroparas. */
+%include "MCPDeps/importallmacros_ue.sas";
+%let _mp_html_root=%sysfunc(pathname(work));
+data _null_;
+ length directory $4096;
+ directory=dcreate('Macro preview fixtures',symget('_mp_html_root'));
+ call symputx('_mp_html_dir',directory,'G');
+run;
+filename mpcopy "&_mp_html_dir/CopyPreviewA.sas";
+data _null_;
+ file mpcopy;
+ put '%macro CopyPreviewA(value=3);';
+ put '  data work.mp_copied_a;';
+ put '    value=&value;';
+ put '    label="A < B & C > D";';
+ put '  run;';
+ put '%mend;';
+ put ' ';
+ put '/* Demo: run after the definition. */';
+ put '%CopyPreviewA(value=7);';
+run;
+filename mpcopy "&_mp_html_dir/CopyPreviewB.sas";
+data _null_;
+ file mpcopy;
+ put '%macro CopyPreviewB;';
+ put '  data work.mp_copied_b;';
+ put '    length note $40;';
+ put '    note=''It''''s a <test> & "quote"'';';
+ put '    flag=1;';
+ put '    flag=1;';
+ put '  run;';
+ put '%mend;';
+ put ' ';
+ put '/* Demo: preserve quotes, blank lines and repeated statements. */';
+ put '%CopyPreviewB;';
+run;
+filename mpcopy clear;
+%macroparas(macrorgx=CopyPreview,dir=%superq(_mp_html_dir),numlines2print=10000);
+%put MACROPARAS_HTML_FIXTURE_COMPLETE;
+%macro _mp_html_no_execution;
+ %if %sysfunc(exist(work.mp_copied_a)) or %sysfunc(exist(work.mp_copied_b)) %then
+   %put ERROR: Source inspection executed the demonstration;
+ %else %put MACROPARAS_HTML_DEMOS_NOT_EXECUTED;
+%mend;
+%_mp_html_no_execution;

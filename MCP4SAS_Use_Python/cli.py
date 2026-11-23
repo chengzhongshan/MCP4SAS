@@ -55,10 +55,54 @@ def terminal_summary(result, log_path, html_path=None, submitted=False, listing=
             lines.append('\nSAS job completed without a downloadable HTML artifact. Programs that only calculate values or write to the SAS log may produce no HTML. See the SAS log above for results.')
     return '\n'.join(lines)+'\n'
 
+def _cygpath(value,windows=False,path_list=False):
+    """Translate client paths at the Cygwin/native-Python boundary only."""
+    tool=shutil.which('cygpath') or '/usr/bin/cygpath.exe'
+    try:
+        result=subprocess.run([tool,('-wp' if path_list else '-aw') if windows else '-au',str(value)],
+                              capture_output=True,text=True,timeout=10,check=False)
+    except (OSError,subprocess.TimeoutExpired) as exc:
+        raise ValueError('Cygwin path conversion failed; check that cygpath is available.') from exc
+    if result.returncode or not result.stdout.strip():
+        raise ValueError('Could not translate a Cygwin client path for the selected Python interpreter.')
+    return result.stdout.strip()
+
+
+def _candidate_path(value):
+    value=os.path.expanduser(str(value))
+    if sys.platform.startswith('cygwin') and re.match(r'^(?:[A-Za-z]:[\\/]|\\\\)',value):
+        value=_cygpath(value)
+    return Path(value)
+
+
+def _windows_handoff_arguments(argv):
+    # SAS source text and remote SAS paths must never be treated as local CLI
+    # filenames. Only translate options whose values live on the client.
+    local_options={'--file','-f','--output-prefix','-p','--macro-dir','--upload-file','-u',
+                   '--download-local-path','--saspy-cfgfile','--monitor-status-file',
+                   '--classify-sas-log','--dir4local_sas_home'}
+    result=[];pending=None
+    for value in argv:
+        if pending:
+            translate=value.startswith('/') and (pending!='--dir4local_sas_home' or value.startswith('/cygdrive/'))
+            result.append(_cygpath(value,windows=True) if translate else value)
+            pending=None
+        elif value.partition('=')[0] in local_options:
+            option,equals,argument=value.partition('=')
+            if equals:
+                translate=argument.startswith('/') and (option!='--dir4local_sas_home' or argument.startswith('/cygdrive/'))
+                result.append(option+'='+(_cygpath(argument,windows=True) if translate else argument))
+            else:
+                result.append(value);pending=option
+        else:
+            result.append(value)
+    return result
+
+
 def _python_candidates():
     configured=os.environ.get('PIPELINE_PYTHON_BIN')
     if configured:
-        candidate=Path(configured).expanduser()
+        candidate=_candidate_path(configured)
         if not candidate.is_file():
             resolved=shutil.which(configured)
             if resolved:
@@ -81,7 +125,10 @@ def _python_candidates():
                 except OSError:
                     recorded=''
                 if recorded:
-                    candidate=Path(recorded).expanduser()
+                    try:
+                        candidate=_candidate_path(recorded)
+                    except (OSError,ValueError):
+                        continue
                     if candidate.is_file():
                         key=os.path.normcase(str(candidate))
                         if key not in seen:
@@ -107,7 +154,9 @@ def _probe_python(candidate):
         info=json.loads(result.stdout.strip().splitlines()[-1])
     except (IndexError,ValueError):
         return None
-    if info.get('version',[0,0]) < [3,10] or info.get('platform')!=sys.platform or not info.get('saspy'):
+    platform=info.get('platform')
+    compatible_platform=platform==sys.platform or (sys.platform.startswith('cygwin') and platform=='win32')
+    if info.get('version',[0,0]) < [3,10] or not compatible_platform or not info.get('saspy'):
         return None
     return info
 
@@ -146,22 +195,33 @@ def ensure_saspy_environment(args):
     selected=find_saspy_interpreter()
     if selected:
         candidate,info=selected
-        if current_is_compatible and Path(info['prefix']).resolve()==Path(sys.prefix).resolve():
+        native_handoff=sys.platform.startswith('cygwin') and info.get('platform')=='win32'
+        if current_is_compatible and not native_handoff and Path(info['prefix']).resolve()==Path(sys.prefix).resolve():
             return
         os.environ['MCP4SAS_PYTHON_ENV_REEXEC']='1'
         print(f'MCP4SAS Python: restarting with the SASPy environment {candidate}',file=sys.stderr,flush=True)
         launcher=Path(__file__).resolve().parents[1]/'run_sas_codes_or_files_in_ODA.py'
         command=[str(candidate),str(launcher),*sys.argv[1:]]
-        if os.name=='nt':
+        if native_handoff:
+            command=[str(candidate),_cygpath(launcher,windows=True),*_windows_handoff_arguments(sys.argv[1:])]
+            os.environ['PIPELINE_PYTHON_BIN']=_cygpath(candidate,windows=True)
+            for name in ('SASPY_CFGFILE','MCP4SAS_PYTHON_STATE_DIR','SAS_ODA_STATUS_FILE','SAS_ODA_SESSION_DEBUG_LOG'):
+                if os.environ.get(name,'').startswith('/'):
+                    os.environ[name]=_cygpath(os.environ[name],windows=True)
+            if os.environ.get('PYTHONPATH'):
+                os.environ['PYTHONPATH']=_cygpath(os.environ['PYTHONPATH'],windows=True,path_list=True)
+        if os.name=='nt' or native_handoff:
             # Windows CRT execv does not quote space-containing arguments for
             # the new process. subprocess supplies the required quoting once.
-            flags=0 if sys.stdin.isatty() else subprocess.CREATE_NO_WINDOW
+            flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' and not sys.stdin.isatty() else 0
             raise SystemExit(subprocess.run(command,check=False,creationflags=flags,
                 stdin=sys.stdin,stdout=sys.stdout,stderr=sys.stderr).returncode)
         os.execv(str(candidate),command)
         return
     if configured:
-        raise ValueError('PIPELINE_PYTHON_BIN is not a compatible Python 3.10+ interpreter with SASPy for this platform. Correct or clear that setting; no different environment was substituted.')
+        raise ValueError('PIPELINE_PYTHON_BIN did not identify a runnable Python 3.10+ interpreter with SASPy. '
+                         'Cygwin may use a native Windows Python; check that executable path and its SASPy installation. '
+                         'Correct or clear that setting; no different environment was substituted.')
     if current_is_compatible:
         return
     raise ValueError(

@@ -1129,8 +1129,24 @@ verification, including nonempty directories and the staging collision test.
 
 ## SAS Macro Loading
 
-By default, if submitted SAS code calls non-built-in macros, MCP4SAS loads
-macros from SAS ODA `~/Macros` through `importallmacros_ue.sas`.
+MCP4SAS resolves requested macros from local sources or the selected SAS target's
+macro library. A full-library bootstrap through `importallmacros_ue.sas` is an
+explicit `SAS_ODA_AUTOLOAD_MACROS=1` option; ordinary targeted submissions do not
+need to import the whole library.
+
+The automatically transferred, self-contained `importallmacros_ue.sas` now
+includes the portable `%macroparas` query utility. It displays each source file
+and its demo in the original dark-blue/light-blue style, with one left-aligned
+path heading and no line numbers or repeated paths in the code. For example:
+
+```bash
+./run_sas_codes_or_files_in_ODA.pl --code '%macroparas(macrorgx=GTEx);' --persistent --session-id mc --open-html
+python run_sas_codes_or_files_in_ODA.py --code '%macroparas(macrorgx=GTEx);' --persistent --session-id python_catalog --open-html
+```
+
+The utility produces its own HTML; a trailing `PROC PRINT;` is unnecessary.
+See [querying and copying macro source](docs/MACROPARAS_SOURCE_VIEWER.md) for
+library selection, compact parameter summaries and the tested copying workflow.
 
 Useful behavior:
 
@@ -1150,8 +1166,8 @@ Useful behavior:
   work on every command.
 - If the local `importallmacros_ue.sas` helper already matches the remote copy
   in SAS ODA `~` by size and timestamp, upload is skipped.
-- If local macro files are newer than matching SAS ODA `~/Macros/*.sas` files,
-  the local copy can be uploaded and included after the global macro bootstrap.
+- Requested local macro files can be uploaded and included for that submission.
+  Explicit local definitions retain precedence over automatic fallback utilities.
 
 Useful environment variables:
 

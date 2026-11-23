@@ -28,7 +28,10 @@ def resolve_local(value,roots):
         return None
     if not source.is_local_file_candidate(value) or source.include_target_needs_runtime_resolution(value) or value.startswith(('~/','/home/','http://','https://')):
         return None
-    path=Path(value)
+    # Inline SAS can still contain a client path written in its Cygwin shell.
+    # Recognize mounted Windows drives without rewriting unrelated remote paths.
+    mounted=re.match(r'^/cygdrive/([A-Za-z])(?:/(.*))?$',value)
+    path=Path(mounted[1]+':/'+(mounted[2] or '')) if os.name=='nt' and mounted else Path(value)
     choices=[path] if path.is_absolute() else [Path(root)/path for root in roots]
     for candidate in choices:
         if candidate.is_file():
@@ -58,6 +61,9 @@ def find_macro(name,roots):
             raise ValueError(f'Ambiguous case-insensitive macro source: {name} in {directory}')
         if found:
             return found[0].resolve()
+    if name.casefold()=='importallmacros_ue':
+        bundled=Path(__file__).resolve().parent.parent/'MCPDeps/importallmacros_ue.sas'
+        if bundled.is_file(): return bundled
     return None
 
 def macro_calls(text,analysis=None):
@@ -173,6 +179,12 @@ class Plan:
         self.analysis=source.analyze_source(code)
         self.scan(code,self.roots,self.analysis)
         self.remote_macros=[name for name in self.remote_macros if name.casefold() not in self.definitions]
+        if os.environ.get('SAS_ODA_AUTOLOAD_MACROS','0').lower() in ('1','true','yes','on') and 'importallmacros_ue.sas' not in self.files:
+            # Stage the complete helper in the existing transfer request before
+            # the backend's explicit global bootstrap. No extra warm submit or
+            # dependency on a remotely downloaded, older loader is necessary.
+            bootstrap=Path(__file__).resolve().parent.parent/'MCPDeps/importallmacros_ue.sas'
+            self.add(bootstrap,str(bootstrap))
 
     def add(self,path,alias):
         path=path.resolve()
@@ -193,7 +205,13 @@ class Plan:
         self.visiting.add(path)
         text=read_source(path)
         self.texts[path]=text
-        self.scan(text,[path.parent]+roots)
+        bundled=Path(__file__).resolve().parent.parent/'MCPDeps/importallmacros_ue.sas'
+        if path==bundled:
+            # Its optional GitHub-download path supplies its own installer;
+            # do not eagerly resolve that conditional helper on every import.
+            self.definitions.update(name.casefold() for name in re.findall(r'%macro\s+([A-Za-z_]\w*)\b',source.macro_dependency_view(text),re.I))
+        else:
+            self.scan(text,[path.parent]+roots)
         self.visiting.remove(path)
         self.visited.add(path)
         if macro and path not in self.macros:

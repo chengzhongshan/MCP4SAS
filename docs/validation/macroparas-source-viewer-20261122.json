@@ -1,0 +1,269 @@
+{
+  "date": "2026-11-22",
+  "base_commit": "348ff659eeb4a8ea6f505d6f537c91a2e25e2305",
+  "sources_sha256": {
+    "MCP4SAS_Use_Python/cli.py": "27d24027363776ce40eebddbb112b29f2731f36d1fb050302e8f136679d7204d",
+    "MCP4SAS_Use_Python/dependencies.py": "f499202d21e7ab6969a143f32a8f1239d81a722026f6ad8f0829c4b4406f8924",
+    "MCPDeps/importallmacros_ue.sas": "bf54f9f668a6cf66e4357e8316c1d199bc28435a5331b7b6867d8f29b35e66ef",
+    "examples/sas_macros/macroparas_portable.sas": "657fd368f28501e63810de7589033a98e13dcb609f2b1b78b7a00fdeddbfe723",
+    "tests/test_macroparas_html.py": "602e05abe3d5c778dedad564a1086ff088ecd6ca57a56c1a870e3401c7c2399f",
+    "tests/test_cygwin_python_handoff.py": "c5ed63904a44c6d85afab520a879990bc1f7b73b4be1bf7c54f21f59a1c9707a",
+    "tests/macroparas_html_regression.sas": "eeb2ef0439db2f58bf33891bf6e40c91de7a770c1ed0b4d0d4a277e78862e952",
+    "tools/sync_macroparas_bundle.py": "5277e43f297c52ebaaa36eab498f7e49b932992bfd9d20192891cb2335de0e82"
+  },
+  "live_sas_stages": [
+    {
+      "target": "local",
+      "language": "python",
+      "stage": "fixture",
+      "exit_code": 0,
+      "seconds": 22.337,
+      "log_sha256": "9c6c36cb1d9fdb3fc66ea83b47da363f2dfa6bfe38e5337dcbb8e2f412319569",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "stage": "bundled-importer",
+      "exit_code": 0,
+      "seconds": 2.627,
+      "log_sha256": "0bf8fe9f7db53aa1bccff5f25bf46ec7d1b1d048191ca1da45051189f849815a",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=1\n",
+        "MCP4SAS_BUNDLE_POST_IMPORT_OK"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "stage": "original",
+      "exit_code": 0,
+      "seconds": 4.031,
+      "log_sha256": "2df484152c48150abf00ddb6d52021c94090d6e904814c7bbe7b2253d0e1c3c4",
+      "markers": []
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "stage": "revised",
+      "exit_code": 0,
+      "seconds": 2.126,
+      "log_sha256": "dad948fd0fe0606cef371f3256d85b64009c327b26506607a1a8ab12501842d3",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=1"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "python",
+      "stage": "run-copied-fixtures",
+      "exit_code": 0,
+      "seconds": 1.132,
+      "log_sha256": "0b3c3419be0efd49403ff4174649756a3aca09bd1d9441b6e5c7e22f337f560d",
+      "markers": [
+        "PASS: COPIED_A_VALUE",
+        "PASS: COPIED_B_VALUE"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "stage": "fixture",
+      "exit_code": 0,
+      "seconds": 26.176,
+      "log_sha256": "0f0d4f9e124568134980e3729a0fb6ef65eb2a526890d07d7663eb391c59d230",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "stage": "bundled-importer",
+      "exit_code": 0,
+      "seconds": 4.315,
+      "log_sha256": "231ab136eaf7f8f76b827c4755c2591081b52a091480a93c3a104bc8bf256d8a",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=1\n",
+        "MCP4SAS_BUNDLE_POST_IMPORT_OK"
+      ]
+    },
+    {
+      "target": "local",
+      "language": "perl",
+      "stage": "run-copied-fixtures",
+      "exit_code": 0,
+      "seconds": 2.173,
+      "log_sha256": "88a7d49aa501cc132bdff917ed5afa0af869390101e24fc3ca81845b52d8b440",
+      "markers": [
+        "PASS: COPIED_A_VALUE",
+        "PASS: COPIED_B_VALUE"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "stage": "fixture",
+      "exit_code": 0,
+      "seconds": 16.304,
+      "log_sha256": "446e3d435e1a1cb3ee6a9e8d90b8b03afa6a5fd56461824a5f306e58e6edce3b",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "stage": "bundled-importer",
+      "exit_code": 0,
+      "seconds": 6.094,
+      "log_sha256": "aba35b3ea11dc5047782c8dfa293603006d9bcc65ef3b4a03c4a07f2f6da6784",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=1",
+        "MCP4SAS_BUNDLE_POST_IMPORT_OK"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "python",
+      "stage": "run-copied-fixtures",
+      "exit_code": 0,
+      "seconds": 1.469,
+      "log_sha256": "6caf4c1be6a221ace85a78646ebe5d1d1639d474b18c53935533a2b1cae053f7",
+      "markers": [
+        "PASS: COPIED_A_VALUE",
+        "PASS: COPIED_B_VALUE"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "stage": "fixture",
+      "exit_code": 0,
+      "seconds": 20.603,
+      "log_sha256": "212ede386b2d8d0fd7beb895e3fff5715721c95e91e102400246719a58f1270d",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=2"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "stage": "bundled-importer",
+      "exit_code": 0,
+      "seconds": 8.103,
+      "log_sha256": "576e869d86084935e6cc72e306da910ff8db97a9be25f76a9564926b0b30f295",
+      "markers": [
+        "MACROPARAS_MATCH_COUNT=1",
+        "MCP4SAS_BUNDLE_POST_IMPORT_OK"
+      ]
+    },
+    {
+      "target": "oda",
+      "language": "perl",
+      "stage": "run-copied-fixtures",
+      "exit_code": 0,
+      "seconds": 1.993,
+      "log_sha256": "ad7176230eb3cfe116586c70e7f8d9b5783b90c1dff73bd7cb2c5cfbda25e737",
+      "markers": [
+        "PASS: COPIED_A_VALUE",
+        "PASS: COPIED_B_VALUE"
+      ]
+    }
+  ],
+  "installed_source_viewer_preview": {
+    "exit_code": 0,
+    "seconds": 4.15,
+    "html": "sas_res_AnKhb.html",
+    "html_sha256": "f81485c852e1f17df1455d73a2813bd568e45b8ccb46164b0666a8e1cf7b9853",
+    "source_lines": 73,
+    "summary_headings": [
+      "macro",
+      "macro_paras"
+    ],
+    "source_match": true,
+    "browser_requested": true,
+    "preserved_session": "mc",
+    "helper_restarted": false
+  },
+  "installed_status": {
+    "MCP4SAS_Use_Python/cli.py": {
+      "current_sha256": "27d24027363776ce40eebddbb112b29f2731f36d1fb050302e8f136679d7204d",
+      "matches_workspace": true
+    },
+    "MCP4SAS_Use_Python/dependencies.py": {
+      "current_sha256": "f499202d21e7ab6969a143f32a8f1239d81a722026f6ad8f0829c4b4406f8924",
+      "matches_workspace": true
+    },
+    "MCPDeps/importallmacros_ue.sas": {
+      "current_sha256": "bf54f9f668a6cf66e4357e8316c1d199bc28435a5331b7b6867d8f29b35e66ef",
+      "matches_workspace": true
+    },
+    "examples/sas_macros/macroparas_portable.sas": {
+      "current_sha256": "657fd368f28501e63810de7589033a98e13dcb609f2b1b78b7a00fdeddbfe723",
+      "matches_workspace": true
+    },
+    "tests/test_macroparas_html.py": {
+      "current_sha256": "602e05abe3d5c778dedad564a1086ff088ecd6ca57a56c1a870e3401c7c2399f",
+      "matches_workspace": true
+    },
+    "tests/test_cygwin_python_handoff.py": {
+      "current_sha256": "c5ed63904a44c6d85afab520a879990bc1f7b73b4be1bf7c54f21f59a1c9707a",
+      "matches_workspace": true
+    },
+    "tests/macroparas_html_regression.sas": {
+      "current_sha256": "eeb2ef0439db2f58bf33891bf6e40c91de7a770c1ed0b4d0d4a277e78862e952",
+      "matches_workspace": true
+    },
+    "tools/sync_macroparas_bundle.py": {
+      "current_sha256": "5277e43f297c52ebaaa36eab498f7e49b932992bfd9d20192891cb2335de0e82",
+      "matches_workspace": true
+    }
+  },
+  "native_suite_before_handoff_patch": {
+    "tests": 93,
+    "result": "pass"
+  },
+  "handoff_tests": {
+    "tests": 8,
+    "result": "pass",
+    "actual_cygwin_native_subprocess": true,
+    "SAS_submitted": false
+  },
+  "root_regressions": {
+    "initial_passed": 75,
+    "initial_restricted_failures": [
+      {
+        "file": "test_copilot_runner_review.py",
+        "status": "fail"
+      },
+      {
+        "file": "test_mcp_job_reporting.py",
+        "status": "fail"
+      }
+    ],
+    "user_account_rerun_passed": 2,
+    "final_script_passes": 77,
+    "explanation": "Both restricted Windows owned-process shutdown failures passed under the user account. No failing test was suppressed or changed."
+  },
+  "actual_cygwin_to_native_sas": {
+    "exit_code": 0,
+    "seconds": 62.268,
+    "count20": true,
+    "handoff_observed": true,
+    "html": [
+      "output.html"
+    ],
+    "session": "owned_cygwin_handoff_1795398508970291100"
+  },
+  "approval_status": "An earlier usage-limit review failure delayed deployment. A subsequent approval completed normally; five files were backed up, copied and verified. No bypass was attempted.",
+  "scientific_scope": "Source inspection and test-fixture demos only; no GTEx API or research pipeline execution.",
+  "user_session": {
+    "session": "mc",
+    "port": 65055,
+    "restarted": false,
+    "closed": false
+  }
+}
