@@ -433,10 +433,8 @@ def execute(args):
             if not args.kill_saspy_sessions:
                 if args.download_file:
                     result['downloads']=runner.transfer(downloads=[dict(remote_path=remote,local_path=str(Path(args.download_local_path[i] if args.download_local_path else Path(remote).name).resolve())) for i,remote in enumerate(args.download_file)])
-                if args.dir4listing:
-                    result['files']=runner.dirlist(args.dir4listing)
-                if args.file_info:
-                    result['file_info']={path:runner.fileinfo(path) for path in args.file_info}
+                # Match the Perl runner: downloads precede deletion, but the
+                # requested listing/metadata describe the final remote state.
                 result['deleted']=[runner.delete(path,args.delete_dir) for path in args.delete_file]
                 for pattern in args.delete_file_rgx:
                     regex=re.compile(pattern)
@@ -446,6 +444,10 @@ def execute(args):
                         # Directories require the separately guarded cleanup operation.
                         if not name.endswith(('/','\\')) and regex.search(name):
                             result['deleted'].append(runner.delete(name,args.delete_dir))
+                if args.dir4listing:
+                    result['files']=runner.dirlist(args.dir4listing)
+                if args.file_info:
+                    result['file_info']={path:runner.fileinfo(path) for path in args.file_info}
             code_exit=result['diagnostics']['exit_code']
     except OSError as exc:
         # OSError includes transport/network errors; never replay user submissions.
