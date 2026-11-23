@@ -3,6 +3,9 @@ use strict;
 use warnings;
 use FindBin qw($Bin);
 use File::Spec;
+use lib $Bin;
+use SAS_ODA_Runner;
+use File::Temp qw(tempdir);
 
 sub slurp {
     my ($path) = @_;
@@ -82,8 +85,20 @@ die "One-shot session caches a failed macro bootstrap as loaded\n"
     unless $runner =~ /session_obj\._macros_loaded\s*=\s*bootstrap_ok\s*==\s*'1'/;
 die "Requested macros are not conditionally restored after the all-macro import\n"
     unless $runner =~ /%if not %sysmacexist\(\$name\) %then %include/;
-die "Del_Dir_Recursive lacks its supplemental post-bootstrap loader\n"
-    unless $runner =~ /my \@explicit_remote = grep \{lc\(\$_\) eq 'del_dir_recursive'\}/;
+# Check behavior rather than requiring one exact spelling of the grep predicate.
+# Adding a second supplemental macro must not break an otherwise valid install.
+{
+    local $ENV{SAS_ODA_AUTOLOAD_MACROS}=1;
+    my $directory=tempdir(CLEANUP=>1);
+    my $instance=bless {local_macro_dir=>$directory}, 'SAS_ODA_Runner';
+    my ($processed,$logs)=$instance->_process_dependencies(
+        '%Del_Dir_Recursive(dir=unused); %macroparas(macrorgx=GTEx);');
+    die "Del_Dir_Recursive lacks its supplemental post-bootstrap loader\n"
+        unless $logs =~ /Injected targeted remote macro loader for:.*Del_Dir_Recursive/i
+            && $processed =~ /Del_Dir_Recursive\.sas/i;
+    die "Portable macroparas lacks its supplemental post-bootstrap loader\n"
+        unless $processed =~ /%macro macroparas\(/i;
+}
 die "Targeted macro verification still runs inside the include wrapper\n"
     unless $runner =~ /%_pipeline_load_macro_tmp;\s*%macro _pipeline_verify_macro_tmp;/;
 

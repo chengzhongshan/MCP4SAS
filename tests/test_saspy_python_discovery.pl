@@ -46,6 +46,23 @@ use SAS_ODA_Runner;use JSON::PP qw(encode_json);
 print encode_json({python=>$ENV{PIPELINE_PYTHON_BIN}//'',pythonpath=>$ENV{PYTHONPATH}//''});
 PL
 close $f;
+# Minimal Cygwin/system interpreters may have no system site-packages tree.
+# The fixture is nevertheless importable through PYTHONPATH. Reproduce that
+# condition explicitly on every platform rather than depending on the CI image.
+open $f,'>',"$fixture/sitecustomize.py" or die $!;
+print {$f} <<'PY';
+import os
+if os.environ.get('MCP4SAS_TEST_MISSING_PURELIB') == '1':
+    import sysconfig
+    _original_get_path = sysconfig.get_path
+    def _missing_purelib(name, *args, **kwargs):
+        if name == 'purelib':
+            return os.path.join(os.path.dirname(__file__), 'absent-system-site-packages')
+        return _original_get_path(name, *args, **kwargs)
+    sysconfig.get_path = _missing_purelib
+PY
+close $f;
+local $ENV{MCP4SAS_TEST_MISSING_PURELIB}=1;
 my $cwd=getcwd();chdir $fixture or die $!;
 local $ENV{PIPELINE_PYTHON_BIN};delete $ENV{PIPELINE_PYTHON_BIN};
 local $ENV{PYTHONPATH}=SAS_ODA_Runner::_normalize_local_path_for_python($fixture,$python);

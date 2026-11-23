@@ -23,9 +23,14 @@ BEGIN {
     my $python_site_for = sub {
         my ($python_bin) = @_;
         return '' unless defined $python_bin && length $python_bin;
-        my $probe = 'import importlib.util, sysconfig; '
+        # A valid SASPy can live on PYTHONPATH even when a minimal interpreter
+        # has no system purelib directory. Return its actual import root rather
+        # than rejecting that interpreter and selecting an unrelated PATH Python.
+        my $probe = 'import importlib.util, os; '
           . 'spec = importlib.util.find_spec("saspy"); '
-          . 'print(sysconfig.get_path("purelib") if spec else "")';
+          . 'locations = list(spec.submodule_search_locations or ()) if spec else []; '
+          . 'print(os.path.dirname(locations[0]) if locations else '
+          . '(os.path.dirname(spec.origin) if spec and spec.origin else ""))';
         my $pid = open my $fh, '-|', $python_bin, '-c', $probe;
         return '' unless $pid;
         my $site = <$fh>;
