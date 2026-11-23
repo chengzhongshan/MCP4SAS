@@ -260,8 +260,8 @@ _MCP4SAS_JAVA = r'${java_bin}'
 _MCP4SAS_CLASSPATH = r'${classpath_value}'
 for _mcp4sas_iom_profile in (oda, winlocal, winiomwin, iomlinux, iomwin):
     _mcp4sas_iom_profile['java'] = os.environ.get(
-        'SASPY_JAVA_WIN', os.environ.get('SASPY_JAVA', _MCP4SAS_JAVA)
-    )
+        'SASPY_JAVA_WIN'
+    ) or os.environ.get('SASPY_JAVA') or _MCP4SAS_JAVA
     _mcp4sas_iom_profile['classpath'] = os.environ.get(
         'SASPY_ODA_CLASSPATH', _MCP4SAS_CLASSPATH
     )

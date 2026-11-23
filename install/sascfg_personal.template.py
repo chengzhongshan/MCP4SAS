@@ -119,8 +119,11 @@ def _default_classpath():
 
 _DEFAULT_JAVA = _default_java()
 _DEFAULT_CLASSPATH = _default_classpath()
-_CONFIGURED_JAVA = os.environ.get(
-    "SASPY_JAVA_WIN", os.environ.get("SASPY_JAVA", os.environ.get("MCP4SAS_JAVA", _DEFAULT_JAVA))
+_CONFIGURED_JAVA = (
+    os.environ.get("SASPY_JAVA_WIN")
+    or os.environ.get("SASPY_JAVA")
+    or os.environ.get("MCP4SAS_JAVA")
+    or _DEFAULT_JAVA
 )
 _SAS_WINDOWS_JAVA = r"C:\Program Files\SASHome\SASPrivateJavaRuntimeEnvironment\9.4\jre\bin\java.exe"
 _SAS_WINDOWS_NATIVE_LIBS = os.environ.get(
@@ -194,9 +197,8 @@ default = linuxlocal
 
 # Local Windows SAS via SASPy IOM. Do not set iomhost for local Windows SAS.
 winlocal = {
-    "java": os.environ.get(
-        "SASPY_JAVA_WIN",
-        _SAS_WINDOWS_JAVA if os.path.isfile(_SAS_WINDOWS_JAVA) else _CONFIGURED_JAVA,
+    "java": os.environ.get("SASPY_JAVA_WIN") or (
+        _SAS_WINDOWS_JAVA if os.path.isfile(_SAS_WINDOWS_JAVA) else _CONFIGURED_JAVA
     ),
     "javaparms": [
         "-Djava.library.path=" + _SAS_WINDOWS_NATIVE_LIBS
