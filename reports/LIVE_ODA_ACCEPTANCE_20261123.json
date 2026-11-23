@@ -1,0 +1,2288 @@
+{
+  "date": "2026-11-23",
+  "repositories": {
+    "mcp": {
+      "target": "oda",
+      "repo": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS",
+      "revision": "3098227cda343e4fec1e0342afb8bd88c80b1118",
+      "source_hashes": {
+        "run_sas_codes_or_files_in_ODA.pl": "2889b04fac403f61f5db1012c5be7d107f09daab20cc49ac408a6afd2c228f53",
+        "run_sas_codes_or_files_in_ODA.py": "16554dd44fbc9332578934b4fa02b462ccd16f1babdfb765bd00e1e38a8533cf",
+        "MCPDeps/SAS_ODA_Runner.pm": "61a5da8ae417db7eb8bce1b3cc67f0069385a309bb9a7b447894b331a0bd57c4",
+        "MCPDeps/sas_oda_session_server.py": "738d444c684658f212258f46cb093c9bb426010036b1fa690e84565a8e490718"
+      },
+      "runners": [
+        {
+          "language": "perl",
+          "session": "oda_live_586f238d61d0",
+          "stages": [
+            {
+              "label": "class_and_create",
+              "exit_code": 0,
+              "seconds": 14.123,
+              "log_sha256": "43ce240e290f2c1ef7bbf6652e0e331468513412df4c55a35d198ce58e61e8f9",
+              "source_sha256": "fa9e1bcf13d7bab2273e7f494d9a71457ff57a20abb031b051df216ddef08ad9",
+              "warnings": []
+            },
+            {
+              "label": "implicit_print",
+              "exit_code": 0,
+              "seconds": 1.998,
+              "log_sha256": "edad9f53ecf6b255fecd658adc33654991cb4d7fe39bf6976414eeeedb66c5d8",
+              "source_sha256": "f249dde437b92aa34f282a8ea98cca495dfe4e093be2c723cd3f81e199290ba7",
+              "warnings": []
+            },
+            {
+              "label": "explicit_print",
+              "exit_code": 0,
+              "seconds": 1.958,
+              "log_sha256": "7c36d34120f243750a69a61fba99a9a8d26aacf45b396fce764be8210fbf5230",
+              "source_sha256": "a8fad2c0d439cf0c0a040a30e14527cedee2662ecf2d067c191942b3280b24df",
+              "warnings": []
+            },
+            {
+              "label": "large_source_print",
+              "exit_code": 0,
+              "seconds": 7.358,
+              "log_sha256": "b07171445a1520aaccd8b469b1e42e0f964b35a34ac5c1ad01a38692c9bbac0d",
+              "source_sha256": "c721ad1c8742d83cba151567938658545a4089f0e78ad8447ce8a2133131a6ab",
+              "warnings": []
+            },
+            {
+              "label": "transfer_roundtrip",
+              "exit_code": 0,
+              "seconds": 15.164,
+              "log_sha256": "f587f3e3fb87cd38139033f8aabf41ac761da4e7d2ee17e61d011a11a1288357",
+              "source_sha256": "7fddf3b23b20bdf519df7fdeaf8493794e22a3339f5692ae1cbd16005056e6ec",
+              "warnings": []
+            },
+            {
+              "label": "nested_macro",
+              "exit_code": 0,
+              "seconds": 8.021,
+              "log_sha256": "143b6c9fb994b57edabdb915736496ccd4466432871b483ed0413357f5d4a562",
+              "source_sha256": "fa61ffefd58bb518abe5d3087362cc50e8d90d7fb1a5fced2072baba1cd0ced6",
+              "warnings": []
+            },
+            {
+              "label": "macro_query",
+              "exit_code": 0,
+              "seconds": 2.051,
+              "log_sha256": "97f95a2314a4577c0a5f9d42b1393e3bebd229c840383840ebc1cfcb28c35f46",
+              "source_sha256": "51da20531edf8cfc6e3e6d2ba9618f810915ec6cb9c3ad7743270357415a5331",
+              "warnings": []
+            },
+            {
+              "label": "forest_submit",
+              "exit_code": 0,
+              "seconds": 31.539,
+              "log_sha256": "1e0834fb69e85a84bac9110334b6237f7af828f711d8aa7c8acbc10e25ca24b7",
+              "source_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "warnings": []
+            },
+            {
+              "label": "forest_collect",
+              "exit_code": 0,
+              "seconds": 8.1,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "clustergram_submit",
+              "exit_code": 0,
+              "seconds": 18.524,
+              "log_sha256": "4903c99332dd8e6a20deca871253dd6cf524f52e8bbf218bebf770c99d6b172a",
+              "source_sha256": "7fa7949304be24df123ac05bd43b7036cebd509cae285e6286025c6df7eb3f5d",
+              "warnings": [
+                "      \n\n\nWARNING: A very large output size of (3958, 4375) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (2560, 2840) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "clustergram_collect",
+              "exit_code": 0,
+              "seconds": 7.966,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "oncoprint_submit",
+              "exit_code": 0,
+              "seconds": 8.656,
+              "log_sha256": "f007e20eeb632c055a126fa4b7d93c1827d7eb78dccaeaa81d3cb1866c56799d",
+              "source_sha256": "7ce43765035a71ca464ababd1e3ede2600e2e46e6a177df63b58fca7eb0a78b8",
+              "warnings": [
+                "\nWARNING: No output destinations active.",
+                "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "oncoprint_collect",
+              "exit_code": 0,
+              "seconds": 6.963,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "multi_gwas_gtf_submit",
+              "exit_code": 0,
+              "seconds": 135.916,
+              "log_sha256": "89ecbd645a04d0b8f98e266a320ec0d1f3ce0494df87bcd84455262ba2d940cb",
+              "source_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "warnings": [
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity "
+              ]
+            },
+            {
+              "label": "multi_gwas_gtf_collect",
+              "exit_code": 0,
+              "seconds": 8.325,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "cleanup_inputs",
+              "exit_code": 0,
+              "seconds": 12.179,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            }
+          ],
+          "figures": [
+            {
+              "case": "forest",
+              "original_program_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 30,
+              "artifacts": {
+                "forest_FEMALE.png": {
+                  "bytes": 69212,
+                  "sha256": "215137a3c019351d5aae4f71ef51e2bb1de28089a4106ddfa28d2f5a197b6a9a"
+                },
+                "forest_MALE.png": {
+                  "bytes": 68751,
+                  "sha256": "08b309251f8bccda8e083cf2b2b5f86514b4cf7b339157ebac12c9f55c5fce3c"
+                },
+                "native/forest_FEMALE.svg": {
+                  "bytes": 38931,
+                  "sha256": "d2e5d1211a53864094a49b7bded01a663ccc1cdc4dbe4599b231bb6a3694b096"
+                },
+                "native/forest_MALE.svg": {
+                  "bytes": 38751,
+                  "sha256": "f1393e70c069bf7dc9c73eae0696582d6047dccdbef9d5c726d74a3731c6dd9e"
+                },
+                "forest_FEMALE.svg": {
+                  "bytes": 44094,
+                  "sha256": "fbacc72c4c3e7c41758f5e3b4150a0c11c703e9ca1af79de188b332bc16675dc"
+                },
+                "forest_MALE.svg": {
+                  "bytes": 44091,
+                  "sha256": "370c00aaed351fdc234ce42bd245c86a22afe155e7361529f8f144e989104d3f"
+                },
+                "forest_0.csv": {
+                  "bytes": 704,
+                  "sha256": "c016462bc58d228a6ec5ff950f805b21fb6249788971ddf0ce4af4ee5f7da7a1"
+                },
+                "forest_1.csv": {
+                  "bytes": 570,
+                  "sha256": "5b7ea2cf3a3d59078cb6f65c3bb0c3a23b8915de9adbeafe1030e050adb92ba4"
+                },
+                "forest_2.csv": {
+                  "bytes": 559,
+                  "sha256": "77693bcd0a757329cd2eef4ab1056d162b2b8eb1a5e79014543105b7448b3c70"
+                },
+                "forest_3.csv": {
+                  "bytes": 644,
+                  "sha256": "ea8ea854b2f8d302306be39e7a3526e6a005e0e27d74ef795defa14985353554"
+                },
+                "forest_4.csv": {
+                  "bytes": 633,
+                  "sha256": "61a679e6ea7d03bb5aee6c5cada632da9f2a386a55bc62a670eef40843406e4f"
+                }
+              }
+            },
+            {
+              "case": "clustergram",
+              "original_program_sha256": "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_expression40.tsv",
+                  "sha256": "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511",
+                  "remote_basename": "oda_live_586f238d61d0_poc261112_expression40.tsv"
+                }
+              ],
+              "checks": 509,
+              "artifacts": {
+                "cluster40.png": {
+                  "bytes": 235532,
+                  "sha256": "71544f080568384cf8466c51a8476ca0ad9b7b1cc6c9ee43a83ec8624ede35ec"
+                },
+                "cluster40.svg": {
+                  "bytes": 103186,
+                  "sha256": "c8cf4f2b41a481e6f022a95c7f9285c8a244d1105556e3a895b2066158ac99b1"
+                },
+                "gene_branch_review.png": {
+                  "bytes": 223560,
+                  "sha256": "bce55dfcfe03ae3821c7ae4210946b9506f93b48f5ac402c12623af44538df6a"
+                },
+                "gene_branch_review.svg": {
+                  "bytes": 69728,
+                  "sha256": "c0b1489f9fdf498d25949b0e4b70ac65d7e592a2cc5408c850d8e9d97086553c"
+                },
+                "clustergram_0.csv": {
+                  "bytes": 3596,
+                  "sha256": "2643f591b11ee5c71b2d2ed8dcf233374a802bbfac5fa27fd2d739e75356827a"
+                },
+                "clustergram_1.csv": {
+                  "bytes": 6708,
+                  "sha256": "5506de388cf16f72ca73c05d48ec183faa19140de86b2452ff555af2eca501bf"
+                },
+                "clustergram_2.csv": {
+                  "bytes": 7363,
+                  "sha256": "049ef1b07f466f923e0d36ea9f3f71bbc470c2cfb38694338b30b132e9e9e413"
+                },
+                "clustergram_3.csv": {
+                  "bytes": 15940,
+                  "sha256": "c66d0202a964985bbfe9def8acea6c97a28f143c3cb6394f63cd8d0f4e2b448f"
+                },
+                "clustergram_4.csv": {
+                  "bytes": 1546,
+                  "sha256": "839e2f5b7b5053e5edc3088e1d17973ab6b8a2e4a7f07c03becceaa6b83b5c60"
+                },
+                "clustergram_5.csv": {
+                  "bytes": 375,
+                  "sha256": "a9bc7d4e0241a58b9a9f0b1b11368f6854ac7f46e6508c1694ef870d0293f097"
+                },
+                "clustergram_6.csv": {
+                  "bytes": 3438,
+                  "sha256": "68394edbc9e0191dd1697b84b895afc8dfd243f5df8b836a646561b7940ccf87"
+                },
+                "clustergram_7.csv": {
+                  "bytes": 800,
+                  "sha256": "6d917593953667cb9a692cab66978deb140fd727209aaef7d966a313e9b8e54a"
+                },
+                "clustergram_8.csv": {
+                  "bytes": 282,
+                  "sha256": "aa2f719fc59feff8dcd2432e5a427966550cc4098d348d7435d4594158699b22"
+                }
+              }
+            },
+            {
+              "case": "oncoprint",
+              "original_program_sha256": "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_oncoprint_template.sas",
+                  "sha256": "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149",
+                  "remote_basename": "oda_live_586f238d61d0_poc261112_oncoprint_template.sas"
+                }
+              ],
+              "checks": 33,
+              "artifacts": {
+                "mgx_oncoprint.png": {
+                  "bytes": 165294,
+                  "sha256": "cfddc1062298dc990b68f0b94ff98a99f7c5fb2345623e60ec42572336703c79"
+                },
+                "mgx_oncoprint.svg": {
+                  "bytes": 102689,
+                  "sha256": "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594"
+                },
+                "onco_frequency.png": {
+                  "bytes": 81564,
+                  "sha256": "0afa8596f368b359cec925a164d34291ba65a3f9b7c9384c4dda575aac7d34f5"
+                },
+                "onco_frequency.svg": {
+                  "bytes": 35788,
+                  "sha256": "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74"
+                },
+                "oncoprint_0.csv": {
+                  "bytes": 2954,
+                  "sha256": "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d"
+                },
+                "oncoprint_1.csv": {
+                  "bytes": 309,
+                  "sha256": "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6"
+                },
+                "oncoprint_2.csv": {
+                  "bytes": 215,
+                  "sha256": "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a"
+                },
+                "oncoprint_3.csv": {
+                  "bytes": 3949,
+                  "sha256": "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9"
+                },
+                "oncoprint_4.csv": {
+                  "bytes": 13891,
+                  "sha256": "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846"
+                },
+                "oncoprint_5.csv": {
+                  "bytes": 9,
+                  "sha256": "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931"
+                }
+              }
+            },
+            {
+              "case": "multi_gwas_gtf",
+              "original_program_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 11295,
+              "artifacts": {
+                "multi_gwas_gtf.png": {
+                  "bytes": 159678,
+                  "sha256": "8933a0470042690fbbf297510f1ac67ad29ff756ab7274fd8e0f9c43f519cfcf"
+                },
+                "multi_gwas_gtf.svg": {
+                  "bytes": 1769639,
+                  "sha256": "a1beb1162f601702569b0b1b99821c92dfb07001465016720351e078054f2770"
+                },
+                "multi_gwas_template.sas": {
+                  "bytes": 13735,
+                  "sha256": "87360592140c9c472ceceec6c9b9baf617a000c4a84d9b6bb74d8147c990dc8f"
+                },
+                "panel_values.csv": {
+                  "bytes": 546079,
+                  "sha256": "f9e02c63a503240b17f6d2dfa99c2192f03fb63682cc13e65ae46acfddbcc858"
+                },
+                "regional_input.csv": {
+                  "bytes": 292124,
+                  "sha256": "f3b3b0e6bec337819940b12250a2f37d0268f1fa061cfc5ed212bb72a8ddf2b6"
+                },
+                "regional_annotation.csv": {
+                  "bytes": 237520,
+                  "sha256": "1da26d4fcb285a605bc8103b60938b8a268c5b0233ffb512912f42930ae84779"
+                },
+                "regional_render.csv": {
+                  "bytes": 3711474,
+                  "sha256": "267660c3e960086fcca81c4ddd261d0bdfb267660e686c286362fed964c24e96"
+                }
+              }
+            }
+          ],
+          "cleanup": {
+            "unique_remote_inputs": 7,
+            "verified_absent": true
+          },
+          "sas_pid": "119383",
+          "oda_work": "/saswork/SAS_workF12A0001D257_odaws01-usw2.oda.sas.com/SAS_workE9A10001D257_odaws01-usw2.oda.sas.com",
+          "gtex_macros_found": 14,
+          "passed": true,
+          "owned_helper_pid": 24932,
+          "close_exit_code": 0
+        },
+        {
+          "language": "python",
+          "session": "oda_live_92ba29c64901",
+          "stages": [
+            {
+              "label": "class_and_create",
+              "exit_code": 0,
+              "seconds": 12.499,
+              "log_sha256": "0c301bf0667ca24d552be19c69d2868140e9b67d89f61921020e78ee55665114",
+              "source_sha256": "fa9e1bcf13d7bab2273e7f494d9a71457ff57a20abb031b051df216ddef08ad9",
+              "warnings": []
+            },
+            {
+              "label": "implicit_print",
+              "exit_code": 0,
+              "seconds": 1.458,
+              "log_sha256": "f6ec2f065e76cfb79ec8b3388db44e589487f29effbd2fbb63915e7730f517fb",
+              "source_sha256": "f249dde437b92aa34f282a8ea98cca495dfe4e093be2c723cd3f81e199290ba7",
+              "warnings": []
+            },
+            {
+              "label": "explicit_print",
+              "exit_code": 0,
+              "seconds": 1.49,
+              "log_sha256": "c019c49308727364c8d275a5e52ce6613d399f56ca1c2eb1dfdffdf7c80ddb61",
+              "source_sha256": "a8fad2c0d439cf0c0a040a30e14527cedee2662ecf2d067c191942b3280b24df",
+              "warnings": []
+            },
+            {
+              "label": "large_source_print",
+              "exit_code": 0,
+              "seconds": 5.394,
+              "log_sha256": "d7027d81f6b6179f81c1ee805a19355b7f819244c10be1adaa58286f333a853c",
+              "source_sha256": "c721ad1c8742d83cba151567938658545a4089f0e78ad8447ce8a2133131a6ab",
+              "warnings": []
+            },
+            {
+              "label": "transfer_roundtrip",
+              "exit_code": 0,
+              "seconds": 13.291,
+              "log_sha256": "b8ad4cb767acdd921ec0235dfc6a99193f128fc4a6c0562ac98337d09e9f59f3",
+              "source_sha256": "a8d7fa27356b2815f16689e1ee0666089a1dd33d38640b95475ffd51f3ae8afc",
+              "warnings": []
+            },
+            {
+              "label": "nested_macro",
+              "exit_code": 0,
+              "seconds": 7.266,
+              "log_sha256": "3486677acc2b17b63823a5fff55f586233f5d310c8464afd2af470d39630e46e",
+              "source_sha256": "75f73ec514e1e9daa168089a97142b21cb3db5a88272fc8675829e6336b2af1b",
+              "warnings": []
+            },
+            {
+              "label": "macro_query",
+              "exit_code": 0,
+              "seconds": 2.481,
+              "log_sha256": "6683eda801541c63bc72d2409b992b95e8a7f7c5bf78d2e7fd7f3f7c58217e04",
+              "source_sha256": "51da20531edf8cfc6e3e6d2ba9618f810915ec6cb9c3ad7743270357415a5331",
+              "warnings": []
+            },
+            {
+              "label": "forest_submit",
+              "exit_code": 0,
+              "seconds": 16.247,
+              "log_sha256": "7181ade5cb4b8eeb9d227941c3e4971464ca6f36ca6d46e25da73bc22b5562c1",
+              "source_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "warnings": []
+            },
+            {
+              "label": "forest_collect",
+              "exit_code": 0,
+              "seconds": 6.3,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "clustergram_submit",
+              "exit_code": 0,
+              "seconds": 14.621,
+              "log_sha256": "cd40b6e832198160367c0161619dc74fb56a49baff1bf236dffbfb55e4fc5f3c",
+              "source_sha256": "05e1dca57b0eccf46540020542473a09fbc5190d4acb98d571b801308edc360c",
+              "warnings": [
+                "      \n\n\nWARNING: A very large output size of (3958, 4375) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (2560, 2840) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "clustergram_collect",
+              "exit_code": 0,
+              "seconds": 6.645,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "oncoprint_submit",
+              "exit_code": 0,
+              "seconds": 7.173,
+              "log_sha256": "4afb063e0825d7348ec39698ede696174a2a20b7148c8374fb33412201a99ae0",
+              "source_sha256": "4945ddc10e5e4ef2fa8063dc121dbfd395ba69c723d78933ceec6d49a0df86dc",
+              "warnings": [
+                "\nWARNING: No output destinations active.",
+                "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "oncoprint_collect",
+              "exit_code": 0,
+              "seconds": 6.263,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "multi_gwas_gtf_submit",
+              "exit_code": 0,
+              "seconds": 89.58,
+              "log_sha256": "f842c811fd7f39b03f5f1718216533ef1bef0a1c3896210340ae79ab9f97a37d",
+              "source_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "warnings": [
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity "
+              ]
+            },
+            {
+              "label": "multi_gwas_gtf_collect",
+              "exit_code": 0,
+              "seconds": 6.762,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "cleanup_inputs",
+              "exit_code": 0,
+              "seconds": 6.917,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            }
+          ],
+          "figures": [
+            {
+              "case": "forest",
+              "original_program_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 30,
+              "artifacts": {
+                "forest_FEMALE.png": {
+                  "bytes": 69212,
+                  "sha256": "215137a3c019351d5aae4f71ef51e2bb1de28089a4106ddfa28d2f5a197b6a9a"
+                },
+                "forest_MALE.png": {
+                  "bytes": 68751,
+                  "sha256": "08b309251f8bccda8e083cf2b2b5f86514b4cf7b339157ebac12c9f55c5fce3c"
+                },
+                "native/forest_FEMALE.svg": {
+                  "bytes": 38931,
+                  "sha256": "d2e5d1211a53864094a49b7bded01a663ccc1cdc4dbe4599b231bb6a3694b096"
+                },
+                "native/forest_MALE.svg": {
+                  "bytes": 38751,
+                  "sha256": "f1393e70c069bf7dc9c73eae0696582d6047dccdbef9d5c726d74a3731c6dd9e"
+                },
+                "forest_FEMALE.svg": {
+                  "bytes": 44094,
+                  "sha256": "fbacc72c4c3e7c41758f5e3b4150a0c11c703e9ca1af79de188b332bc16675dc"
+                },
+                "forest_MALE.svg": {
+                  "bytes": 44091,
+                  "sha256": "370c00aaed351fdc234ce42bd245c86a22afe155e7361529f8f144e989104d3f"
+                },
+                "forest_0.csv": {
+                  "bytes": 704,
+                  "sha256": "c016462bc58d228a6ec5ff950f805b21fb6249788971ddf0ce4af4ee5f7da7a1"
+                },
+                "forest_1.csv": {
+                  "bytes": 570,
+                  "sha256": "5b7ea2cf3a3d59078cb6f65c3bb0c3a23b8915de9adbeafe1030e050adb92ba4"
+                },
+                "forest_2.csv": {
+                  "bytes": 559,
+                  "sha256": "77693bcd0a757329cd2eef4ab1056d162b2b8eb1a5e79014543105b7448b3c70"
+                },
+                "forest_3.csv": {
+                  "bytes": 644,
+                  "sha256": "ea8ea854b2f8d302306be39e7a3526e6a005e0e27d74ef795defa14985353554"
+                },
+                "forest_4.csv": {
+                  "bytes": 633,
+                  "sha256": "61a679e6ea7d03bb5aee6c5cada632da9f2a386a55bc62a670eef40843406e4f"
+                }
+              }
+            },
+            {
+              "case": "clustergram",
+              "original_program_sha256": "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_expression40.tsv",
+                  "sha256": "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511",
+                  "remote_basename": "oda_live_92ba29c64901_poc261112_expression40.tsv"
+                }
+              ],
+              "checks": 509,
+              "artifacts": {
+                "cluster40.png": {
+                  "bytes": 235532,
+                  "sha256": "71544f080568384cf8466c51a8476ca0ad9b7b1cc6c9ee43a83ec8624ede35ec"
+                },
+                "cluster40.svg": {
+                  "bytes": 103186,
+                  "sha256": "c8cf4f2b41a481e6f022a95c7f9285c8a244d1105556e3a895b2066158ac99b1"
+                },
+                "gene_branch_review.png": {
+                  "bytes": 223560,
+                  "sha256": "bce55dfcfe03ae3821c7ae4210946b9506f93b48f5ac402c12623af44538df6a"
+                },
+                "gene_branch_review.svg": {
+                  "bytes": 69728,
+                  "sha256": "c0b1489f9fdf498d25949b0e4b70ac65d7e592a2cc5408c850d8e9d97086553c"
+                },
+                "clustergram_0.csv": {
+                  "bytes": 3596,
+                  "sha256": "2643f591b11ee5c71b2d2ed8dcf233374a802bbfac5fa27fd2d739e75356827a"
+                },
+                "clustergram_1.csv": {
+                  "bytes": 6708,
+                  "sha256": "5506de388cf16f72ca73c05d48ec183faa19140de86b2452ff555af2eca501bf"
+                },
+                "clustergram_2.csv": {
+                  "bytes": 7363,
+                  "sha256": "049ef1b07f466f923e0d36ea9f3f71bbc470c2cfb38694338b30b132e9e9e413"
+                },
+                "clustergram_3.csv": {
+                  "bytes": 15940,
+                  "sha256": "c66d0202a964985bbfe9def8acea6c97a28f143c3cb6394f63cd8d0f4e2b448f"
+                },
+                "clustergram_4.csv": {
+                  "bytes": 1546,
+                  "sha256": "839e2f5b7b5053e5edc3088e1d17973ab6b8a2e4a7f07c03becceaa6b83b5c60"
+                },
+                "clustergram_5.csv": {
+                  "bytes": 375,
+                  "sha256": "a9bc7d4e0241a58b9a9f0b1b11368f6854ac7f46e6508c1694ef870d0293f097"
+                },
+                "clustergram_6.csv": {
+                  "bytes": 3438,
+                  "sha256": "68394edbc9e0191dd1697b84b895afc8dfd243f5df8b836a646561b7940ccf87"
+                },
+                "clustergram_7.csv": {
+                  "bytes": 800,
+                  "sha256": "6d917593953667cb9a692cab66978deb140fd727209aaef7d966a313e9b8e54a"
+                },
+                "clustergram_8.csv": {
+                  "bytes": 282,
+                  "sha256": "aa2f719fc59feff8dcd2432e5a427966550cc4098d348d7435d4594158699b22"
+                }
+              }
+            },
+            {
+              "case": "oncoprint",
+              "original_program_sha256": "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_oncoprint_template.sas",
+                  "sha256": "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149",
+                  "remote_basename": "oda_live_92ba29c64901_poc261112_oncoprint_template.sas"
+                }
+              ],
+              "checks": 33,
+              "artifacts": {
+                "mgx_oncoprint.png": {
+                  "bytes": 165294,
+                  "sha256": "cfddc1062298dc990b68f0b94ff98a99f7c5fb2345623e60ec42572336703c79"
+                },
+                "mgx_oncoprint.svg": {
+                  "bytes": 102689,
+                  "sha256": "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594"
+                },
+                "onco_frequency.png": {
+                  "bytes": 81564,
+                  "sha256": "0afa8596f368b359cec925a164d34291ba65a3f9b7c9384c4dda575aac7d34f5"
+                },
+                "onco_frequency.svg": {
+                  "bytes": 35788,
+                  "sha256": "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74"
+                },
+                "oncoprint_0.csv": {
+                  "bytes": 2954,
+                  "sha256": "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d"
+                },
+                "oncoprint_1.csv": {
+                  "bytes": 309,
+                  "sha256": "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6"
+                },
+                "oncoprint_2.csv": {
+                  "bytes": 215,
+                  "sha256": "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a"
+                },
+                "oncoprint_3.csv": {
+                  "bytes": 3949,
+                  "sha256": "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9"
+                },
+                "oncoprint_4.csv": {
+                  "bytes": 13891,
+                  "sha256": "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846"
+                },
+                "oncoprint_5.csv": {
+                  "bytes": 9,
+                  "sha256": "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931"
+                }
+              }
+            },
+            {
+              "case": "multi_gwas_gtf",
+              "original_program_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 11295,
+              "artifacts": {
+                "multi_gwas_gtf.png": {
+                  "bytes": 159678,
+                  "sha256": "8933a0470042690fbbf297510f1ac67ad29ff756ab7274fd8e0f9c43f519cfcf"
+                },
+                "multi_gwas_gtf.svg": {
+                  "bytes": 1769639,
+                  "sha256": "a1beb1162f601702569b0b1b99821c92dfb07001465016720351e078054f2770"
+                },
+                "multi_gwas_template.sas": {
+                  "bytes": 13735,
+                  "sha256": "87360592140c9c472ceceec6c9b9baf617a000c4a84d9b6bb74d8147c990dc8f"
+                },
+                "panel_values.csv": {
+                  "bytes": 546079,
+                  "sha256": "f9e02c63a503240b17f6d2dfa99c2192f03fb63682cc13e65ae46acfddbcc858"
+                },
+                "regional_input.csv": {
+                  "bytes": 292124,
+                  "sha256": "f3b3b0e6bec337819940b12250a2f37d0268f1fa061cfc5ed212bb72a8ddf2b6"
+                },
+                "regional_annotation.csv": {
+                  "bytes": 237520,
+                  "sha256": "1da26d4fcb285a605bc8103b60938b8a268c5b0233ffb512912f42930ae84779"
+                },
+                "regional_render.csv": {
+                  "bytes": 3711474,
+                  "sha256": "267660c3e960086fcca81c4ddd261d0bdfb267660e686c286362fed964c24e96"
+                }
+              }
+            }
+          ],
+          "cleanup": {
+            "unique_remote_inputs": 7,
+            "verified_absent": true,
+            "verified_in_followup": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_RandID_oda_fileops_20261123_1795463707322\\followup.json"
+          },
+          "sas_pid": "94305",
+          "oda_work": "/saswork/SAS_work080500017061_odaws01-usw2.oda.sas.com/SAS_workB97400017061_odaws01-usw2.oda.sas.com",
+          "gtex_macros_found": 14,
+          "passed": true,
+          "failure": "",
+          "close_exit_code": 0,
+          "original_cleanup_reporting_assertion_failed": true
+        }
+      ],
+      "scope": "Actual ODA saved-program execution; prepared GTEx/PGC summaries and synthetic oncoprint. No upstream study, AI/token benchmark or full GWAS preprocessing rerun.",
+      "raw_acceptance_passed": false,
+      "cleanup_followup": {
+        "passed": true,
+        "repo": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS",
+        "target": "oda",
+        "stages": [
+          {
+            "stage": "combined",
+            "exit_code": 0,
+            "seconds": 29.706
+          },
+          {
+            "stage": "cleanup",
+            "exit_code": 0,
+            "seconds": 13.511
+          }
+        ],
+        "prior_inputs_verified_absent": 7,
+        "new_files": 3,
+        "download_sha256_matches": true,
+        "final_listing_and_metadata_correct": true,
+        "unselected_file_preserved": true,
+        "unique_remote_inputs": 10,
+        "all_test_inputs_verified_absent": true,
+        "source_sha256": "0f6813044fb4ed9d9a8b408b10ab30c9ff97f553c8e828522c90b6546085311a",
+        "evidence": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MCP4SAS\\SAS_Output_RandID_oda_fileops_20261123_1795463707322\\followup.json"
+      },
+      "passed": true
+    },
+    "explorer": {
+      "target": "oda",
+      "repo": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MultiGWAS-Explorer-git\\MultiGWAS-Explorer",
+      "revision": "aa5ba83c1d50c1af21448226089ce66f939e689d",
+      "source_hashes": {
+        "run_sas_codes_or_files_in_ODA.pl": "a86ccd4718d3e9e9dcfec23e407b6d59b686217ed46cd723e5bd9544ec9f5ddc",
+        "run_sas_codes_or_files_in_ODA.py": "16554dd44fbc9332578934b4fa02b462ccd16f1babdfb765bd00e1e38a8533cf",
+        "DiffGWASDeps/SAS_ODA_Runner.pm": "244957df7e3996b8509b8f24d1f9b282bdea96cfa6412a516774ec23ea634440",
+        "DiffGWASDeps/sas_oda_session_server.py": "5bbca8b90cecea5d189770c1f56f4d0608eff8ce7cb76e8f2b00b585c54c4fd7"
+      },
+      "runners": [
+        {
+          "language": "perl",
+          "session": "oda_live_f96171032b01",
+          "stages": [
+            {
+              "label": "class_and_create",
+              "exit_code": 0,
+              "seconds": 14.133,
+              "log_sha256": "cd8d91125bdcd45103ad86c2b94b59e7e27728e66edf00a178a936093c11f201",
+              "source_sha256": "fa9e1bcf13d7bab2273e7f494d9a71457ff57a20abb031b051df216ddef08ad9",
+              "warnings": []
+            },
+            {
+              "label": "implicit_print",
+              "exit_code": 0,
+              "seconds": 3.039,
+              "log_sha256": "677b93d679d3ff06c3d867ca37c389c9775beb2a5f54a0feaf99077eaf2d5725",
+              "source_sha256": "f249dde437b92aa34f282a8ea98cca495dfe4e093be2c723cd3f81e199290ba7",
+              "warnings": []
+            },
+            {
+              "label": "explicit_print",
+              "exit_code": 0,
+              "seconds": 2.011,
+              "log_sha256": "f31844bc1f0ebdb9896885bc455142122072a1e7f2228aaec95912a7ca4884ad",
+              "source_sha256": "a8fad2c0d439cf0c0a040a30e14527cedee2662ecf2d067c191942b3280b24df",
+              "warnings": []
+            },
+            {
+              "label": "large_source_print",
+              "exit_code": 0,
+              "seconds": 7.426,
+              "log_sha256": "90b028acbb9b2bf73572a8c39ba4a077dabd49812e65cde46d1140cd5e39349c",
+              "source_sha256": "c721ad1c8742d83cba151567938658545a4089f0e78ad8447ce8a2133131a6ab",
+              "warnings": []
+            },
+            {
+              "label": "transfer_roundtrip",
+              "exit_code": 0,
+              "seconds": 17.192,
+              "log_sha256": "f1ceed0262e2fd8e5f0b380ca12664347588aa7292be96c57414e30dfc3f530a",
+              "source_sha256": "b1320fd125ad5815e66c9108580411d83c99602d8b9951965d10c216e4028979",
+              "warnings": []
+            },
+            {
+              "label": "nested_macro",
+              "exit_code": 0,
+              "seconds": 9.081,
+              "log_sha256": "47ac3f0ce55394d5d4e8bab61527a18cec7c6c7088ba1506167bb4c0ab91ba29",
+              "source_sha256": "04535d9b7d1d32e08bab1f104d9938ae6204938d91d86f00cd71a8282e179779",
+              "warnings": []
+            },
+            {
+              "label": "macro_query",
+              "exit_code": 0,
+              "seconds": 3.108,
+              "log_sha256": "4497851c5ae7d57e676a39c27f7b6b18ed010a863f60d5942de52ff484ab6849",
+              "source_sha256": "51da20531edf8cfc6e3e6d2ba9618f810915ec6cb9c3ad7743270357415a5331",
+              "warnings": []
+            },
+            {
+              "label": "forest_submit",
+              "exit_code": 0,
+              "seconds": 32.266,
+              "log_sha256": "ff5fa81337883bf4fb7c6ab2aabb79b53c353061236b6c856a12b5af8d6a7721",
+              "source_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "warnings": []
+            },
+            {
+              "label": "forest_collect",
+              "exit_code": 0,
+              "seconds": 9.17,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "clustergram_submit",
+              "exit_code": 0,
+              "seconds": 19.947,
+              "log_sha256": "d760ea3f79d1394de0d93a271256d6bb0eedcea807730c48014489691c3ba1e4",
+              "source_sha256": "2164fbec54f981e36068e71d063282132868b424a70fd879378c6534d86b6df4",
+              "warnings": [
+                "      \n\n\nWARNING: A very large output size of (3958, 4375) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (2560, 2840) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "clustergram_collect",
+              "exit_code": 0,
+              "seconds": 9.059,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "oncoprint_submit",
+              "exit_code": 0,
+              "seconds": 8.718,
+              "log_sha256": "fc856ccb4e85ddda795be57fb6679b4d9478207a690e4e537ba0a099d4646dbc",
+              "source_sha256": "842ecaae5596705b490674795d2aec894aeb0dd0d08935cb09c775ab70830ae4",
+              "warnings": [
+                "\nWARNING: No output destinations active.",
+                "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "oncoprint_collect",
+              "exit_code": 0,
+              "seconds": 7.992,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "multi_gwas_gtf_submit",
+              "exit_code": 0,
+              "seconds": 139.922,
+              "log_sha256": "fafe4d298a41074e36e86648035d6fa92b3b12b57bcc2b0e092fa621b9ae22f0",
+              "source_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "warnings": [
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity "
+              ]
+            },
+            {
+              "label": "multi_gwas_gtf_collect",
+              "exit_code": 0,
+              "seconds": 9.342,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "cleanup_inputs",
+              "exit_code": 0,
+              "seconds": 12.183,
+              "log_sha256": null,
+              "source_sha256": null,
+              "warnings": []
+            }
+          ],
+          "figures": [
+            {
+              "case": "forest",
+              "original_program_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 30,
+              "artifacts": {
+                "forest_FEMALE.png": {
+                  "bytes": 69212,
+                  "sha256": "215137a3c019351d5aae4f71ef51e2bb1de28089a4106ddfa28d2f5a197b6a9a"
+                },
+                "forest_MALE.png": {
+                  "bytes": 68751,
+                  "sha256": "08b309251f8bccda8e083cf2b2b5f86514b4cf7b339157ebac12c9f55c5fce3c"
+                },
+                "native/forest_FEMALE.svg": {
+                  "bytes": 38931,
+                  "sha256": "d2e5d1211a53864094a49b7bded01a663ccc1cdc4dbe4599b231bb6a3694b096"
+                },
+                "native/forest_MALE.svg": {
+                  "bytes": 38751,
+                  "sha256": "f1393e70c069bf7dc9c73eae0696582d6047dccdbef9d5c726d74a3731c6dd9e"
+                },
+                "forest_FEMALE.svg": {
+                  "bytes": 44094,
+                  "sha256": "fbacc72c4c3e7c41758f5e3b4150a0c11c703e9ca1af79de188b332bc16675dc"
+                },
+                "forest_MALE.svg": {
+                  "bytes": 44091,
+                  "sha256": "370c00aaed351fdc234ce42bd245c86a22afe155e7361529f8f144e989104d3f"
+                },
+                "forest_0.csv": {
+                  "bytes": 704,
+                  "sha256": "c016462bc58d228a6ec5ff950f805b21fb6249788971ddf0ce4af4ee5f7da7a1"
+                },
+                "forest_1.csv": {
+                  "bytes": 570,
+                  "sha256": "5b7ea2cf3a3d59078cb6f65c3bb0c3a23b8915de9adbeafe1030e050adb92ba4"
+                },
+                "forest_2.csv": {
+                  "bytes": 559,
+                  "sha256": "77693bcd0a757329cd2eef4ab1056d162b2b8eb1a5e79014543105b7448b3c70"
+                },
+                "forest_3.csv": {
+                  "bytes": 644,
+                  "sha256": "ea8ea854b2f8d302306be39e7a3526e6a005e0e27d74ef795defa14985353554"
+                },
+                "forest_4.csv": {
+                  "bytes": 633,
+                  "sha256": "61a679e6ea7d03bb5aee6c5cada632da9f2a386a55bc62a670eef40843406e4f"
+                }
+              }
+            },
+            {
+              "case": "clustergram",
+              "original_program_sha256": "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_expression40.tsv",
+                  "sha256": "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511",
+                  "remote_basename": "oda_live_f96171032b01_poc261112_expression40.tsv"
+                }
+              ],
+              "checks": 509,
+              "artifacts": {
+                "cluster40.png": {
+                  "bytes": 235532,
+                  "sha256": "71544f080568384cf8466c51a8476ca0ad9b7b1cc6c9ee43a83ec8624ede35ec"
+                },
+                "cluster40.svg": {
+                  "bytes": 103186,
+                  "sha256": "c8cf4f2b41a481e6f022a95c7f9285c8a244d1105556e3a895b2066158ac99b1"
+                },
+                "gene_branch_review.png": {
+                  "bytes": 223560,
+                  "sha256": "bce55dfcfe03ae3821c7ae4210946b9506f93b48f5ac402c12623af44538df6a"
+                },
+                "gene_branch_review.svg": {
+                  "bytes": 69728,
+                  "sha256": "c0b1489f9fdf498d25949b0e4b70ac65d7e592a2cc5408c850d8e9d97086553c"
+                },
+                "clustergram_0.csv": {
+                  "bytes": 3596,
+                  "sha256": "2643f591b11ee5c71b2d2ed8dcf233374a802bbfac5fa27fd2d739e75356827a"
+                },
+                "clustergram_1.csv": {
+                  "bytes": 6708,
+                  "sha256": "5506de388cf16f72ca73c05d48ec183faa19140de86b2452ff555af2eca501bf"
+                },
+                "clustergram_2.csv": {
+                  "bytes": 7363,
+                  "sha256": "049ef1b07f466f923e0d36ea9f3f71bbc470c2cfb38694338b30b132e9e9e413"
+                },
+                "clustergram_3.csv": {
+                  "bytes": 15940,
+                  "sha256": "c66d0202a964985bbfe9def8acea6c97a28f143c3cb6394f63cd8d0f4e2b448f"
+                },
+                "clustergram_4.csv": {
+                  "bytes": 1546,
+                  "sha256": "839e2f5b7b5053e5edc3088e1d17973ab6b8a2e4a7f07c03becceaa6b83b5c60"
+                },
+                "clustergram_5.csv": {
+                  "bytes": 375,
+                  "sha256": "a9bc7d4e0241a58b9a9f0b1b11368f6854ac7f46e6508c1694ef870d0293f097"
+                },
+                "clustergram_6.csv": {
+                  "bytes": 3438,
+                  "sha256": "68394edbc9e0191dd1697b84b895afc8dfd243f5df8b836a646561b7940ccf87"
+                },
+                "clustergram_7.csv": {
+                  "bytes": 800,
+                  "sha256": "6d917593953667cb9a692cab66978deb140fd727209aaef7d966a313e9b8e54a"
+                },
+                "clustergram_8.csv": {
+                  "bytes": 282,
+                  "sha256": "aa2f719fc59feff8dcd2432e5a427966550cc4098d348d7435d4594158699b22"
+                }
+              }
+            },
+            {
+              "case": "oncoprint",
+              "original_program_sha256": "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_oncoprint_template.sas",
+                  "sha256": "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149",
+                  "remote_basename": "oda_live_f96171032b01_poc261112_oncoprint_template.sas"
+                }
+              ],
+              "checks": 33,
+              "artifacts": {
+                "mgx_oncoprint.png": {
+                  "bytes": 165294,
+                  "sha256": "cfddc1062298dc990b68f0b94ff98a99f7c5fb2345623e60ec42572336703c79"
+                },
+                "mgx_oncoprint.svg": {
+                  "bytes": 102689,
+                  "sha256": "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594"
+                },
+                "onco_frequency.png": {
+                  "bytes": 81564,
+                  "sha256": "0afa8596f368b359cec925a164d34291ba65a3f9b7c9384c4dda575aac7d34f5"
+                },
+                "onco_frequency.svg": {
+                  "bytes": 35788,
+                  "sha256": "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74"
+                },
+                "oncoprint_0.csv": {
+                  "bytes": 2954,
+                  "sha256": "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d"
+                },
+                "oncoprint_1.csv": {
+                  "bytes": 309,
+                  "sha256": "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6"
+                },
+                "oncoprint_2.csv": {
+                  "bytes": 215,
+                  "sha256": "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a"
+                },
+                "oncoprint_3.csv": {
+                  "bytes": 3949,
+                  "sha256": "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9"
+                },
+                "oncoprint_4.csv": {
+                  "bytes": 13891,
+                  "sha256": "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846"
+                },
+                "oncoprint_5.csv": {
+                  "bytes": 9,
+                  "sha256": "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931"
+                }
+              }
+            },
+            {
+              "case": "multi_gwas_gtf",
+              "original_program_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 11295,
+              "artifacts": {
+                "multi_gwas_gtf.png": {
+                  "bytes": 159678,
+                  "sha256": "8933a0470042690fbbf297510f1ac67ad29ff756ab7274fd8e0f9c43f519cfcf"
+                },
+                "multi_gwas_gtf.svg": {
+                  "bytes": 1769639,
+                  "sha256": "a1beb1162f601702569b0b1b99821c92dfb07001465016720351e078054f2770"
+                },
+                "multi_gwas_template.sas": {
+                  "bytes": 13735,
+                  "sha256": "87360592140c9c472ceceec6c9b9baf617a000c4a84d9b6bb74d8147c990dc8f"
+                },
+                "panel_values.csv": {
+                  "bytes": 546079,
+                  "sha256": "f9e02c63a503240b17f6d2dfa99c2192f03fb63682cc13e65ae46acfddbcc858"
+                },
+                "regional_input.csv": {
+                  "bytes": 292124,
+                  "sha256": "f3b3b0e6bec337819940b12250a2f37d0268f1fa061cfc5ed212bb72a8ddf2b6"
+                },
+                "regional_annotation.csv": {
+                  "bytes": 237520,
+                  "sha256": "1da26d4fcb285a605bc8103b60938b8a268c5b0233ffb512912f42930ae84779"
+                },
+                "regional_render.csv": {
+                  "bytes": 3711474,
+                  "sha256": "267660c3e960086fcca81c4ddd261d0bdfb267660e686c286362fed964c24e96"
+                }
+              }
+            }
+          ],
+          "cleanup": {
+            "unique_remote_inputs": 7,
+            "verified_absent": true
+          },
+          "sas_pid": "119334",
+          "oda_work": "/saswork/SAS_work20DC0001D226_odaws01-usw2.oda.sas.com/SAS_work4BD40001D226_odaws01-usw2.oda.sas.com",
+          "gtex_macros_found": 14,
+          "passed": true,
+          "close_session": {
+            "status": "ok",
+            "msg": "not_open"
+          },
+          "owned_helper_pid": 17800,
+          "close_exit_code": 0
+        },
+        {
+          "language": "python",
+          "session": "oda_live_6dd2ef17a3d2",
+          "stages": [
+            {
+              "label": "class_and_create",
+              "exit_code": 0,
+              "seconds": 11.398,
+              "log_sha256": "208e5f14246c7c5430ce72e30fd7acc77805d7d4c41ae3c9e8cf0f5deed055a1",
+              "source_sha256": "fa9e1bcf13d7bab2273e7f494d9a71457ff57a20abb031b051df216ddef08ad9",
+              "warnings": []
+            },
+            {
+              "label": "implicit_print",
+              "exit_code": 0,
+              "seconds": 1.394,
+              "log_sha256": "bc52ae6670756af1191eadc8d813be66f6ade476f5328db1672c1ff6e3a5ae0e",
+              "source_sha256": "f249dde437b92aa34f282a8ea98cca495dfe4e093be2c723cd3f81e199290ba7",
+              "warnings": []
+            },
+            {
+              "label": "explicit_print",
+              "exit_code": 0,
+              "seconds": 1.305,
+              "log_sha256": "2fb2e16f4d4bb736b348b460f5fc84edd8967193d49ed1279e102f3587b6527f",
+              "source_sha256": "a8fad2c0d439cf0c0a040a30e14527cedee2662ecf2d067c191942b3280b24df",
+              "warnings": []
+            },
+            {
+              "label": "large_source_print",
+              "exit_code": 0,
+              "seconds": 5.197,
+              "log_sha256": "2d54b1eac678fd116e1a21183a80430a469dba710a4ba6116fc0b75901864084",
+              "source_sha256": "c721ad1c8742d83cba151567938658545a4089f0e78ad8447ce8a2133131a6ab",
+              "warnings": []
+            },
+            {
+              "label": "transfer_roundtrip",
+              "exit_code": 0,
+              "seconds": 12.919,
+              "log_sha256": "3937f6320139b6dd6c8dd1a33a896318bc67e4dc4722b52c6cfe08f392ba0450",
+              "source_sha256": "f30ba4952853d525864f1b27100f28f88b685fcab4a4b8b4828eb6da1a9239ab",
+              "warnings": []
+            },
+            {
+              "label": "nested_macro",
+              "exit_code": 0,
+              "seconds": 7.217,
+              "log_sha256": "5afc11d0199896e841522e3ba604bf982059ea508226207b1915e3d6422ffedd",
+              "source_sha256": "d950da9b3a14ed633ea6d444ff9f766e625ae80ca00b76cc55bc7c14b77eca9e",
+              "warnings": []
+            },
+            {
+              "label": "macro_query",
+              "exit_code": 0,
+              "seconds": 1.572,
+              "log_sha256": "d7abeae94004b251d22c28aae95451a2bf9f86ddac00c95e8bd07c3c04122636",
+              "source_sha256": "51da20531edf8cfc6e3e6d2ba9618f810915ec6cb9c3ad7743270357415a5331",
+              "warnings": []
+            },
+            {
+              "label": "forest_submit",
+              "exit_code": 0,
+              "seconds": 16.44,
+              "log_sha256": "b9cc9bc54bf4ec493e8025a3d162b6eeb9f8bce28708b83451391e7f12330f18",
+              "source_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "warnings": []
+            },
+            {
+              "label": "forest_collect",
+              "exit_code": 0,
+              "seconds": 6.268,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "clustergram_submit",
+              "exit_code": 0,
+              "seconds": 14.715,
+              "log_sha256": "a1aac312c316316046fa977e2abf1b966ac02bbd2a3087cc3e3afb6d6713534d",
+              "source_sha256": "f552fbcc482287e9ee578797bb64a17770044ebcee3cf469083f3cbbcd59f12b",
+              "warnings": [
+                "      \n\n\nWARNING: A very large output size of (3958, 4375) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (2560, 2840) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java ",
+                "      \n\n\nWARNING: A very large output size of (4000, 1920) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "clustergram_collect",
+              "exit_code": 0,
+              "seconds": 6.386,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "oncoprint_submit",
+              "exit_code": 0,
+              "seconds": 7.073,
+              "log_sha256": "97713d5c627fc9f6738a3a88b3cb8644159c26f2f8fc8e692d1f4c72e0090e66",
+              "source_sha256": "031dc88ed923fe40c967232417748af9c15213079f7be8a1f45d90d8cb974d65",
+              "warnings": [
+                "\nWARNING: No output destinations active.",
+                "WARNING: A very large output size of (3420, 2430) is in effect. This could make Java VM run out of memory and result in some Java "
+              ]
+            },
+            {
+              "label": "oncoprint_collect",
+              "exit_code": 0,
+              "seconds": 6.022,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "multi_gwas_gtf_submit",
+              "exit_code": 0,
+              "seconds": 90.282,
+              "log_sha256": "6f7204b6bfd17342df1b55f00e17421f75939534c2d5e595989cd0e5b428abdd",
+              "source_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "warnings": [
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "WARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity ",
+                "      \n\nWARNING: This CREATE TABLE statement recursively references the target table. A consequence of this is a possible data integrity "
+              ]
+            },
+            {
+              "label": "multi_gwas_gtf_collect",
+              "exit_code": 0,
+              "seconds": 6.388,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            },
+            {
+              "label": "cleanup_inputs",
+              "exit_code": 0,
+              "seconds": 6.911,
+              "log_sha256": "8310706e59c8402bf82f0b5df17ffddd5fe38b9e493642f5828a9588d3b51400",
+              "source_sha256": null,
+              "warnings": []
+            }
+          ],
+          "figures": [
+            {
+              "case": "forest",
+              "original_program_sha256": "3661e1785b9513dd1448011fbd89136911a1b60d719865470b57df36b0c45df2",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 30,
+              "artifacts": {
+                "forest_FEMALE.png": {
+                  "bytes": 69212,
+                  "sha256": "215137a3c019351d5aae4f71ef51e2bb1de28089a4106ddfa28d2f5a197b6a9a"
+                },
+                "forest_MALE.png": {
+                  "bytes": 68751,
+                  "sha256": "08b309251f8bccda8e083cf2b2b5f86514b4cf7b339157ebac12c9f55c5fce3c"
+                },
+                "native/forest_FEMALE.svg": {
+                  "bytes": 38931,
+                  "sha256": "d2e5d1211a53864094a49b7bded01a663ccc1cdc4dbe4599b231bb6a3694b096"
+                },
+                "native/forest_MALE.svg": {
+                  "bytes": 38751,
+                  "sha256": "f1393e70c069bf7dc9c73eae0696582d6047dccdbef9d5c726d74a3731c6dd9e"
+                },
+                "forest_FEMALE.svg": {
+                  "bytes": 44094,
+                  "sha256": "fbacc72c4c3e7c41758f5e3b4150a0c11c703e9ca1af79de188b332bc16675dc"
+                },
+                "forest_MALE.svg": {
+                  "bytes": 44091,
+                  "sha256": "370c00aaed351fdc234ce42bd245c86a22afe155e7361529f8f144e989104d3f"
+                },
+                "forest_0.csv": {
+                  "bytes": 704,
+                  "sha256": "c016462bc58d228a6ec5ff950f805b21fb6249788971ddf0ce4af4ee5f7da7a1"
+                },
+                "forest_1.csv": {
+                  "bytes": 570,
+                  "sha256": "5b7ea2cf3a3d59078cb6f65c3bb0c3a23b8915de9adbeafe1030e050adb92ba4"
+                },
+                "forest_2.csv": {
+                  "bytes": 559,
+                  "sha256": "77693bcd0a757329cd2eef4ab1056d162b2b8eb1a5e79014543105b7448b3c70"
+                },
+                "forest_3.csv": {
+                  "bytes": 644,
+                  "sha256": "ea8ea854b2f8d302306be39e7a3526e6a005e0e27d74ef795defa14985353554"
+                },
+                "forest_4.csv": {
+                  "bytes": 633,
+                  "sha256": "61a679e6ea7d03bb5aee6c5cada632da9f2a386a55bc62a670eef40843406e4f"
+                }
+              }
+            },
+            {
+              "case": "clustergram",
+              "original_program_sha256": "9adcb7c5c88902d2e3c1d101edb3f7d2ee6d431c5e0bd9656adbc3b8e003be18",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_expression40.tsv",
+                  "sha256": "672ff88cbf7e21564b0e944aae2a2fa0242778689247f2b3c086dcfb3b8ea511",
+                  "remote_basename": "oda_live_6dd2ef17a3d2_poc261112_expression40.tsv"
+                }
+              ],
+              "checks": 509,
+              "artifacts": {
+                "cluster40.png": {
+                  "bytes": 235532,
+                  "sha256": "71544f080568384cf8466c51a8476ca0ad9b7b1cc6c9ee43a83ec8624ede35ec"
+                },
+                "cluster40.svg": {
+                  "bytes": 103186,
+                  "sha256": "c8cf4f2b41a481e6f022a95c7f9285c8a244d1105556e3a895b2066158ac99b1"
+                },
+                "gene_branch_review.png": {
+                  "bytes": 223560,
+                  "sha256": "bce55dfcfe03ae3821c7ae4210946b9506f93b48f5ac402c12623af44538df6a"
+                },
+                "gene_branch_review.svg": {
+                  "bytes": 69728,
+                  "sha256": "c0b1489f9fdf498d25949b0e4b70ac65d7e592a2cc5408c850d8e9d97086553c"
+                },
+                "clustergram_0.csv": {
+                  "bytes": 3596,
+                  "sha256": "2643f591b11ee5c71b2d2ed8dcf233374a802bbfac5fa27fd2d739e75356827a"
+                },
+                "clustergram_1.csv": {
+                  "bytes": 6708,
+                  "sha256": "5506de388cf16f72ca73c05d48ec183faa19140de86b2452ff555af2eca501bf"
+                },
+                "clustergram_2.csv": {
+                  "bytes": 7363,
+                  "sha256": "049ef1b07f466f923e0d36ea9f3f71bbc470c2cfb38694338b30b132e9e9e413"
+                },
+                "clustergram_3.csv": {
+                  "bytes": 15940,
+                  "sha256": "c66d0202a964985bbfe9def8acea6c97a28f143c3cb6394f63cd8d0f4e2b448f"
+                },
+                "clustergram_4.csv": {
+                  "bytes": 1546,
+                  "sha256": "839e2f5b7b5053e5edc3088e1d17973ab6b8a2e4a7f07c03becceaa6b83b5c60"
+                },
+                "clustergram_5.csv": {
+                  "bytes": 375,
+                  "sha256": "a9bc7d4e0241a58b9a9f0b1b11368f6854ac7f46e6508c1694ef870d0293f097"
+                },
+                "clustergram_6.csv": {
+                  "bytes": 3438,
+                  "sha256": "68394edbc9e0191dd1697b84b895afc8dfd243f5df8b836a646561b7940ccf87"
+                },
+                "clustergram_7.csv": {
+                  "bytes": 800,
+                  "sha256": "6d917593953667cb9a692cab66978deb140fd727209aaef7d966a313e9b8e54a"
+                },
+                "clustergram_8.csv": {
+                  "bytes": 282,
+                  "sha256": "aa2f719fc59feff8dcd2432e5a427966550cc4098d348d7435d4594158699b22"
+                }
+              }
+            },
+            {
+              "case": "oncoprint",
+              "original_program_sha256": "1f737bb5008ecd4ba2660a277071d86e2cdf86573b871bc1e625eef217766d4c",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [
+                {
+                  "source": "inputs/poc261112_oncoprint_template.sas",
+                  "sha256": "951aa294ba82f29a752188c7f4e947bef3dbf25053c23da310d6f616e8fbb149",
+                  "remote_basename": "oda_live_6dd2ef17a3d2_poc261112_oncoprint_template.sas"
+                }
+              ],
+              "checks": 33,
+              "artifacts": {
+                "mgx_oncoprint.png": {
+                  "bytes": 165294,
+                  "sha256": "cfddc1062298dc990b68f0b94ff98a99f7c5fb2345623e60ec42572336703c79"
+                },
+                "mgx_oncoprint.svg": {
+                  "bytes": 102689,
+                  "sha256": "7d83e63b371d3b8929f3a8d7446a78672f45efc937c45fdaf88c7c84d4db5594"
+                },
+                "onco_frequency.png": {
+                  "bytes": 81564,
+                  "sha256": "0afa8596f368b359cec925a164d34291ba65a3f9b7c9384c4dda575aac7d34f5"
+                },
+                "onco_frequency.svg": {
+                  "bytes": 35788,
+                  "sha256": "ed28d84a7083e317b5e9776a96e850042cd38856d3e8acc5974bb0dd2a511c74"
+                },
+                "oncoprint_0.csv": {
+                  "bytes": 2954,
+                  "sha256": "4edddf569c0d23b7bdcfea7af93951db3d1f42116c1e2af90279a0822d2a1a3d"
+                },
+                "oncoprint_1.csv": {
+                  "bytes": 309,
+                  "sha256": "c45e3c977e18271ce57d687a3adbfcffd8743b47e9687038a639859cdb752ba6"
+                },
+                "oncoprint_2.csv": {
+                  "bytes": 215,
+                  "sha256": "32c0f5c9a30fbdab9dff457e0bfb121df1decb6b32faefaf04f7d9e136045e8a"
+                },
+                "oncoprint_3.csv": {
+                  "bytes": 3949,
+                  "sha256": "0710df7ea1dcd7c3db4f0ccef550239413664e730ff739fddd7eb6cf5a657de9"
+                },
+                "oncoprint_4.csv": {
+                  "bytes": 13891,
+                  "sha256": "8898ffff140bd72c6db7217f1e6e0f88b8c16ac0c726bf56f5bad1dc292bd846"
+                },
+                "oncoprint_5.csv": {
+                  "bytes": 9,
+                  "sha256": "205da0eb2527c905e5c870c409343c172b58579d32bddfcfd001778c89cc3931"
+                }
+              }
+            },
+            {
+              "case": "multi_gwas_gtf",
+              "original_program_sha256": "595c1c91dab966ec03e3d2eb8a744c5223cbaf99906cbca605ce846e7e51485f",
+              "adaptation": "Only input basenames are uniquely prefixed to avoid shared HOME collisions.",
+              "inputs": [],
+              "checks": 11295,
+              "artifacts": {
+                "multi_gwas_gtf.png": {
+                  "bytes": 159678,
+                  "sha256": "8933a0470042690fbbf297510f1ac67ad29ff756ab7274fd8e0f9c43f519cfcf"
+                },
+                "multi_gwas_gtf.svg": {
+                  "bytes": 1769639,
+                  "sha256": "a1beb1162f601702569b0b1b99821c92dfb07001465016720351e078054f2770"
+                },
+                "multi_gwas_template.sas": {
+                  "bytes": 13735,
+                  "sha256": "87360592140c9c472ceceec6c9b9baf617a000c4a84d9b6bb74d8147c990dc8f"
+                },
+                "panel_values.csv": {
+                  "bytes": 546079,
+                  "sha256": "f9e02c63a503240b17f6d2dfa99c2192f03fb63682cc13e65ae46acfddbcc858"
+                },
+                "regional_input.csv": {
+                  "bytes": 292124,
+                  "sha256": "f3b3b0e6bec337819940b12250a2f37d0268f1fa061cfc5ed212bb72a8ddf2b6"
+                },
+                "regional_annotation.csv": {
+                  "bytes": 237520,
+                  "sha256": "1da26d4fcb285a605bc8103b60938b8a268c5b0233ffb512912f42930ae84779"
+                },
+                "regional_render.csv": {
+                  "bytes": 3711474,
+                  "sha256": "267660c3e960086fcca81c4ddd261d0bdfb267660e686c286362fed964c24e96"
+                }
+              }
+            }
+          ],
+          "cleanup": {
+            "unique_remote_inputs": 7,
+            "verified_absent": true,
+            "verified_in_followup": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MultiGWAS-Explorer-git\\MultiGWAS-Explorer\\SAS_Output_RandID_oda_fileops_20261123_1795463717572\\followup.json"
+          },
+          "sas_pid": "99676",
+          "oda_work": "/saswork/SAS_work7FDF0001855C_odaws01-usw2.oda.sas.com/SAS_work34210001855C_odaws01-usw2.oda.sas.com",
+          "gtex_macros_found": 14,
+          "passed": true,
+          "failure": "",
+          "close_exit_code": 0,
+          "original_cleanup_reporting_assertion_failed": true
+        }
+      ],
+      "scope": "Actual ODA saved-program execution; prepared GTEx/PGC summaries and synthetic oncoprint. No upstream study, AI/token benchmark or full GWAS preprocessing rerun.",
+      "raw_acceptance_passed": false,
+      "cleanup_followup": {
+        "passed": true,
+        "repo": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MultiGWAS-Explorer-git\\MultiGWAS-Explorer",
+        "target": "oda",
+        "stages": [
+          {
+            "stage": "combined",
+            "exit_code": 0,
+            "seconds": 30.022
+          },
+          {
+            "stage": "cleanup",
+            "exit_code": 0,
+            "seconds": 13.497
+          }
+        ],
+        "prior_inputs_verified_absent": 7,
+        "new_files": 3,
+        "download_sha256_matches": true,
+        "final_listing_and_metadata_correct": true,
+        "unselected_file_preserved": true,
+        "unique_remote_inputs": 10,
+        "all_test_inputs_verified_absent": true,
+        "source_sha256": "a42945c53e976f4d8185a4445e80675182b3bbe8c3229b74e6bb53e4dd3d9374",
+        "evidence": "E:\\LongCOVID_HGI_GWAS\\PGC_Large_GWASs\\Manuscript4AI_with_PGC_GWASs\\FR_Reviewers_Comments\\perlMCP4Gemini_Paper\\MultiGWAS-Explorer-git\\MultiGWAS-Explorer\\SAS_Output_RandID_oda_fileops_20261123_1795463717572\\followup.json"
+      },
+      "passed": true
+    }
+  },
+  "numeric_comparisons": [
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_0.csv",
+      "cells": 70,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_1.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_2.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_3.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_4.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_0.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_1.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_2.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_3.csv",
+      "cells": 3609,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_4.csv",
+      "cells": 240,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_5.csv",
+      "cells": 60,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_6.csv",
+      "cells": 640,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_7.csv",
+      "cells": 160,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "clustergram_8.csv",
+      "cells": 80,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_0.csv",
+      "cells": 1067,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_1.csv",
+      "cells": 54,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_2.csv",
+      "cells": 65,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_3.csv",
+      "cells": 845,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_4.csv",
+      "cells": 6369,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "oncoprint_5.csv",
+      "cells": 2,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "panel_values.csv",
+      "cells": 50769,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "regional_input.csv",
+      "cells": 26334,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "regional_annotation.csv",
+      "cells": 30907,
+      "numerically_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "regional_render.csv",
+      "cells": 2448411,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_0.csv",
+      "cells": 70,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_1.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_2.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_3.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_4.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_0.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_1.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_2.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_3.csv",
+      "cells": 3609,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_4.csv",
+      "cells": 240,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_5.csv",
+      "cells": 60,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_6.csv",
+      "cells": 640,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_7.csv",
+      "cells": 160,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "clustergram_8.csv",
+      "cells": 80,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_0.csv",
+      "cells": 1067,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_1.csv",
+      "cells": 54,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_2.csv",
+      "cells": 65,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_3.csv",
+      "cells": 845,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_4.csv",
+      "cells": 6369,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "oncoprint_5.csv",
+      "cells": 2,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "panel_values.csv",
+      "cells": 50769,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "regional_input.csv",
+      "cells": 26334,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "regional_annotation.csv",
+      "cells": 30907,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "regional_render.csv",
+      "cells": 2448411,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_0.csv",
+      "cells": 70,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_1.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_2.csv",
+      "cells": 64,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_3.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_4.csv",
+      "cells": 68,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_0.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_1.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_2.csv",
+      "cells": 451,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_3.csv",
+      "cells": 3609,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_4.csv",
+      "cells": 240,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_5.csv",
+      "cells": 60,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_6.csv",
+      "cells": 640,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_7.csv",
+      "cells": 160,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "clustergram_8.csv",
+      "cells": 80,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_0.csv",
+      "cells": 1067,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_1.csv",
+      "cells": 54,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_2.csv",
+      "cells": 65,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_3.csv",
+      "cells": 845,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_4.csv",
+      "cells": 6369,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "oncoprint_5.csv",
+      "cells": 2,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "panel_values.csv",
+      "cells": 50769,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "regional_input.csv",
+      "cells": 26334,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "regional_annotation.csv",
+      "cells": 30907,
+      "numerically_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "regional_render.csv",
+      "cells": 2448411,
+      "numerically_equal": true
+    }
+  ],
+  "appearance_comparisons": [
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_FEMALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "forest_MALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "cluster40.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "gene_branch_review.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "mgx_oncoprint.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "onco_frequency.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "mcp",
+      "language": "python",
+      "file": "multi_gwas_gtf.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_FEMALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "forest_MALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "cluster40.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "gene_branch_review.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "mgx_oncoprint.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "onco_frequency.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "perl",
+      "file": "multi_gwas_gtf.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_FEMALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "forest_MALE.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "cluster40.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "gene_branch_review.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "mgx_oncoprint.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "onco_frequency.png",
+      "pixels_equal": true
+    },
+    {
+      "repo": "explorer",
+      "language": "python",
+      "file": "multi_gwas_gtf.png",
+      "pixels_equal": true
+    }
+  ],
+  "runtime_fix_commits": {
+    "mcp": "66774f8efe39d5c206799559b292a9deaccd6fba",
+    "explorer": "55357a24d330b2e7aeccfdb1fa9307d3353ca9e7"
+  },
+  "independent_checks": 47468,
+  "plugin_smoke": {
+    "status": "COMPLETE",
+    "exit_code": 0,
+    "warnings": 0,
+    "rows_requested": 3,
+    "log": "C:/Users/cheng/OneDrive/Desktop/Test_MCP4SAS/SAS_Output_MCP4SAS_4YHAq1/output.html.info.txt"
+  },
+  "initial_failed_attempt": "The first test helper was named VERIFY and shadowed the SAS-supplied %VERIFY autocall used by %LEFT. The failed logs remain local. Only the test helper was renamed to a unique session-prefixed name; plotting programs were preserved and fresh sessions rerun.",
+  "cleanup_fix": "Python inspected files before deleting them in a combined request. Both native CLIs now match Perl: download, delete, then final listing/metadata. Three offline regressions and a new live combined-operation probe in each repository passed. The follow-up independently verified all seven earlier inputs absent, downloaded a new file before deletion, preserved an unselected file, and cleaned all three new inputs. Original failed acceptance.json files remain unchanged; only this derived summary resolves the cleanup assertion. Graphics were not rerun after this file-operation-only fix.",
+  "offline_regressions": {
+    "combined_file_operations": {
+      "mcp": {
+        "passed": 3
+      },
+      "explorer": {
+        "passed": 3
+      }
+    },
+    "mcp_native_units": {
+      "tests": 93,
+      "passed": 91,
+      "skipped": 2,
+      "reason": "Optional MCP SDK absent in selected Anaconda interpreter"
+    },
+    "real_cygwin_handoff": {
+      "mcp": {
+        "passed": 8,
+        "skipped": 0
+      },
+      "explorer": {
+        "passed": 8,
+        "skipped": 0
+      }
+    },
+    "explorer_runtime_checker": {
+      "exit_code": 0,
+      "log": "SAS_Output_oda_offline_regressions_20261123.log",
+      "warning": "Java-help Perl test shadows a variable; no product execution failure."
+    }
+  },
+  "limits": [
+    "Four frozen PoC programs, not a full study/preprocessing/LD/GTF-download pipeline rerun.",
+    "Prepared GTEx/PGC summaries; oncoprint events are synthetic.",
+    "This live run used Windows/Cygwin and native Windows Python clients; the SAS execution host was ODA Linux.",
+    "SAS warnings were retained, not silently removed.",
+    "Concurrent elapsed times are observations, not a controlled runtime or cost benchmark.",
+    "The frozen forest plot has a very tight left variant-label margin. Successful execution does not certify publication layout."
+  ]
+}
