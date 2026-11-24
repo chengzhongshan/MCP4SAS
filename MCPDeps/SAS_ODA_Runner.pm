@@ -2729,7 +2729,9 @@ sub _server_reachable {
         Proto    => 'tcp',
         Timeout  => ($SERVER_CONNECT_TIMEOUT_SECONDS > 0 ? $SERVER_CONNECT_TIMEOUT_SECONDS : 1),
     );
-    return $sock ? 1 : 0;
+    # Some macOS Perl/socket combinations return an object after a failed
+    # connect. A socket object alone does not establish a TCP connection.
+    return ($sock && defined(getpeername($sock))) ? 1 : 0;
 }
 
 sub _wait_for_server_port_state {
@@ -3078,7 +3080,8 @@ sub _call_session_server {
         Proto    => 'tcp',
         Timeout  => ($SERVER_CONNECT_TIMEOUT_SECONDS > 0 ? $SERVER_CONNECT_TIMEOUT_SECONDS : 5),
     );
-    return { status => 'error', error => 'cannot connect to session server' } unless $sock;
+    return { status => 'error', error => 'cannot connect to session server' }
+      unless $sock && defined(getpeername($sock));
     $sock->autoflush(1);
     # send length-prefixed
     my $len = length($json);
@@ -3086,7 +3089,10 @@ sub _call_session_server {
     my $payload_bytes = $hdr . $json;
     my $sent = 0;
     while ($sent < length($payload_bytes)) {
-        my $written = $sock->send(substr($payload_bytes, $sent), 0);
+        # Write directly to the connected stream; IO::Socket::send can croak
+        # while looking up a peer if the connection closes between checks.
+        local $SIG{PIPE} = 'IGNORE';
+        my $written = syswrite($sock, $payload_bytes, length($payload_bytes) - $sent, $sent);
         if (!defined $written || $written <= 0) {
             close $sock;
             return { status => 'error', error => 'failed to send request to session server' };
